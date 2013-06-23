@@ -13,7 +13,7 @@ import pylab as pl
 
 import numpy as np
 
-from pyfusion.data.utils import peak_freq, split_names, make_title, get_axes_pixcells
+from pyfusion.data.utils import split_names, make_title, get_axes_pixcells #, peak_freq
 from pyfusion.data.filters import cps
 from pyfusion.utils.utils import fix2pi_skips, modtwopi
 from pyfusion.debug_ import debug_
@@ -62,7 +62,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
     if (n_rows > 3) and (hspace == None): 
         hspace = 0.001 # should be 0, but some plots omitted if 
                        #exactly zero - fixed in matplotlib 1
-    if pyfusion.VERBOSE>3: print str(n_rows) + ' ' + str(n_columns)
+    if pyfusion.VERBOSE > 3: print str(n_rows) + ' ' + str(n_columns)
 
     if labelfmt != None:
         if len(make_title(labelfmt, input_data, 0)) > 8: 
@@ -222,51 +222,53 @@ def posNegFill(x,y1,y2):
     oldSign = (diff[0] < 0 )
     npts = x.shape[0]
     for i in range(1,npts):
-            newSign = (diff[i] < 0)
-            if newSign != oldSign:
-                    xz,yz = findZero(i,x,y1,y2)
-                    xx1.append(xz)
-                    yy1.append(yz)
-                    xx2.reverse()
-                    xx1.extend(xx2)
-                    yy2.reverse()
-                    yy1.extend(yy2)
-                    if oldSign:
-                            neg.append( (xx1,yy1) )
-                    else:
-                            pos.append( (xx1,yy1) )
-                    xx1 = [xz,x[i]]
-                    xx2 = [xz,x[i]]
-                    yy1 = [yz,y1[i]]
-                    yy2 = [yz,y2[i]]
-                    oldSign = newSign
+        newSign = (diff[i] < 0)
+        if newSign != oldSign:
+            xz,yz = findZero(i,x,y1,y2)
+            xx1.append(xz)
+            yy1.append(yz)
+            xx2.reverse()
+            xx1.extend(xx2)
+            yy2.reverse()
+            yy1.extend(yy2)
+            if oldSign:
+                neg.append( (xx1,yy1) )
             else:
-                    xx1.append( x[i])
-                    xx2.append( x[i])
-                    yy1.append(y1[i])
-                    yy2.append(y2[i])
-                    if i == npts-1:
-                            xx2.reverse()
-                            xx1.extend(xx2)
-                            yy2.reverse()
-                            yy1.extend(yy2)
-                            if oldSign :
-                                    neg.append( (xx1,yy1) )
-                            else:
-                                    pos.append( (xx1,yy1) )
+                pos.append( (xx1,yy1) )
+            xx1 = [xz,x[i]]
+            xx2 = [xz,x[i]]
+            yy1 = [yz,y1[i]]
+            yy2 = [yz,y2[i]]
+            oldSign = newSign
+        else:
+            xx1.append( x[i])
+            xx2.append( x[i])
+            yy1.append(y1[i])
+            yy2.append(y2[i])
+            if i == npts-1:
+                xx2.reverse()
+                xx1.extend(xx2)
+                yy2.reverse()
+                yy1.extend(yy2)
+                if oldSign :
+                    neg.append( (xx1,yy1) )
+                else:
+                    pos.append( (xx1,yy1) )
     return pos,neg
 
 class Energy:
     def __init__(self,energy_list,initial_list):
-            self.value = 0.0
-            self.energy_list = energy_list
-            for i in range(len(initial_list)):
-                    if initial_list[i]:
-                            self.value += self.energy_list[i]
+        self.value = 0.0
+        self.energy_list = energy_list
+        for i in range(len(initial_list)):
+            if initial_list[i]:
+                self.value += self.energy_list[i]
+
     def add(self,elmt):
-            self.value += self.energy_list[elmt]
+        self.value += self.energy_list[elmt]
+
     def sub(self,elmt):
-            self.value -= self.energy_list[elmt]
+        self.value -= self.energy_list[elmt]
 
 def findZero(i,x,y1,y2):
     im1 = i-1
@@ -287,7 +289,7 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, block=False
     that adjacent channels are adjacent (i.e. ch2-ch1, ch2-c2 etc).
     Channel names are taken from the fs and plotted abbreviated
 
-    1/1/2011: TODO This appears to work only for database=None config
+    1/1/2011: TODO This appears to work only for database = None config
     1/17/2011:  bdb: May be fixed - I had used channel instead of channel.name
     """
     # extract by channels
@@ -403,7 +405,7 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, block=False
 @register("SVDData")
 def svdplot(input_data, fmax=None, hold=0):
 
-    if hold==0: pl.clf(); # erase the figure, as this is a mult- axis plot
+    if hold==0: pl.clf() # erase the figure, as this is a mult- axis plot
     else: pl.clf() # do it anyway, trying to overcome checkbuttons problem
 
     n_SV = len(input_data.svs)
@@ -428,12 +430,12 @@ def svdplot(input_data, fmax=None, hold=0):
     button_setting_list=[]
 
     for i in range(n_SV):
-	button_name_list.append('  '+str(i))
-	button_setting_list.append(False)
+        button_name_list.append('  '+str(i))
+        button_setting_list.append(False)
         
     # have first 2 SVs on as default
     for i in [0,1]:
-	button_setting_list[i] = True
+        button_setting_list[i] = True
 
         # like "self"
     check = CheckButtons(rax, tuple(button_name_list), tuple(button_setting_list))
@@ -441,8 +443,8 @@ def svdplot(input_data, fmax=None, hold=0):
     check_box_stretch = 7
     for i in range(len(check.rectangles)):
     #if (1 == 0):  # this to turn off the hack
-	check.rectangles[i].set_width(check_box_stretch*check.rectangles[i].get_height())
-	for j in [0,1]: # two lines of the x
+        check.rectangles[i].set_width(check_box_stretch*check.rectangles[i].get_height())
+        for j in [0,1]: # two lines of the x
             orig_x_data = check.lines[i][j].get_xdata()
             orig_y_data = check.lines[i][j].get_ydata()
             orig_width = orig_x_data[1]-orig_x_data[0]
@@ -458,7 +460,7 @@ def svdplot(input_data, fmax=None, hold=0):
     plot_list_1 = range(n_SV)
     for sv_i in range(n_SV):
 	#plot_list_1[sv_i], = ax1.plot(array(input_data.dim1), input_data.chronos[sv_i], visible= button_setting_list[sv_i],alpha=0.5)
-	plot_list_1[sv_i], = ax1.plot(np.arange(len(input_data.chronos[sv_i])), input_data.chronos[sv_i], visible= button_setting_list[sv_i],alpha=0.5)
+        plot_list_1[sv_i], = ax1.plot(np.arange(len(input_data.chronos[sv_i])), input_data.chronos[sv_i], visible= button_setting_list[sv_i],alpha=0.5)
     #pl.xlim(min(input_data.dim1), max(input_data.dim1))
 
     # axes 2: SVs
@@ -498,14 +500,14 @@ def svdplot(input_data, fmax=None, hold=0):
                  .replace(', ','\n')
                  .format(tm=1e3*np.average(input_data.chrono_labels),
                          invH=(1./entropy), 
-                         Amp = np.sqrt(np.sum(input_data.p*bsl))*RMS_scale,
-                         a12 = np.sqrt(input_data.p[1]/input_data.p[0])))
+                         Amp = float(np.sqrt(np.sum(input_data.p*bsl))*RMS_scale),
+                         a12 = float(np.sqrt(input_data.p[1]/input_data.p[0]))))
     ax2.text(0.96,0.85,labstr, color='r', **kwargs)
 
     # grid('True')
     for sv_i in range(n_SV):
-	col = plot_list_1[sv_i].get_color()
-	plot_list_2[sv_i], = ax2.semilogy([sv_i], [input_data.svs[sv_i]], '%so' %(col),visible= button_setting_list[sv_i],markersize=8,alpha=0.5)
+        col = plot_list_1[sv_i].get_color()
+        plot_list_2[sv_i], = ax2.semilogy([sv_i], [input_data.svs[sv_i]], '%so' %(col),visible= button_setting_list[sv_i],markersize=8,alpha=0.5)
 
     # axes 3: fft(chrono)
     pl.axes(ax3)
@@ -541,20 +543,20 @@ def svdplot(input_data, fmax=None, hold=0):
     #channel_names.append(channel_names[0])
     #pl.xticks(angle_array,channel_names, rotation=90)
     for sv_i in range(n_SV):
-	col = plot_list_1[sv_i].get_color()
-	tmp_topo = join_ends(input_data.topos[sv_i])
-	pos,neg =  posNegFill(angle_array,np.zeros(len(angle_array)),tmp_topo)
-	### BUG: it looks like ax4.fill doesn't work in a couple of cases, leaving sub_plot_4_list[i] as int, which raises a set_visible() bug in button_action - also has problems with draw(). other subplots all worked fine before I started with subplot 4
-	sub_plot_4_list = range(len(pos)+len(neg)+2)
-	for j in range(len(pos)):
+        col = plot_list_1[sv_i].get_color()
+        tmp_topo = join_ends(input_data.topos[sv_i])
+        pos,neg =  posNegFill(angle_array,np.zeros(len(angle_array)),tmp_topo)
+        ### BUG: it looks like ax4.fill doesn't work in a couple of cases, leaving sub_plot_4_list[i] as int, which raises a set_visible() bug in button_action - also has problems with draw(). other subplots all worked fine before I started with subplot 4
+        sub_plot_4_list = range(len(pos)+len(neg)+2)
+        for j in range(len(pos)):
             sub_plot_4_list[j], = ax4.fill(pos[j][0],pos[j][1],col,visible= button_setting_list[sv_i],alpha=0.5)
         for j in range(len(neg)):
             sub_plot_4_list[j+len(pos)], = ax4.fill(neg[j][0],neg[j][1],col,visible= button_setting_list[sv_i],alpha=0.5)
-		
-	sub_plot_4_list[len(neg)+len(pos)+0], = ax4.plot(angle_array,tmp_topo,'%so' %(col),visible= button_setting_list[sv_i],markersize=3)
-	# show repeated val
-	sub_plot_4_list[len(neg)+len(pos)+1], = ax4.plot([angle_array[-1]],[tmp_topo[-1]],'kx', visible= button_setting_list[sv_i],markersize=6)
-	plot_list_4[sv_i]=sub_plot_4_list
+                
+        sub_plot_4_list[len(neg)+len(pos)+0], = ax4.plot(angle_array,tmp_topo,'%so' %(col),visible= button_setting_list[sv_i],markersize=3)
+        # show repeated val
+        sub_plot_4_list[len(neg)+len(pos)+1], = ax4.plot([angle_array[-1]],[tmp_topo[-1]],'kx', visible= button_setting_list[sv_i],markersize=6)
+        plot_list_4[sv_i]=sub_plot_4_list
         debug_(pyfusion.DEBUG, 2, key='svdplot')
 
     def test_action(label):
@@ -563,19 +565,19 @@ def svdplot(input_data, fmax=None, hold=0):
     def button_action(label):
         print('action')
 	# this is not very clear: but basically, the label is the str() of the element of plot_list_x we want to make / unmake visible
-	visible_status = plot_list_1[int(label)].get_visible()
-	plot_list_1[int(label)].set_visible(not visible_status)
-	plot_list_2[int(label)].set_visible(not visible_status)
-	plot_list_3[int(label)].set_visible(not visible_status)
-	for i in range(len(plot_list_4[int(label)])):
+        visible_status = plot_list_1[int(label)].get_visible()
+        plot_list_1[int(label)].set_visible(not visible_status)
+        plot_list_2[int(label)].set_visible(not visible_status)
+        plot_list_3[int(label)].set_visible(not visible_status)
+        for i in range(len(plot_list_4[int(label)])):
             plot_list_4[int(label)][i].set_visible(not visible_status)
-	# if visible_status == False, then we are adding visiblity => add to energy, vice-verca
-	if visible_status:
+        # if visible_status == False, then we are adding visiblity => add to energy, vice-verca
+        if visible_status:
             energy.sub(int(label))
-	else:
+        else:
             energy.add(int(label))
-	energy_label._text='E = %.2f %%' %(100.*energy.value)
-	pl.draw()
+        energy_label._text='E = %.2f %%' %(100.*energy.value)
+        pl.draw()
 
     # action when button is clicked
     check.on_clicked(button_action)

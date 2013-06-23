@@ -1,21 +1,25 @@
 import pylab as pl
+import time as tm
 
-def raise_matching(str):
-    """ raise all pylab windows with str in the title,
-    whether they flash or raise depends on window manager and settings
-    Note than figure(num='myname') is a legal way to name a fig"""
+def save_matching(str, prefix = None):
+    """ save all pylab windows with str in the title,
+    Note that figure(num='myname') is a legal way to name a fig"""
+    if prefix is None:
+        prefix = tm.strftime('%Y%m%d%H%M')
+        print('defaulting to prefix={p}'.format(p=prefix))
+
     labs = pl.get_figlabels()
     for lab in labs:
         if str in lab:
             pl.figure(lab)
-            mgr = pl.get_current_fig_manager()
-            mgr.window.tkraise()
+            pl.savefig((prefix+lab).replace(' ','_'))
 
-rwm = raise_matching
+swm = save_matching  # short cut
+
 def raise_matching(str):
     """ raise all pylab windows with str in the title,
     whether they flash or raise depends on window manager and settings
-    Note than figure(num='myname') is a legal way to name a fig"""
+    Note that figure(num='myname') is a legal way to name a fig"""
     labs = pl.get_figlabels()
     for lab in labs:
         if str in lab:

@@ -6,7 +6,7 @@ import re
 import sys
 
 def find_data(file, target, skip = 0, recursion_level=0, debug=0):
-    """ find the first line number which contains the string (regexp) target 
+    """ find the last line number which contains the string (regexp) target 
     work around a "feature" of loadtxt, which ignores empty lines while reading data
     but counts them while skipping.
     This way, everything goes through one reader (instead of gzip.open), simplifying,
@@ -15,18 +15,18 @@ def find_data(file, target, skip = 0, recursion_level=0, debug=0):
     about 0.14 secs to read 3500 lines, 0.4 if after 11000 lines of text
     """
     lines = np.loadtxt(file,dtype=str,delimiter='FOOBARWOOBAR',skiprows=skip)
-    shotlines = np.where(
+    wh_shotlines = np.where(
         np.array([re.match(target, line)!=None for line in lines]))[0]
     if debug>0: print('main, rec, skip=', 
-                      recursion_level, skip, shotlines[0],lines[shotlines[0]])
-    if len(shotlines) == 0: 
+                      recursion_level, skip, wh_shotlines[-1],lines[wh_shotlines[-1]])
+    if len(wh_shotlines) == 0: 
         raise LookupError('target {t} not found in file "{f}". Line 0 follows\n{l}'.
                           format(t=target, f=file, l=lines[0]))
-    sk = shotlines[0]
+    sk = wh_shotlines[-1]
     if recursion_level>0: return(sk)
 
     for tries in range(10):
-        if debug>0: print(sk, shotlines[0], lines[sk])
+        if debug>0: print(sk, wh_shotlines[-1], lines[sk])
 
         sk1 = find_data(file, target=target, skip=sk, 
                         recursion_level=recursion_level+1)
@@ -92,7 +92,7 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
 
             ds_list.append(
                 np.loadtxt(fname=filename, skiprows = skip, 
-                           dtype= fs_dtype)
+                           dtype= fs_dtype, ndmin=1)  # ENSURE a 1D array
             )
             count += 1
             comment_list.append(filename)

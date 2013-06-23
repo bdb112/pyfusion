@@ -177,6 +177,10 @@ else:
                     try:
                         seg_proc.channels[0].name
                         names = [sgch.name for sgch in seg_proc.channels]
+                    except:
+                        names = seg_proc.channels
+
+                    try:
                         phi = np.array([float(pyfusion.config.get
                                               ('Diagnostic:{cn}'.
                                                format(cn=c.name), 
@@ -184,7 +188,8 @@ else:
                                               .split(',')[0]) 
                                         for c in seg.channels])
                     except:
-                        names = seg_proc.channels
+                        print('no phi values found')
+                        phi = np.arange(len(seg.channels))
 
                     short_names,p,s = pf.data.plots.split_names(names)
                     #short_names[0]="\n"+seg_proc.channels[0].name  # first one in full

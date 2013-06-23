@@ -61,6 +61,7 @@ minshot=0
 maxshot=999999 # higher than even LHD
 shot_list = []
 diags=diag_basic
+diags_scalar="b_0,R_ax,Quad,Gamma".split(',')
 
 import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
@@ -88,12 +89,13 @@ for shot in shot_list:
        try:
           times = dd['t_mid'][ws]
           basic_data = get_basic_diagnostics(diags,shot=shot,times=times)
-          (tstart,tend,inds) = get_flat_top(times=None, shot=shot) # None important
-          flat_level = times*0
-          w=np.where((times>tstart) & (times<tend))[0]
-          flat_level[w] = 1.0
-          if debug>0: print("len = {0}".format(len(w)))
-          basic_data.update({'flat_level': flat_level})
+          if 'w_p' in diags:  # omit all this if not asked for w_p (to make sure we get Bo)
+              (tstart,tend,inds) = get_flat_top(times=None, shot=shot) # None important
+              flat_level = times*0
+              w=np.where((times>tstart) & (times<tend))[0]
+              flat_level[w] = 1.0
+              if debug>0: print("len = {0}".format(len(w)))
+              basic_data.update({'flat_level': flat_level})
 
           good_shots.append(shot)
        except exception, details:		

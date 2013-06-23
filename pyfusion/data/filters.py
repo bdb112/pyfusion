@@ -221,7 +221,7 @@ def normalise(input_data, method=None, separate=False):
             norm_value = atleast_2d(var_vals).T            
     input_data.signal = input_data.signal / norm_value
     #print('norm_value = %s' % norm_value)
-    norm_hist = ','.join(["{0:.2g}".format(v) for v in norm_value.flatten()])
+    norm_hist = ','.join(["{0:.2g}".format(float(v)) for v in norm_value.flatten()])
     input_data.history += "\n:: norm_value =[{0}]".format(norm_hist)
     input_data.history += ", method={0}, separate={1}".format(method, separate)
     input_data.scales = norm_value

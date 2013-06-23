@@ -244,10 +244,14 @@ class MultiChannelFetcher(BaseDataFetcher):
                 tmp_data = tmp_data.reduce_time(t_range)
             channels.append(tmp_data.channels)
             # two tricky things here - tmp.data.channels only gets one channel hhere
-            #config_name for a channel is attached to the multi part -
-            #we need to move it to the particular channel 
-            # was  channels[-1].config_name = chan
-            channels[-1].config_name = tmp_data.config_name
+            # Config_name for a channel is attached to the multi part -
+            # We need to move it to the particular channel 
+            # Was  channels[-1].config_name = chan
+            # 2013 - default to something if config_name not defined
+            if hasattr(tmp_data,'config_name'):
+                channels[-1].config_name = tmp_data.config_name                
+            else:
+                channels[-1].config_name = 'fix_me'
             meta_dict.update(tmp_data.meta)
             #print(tmp_data.signal[-1], sgn)
             tmp_data.signal = sgn * tmp_data.signal

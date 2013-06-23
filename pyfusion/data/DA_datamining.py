@@ -93,12 +93,55 @@ class DA():
         start_mem = report_mem(start_mem)
     #shallow_copy = try:if da.copy
 
+    def append(self, dd):
+        """ append the data in dd to the data in self
+
+        """
+        for k in self.da.keys():
+            if k not in dd.keys():
+                raise LookupError('key {k} not in dd keys: {keys}'
+                                  .format(k=k, keys=dd.keys()))
+        for k in dd.keys():
+            if k not in self.da.keys():
+                raise LookupError('key {k} not in DA keys: {keys}'
+                                  .format(k=k, keys=self.da.keys()))
+        for k in self.da.keys():
+            if hasattr(dd[k],'keys'):
+                for kk in self.da[k]:
+                    if kk in dd.keys():  # if it is there, append
+                        self.da[k][kk] = np.append(self.da[k][kk], dd[k][kk])
+                    else:
+                        self.da[k][kk] = dd[k][kk]  # else insert
+                
+            else:
+                self.da[k] = np.append(self.da[k], dd[k], 0)
+                
+        self.len = len(self.da[self.mainkey])
+        if self.verbose>0: 
+            print('added {dl} instances to make a total of {tl}'
+                  .format(dl=len(dd['shot']), tl = self.len))
+
     def to_sqlalchemy(self,db = 'sqlite:///:memory:',n_recs=1000, chunk=1000):
         """ Write to an sqlachemy database 
             chunk = 500: 2000 34 element recs/sec to (big) sqllite file, 
-                    1600/sec to mysql
-            'mysql://bdb112@localhost/junk'  (mysql need snans cvtd to nul
+                    1600/sec to mysql.  cat file|mysql junk is ~ 16,000/sec
+                    Using load data infile -> 25,000/s (for file on server!)
+
+                    mysql> select * from fs_table into outfile 'foo1';
+                    Query OK, 100000 rows affected (0.78 sec) (see format below)
+
+                    mysql> load data INFILE "foo1" into table fs_table;
+                    Query OK, 100000 rows affected (4.09 sec)
+
+
+            'mysql://bdb112@localhost/junk'  (mysql needs nans cvtd to nul
+
+            This is a proof of principle - won't work with other than 
+            numeric scalars at the moment - DA.pop('phases'); DA.pop('info')
         """        
+        """ FOrmat for mysql load data infile
+\N	27153	0.1	-1	0.285	11.7753	1	10010	-0.000908817	2.75	0.074	18.3	0.0156897	-0.118291	1.25	27153	\N	-1	-1	-1	\N	0.373338	\N	-0.00219764	0.001536	\N  etc
+        """
         import sqlalchemy as SA
         def cvt(val):
             if np.isnan(val): return(None)
@@ -235,7 +278,7 @@ class DA():
                              #pc = 100*(len(np.where(self.da[k]!=np.nan)[0])/
                              pc = 100*(1-(len(invalid)/float(lenshots)/fac)))),
                 print(typ),
-                if varlen != lenshots: 
+                if varlen != lenshots and k != 'info': 
                     print('Warning - array length {al} != shot length {s} '
                           .format(al=varlen,s=lenshots))
                 else: print('')  # to close line
@@ -300,7 +343,7 @@ class DA():
         args=','.join(["{k}=save_dict['{k}']".
                        format(k=k) for k in use_keys])
         if verbose:
-             print('lengths: {0} -999 indicates dodgy variable'
+            print('lengths: {0} -999 indicates dodgy variable'
                    .format([mylen(save_dict[k]) for k in use_keys]))
 
         exec("np.savez_compressed(filename,"+args+")")

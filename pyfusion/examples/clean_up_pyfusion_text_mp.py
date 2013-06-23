@@ -10,44 +10,10 @@ import numpy as np
 import sys
 import glob
 
-def my_move(filename, subfolder='bad',overwrite=False):
-    """ move a file to a subfolder, making it if required
-    """
-    (this_folder, fn) = os.path.split(filename)
-    todir = os.path.join(this_folder, subfolder)
+def clean_up_file(filename, debug = 1):
 
-    if not os.path.isdir(todir):  os.mkdir(todir)
-    newfullname = os.path.join(todir, fn)
-    while (not overwrite) and os.path.isfile(newfullname):
-        newfullname += '.tmp'
-    os.rename(filename, newfullname)
-    return(newfullname)
-
-
-_var_default="""
-debug=1
-all_errors=[]
-baddir = 'bad'
-fileglob = '/mythextra/datamining/PF2_121208/*2'
-fast = False
-
-"""
-
-exec(_var_default)
-
-from pyfusion.utils import process_cmd_line_args
-exec(process_cmd_line_args())
-
-
-
-
-#filename='/home/bdb112/datamining/preproc/PF2_121208/PF2_121209_MP2010_99931_99931_1_384_rms_1.dat.bz2'  # I killed it
-#filename = '/home/bdb112/datamining/preproc/PF2_121208/foo.bz2'
-#for filename in np.sort(glob.glob('/home/bdb112/datamining/preproc/PF2_121208/*2')):
-#for filename in np.sort(glob.glob('/home/bdb112/datamining/preproc/PF2_121208/PF2_121209_MP2010_113431_113431_1_384_rms_1.dat.bz2')):  # I killed it
-good_lines = 0
-
-for filename in np.sort(glob.glob(fileglob)):
+    all_errors=[]
+    good_lines = 0
 
     with bz2.BZ2File(filename) as fd:
         lines=fd.readlines()
@@ -58,7 +24,7 @@ for filename in np.sort(glob.glob(fileglob)):
         print('no Shot line in '+filename)
         all_errors.append([filename, len(lines), [-1], ['no shotline']]) # -1 means no shotline
         print('moving to '+ my_move(filename, 'no_shot_line'))
-        continue
+        return(good_lines, all_errors)
     if len(shotline_candidates)!=1: 
         print('Extra shot line in '+filename, ' using last')
 
@@ -67,7 +33,7 @@ for filename in np.sort(glob.glob(fileglob)):
         print('no fs data in '+filename)
         all_errors.append([filename, len(lines), [-2], ['no fs data']]) # -2 means no data
         print('moving to ' +my_move(filename,'no_fs'))
-        continue
+        return(good_lines, all_errors)
         
     shotlinetext = lines[shotline]
     header_toks = shotlinetext.split()
@@ -142,7 +108,11 @@ for filename in np.sort(glob.glob(fileglob)):
                 errors.append(l)
                 badlines.append([l,lines[l]])
                 if len(errors)<3: print(lines[l])
-                if debug>0: ans = raw_input('delete this line? (Y, A(ll),^C to stop)').lower()
+                if not MP and debug>0: 
+                    ans = raw_input('delete this line? (Y, A(ll),^C to stop)').lower()
+                else: 
+                    ans = 'a'  # this is a fudge - need to rethink logic
+
                 if ans=='a': 
                     debug=0
                 if ans in ['y','','a']:   # need ans to act!
@@ -209,9 +179,60 @@ for filename in np.sort(glob.glob(fileglob)):
             print(' shot number not same at {l} in {f}'.format(l=one_funny_shot, f= filename))
             all_errors.append([filename, len(lines), errors, badlines])
             my_move(filename, 'bad_shotno')
+    return(good_lines, all_errors)
+
+def my_move(filename, subfolder='bad',overwrite=False):
+    """ move a file to a subfolder, making it if required
+    """
+    (this_folder, fn) = os.path.split(filename)
+    todir = os.path.join(this_folder, subfolder)
+
+    if not os.path.isdir(todir):  os.mkdir(todir)
+    newfullname = os.path.join(todir, fn)
+    while (not overwrite) and os.path.isfile(newfullname):
+        newfullname += '.tmp'
+    os.rename(filename, newfullname)
+    return(newfullname)
+
+
+_var_default="""
+debug=1
+baddir = 'bad'
+fileglob = '/mythextra/datamining/PF2_121208/*2'
+fast = False
+MP = 0
+"""
+
+exec(_var_default)
+
+from pyfusion.utils import process_cmd_line_args
+exec(process_cmd_line_args())
+
+all_errors=[]
+good_lines = 0
 
 import pickle
 import time as tm
+
+if MP:
+
+    import multiprocessing
+    def main():
+        pool = multiprocessing.Pool()
+        input = np.sort(glob.glob(fileglob))
+
+        results = pool.map(clean_up_file, input)
+        p=open(tm.strftime('%Y%m%d%H%M%S_cleanup_data.pickle'),'w')
+        pickle.dump(results, p)
+        p.close()
+        1/0
+else:
+
+    for filename in np.sort(glob.glob(fileglob)):
+        (good_lines, errors) = clean_up_file(filename)
+
+main()
+
 
 p=open(tm.strftime('%Y%m%d%H%M%S_cleanup_data.pickle'),'w')
 pickle.dump(all_errors,p)

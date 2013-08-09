@@ -90,7 +90,7 @@ def subdivide_interval(pts, overlap= None, debug=0):
 
 def find_peaks(arr, minratio=.001, debug=0):
     """ find the peaks in the data in arr, by selecting points
-    See Shauns using find_peaks running average
+    See also Shauns using find_peaks running average
     where the slope changes sign, and the value is > minratio*max(arr) """
     darr = np.diff(arr)
     wnz = np.where(darr != 0)[0]

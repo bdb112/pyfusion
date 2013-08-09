@@ -6,6 +6,7 @@ Temporary fix is to block in svdplot when hold==1.
 This enables the function, then you kill the window to move on (see plot_svd.py)
 Also attempted to use subplots here to tidy up putting additonal graphs on top.
 See plots_1.py and svd_plots1.py - need to sovle subplot pars problem
+bdb made format more conforming. 2013
 """
 from matplotlib.widgets import CheckButtons
 from matplotlib.font_manager import FontProperties

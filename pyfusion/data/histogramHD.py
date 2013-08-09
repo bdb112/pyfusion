@@ -1,5 +1,6 @@
 import numpy as np
 import pylab as pl
+import pyfusion
 from pyfusion.debug_ import debug_
 
 """ 

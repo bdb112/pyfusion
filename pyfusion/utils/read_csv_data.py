@@ -72,7 +72,11 @@ def read_csv_data(file_or_list,debug=0,columns=None, header=1, dialect='excel', 
     """
     import csv
     if len(shape(file_or_list)) == 0:
-        fd = open(file_or_list,openMode)
+        if '.bz2' in file_or_list:
+            import bz2
+            fd = bz2.BZ2File(file_or_list, mode=openMode)
+        else:
+            fd = open(file_or_list,openMode)
     else:
         fd = file_or_list
     reader=csv.reader(fd,dialect=dialect)

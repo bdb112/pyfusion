@@ -58,6 +58,8 @@ file_info.update({'b_0': {'format': 'lhd_summary_data.csv','name':'MagneticField
 file_info.update({'R_ax': {'format': 'lhd_summary_data.csv','name':'MagneticAxis'}})
 file_info.update({'Quad': {'format': 'lhd_summary_data.csv','name':'Quadruple'}})
 file_info.update({'Gamma': {'format': 'lhd_summary_data.csv','name':'GAMMA'}})
+file_info.update({'NBI1Pwr': {'format': 'lhd_summary_data.csv','name':'NBI1Power'}})
+file_info.update({'NBI2Pwr': {'format': 'lhd_summary_data.csv','name':'NBI2Power'}})
 
 global lhd_summary
 
@@ -169,8 +171,11 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                 try:
                     test=lhd_summary.keys()
                 except:    
-                    print('reloading {0}'.format(info['format']))
-                    lhd_summary = read_csv_data(acq_LHD+'/'+info['format'], header=3)
+                    csvfilename = acq_LHD+'/'+info['format']
+                    if not os.path.exists(csvfilename):
+                        csvfilename += ".bz2"
+                    print('reloading {0}'.format(csvfilename))
+                    lhd_summary = read_csv_data(csvfilename, header=3)
 
                 val = lhd_summary[varname][shot]    
                 valarr = np.double(val)+(times*0)
@@ -185,9 +190,10 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                     except IOError:
                         try:
                             dg = igetfile(filepath + '.gz', shot=shot, debug=debug-1)
-                        except exception:
+                        except exception, details:
                             if debug>0: print('diag at {fp} not found'
                                               .format(fp=filepath))
+                            print(details)
                             dg=None
                             #break  # give up and try next diagnostic
                 if dg==None:  # messy - break doesn't do what I want?

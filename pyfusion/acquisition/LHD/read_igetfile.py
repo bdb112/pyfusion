@@ -277,7 +277,7 @@ def read_igetfile(filename=None, verbose=0, plot=True, hold=True, debug=0, quiet
     sio.seek(0)
     return(sio.readlines())
     """
-    arr=loadtxt(sio,delimiter=',')
+    arr=loadtxt(sio,delimiter=',') 
     if plot: 
         import pylab as pl
         pl.plot(arr[:,0],arr[:,1],'.',markersize=1, hold=hold)

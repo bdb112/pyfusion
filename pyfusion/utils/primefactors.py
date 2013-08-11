@@ -169,16 +169,21 @@ def optimise_fit(atimes):
     plsq = leastsq(residuals, p0, args=(atimes[0], atimes[1]))
     print(plsq)
 
-def get_fftw3_speed(arr, iters=10, direction=None, **kwargs):
+def get_fftw3_speed(arr, iters=10, direction=None, dtype=np.float32, **kwargs):
     """ measure the fftw3 speed for various data sizes by using
     plan with estimate, and running one instance.  If arr is int,
     then the elements are different array sizes, otherwise use the
     array.
     direction default - just fwd - use 'both' for both
     To "train": - the print allows you to ^c out.
+    from pyfusion.utils.primefactors import get_fftw3_speed
+    from pyfusion.utils.fftw3_bdb_utils import save_wisdom, load_wisdom
     from pyfusion.data.filters import next_nice_number
     from pyfusion.utils.primefactors import get_fftw3_speed
-    for n in next_nice_number(None): print(n); get_fftw3_speed(n, flags=['FFTW_MEASURE'],direction='both')
+    for n in next_nice_number(None):
+        print(n); 
+        get_fftw3_speed(n, flags=['FFTW_MEASURE'],direction='both',dtype=np.float32)
+    save_wisdom()
 
     Accepts all pyfftw.FFTW args e.g. planning_timelimit
     """
@@ -188,7 +193,7 @@ def get_fftw3_speed(arr, iters=10, direction=None, **kwargs):
     if np.issubdtype(arr.dtype, int):
         atimes = []
         for n in arr:
-            atimes.append([n, get_fftw3_speed(np.ones(n, dtype=np.float32),
+            atimes.append([n, get_fftw3_speed(np.ones(n, dtype=dtype),
                                               direction=direction, iters=iters, **kwargs)])
         return(np.array(atimes))
     else:  # do one example

@@ -103,7 +103,12 @@ else
     return 1	
 fi
 
+# detect LHD server
+if [[ `uname -a` =~ .*lhd.* ]]
+then export PYFUSION_CONFIG_FILE=`pwd`/pyfusion/pyfusion.cfg
+else
 export PYFUSION_CONFIG_FILE=`pwd`/pyfusion_boyd_nov_2012.cfg
+fi
 
 # use $pyfparent/pyfusion rather than PYFUSIONPATH, as it may include c:/cygwin
 #cd $pyfparent/pyfusion

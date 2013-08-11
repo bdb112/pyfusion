@@ -33,7 +33,7 @@ shot_range = [27233]
 #shot_range = range(90090, 90110)
 n_samples = 512
 overlap=1.0
-diag_name= 'MP'
+diag_name= 'MP2010'
 exception=Exception
 time_range = None
 min_svs=2
@@ -63,6 +63,7 @@ for shot in shot_range:
 
     try:
         d = lhd.acq.getdata(shot, diag_name)
+        n_channels = len(d.channels)
         if time_range != None:
             d.reduce_time(time_range, copy=False)
 
@@ -100,14 +101,16 @@ for shot in shot_range:
                     if count==0: 
                         # show history if info says to, and avoid starting line with a digit
                         if info > 0: print('< '+fs.history.replace('\n201','\n< 201'))
-                        print('Shot    time         SVS    freq  Amp    a12   p    H     frlow frhigh     {np:2d} Phases'.format(np=len(fs.dphase)))
+                        SVtitle_spc = (n_channels - 2)*' '
+                        print('Shot    time   {spc}SVS    freq  Amp    a12   p    H     frlow frhigh     {np:2d} Phases'
+                              .format(np=len(fs.dphase),spc=SVtitle_spc))
                     count += 1
                     if fs.H < max_H and fs.p>0.01 and len(fs.svs())>=min_svs:
                         phases = ' '.join(["%5.2f" % j.delta for j in fs.dphase])
                         # was t_seg.scales, but now it is copies, t_seg is not updated 
                         RMS_scale = sqrt(mean(fs.scales**2)) 
                         adjE = fs.p*fs.E*RMS_scale**2
-                        debug_(debug)
+                        debug_(debug,2)
                         if pyfusion.orm_manager.IS_ACTIVE: 
                         # 2-2.05, MP: 11 secs, 87  , commit=False 10.6 secs 87
                         # commits don't seem to reduce time.    
@@ -115,8 +118,10 @@ for shot in shot_range:
                         else: 
                             # 20121206 - time as %8.5g (was 7.4) 
                             # caused apparent duplicate times
+                            SV_fmt = "{{0:{w}b}}".format(w=2+n_channels)
                             print ("%d %8.5g %s %6.3g %6.3f %.2f %.3f %.3f %5.1f %5.1f  %s" % (
-                                    shot, fs.t0, "{0:11b}".format(fs._binary_svs), 
+                                    #shot, fs.t0, "{0:11b}".format(fs._binary_svs), 
+                                    shot, fs.t0, SV_fmt.format(fs._binary_svs), 
                                     fs.freq/1000., sqrt(fs.E*fs.p)*RMS_scale, 
                                     fs.a12, fs.p, fs.H, frlow/1e3, frhigh/1e3, phases))
 

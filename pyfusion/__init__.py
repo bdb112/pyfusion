@@ -93,11 +93,20 @@ except:
     if VERBOSE>0: print('colors not in config file - no color!')
     COLORS=None
 
+# 
+default_fft_type = 'default numpy'
 try:
-    import pyfftw
-    fft_type = 'fftw3'
+    fft_type = config.get('global','fft_type')
 except:
-    fft_type = 'default numpy'
+    fft_type = default_fft_type
+    if VERBOSE>0: print('fft_type not in config - use default: {s}'.format(s=fft_type))
+
+if fft_type == 'fftw3':  # Note - don't use quotes in .cfg file
+    try:
+        import pyfftw
+    except:
+        print('unable to load fftw3')
+        fft_type = default_fft_type
 
 print('Using {f} for FFT'.format(f=fft_type))
 
@@ -105,6 +114,7 @@ if fft_type == 'fftw3':
     try: 
         from pyfusion.utils.fftw3_bdb_utils import save_wisdom, load_wisdom
         load_wisdom()
+        # note - see pyfusion.utils.primefactors for paste to get wisdom
     except:
         print('using fftw3, but no saved wisdom')
         

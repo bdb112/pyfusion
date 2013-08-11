@@ -9,7 +9,7 @@ import copy
 from numpy import searchsorted, arange, mean, resize, repeat, fft, conjugate, linalg, array, zeros_like, take, argmin, pi, cumsum
 from numpy import correlate as numpy_correlate
 import numpy as np
-
+from time import time as seconds
 
 try:
     from scipy import signal as sp_signal
@@ -49,10 +49,20 @@ class MetaFilter(type):
 
 def next_nice_number(N):
     """ return the next highest power of 2 including nice fractions (e.g. 2**n *5/4)
-    takes about 30us  - should rewrite to calculate starting from smallest
-    power of 2 less than N.
+    takes about 10us  - should rewrite more carefully to calculate 
+    starting from smallest power of 2 less than N, but hard to do better
+    >>> print(next_nice_number(256), next_nice_number(257)) 
+    (256, 288)
+
+    Have to be careful this doen't take more time than it saves!
     """
-    nice = [2**p * n/16 for p in range(10,30) for n in [16, 18, 20, 24, 27]]
+    if N is None:
+        (minp2, maxp2) = (6,16)
+    else:
+        minp2 = int(np.log2(N))
+        maxp2 = minp2 + 2
+
+    nice = [2**p * n/16 for p in range(minp2,maxp2) for n in [16, 18, 20, 24, 27]]
     if N is None: return(np.array(nice))
     for n in nice:
         if n>=N: return(n)
@@ -393,10 +403,11 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     Use a Fourier space taper/tophat or pseudo gaussian filter to perform 
     narrowband filtering (much narrower than butterworth).  
     Problem is that bursts may generate ringing. (should be better with taper=2)  
+    twid is the width of the transition from stop to pass
     >>> tb = dummytb(np.linspace(0,20,512))
     >>> w = 2*np.pi* 1  # 1 Hertz
     >>> dat = dummysig(tb,np.sin(w*tb.timebase)*(tb.timebase<np.max(tb.timebase)/3))
-    >>> fop = filter_fourier_bandpass(dat,[0.9,1.1],[0.8,1.2],debug=2).signal[0]
+    >>> fop = filter_fourier_bandpass(dat,[0.9,1.1],[0.8,1.2],debug=1).signal[0]
 
     """
     if debug == None: debug = pyfusion.DEBUG
@@ -405,6 +416,8 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     norm_stopband = input_data.timebase.normalise_freq(np.array(stopband))
     NS = len(input_data.signal[0])
     NA = next_nice_number(NS)
+    input_data.history += str(" {fftt} : nice number: {NA} cf {NS}\n"
+                              .format(fftt=pyfusion.fft_type, NA=NA, NS=NS))
     # take a little more to speed up FFT
 
     mask = np.zeros(NA)
@@ -416,8 +429,11 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     n_pb_hi = int(norm_passband[1]*NA/2)
     n_sb_hi = int(norm_stopband[1]*NA/2)
 
-    wid = max(n_pb_low - n_sb_low,n_sb_hi - n_pb_hi)
-    if wid < 4: 
+    # twid is the transition width, and should default so that the sloped part is the same width as the flat?
+    # !!!! doesn't do that yet.
+    # make the transition width an even number, and the larger of the two
+    twid = 2*(1+max(n_pb_low - n_sb_low,n_sb_hi - n_pb_hi)/2)
+    if (twid < 4) or (n_sb_low < 0): 
         if taper == 2: 
             raise ValueError(
             'taper 2 requres a bigger margin between stop and pass') 
@@ -429,8 +445,14 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
             taper = 2
 
     if taper==1:
+        #          _____
+        #         /     \
+        #        /       \
+        # ______/         \___
+        # want 0 at sb low and sb high, 1 at pb low and pb high
+        # present code does not quite do this.
         for n in range(n_sb_low,n_pb_low+1):
-            if n_pb_low == n_sb_low:  # allow for pass=stop on low side
+            if n_sb_low == n_pb_low:  # allow for pass=stop on low side
                 mask[n]=1.
             else:
                 mask[n] = float(n - n_sb_low)/(n_pb_low - n_sb_low) # trapezoid
@@ -439,19 +461,34 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         for n in range(n_pb_low,n_pb_hi+1):
             mask[n] = 1
     elif taper == 2:
-        # symmetrise (so that cumsum works)
+        # Note - must symmetrise (so that cumsum works)
+        #          _
+        #         / \
+        #        |   |
+        #  ______/   \___
+        # want 0 at sb low and sb high, 1 at pb low and pb high
+        # this means that the peak of the mask before integration is halfway between sb_low and pb_low
+        # and pb_low - sb_low is an even number
+        # present code does not quite do this.
 
-        n_pb_low = n_sb_low+wid
-        n_sb_hi = n_pb_hi+wid
+        n_sb_low = n_pb_low-twid  # sacrifice the stop band, not the pass
+        n_sb_hi = n_pb_hi+twid
 
-        for n in range(n_sb_low,n_pb_low+1):
-            mask[n] = float(n - n_sb_low)/(n_pb_low - n_sb_low) # trapezoid
-            mask[2*n_pb_low-n+1] = mask[n] #down ramp
-        wid_up = n_sb_hi - n_pb_hi
-        for n in range(n_pb_hi,n_sb_hi+1):
-            mask[n] = -float(n_sb_hi - n)/(n_sb_hi - n_pb_hi) # trapezoid
-            mask[2*n_pb_hi - n - 1] = mask[n]
+        low_mid = n_pb_low - twid/2
+        high_mid = n_pb_hi + twid/2
+        for n in range(n_sb_low,low_mid):
+            mask[n] = float(n - n_sb_low)/(low_mid - 1 - n_sb_low) # trapezoid
+            mask[2*low_mid-n-1] = mask[n] #down ramp - repeat max
+        #wid_up = n_sb_hi - n_pb_hi
+        for n in range(n_pb_hi,high_mid): # negative tri
+            mask[n] = float(n_pb_hi - n)/(high_mid - n_pb_hi - 1) # trapezoid
+            mask[2*high_mid - n - 1] = mask[n]
+        before_integration = mask    
         mask = np.cumsum(mask) # integrate
+        if np.max(mask) == 0:
+            raise ValueError('zero mask, '
+                             'passband = {pb}, stopband={sb}, taper {t}'
+                             .format(pb = passband, sb = stopband, t=taper))
         mask = mask/np.max(mask)
     # reflection only required for complex data
     # this even and odd is not totally thought through...but it seems OK
@@ -460,8 +497,13 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     output_data = copy.deepcopy(input_data)  # was output_data = input_data
 
     if (pyfusion.fft_type == 'fftw3'):
-        # should migrate elsewhere
+        # should migrate elsewhere, but the import is only 6us
+        # the setup time seems about 150-250us even if size is in wisdom
+        # for 384, numpy is 20us, fftw3 is 4us, so fftw3 slower for less than 
+        # 10 channels (unless we cache the plan)
+        #time# st=seconds()
         import pyfftw
+        #time# im=seconds()
         tdtype = np.float32
         fdtype = np.complex64
         # this could be useful to cache.
@@ -469,10 +511,14 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         tdom = pyfftw.n_byte_align(np.zeros(NA,dtype=tdtype), simd_align)
         FT = pyfftw.n_byte_align_empty(NA/2+1, simd_align, fdtype)
         ids = [[id(tdom),id(FT)]]  # check to see if it moves out of alignment
+        #time# alloc_t = seconds()
         fwd = pyfftw.FFTW(tdom, FT, direction='FFTW_FORWARD',
                           **pyfusion.fftw3_args)
         rev = pyfftw.FFTW(FT, tdom, direction='FFTW_BACKWARD',
                           **pyfusion.fftw3_args)
+        #time# pl=seconds()
+        #time# print("import {im:.2g}, alloc {al:.2g}, planboth {pl:.2g}"
+        #time#      .format(im=im-st, al=alloc_t-im, pl=pl-alloc_t))
     else:
         tdtype = np.float32
         tdom = np.zeros(NA,dtype=tdtype)
@@ -496,14 +542,15 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         # next _nice: 5.74 for 10 sec lenny 
         #  E4300: 1thr  9.3 (39np) for 10 sec 90091;    5.5 for 4 sec (19.6 np)
         if (pyfusion.fft_type == 'fftw3'):  # fftw3 nosim, no thread 2.8s cf 10s
-            tdom[0:NS]=s  # indexed to make sure tdom stays put
+            #time# sst = seconds()
+            tdom[0:NS]=s  # indexed to make sure tdom is in the right part of memory
             if NS != NA: tdom[NS:]=0.
             fwd.execute()
             FT[:] = FT * mask[0:NA/2+1] # 12ms
             rev.execute()
-            output_data.signal[i] = tdom[0:NS]
+            output_data.signal[i] = tdom[0:NS]/NA # doco says NA
             ids.append([id(tdom),id(FT)])
-
+            #time# print("{dt:.1f}us".format(dt=(seconds()-sst)/1e-6)),
         else: # default to numpy
             tdom[0:NS] = s
             FT = np.fft.fft(tdom)
@@ -520,7 +567,9 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         pl.plot(mask,'r.-',label='mask')
         pl.plot(np.abs(FT)/len(mask),label='FT')
         pl.plot(input_data.signal[0],label='input')
-        pl.plot(output_data.signal[0],label='output')
+        # for a while I needed a factor of 3 here too for fftw - why ????
+        #pl.plot(output_data.signal[0]/(3*NA),'m',label='output/{N}'.format(N=3*NA))
+        pl.plot(output_data.signal[0],'m',label='output')
         pl.legend()
         pl.show()
     debug_(debug, 2, key='filter_fourier')
@@ -548,13 +597,20 @@ if __name__ == "__main__":
     class dummysig():
         def __init__(self, tb,sig):
             self.timebase = tb
-            self.signal = [sig]
+            self.signal = 10*[sig, 2*sig, 3*sig]
+            self.history = ''
 
     import doctest
     doctest.testmod()
     import pylab as pl
-    pl.figure()
+
     tb = dummytb(np.linspace(0,20,2048))
     w = 2*np.pi* 10  # 10 Hertz
     dat = dummysig(tb,np.sin(w*tb.timebase)*(tb.timebase<np.max(tb.timebase)/3))
-    fop = filter_fourier_bandpass(dat,[9,11],[8,12],debug=2).signal[0]
+    # below is 680us/loop fftw3, 3x2k signals. 1.2ms with numpy
+    #         1.84us                           8.5ms for 10*3 signals
+    fop = filter_fourier_bandpass(dat,[9,11],[8,12],debug=1).signal[0]
+    pl.title('test 2 - 10Hz'); pl.show()
+    fopwide = filter_fourier_bandpass(dat,[0,30],[8,12],debug=1).signal[0]
+    pl.title('test 2 - 10Hz wide'); pl.show()
+

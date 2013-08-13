@@ -457,7 +457,8 @@ def svdplot(input_data, fmax=None, hold=0):
     # axes 1: chrono
     pl.axes(ax1)
     #pl.xlabel('Time -*-get units from Timebase-*-')
-    pl.ylabel('Amplitude [a.u.]')
+    pl.ylabel('chronos [a.u.]')  # used to be labelled amplitude, but is not really.
+    # you can get to the reconstructed signals via fs.signal, but chronos is better here
     plot_list_1 = range(n_SV)
     for sv_i in range(n_SV):
 	#plot_list_1[sv_i], = ax1.plot(array(input_data.dim1), input_data.chronos[sv_i], visible= button_setting_list[sv_i],alpha=0.5)

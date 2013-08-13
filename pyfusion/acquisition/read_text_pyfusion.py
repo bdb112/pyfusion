@@ -71,6 +71,14 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
             txt = np.loadtxt(fname=filename, skiprows=skip-1, dtype=str, 
                              delimiter='FOOBARWOOBAR')
             header_toks = txt[0].split()
+            # look for a version number first
+            if header_toks[-1][-1] in '0123456789.':
+                version = float(header_toks.pop())
+                if 'ersion' not in header_toks.pop():
+                    raise ValueError('Error reading header in {f}'
+                                     .format(f=filename))
+            else: version=-1  # pre Aug 12 2013
+
             # is the first character of the 2nd last a digit?
             if header_toks[-2][0] in '0123456789': 
                 if pyfusion.VERBOSE > 0: 
@@ -89,6 +97,13 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
                             ('_binary_svs','i8'), 
                             ('freq','f8'), ('amp', 'f8'), ('a12','f8'),
                             ('p', 'f8'), ('H','f8'), ('phases',ph_dtype)]
+
+            if version > 0.69:  # don't rely on precision
+                fs_dtype.insert(-1,('cpkf', 'f8'))  # -1 is 1 before the end
+                fs_dtype.insert(-1,('fpkf', 'f8'))  # they appear in this order
+                
+            if pyfusion.VERBOSE > 0: 
+                print(version, fs_dtype)
 
             ds_list.append(
                 np.loadtxt(fname=filename, skiprows = skip, 

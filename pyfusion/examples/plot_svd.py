@@ -208,7 +208,7 @@ else:
             fs_arr = order_fs(fs_set)
             for fs in fs_arr[0:min([len(fs_arr)-1,max_fs])]:
                 RMS_scale=sqrt(mean(seg_proc.scales**2))
-                print("amp=%.3g:" % (sqrt(fs.p)*RMS_scale)),
+                print("  amp=%.3g:" % (sqrt(fs.p)*RMS_scale)),
 
                 print("f=%.3gkHz, t=%.3g, p=%.2f, a12=%.2f, E=%.2g, adjE=%.2g, %s" %
                       (fs.freq/1000, fs.t0, fs.p, fs.a12, fs.E,

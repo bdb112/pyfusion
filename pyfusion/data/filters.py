@@ -601,7 +601,6 @@ if __name__ == "__main__":
             self.history = ''
 
     import doctest
-    doctest.testmod()
     import pylab as pl
 
     tb = dummytb(np.linspace(0,20,2048))
@@ -614,3 +613,4 @@ if __name__ == "__main__":
     fopwide = filter_fourier_bandpass(dat,[0,30],[8,12],debug=1).signal[0]
     pl.title('test 2 - 10Hz wide'); pl.show()
 
+    doctest.testmod()

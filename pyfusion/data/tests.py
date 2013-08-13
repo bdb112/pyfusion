@@ -79,7 +79,7 @@ class CheckUtils(PfTestBase):
         single_mode_signal = get_multimode_test_data(channels=get_n_channels(1),
                                                      timebase=timebase,
                                                      modes = [mode_3])
-        p_f, p_f_elmt = peak_freq(single_mode_signal.signal[0],
+        p_f, p_f_elmt, fpkf = peak_freq(single_mode_signal.signal[0],
                                   single_mode_signal.timebase)
         # Check that we get mode_3 frequency of 27.0 kHz (to 1 decimal place).
         self.assertAlmostEqual(1.e-3*p_f, 1.e-3*mode_3['freq'], 1)

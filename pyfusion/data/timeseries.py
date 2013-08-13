@@ -202,11 +202,15 @@ class FlucStruc(BaseData):
             # this ratio was inverted accidentally at first
             self.a12 = svd_data.svs[sv_list[1]]/svd_data.svs[sv_list[0]]
         self._binary_svs = list2bin(sv_list)
-        # peak frequency for fluctuation structure
         self.timebase = timebase
-        self.freq, self.freq_elmt = peak_freq(svd_data.chronos[sv_list[0]], self.timebase)
+        # peak frequency for fluctuation structure, fpkf is freq peak factor
+        self.freq, self.freq_elmt, self.fpkf = \
+            peak_freq(svd_data.chronos[sv_list[0]], self.timebase)
         self.phase_pairs = phase_pairs
         self.t0 = timebase[0]
+        # channel peaking factor - squaring increases contrast 
+        top = np.abs(svd_data.topos[sv_list[0]])
+        self.cpkf = np.max(top)/np.sqrt(np.average(top**2))
         # singular value filtered signals
         self.signal = np.dot(np.transpose(svd_data.topos[sv_list,:]),
                            np.dot(np.diag(svd_data.svs.take(sv_list)), svd_data.chronos[sv_list,:]))

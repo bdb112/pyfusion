@@ -129,24 +129,36 @@ def find_signal_spectral_peaks(timebase, signal, minratio = .001, debug=0):
 
 def peak_freq(signal,timebase,minfreq=0,maxfreq=1.e18):
     """
-    TODO: old code: needs review
+    TODO: old code: needs review - since then bdb helped a bit...
+    now also returns peaking factor
     this function only has a basic unittest to make sure it returns
     the correct freq in a simple case.
+    >>> tb = np.linspace(0,1,10000)
+    >>> int(peak_freq(np.sin(2*np.pi*567*tb), tb)[1])
+    567
+
     """
     timebase = array(timebase)
-    sig_fft = fft.fft(signal)    # bdb 5% fft
-    sample_time = float(mean(timebase[1:]-timebase[:-1]))
-    fft_freqs = (1./sample_time)*arange(len(sig_fft)).astype(float)/(len(sig_fft)-1)
-    # only show up to nyquist freq
+    # Note - the call to this uses the first Svector
+    sig_fft = fft.rfft(signal)    # bdb 5% fft (before rfft - was just fft)
+    #sample_time = float(mean(timebase[1:]-timebase[:-1]))
+    sample_time = np.average(np.diff(timebase))
+    #fft_freqs = (1./sample_time)*arange(len(sig_fft)).astype(float)/(len(sig_fft)-1)
+    # I think the -1 in (len() - 1) was an error - bdb
+    fft_freqs = (1./sample_time)*arange(len(sig_fft)).astype(float)/len(signal)
+    """ not needed for rfft # only show up to nyquist freq
     new_len = len(sig_fft)/2
     sig_fft = sig_fft[:new_len]
     fft_freqs = fft_freqs[:new_len]
+    """
     [minfreq_elmt,maxfreq_elmt] = searchsorted(fft_freqs,[minfreq,maxfreq])
     sig_fft = sig_fft[minfreq_elmt:maxfreq_elmt]
     fft_freqs = fft_freqs[minfreq_elmt:maxfreq_elmt]
 
     peak_elmt = (argsort(abs(sig_fft)))[-1]
-    return [fft_freqs[peak_elmt], peak_elmt]
+    
+    pkfactor = np.max(np.abs(sig_fft))/np.sqrt(np.average(np.abs(sig_fft)**2))
+    return [fft_freqs[peak_elmt], peak_elmt, pkfactor]
 
 def remap_periodic(input_array, min_val, period = 2*pi):
     while len(input_array[input_array<min_val]) > 0:
@@ -173,8 +185,9 @@ def split_names(names, pad=' ',min_length=3):
     The array of varying parts is first in the tuple in case others are not
     wanted.  This is used to make the x labels of phase plots simpler and smaller.
     e.g.
-    >>> split_names(['MP01','MP10'])
-    (['01','10'], 'MP', '')
+    >>> split_names(['MP01','MP10'],min_length=2)
+    (['01', '10'], 'MP', '')
+
     The pad char is put on the end of shorter names - a better way would be
     to keep the end char the same, and pad in between the beginning and end
     the per channel part is at least min_length long.  
@@ -201,6 +214,7 @@ def split_names(names, pad=' ',min_length=3):
     while (first < maxlen and
            (nms_arr[:,first] == nms_arr[0,first]).all()):
         first += 1
+
     # and the last        
     last = maxlen-1
     while ((last >= 0) and
@@ -214,7 +228,7 @@ def split_names(names, pad=' ',min_length=3):
     if (1+last-first) < min_length:
         add_chars = min_length - (1+last-first)
         first = max(0, first-add_chars)
-        print(first, add_chars)
+        print(first, last, add_chars, maxlen)
     return(([''.join(s) for s in nms_arr[:,first:last+1]],
             ''.join(nms_arr[0,0:first]),
             ''.join(nms_arr[0,last+1:maxlen+1])))
@@ -260,6 +274,9 @@ def make_title(formatstr, input_data, channum=None, dict = {}, min_length=3):
 if __name__ == '__main__':
 
 # test program
+    import doctest
+    doctest.testmod()
+
     import pyfusion
     x=find_peaks([1,2,3,4,2,1,1,10,5,4,3,4,5])
     tb = np.linspace(0,1e-3,1000)

@@ -31,107 +31,110 @@ def nansort(arr):
 def nanargsort(arr):
     return(np.argsort(arr[np.where(np.invert(isnan(arr)))]))
 
-""" Do it simply, not necessarily efficiently
-(after wasting 3 hours doing it efficiently)
-First delete all records with blank shot numbers by copying to tmp
-Then convert shot to int, and reorder everything to shot order
-Then create the final shot array, indexed by shot (must be equal or bigger len)
-The target address in the final array is just the shot coulum (sht) in the tmp
-Then for each column, find non blanks (wnn) 
-Prepare a target arrlen array of the right type, with nan entries (or -1, '')
-depost them target[sht[wnn]] = col[wnn]
-Finally, the shot column in the final array (Shot) should be == arange(maxshot+1) 
 
-"""
-LHD = {}
-tmp = {}
-sh = 90091
-err=0
-str_summary=[]
+if __name__ == "__main__":
 
-wnotnull = np.where(lhd['nShotnumber'] != '')[0]  # cautiously convert to int
-shots_tmp = lhd['nShotnumber'][wnotnull].astype(np.int32)
-# need unique here, are there are 2 shot 100's ! (what does this mean?)
-shots_test,ws = np.unique(shots_tmp, return_index=1)
-# reorder the strings in a new dict, in shot number order.
-for k in lhd.keys(): tmp.update({k: lhd[k][ws]})
+    """ Do it simply, not necessarily efficiently
+    (after wasting 3 hours doing it efficiently)
+    First delete all records with blank shot numbers by copying to tmp
+    Then convert shot to int, and reorder everything to shot order
+    Then create the final shot array, indexed by shot (must be equal or bigger len)
+    The target address in the final array is just the shot coulum (sht) in the tmp
+    Then for each column, find non blanks (wnn) 
+    Prepare a target arrlen array of the right type, with nan entries (or -1, '')
+    depost them target[sht[wnn]] = col[wnn]
+    Finally, the shot column in the final array (Shot) should be == arange(maxshot+1) 
 
-# now prepare the final shot array
-arrlen = np.max(shots_tmp)+1  # need a spot for all shots including 0
-shots = np.zeros(arrlen, dtype=np.int32) -1  # initialise to shot=-1
-shots[shots_tmp] = shots_tmp
-LHD.update({'Shot': shots})
+    """
+    LHD = {}
+    tmp = {}
+    sh = 90091
+    err=0
+    str_summary=[]
 
-for k in tmp.keys():
-    as_str_in_order = tmp[k]
-    # now look for '' in other cols
-    wcolnotnull = np.where(as_str_in_order != '')[0]
+    wnotnull = np.where(lhd['nShotnumber'] != '')[0]  # cautiously convert to int
+    shots_tmp = lhd['nShotnumber'][wnotnull].astype(np.int32)
+    # need unique here, are there are 2 shot 100's ! (what does this mean?)
+    shots_test,ws = np.unique(shots_tmp, return_index=1)
+    # reorder the strings in a new dict, in shot number order.
+    for k in lhd.keys(): tmp.update({k: lhd[k][ws]})
 
-    chk_range = min(10, len(wcolnotnull))
-    # get a lot of values, in case the first choice is not representative
-    values = '_'.join([as_str_in_order[wcolnotnull[i]].strip() 
-                        for i in range(chk_range)])
-    if re.match('^[_0-9]*$',values): 
-        dt = 'int32'
-        arr = -np.ones(arrlen).astype(dt)
-        wdecimal = np.where(
-            np.remainder(as_str_in_order[wcolnotnull].astype(float),1)!=0)[0]
-        if len(wdecimal)>0: 
-            print('reverting {k} to float based on {eg}'
-                  .format(k=k, eg=as_str_in_order[wcolnotnull[wdecimal[0]]]))
-        dt = 'float32'
-        arr = np.nan + np.ones(arrlen).astype(dt)
+    # now prepare the final shot array
+    arrlen = np.max(shots_tmp)+1  # need a spot for all shots including 0
+    shots = np.zeros(arrlen, dtype=np.int32) -1  # initialise to shot=-1
+    shots[shots_tmp] = shots_tmp
+    LHD.update({'Shot': shots})
 
-    elif re.match('^[_+-.0-9eE]*$',values): 
-        dt = 'float32'
-        arr = np.nan + np.ones(arrlen).astype(dt)
-    else: 
-        dt == 'str'
-        #arr = np.empty(arrlen,dtype='|S256')  # need to initialise empty
-        arr = np.array(arrlen*[''],dtype='|S256')
+    for k in tmp.keys():
+        as_str_in_order = tmp[k]
+        # now look for '' in other cols
+        wcolnotnull = np.where(as_str_in_order != '')[0]
 
+        chk_range = min(10, len(wcolnotnull))
+        # get a lot of values, in case the first choice is not representative
+        values = '_'.join([as_str_in_order[wcolnotnull[i]].strip() 
+                            for i in range(chk_range)])
+        if re.match('^[_0-9]*$',values): 
+            dt = 'int32'
+            arr = -np.ones(arrlen).astype(dt)
+            wdecimal = np.where(
+                np.remainder(as_str_in_order[wcolnotnull].astype(float),1)!=0)[0]
+            if len(wdecimal)>0: 
+                print('reverting {k} to float based on {eg}'
+                      .format(k=k, eg=as_str_in_order[wcolnotnull[wdecimal[0]]]))
+            dt = 'float32'
+            arr = np.nan + np.ones(arrlen).astype(dt)
 
-    try:  # the conversion may go wrong - protect
-        arr[shots_tmp[ws[wcolnotnull]]] = \
-            as_str_in_order[wcolnotnull].astype(np.dtype(dt))
-    except Exception, details:
-        err += 1
-        print('Failed on {k} (type was based on "{v}" for shot {sh}, {d}'
-              .format(k=k, d=details, v = values, sh=sh))
-              
-        arr = np.array(arrlen*[''],dtype='|S256')
-        #arr = np.empty(arrlen,dtype='|S256')
-        #arr = np.array(arrlen*[''])
-        arr[shots_tmp[ws[wcolnotnull]]] = as_str_in_order[wcolnotnull]
-
-        # compress, but beware assignments in the future.
-        arr=np.array([s.strip() for s in arr])
-        str_summary.append('{k}: {oldty}-> {dty}'
-                           .format(k=k, dty=arr.dtype, 
-                                   oldty=as_str_in_order.dtype))
-        print('revert {k} to a string, type {dty}'.format(k=k, dty=arr.dtype))
+        elif re.match('^[_+-.0-9eE]*$',values): 
+            dt = 'float32'
+            arr = np.nan + np.ones(arrlen).astype(dt)
+        else: 
+            dt == 'str'
+            #arr = np.empty(arrlen,dtype='|S256')  # need to initialise empty
+            arr = np.array(arrlen*[''],dtype='|S256')
 
 
-    LHD.update({k: arr})  # add the new entry
-    
-print('{err} string reversions/compressions'.format(err=err))
-print('{s}'.format(s=str_summary))
+        try:  # the conversion may go wrong - protect
+            arr[shots_tmp[ws[wcolnotnull]]] = \
+                as_str_in_order[wcolnotnull].astype(np.dtype(dt))
+        except Exception, details:
+            err += 1
+            print('Failed on {k} (type was based on "{v}" for shot {sh}, {d}'
+                  .format(k=k, d=details, v = values, sh=sh))
 
-for k in lhd.keys():
-    if len(LHD[k]) != arrlen: print('conversion error on {k}'
-                                     .format(k=k))
-            
-wset = np.where(LHD['Shot'] != -1)[0]
-werr = np.where(LHD['Shot'][wset] != np.arange(arrlen)[wset])[0]
-if len(werr) > 0: raise LookupError('shot numbers mixed up')
-            
+            arr = np.array(arrlen*[''],dtype='|S256')
+            #arr = np.empty(arrlen,dtype='|S256')
+            #arr = np.array(arrlen*[''])
+            arr[shots_tmp[ws[wcolnotnull]]] = as_str_in_order[wcolnotnull]
 
-if 'y' in raw_input('save ? ').lower():
-    fn = 'LHD_summary_new'
-    print('saving as {n}..'.format(n=fn))
-    savez_compressed(fn,LHD=LHD)
-else:
-    print('not saved')
+            # compress, but beware assignments in the future.
+            arr=np.array([s.strip() for s in arr])
+            str_summary.append('{k}: {oldty}-> {dty}'
+                               .format(k=k, dty=arr.dtype, 
+                                       oldty=as_str_in_order.dtype))
+            print('revert {k} to a string, type {dty}'.format(k=k, dty=arr.dtype))
+
+
+        LHD.update({k: arr})  # add the new entry
+
+    print('{err} string reversions/compressions'.format(err=err))
+    print('{s}'.format(s=str_summary))
+
+    for k in lhd.keys():
+        if len(LHD[k]) != arrlen: print('conversion error on {k}'
+                                         .format(k=k))
+
+    wset = np.where(LHD['Shot'] != -1)[0]
+    werr = np.where(LHD['Shot'][wset] != np.arange(arrlen)[wset])[0]
+    if len(werr) > 0: raise LookupError('shot numbers mixed up')
+
+
+    if 'y' in raw_input('save ? ').lower():
+        fn = 'LHD_summary_new'
+        print('saving as {n}..'.format(n=fn))
+        savez_compressed(fn,LHD=LHD)
+    else:
+        print('not saved')
 
 
 """

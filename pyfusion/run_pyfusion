@@ -114,7 +114,7 @@ fi
 #cd $pyfparent/pyfusion
 #now we are good, push some lines if they are not there already
 
-set_window_title PYFUSION
+set_window_title PYFUSION_$2
 
 # if there are not a lot like this there already, add some useful lines
 # you can ^R or up arrow back to

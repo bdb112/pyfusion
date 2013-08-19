@@ -218,7 +218,7 @@ if MP:
 
     import multiprocessing
     def main():
-        pool = multiprocessing.Pool()
+        pool = multiprocessing.Pool(MP)
         input = np.sort(glob.glob(fileglob))
 
         results = pool.map(clean_up_file, input)

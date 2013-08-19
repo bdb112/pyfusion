@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-""" job controller for preprocessing pyfusion flucstruc data.  Replaces 
+""" 
+Like prepfs_range, but separate jobs and files for each shot
+job controller for preprocessing pyfusion flucstruc data.  Replaces 
 do_range script, so that a nice argument form can be used, and eventually 
 multi-processing.
 """
@@ -58,31 +60,35 @@ if __name__ == '__main__':
     tm = localtime()
 
     shot_range = eval(ARGS.shot_range)
-    if len(shot_range)==1: sr = shot_range[0]
-    else: sr = "{min}_{max}".format(min=min(shot_range), max=max(shot_range))
-    filename = ARGS.filename_format.format(sr=sr, nor=ARGS.normalize, sep=ARGS.separate, 
-                                           dn = ARGS.diag_name, ns=ARGS.n_samples,
-                                           yy=tm.tm_year-2000,mm=tm.tm_mon,dd=tm.tm_mday,hh=tm.tm_hour
-                                           )
+    #if len(shot_range)==1: sr = shot_range[0]
+    #else: sr = "{min}_{max}".format(min=min(shot_range), max=max(shot_range))
+    for shot in shot_range:
+        sr=shot
+        filename = ARGS.filename_format.format(sr=sr, nor=ARGS.normalize, sep=ARGS.separate, 
+                                               dn = ARGS.diag_name, ns=ARGS.n_samples,
+                                               yy=tm.tm_year-2000,mm=tm.tm_mon,dd=tm.tm_mday,hh=tm.tm_hour
+                                               )
 
-    cmd = str('python pyfusion/examples/{exe} shot_range={sr} diag_name={dn} '
-              'overlap={ov} exception={ex} debug={db} '
-              '  n_samples={ns} seg_dt={seg_dt:.4g} time_range={tr} '
-              'separate={sep} info={info} method="{nor}" > {path}/{fn}'
-              .format(exe=ARGS.exe,sr=ARGS.shot_range, 
-                      nor=ARGS.normalize, sep=ARGS.separate, 
-                      dn = ARGS.diag_name, tr=ARGS.time_range, db=ARGS.debug,
-                      ex=ARGS.exception, ov=ARGS.overlap, ns=ARGS.n_samples,
-                      seg_dt=ARGS.seg_dt,
-                      path=ARGS.output_path[0],fn=filename, info=ARGS.info
-                      )
-              )
-               
-    print(cmd)
+        cmd = str('python pyfusion/examples/{exe} shot_range=[{sr}] diag_name={dn} '
+                  'overlap={ov} exception={ex} debug={db} '
+                  '  n_samples={ns} seg_dt={seg_dt:.4g} time_range={tr} '
+                  'separate={sep} info={info} method="{nor}" > {path}/{fn}'
+                  .format(exe=ARGS.exe,sr=shot, 
+                          nor=ARGS.normalize, sep=ARGS.separate, 
+                          dn = ARGS.diag_name, tr=ARGS.time_range, db=ARGS.debug,
+                          ex=ARGS.exception, ov=ARGS.overlap, ns=ARGS.n_samples,
+                          seg_dt=ARGS.seg_dt,
+                          path=ARGS.output_path[0],fn=filename, info=ARGS.info
+                          )
+                  )
 
-    sub_pipe = subprocess.Popen(cmd,  shell=True, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-    (resp,err) = sub_pipe.communicate()
-    if (err != '') or (sub_pipe.returncode != 0): 
-        print(resp,err,'.') #
-    print(resp[-10000:])
+        print(cmd)
+
+        sub_pipe = subprocess.Popen(cmd,  shell=True, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+        (resp,err) = sub_pipe.communicate()
+        if (err != '') or (sub_pipe.returncode != 0): 
+            print(resp,err,'.') #
+        print(resp[-10000:])
+        #sub_pipe.terminate()  # too harsh
+    print('Done')

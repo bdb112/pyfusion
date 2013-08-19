@@ -53,8 +53,10 @@ if not(os.path.exists(USER_ENV_CONFIG_FILE)):
 
 # Now we actually load the configuration files. Settings in
 # DEFAULT_CONFIG_FILE will be superseded by those in USER_CONFIG_FILE,
-# and USER_ENV_CONFIG_FILE will supersede both. As well as storing the
-# settings, read_config() will set up the ORM backend if required.
+# and USER_ENV_CONFIG_FILE will supersede both. Note that, so that
+# DEFAULT_CONFIG can substitute local values, USER_CONFIG
+# is read in initially as well.  In addition to reading in settings,
+# read_config() will set up the ORM backend if required.
 # Note that the $HOME/.pyfusion file overrides the $PYFUSION_ROOT_DIR file.
 DEBUG = os.getenv('PYFUSION_DEBUG','0')  # probably better as an env var
 try:   # if it looks like an int, make it one.
@@ -64,7 +66,11 @@ except:
 # VERBOSE is likely to be used as an env var for debugging and as a config
 # var, depending on taste.
 VERBOSE = int(os.getenv('PYFUSION_VERBOSE','0'))  # allows config info to be debugged
-read_config([DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
+#read_config([DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
+""" the USER_CONFIG file must be there at first to define local items (e.g. 
+paths) and  then after DEFAULT_CONFIG to override defaults
+"""
+read_config([USER_CONFIG_FILE, DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
 
 # verbosity level from environment has priority, otherwise use config, which 
 # defaults to 0.  Note that we looked at the env var previously to allow debug of config
@@ -74,6 +80,12 @@ VERBOSE = int(os.getenv('PYFUSION_VERBOSE',
 
 root_dir = os.path.split(os.path.abspath( __file__ ))[0]
 
+# cache control is likely to be computer dependent
+try:
+    TMP_FREE_BYTES = config.get('global','tmp_free_bytes')
+except:
+    TMP_FREE_BYTES = 1e9
+    print('defaulting [global]temp_free_bytes to {t:,}'.format(t=TMP_FREE_BYTES))
 
 try:
     from numpy import dtype as npdtype

@@ -451,6 +451,11 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         # ______/         \___
         # want 0 at sb low and sb high, 1 at pb low and pb high
         # present code does not quite do this.
+        # try to prevent zero width or very narrow (DC only) filters.
+        if n_sb_low<0: n_sb_low=0
+        if n_pb_low<0: n_pb_low=0
+        if n_pb_hi<1: n_pb_hi=1
+        if n_sb_hi<=n_pb_hi: n_sb_hi=n_pb_hi+1
         for n in range(n_sb_low,n_pb_low+1):
             if n_sb_low == n_pb_low:  # allow for pass=stop on low side
                 mask[n]=1.

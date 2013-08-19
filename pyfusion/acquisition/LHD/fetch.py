@@ -227,10 +227,11 @@ def retrieve_to_file(diagg_name=None, shot=None, subshot=None,
     if not(path.exists(outdir)): makedirs(outdir)
 
     freebytes=get_free_bytes(outdir)
-    if freebytes < 1e9:
+    if freebytes < pyfusion.TMP_FREE_BYTES:
+    #if freebytes < 25e9:
          purge_old(outdir, '*dat')  # ONLY DO .DAT have to manually purge prm
          if (get_free_bytes(outdir) > freebytes*0.9):
-              print("Warning - unable to clear much space!")
+              pyfusion.logger.warning("Warning - unable to clear much space!")
 
 #
     cmd = str("retrieve %s %d %d %d %s" % (diagg_name, shot, subshot, channel, path.join(outdir, diagg_name)))

@@ -19,17 +19,18 @@ from time import sleep, time as seconds
 import os
 from pyfusion.data.utils import find_signal_spectral_peaks, subdivide_interval
 
-def timeinfo(message):
+# implement some extras from gen_fs_local
+def timeinfo(message, outstream=sys.stdout):
     if show_times == 0: return
     global st, st_0
     try:
         dt = seconds()-st
     except:
-        print('Time:' + message + '(first call)')
+        outstream.writelines('Time:' + message + '(first call)\n')
         st = seconds()
         st_0 = seconds()
         return
-    print("Time: {m} in {dt:.2f}/{t:.2f}".format(m=message, dt=dt, t=seconds()-st_0))
+    outstream.writelines("Time: {m} in {dt:.2f}/{t:.2f}\n".format(m=message, dt=dt, t=seconds()-st_0))
     st = seconds()
     return
 
@@ -46,7 +47,7 @@ debug=0
 show_times=1
 shot_range = [27233]
 #shot_range = range(90090, 90110)
-n_samples = 512
+n_samples = None  # was 512
 overlap=1.0
 diag_name= 'MP2010'
 exception=Exception
@@ -56,6 +57,7 @@ max_H=0.97
 info=2
 separate=1
 method='rms'
+seg_dt=1.5e-6 # time interval - overrides n_samples if None
 df = 2e3  #Hz
 fmax = None
 max_bands = 4
@@ -68,6 +70,7 @@ exec(_var_default)
 # ideally should be a direct call, passing the local dictionary
 import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
+from pyfusion.data.filters import next_nice_number
 
 count = 0  #  we print the header right before the first data
 
@@ -81,7 +84,12 @@ for shot in shot_range:
         d = lhd.acq.getdata(shot, diag_name)
         timeinfo('data read')
         n_channels = len(d.channels)
-
+        dt = np.average(np.diff(d.timebase))
+        if n_samples is None:
+            n_samples = next_nice_number(seg_dt/dt)
+            print('Choosing {N} samples to cover {seg_dt}'
+                  .format(N=n_samples,  seg_dt=seg_dt))
+            
         if time_range != None:
             d.reduce_time(time_range, copy=False)
 
@@ -165,4 +173,5 @@ if pyfusion.orm_manager.IS_ACTIVE:
     pyfusion.orm_manager.Session().commit()
     pyfusion.orm_manager.Session().close_all()
 
-timeinfo('finished')
+timeinfo('\n######## {c} fs finished'.format(c=count), sys.stderr) # stderr so that read_text is not fooled.
+# should really put a sentinel here.

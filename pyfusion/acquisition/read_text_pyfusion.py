@@ -56,8 +56,11 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
     for (i,filename) in enumerate(file_list):
         if seconds() - last_update > 30:
             last_update = seconds()
-            print('reading {n}/{t}: {f}'
-                  .format(f=filename, n=i, t=len(file_list)))
+            tot = len(file_list)
+            print('reading {n}/{t}: ETA {m:.1f}m {f}'
+                  .format(f=filename, n=i, t=tot,
+                          m=(seconds()-st)*(tot-i)/float(60*i)))
+
         try:
             if pl.is_string_like(target): 
                 skip = 1+find_data(filename, target,debug=debug)
@@ -113,6 +116,9 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
             comment_list.append(filename)
         except ValueError, info:
             print('Conversion error while reading {f} with loadtxt - {info}'.format(f=filename, info=info))
+
+        except LookupError, info:
+            print('Lookup error while reading {f} with loadtxt - {info}'.format(f=filename, info=info))
 
     print("{c} out of {t} files".format(c=count, t=len(file_list)))
     if plot>0: 

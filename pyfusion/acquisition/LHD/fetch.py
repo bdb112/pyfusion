@@ -125,23 +125,27 @@ def fetch_data_from_file(fetcher):
         bytes_per_sample = 2
         dat_arr = Array.array('H')
         offset = 2**(bits-1)
-        dtype = np.dtype('uint16')
+        dtyp = np.dtype('uint16')
     else:
         if prm_dict['ImageType'][0] == 'INT16':
             bytes_per_sample = 2
             if prm_dict['BinaryCoding'][0] == 'offset_binary':
                 dat_arr = Array.array('H')
                 offset = 2**(bits-1)
-                dtype = np.dtype('uint16')
+                dtyp = np.dtype('uint16')
             elif prm_dict['BinaryCoding'][0] == "shifted_2's_complementary":
                 dat_arr = Array.array('h')
                 offset = 0
-                dtype = np.dtype('int16')
+                dtyp = np.dtype('int16')
             else: raise NotImplementedError,' binary coding ' + prm_dict['BinaryCoding']
 
+    """
     fp = open(fetcher.basename + '.dat', 'rb')
     dat_arr.fromfile(fp, bytes/bytes_per_sample)
     fp.close()
+    """
+    dat_arr = np.fromfile(fetcher.basename + '.dat',dtyp)
+    #print(dat_arr[0:10])
     #print(fetcher.config_name)
 
     clockHz = None
@@ -178,9 +182,13 @@ def fetch_data_from_file(fetcher):
     scale_factor = flip*double(prm_dict['Range'][0])/(2**bits)
     # not sure how this worked before I added array() - but has using
     # array slowed things?  I clearly went to trouble using tailored ints above?
+    # - yes array(dat_arr) takes 1.5 sec for 4MS!!
+    # Answer - using numpy fromfile('file',dtype=numpy.int16) - 16ms instead!
+    # NOTE! ctype=int32 required if the array is already an np array - can be fixed once Array code is removed (next version)
     output_data = TimeseriesData(timebase=Timebase(timebase),
-                                 signal=Signal(scale_factor*gain*(array(dat_arr)-offset)),
+                                 signal=Signal(scale_factor*gain*(array(dat_arr,dtype=np.int32)-offset)),
                                  channels=ch)
+    #print(output_data.signal[0:5],offset,(array(dat_arr)-offset)[0:5])
     output_data.meta.update({'shot':fetcher.shot})
     output_data.config_name = fetcher.config_name
     return output_data
@@ -229,9 +237,9 @@ def retrieve_to_file(diagg_name=None, shot=None, subshot=None,
     freebytes=get_free_bytes(outdir)
     if freebytes < pyfusion.TMP_FREE_BYTES:
     #if freebytes < 25e9:
-         purge_old(outdir, '*dat')  # ONLY DO .DAT have to manually purge prm
-         if (get_free_bytes(outdir) > freebytes*0.9):
-              pyfusion.logger.warning("Warning - unable to clear much space!")
+         purge_old(outdir, '*')  #dat')  # ONLY DO .DAT have to manually purge prm
+         if (get_free_bytes(outdir) < freebytes*1.1):
+              pyfusion.logger.warning("Warning - unable to clear much space! {fGb:.1f}Gb free".format(fGb=freebytes/1e9))
 
 #
     cmd = str("retrieve %s %d %d %d %s" % (diagg_name, shot, subshot, channel, path.join(outdir, diagg_name)))
@@ -246,10 +254,10 @@ def retrieve_to_file(diagg_name=None, shot=None, subshot=None,
          if (err != '') or (retr_pipe.returncode != 0): 
               attempt += 1
               print(resp,err,attempt,'.') #,
-              if attempt>10: 
+              if (attempt>10) or ("not exist" in err) or ( "data not found" in resp): 
                    raise LookupError(str("Error %d accessing retrieve:"
-                                         "cmd=%s \nstdout=%s, stderr=%s" % 
-                                         (retr_pipe.poll(), cmd, resp, err)))
+                                         "cmd=%s \nstdout=%s, stderr=%s, attempt %d" % 
+                                         (retr_pipe.poll(), cmd, resp, err, attempt)))
               sleep(2)
          else:
               break

@@ -1,7 +1,7 @@
 import numpy as np
 import pylab as pl
 from time import time as seconds
-
+from warnings import warn
 
 # first, arrange a debug one way or another
 try: 
@@ -312,7 +312,7 @@ class DA():
         self.da = dd
         report_mem(start_mem)
 
-    def save(self, filename, verbose=None, use_dictionary=False):
+    def save(self, filename, verbose=None, use_dictionary=False,tempdir=None):
         """ Save as an npz file, using an incremental method, which
         only uses as much /tmp space as required by each var at a time.
         if use_dictionary is a valid dictionary, save the values of
@@ -322,9 +322,26 @@ class DA():
         use_dictionary=locals(),
         only that subset is saved (both in array length, and variables chosen).
         Beware locals that are not your variables - e.g. mtrand.beta
+        To avoid running out of space on tmp, or to speed up zip - 
+        Now included as an argument
+        (Note that the normal os.putenv() doesn't seem to write the THIS environment)
+        os.environ.__setitem__('TMPDIR',os.getenv('HOME'))
+        reload tempfile
+        tempfile.gettempdir()
+        also ('ZIPOPT','"-1"')
         """
         if verbose == None: verbose = self.verbose
         st = seconds()
+
+        if tempdir is not None:
+            import os
+            os.environ.__setitem__('TMPDIR', tempdir)
+            import tempfile
+            reload(tempfile) # in case it was already imported
+            if tempfile.gettempdir() != tempdir:
+                warn('failed to set tempdir = {t}: Value is {v}'
+                     .format(t=tempdir, v=tempfile.gettempdir()))
+
         if use_dictionary == False: 
             save_dict = self.da # the dict used to get data
         else: 

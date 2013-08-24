@@ -36,7 +36,7 @@ def register(*class_names):
     return reg_item
 
 @register("TimeseriesData")
-def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="%(short_name)s", filldown=True):
+def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="%(short_name)s", filldown=True, suptitle='shot {shot}'):
     """ 
     Plot a figure full of signals using n_columns[1], 
         sharey [=1]  "gangs" y axes  - sim for sharex - sharex=None stops this
@@ -55,7 +55,8 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
         Note = sharex that to allow implicit overlay by using the same subplot
         specs the sharex must be the same between main and overlay - hence the 
         use of explicit sharex = None
-
+        
+        suptitle by default refers to the shot number
     """
     import pylab as pl
     n_rows = input_data.signal.n_channels()
@@ -128,11 +129,25 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
 
             if ylim != None: pl.ylim(ylim)
             if xlim != None: pl.xlim(xlim)
+    if suptitle is not None:
+        try:
+            suptitlestr = (suptitle.format(**input_data.meta))
+        except:
+            suptitlestr = ''
+            debug_(pyfusion.DEBUG, 1, 
+                   msg=' input metadata [{m}] does not have  a '
+                   'key for suptitle [{s}]'
+                   .format(m=input_data.meta, s=suptitle))
+
     if hspace != None:  # adjust vertical spacing between plots
         pl.gcf().subplotpars.hspace = hspace
         pl.gcf().subplotpars.bottom = 0.04 + hspace
-        pl.gcf().subplots_adjust(top = 1-(hspace+0.01))
+        extratop = 0.01
+        if suptitlestr != '': extratop += 0.04
+        pl.gcf().subplots_adjust(top = 1-(hspace+extratop)) # allow a little room for title
 
+    # suptitle can have references to show number etc in metadata
+    if suptitlestr != '': pl.suptitle(suptitlestr)
     if filename != None:
         pl.savefig(filename)
     else:

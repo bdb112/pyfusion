@@ -82,7 +82,7 @@ root_dir = os.path.split(os.path.abspath( __file__ ))[0]
 
 # cache control is likely to be computer dependent
 try:
-    TMP_FREE_BYTES = config.get('global','tmp_free_bytes')
+    TMP_FREE_BYTES = float(config.get('global','tmp_free_bytes'))
 except:
     TMP_FREE_BYTES = 1e9
     print('defaulting [global]temp_free_bytes to {t:,}'.format(t=TMP_FREE_BYTES))

@@ -1,0 +1,5 @@
+#!/bin/bash
+# quick test of the whole procedure - expects LHD shots  54184, 54185, takes about 10 seconds
+mkdir pyfusion_temp
+python pyfusion/examples/prepfs_range_mp.py . --MP=2  --exe='gen_fs_bands.py n_samples=None df=2e3 seg_dt=15e-3 max_bands=3' --shot_range=[54184,54185] --time_range=[0.8,0.82] --filename_format='pyfusion_temp/{sr}_{ns}_{nor}_{sep}.dat'
+python pyfusion/examples/merge_text_pyfusion.py file_list="np.sort(glob('pyfusion_temp/*.dat'))" exception=None "save_filename='pyfusion_temp/DA_test'"

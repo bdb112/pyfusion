@@ -1,1 +1,4 @@
-/home/bdb112/bin/get_PF_shotnums
+#!/bin/bash
+#return the shot numbers of all the PF data in the pwd and below it
+ls -R $1 |awk -F_ ' /^PF/ {print $4}'|sort -n|uniq
+

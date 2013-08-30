@@ -36,15 +36,15 @@ def call_igetfile(path_to_igetfile, filename):
                                       stderr=subprocess.PIPE)
          (resp,err) = retr_pipe.communicate()
          if (resp != "") or (retr_pipe.returncode != 0): 
-              attempt += 1
               print("IGETFILE Error code {ecode}, err = {err}, \n"
                     "on attempt {att}, stdout => {resp}"
                     .format(ecode=retr_pipe.returncode,resp=resp,
                             err=err,att=attempt))
-              if attempt>10: 
+              if attempt>10 or ("not exist" in err) or ( "data not found" in resp): 
                    raise LookupError(str("Error %d accessing igetfile: cmd=%s \n"
                                          "stdout=%s, stderr=%s" % 
                                          (retr_pipe.poll(), cmd, resp, err)))
+              attempt += 1
               sleep(2)
          else:
               break

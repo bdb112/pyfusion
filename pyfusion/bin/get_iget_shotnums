@@ -1,1 +1,3 @@
-/home/bdb112/bin/get_iget_shotnums
+#!/bin/bash
+#return the shot numbers of all the LH diagnostic data in the pwd and below it
+ls -R $1 |awk -F[@,.] '/@/ {print $2}'|sort -n|uniq

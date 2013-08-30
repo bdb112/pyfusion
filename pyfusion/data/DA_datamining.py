@@ -57,8 +57,10 @@ class DA():
     faster to use if load=1, but if you subselect by using extract
     you get the speed for large data sets (once extract is done.
     Extract can be used over and over to get different data sets.
+
+    mainkey is not necessarily a unique identifier - e.g it can be shot.
     """
-    def __init__(self, fileordict, debug=0, verbose=0, load=0):
+    def __init__(self, fileordict, debug=0, verbose=0, load=0, mainkey=None):
         # may want to make into arrays here...
         self.debug = debug
         self.verbose = verbose
@@ -83,11 +85,26 @@ class DA():
             self.da = self.da['dd'].tolist()
             self.keys = self.da.keys()
 
-        if 'shot' in self.keys:
-            self.mainkey = 'shot'
+        # make the info available to self.
+        if self.da.has_key('info'):
+            self.infodict = self.da['info']
         else:
-            self.mainkey = self.da.keys()[0]
+            self.infodict = {}
 
+        self.mainkey = mainkey  # may be None!
+        debug_(self.debug, 2)
+        if self.mainkey is None:
+            if self.infodict.has_key('mainkey'):
+                self.mainkey = self.infodict['mainkey']
+            else:
+                if 'shot' in self.keys:
+                    self.mainkey = 'shot'
+                else:
+                    self.mainkey = self.da.keys()[0]
+
+        self.infodict.update({'mainkey':self.mainkey}) # update in case it has changed
+        self.da.update({'info': self.infodict})
+        
         self.len = len(self.da[self.mainkey])
 
         start_mem = report_mem(start_mem)
@@ -119,7 +136,7 @@ class DA():
         self.len = len(self.da[self.mainkey])
         if self.verbose>0: 
             print('added {dl} instances to make a total of {tl}'
-                  .format(dl=len(dd['shot']), tl = self.len))
+                  .format(dl=len(dd[self.mainkey]), tl = self.len))
 
     def to_sqlalchemy(self,db = 'sqlite:///:memory:',n_recs=1000, chunk=1000):
         """ Write to an sqlachemy database 
@@ -218,20 +235,21 @@ class DA():
     def info(self, verbose=None):
         if verbose == None: verbose = self.verbose
         shots = np.unique(self.da[self.mainkey])
-        print('{nm} contains {ins}({mins:.1f}M) instances from {s} shots'\
+        print('{nm} contains {ins}({mins:.1f}M) instances from {s} {mainkey}s'\
                   ', {ks} data arrays'
               .format(nm = self.name,
-                      ins=len(self.da['shot']),
-                      mins=len(self.da['shot'])/1e6,
-                      s=len(shots),
+                      ins=len(self.da[self.mainkey]),
+                      mins=len(self.da[self.mainkey])/1e6,
+                      s=len(shots), mainkey=self.mainkey,
                       ks = len(self.da.keys())))
         if verbose==0:
-            print('Shots {s}, vars are {ks}'.format(s=shots, ks=self.da.keys()))
+            # Shots is usually the main key, but allow for others
+            print('{Shots} {s}, vars are {ks}'.format(Shots=self.mainkey, s=shots, ks=self.da.keys()))
         else:
             if (not self.loaded) and (self.len > 1e6): 
                 print('may be faster to load first')
 
-            print('Shots {s}\n Vars: '.format(s=shots))
+            print('{Shots} {s}\n Vars: '.format(Shots=self.mainkey,s=shots))
             lenshots = self.len
             for k in np.sort(self.da.keys()):
                 varname = k
@@ -436,7 +454,11 @@ class DA():
                 if len(np.shape(allvals)) == 0:
                     sel_vals = allvals
                 else: 
-                    sel_vals = allvals[inds]
+                    if (len(np.shape(allvals)) > 0) and (len(allvals) < np.max(inds)):
+                        print('{k} does not match the size of the other arrays - extracting all'.format(k=k))
+                        sel_vals = allvals
+                    else:
+                        sel_vals = allvals[inds]
                 if dictionary == False: 
                     val_tuple += (sel_vals,)
                 else:

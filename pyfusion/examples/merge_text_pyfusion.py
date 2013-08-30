@@ -12,6 +12,7 @@ append = False
 append_old_method =False   # not sure if the old method ever worked - takes a lot of mem
 exception=Exception
 file_list = [pyfusion.root_dir+'/acquisition/PF2_121206_54185_384_rms_1.dat.bz2']
+save_filename=None
 """
 
 exec(_var_default)
@@ -33,6 +34,12 @@ if append:
     dd = merge_ds(ds_list, comment_list, old_dd=dd)
 else:
     dd = merge_ds(ds_list, comment_list)
+
+if save_filename != None:
+    from pyfusion.data.DA_datamining import DA
+    DAtest=DA(dd)
+    DAtest.info()
+    DAtest.save(save_filename)
 
 
 

@@ -41,6 +41,11 @@ exec(_var_defaults)
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
+if len(np.shape(cl)) == 0:
+    cls = [cl]
+else:
+    cls = cl
+
 try:
     da
     if oldDAfilename!=DAfilename: 
@@ -75,49 +80,56 @@ except:
         sel = oldsel
     if subsel is not None:
         subset=subset[:,subsel]
+for cl in cls:
+    start_mem = report_mem(msg='cluster_phases')
+    w5=np.where((dists(subset[clinds[cl][0]], phases[:,sel])<d_big) & (bw(freq,frlow,frhigh)) & (shot==shot))[0]; print(len(w5),len(unique(shot[w5])))
+    ph5=phases[w5]
 
-start_mem = report_mem(msg='cluster_phases')
-w5=np.where((dists(subset[clinds[cl][0]], phases[:,sel])<d_big) & (bw(freq,frlow,frhigh)) & (shot==shot))[0]; print(len(w5),len(unique(shot[w5])))
-ph5=phases[w5]
+    wc=np.where(dists(subset[clinds[cl][0]], ph5[:,sel])<d_med)[0]
+    wcc=np.where(dists(subset[clinds[cl][0]], ph5[:,sel])<d_sml)[0]
 
-wc=np.where(dists(subset[clinds[cl][0]], ph5[:,sel])<d_med)[0]
-wcc=np.where(dists(subset[clinds[cl][0]], ph5[:,sel])<d_sml)[0]
+    sl_red = compact_str(np.unique(shot[w5[wcc]]))
+    sl_green = compact_str(np.unique(shot[w5[wc]]))
+    xlab='clind {cl}: {f}'.format(f=da.name, cl=cl)
+    titl = 'red:d<{d_sml:.1g}: {slr}'.format(slr=sl_red, d_sml=d_sml)
+    suptitl = 'green:d<{d_med:.1g}: {slr}'.format(slr=sl_green, d_med=d_med)
+    if maxline is None:
+        maxline = len(suptitl)**0.85
+    if len(suptitl)>maxline: 
+        pieces = suptitl.split(',')
+        suptitl = ''
+        while len(pieces)>0:
+            thislin = pieces.pop(0)
+            while((len(thislin)<maxline) and len(pieces)>0):
+                thislin += ','+pieces.pop(0)
+            suptitl += thislin + '\n'
 
-sl_red = compact_str(np.unique(shot[w5[wcc]]))
-sl_green = compact_str(np.unique(shot[w5[wc]]))
-titl = 'red:d<{d_sml:.1g}:{slr}'.format(slr=sl_red, d_sml=d_sml)
-suptitl = 'green:d<{d_med:.1g}:{slr}'.format(slr=sl_green, d_med=d_med)
-if maxline is None:
-    maxline = len(suptitl)**0.85
-if len(suptitl)>maxline: 
-    pieces = suptitl.split(',')
-    suptitl = ''
-    while len(pieces)>0:
-        thislin = pieces.pop(0)
-        while((len(thislin)<maxline) and len(pieces)>0):
-            thislin += ','+pieces.pop(0)
-        suptitl += thislin + '\n'
+    pl.figure(num='cl[{cl}] delta phase'.format(cl=cl))
+    if clearfigs: pl.clf()
+    for (i,ph) in enumerate(decimate(ph5,limit=1000)): pl.plot(ph[sel],'k',linewidth=.03,hold=i>0)
+    for (i,ph) in enumerate(decimate(ph5[wc],limit=1000)): pl.plot(ph[sel],'g',linewidth=.01,hold=i>-1)
+    for (i,ph) in enumerate(decimate(ph5[wcc],limit=1000)): pl.plot(ph[sel],'r',linewidth=.01,hold=i>-1)
+    pl.title(titl)
+    pl.suptitle(suptitl)
+    pl.xlabel(xlab)
+    pl.show()
+    report_mem(start_mem)
+    pl.figure(num='cl[{cl}] freq-time'.format(cl=cl))
+    if clearfigs: pl.clf()
+    pl.plot(t_mid[w5],freq[w5],'.k')
+    pl.plot(t_mid[w5[wc]],freq[w5[wc]],'.g')
+    pl.plot(t_mid[w5[wcc]],freq[w5[wcc]],'.r')
+    pl.title(suptitl)
+    pl.xlabel(xlab)
 
-pl.figure(num='cl[{cl}] delta phase'.format(cl=cl))
-if clearfigs: pl.clf()
-for (i,ph) in enumerate(decimate(ph5,limit=1000)): pl.plot(ph[sel],'k',linewidth=.03,hold=i>0)
-for (i,ph) in enumerate(decimate(ph5[wc],limit=1000)): pl.plot(ph[sel],'g',linewidth=.01,hold=i>-1)
-for (i,ph) in enumerate(decimate(ph5[wcc],limit=1000)): pl.plot(ph[sel],'r',linewidth=.01,hold=i>-1)
-pl.title(titl)
-pl.suptitle(suptitl)
-pl.show()
-report_mem(start_mem)
-pl.figure(num='cl[{cl}] freq-time'.format(cl=cl))
-if clearfigs: pl.clf()
-pl.plot(t_mid[w5],freq[w5],'.k')
-pl.plot(t_mid[w5[wc]],freq[w5[wc]],'.g')
-pl.plot(t_mid[w5[wcc]],freq[w5[wcc]],'.r')
-pl.title(suptitl)
+    pl.figure(num='cl[{cl}] histo'.format(cl=cl))
+    if clearfigs: pl.clf()
+    pl.hist(dists(subset[clinds[cl][0]], ph5[:,sel]),50,log=True)
+    pl.title('{pc:.1g}% up to d_rms={d_big:.2g} rad'
+             .format(pc=100*len(ph5)/float(len(phases)),
+                     d_big=d_big))
+    pl.xlabel(xlab)
+    if pl.isinteractive():
+        pl.show()
 
-pl.figure(num='cl[{cl}] histo'.format(cl=cl))
-if clearfigs: pl.clf()
-pl.hist(dists(subset[clinds[cl][0]], ph5[:,sel]),50,log=True)
-pl.title('{pc:.1g}% up to d_rms={d_big:.2g} rad'
-         .format(pc=100*len(ph5)/float(len(phases)),
-                 d_big=d_big))
 pl.show()

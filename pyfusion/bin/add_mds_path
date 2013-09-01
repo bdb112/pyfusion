@@ -1,0 +1,7 @@
+#!/bin/bash
+# add a path to all the mds paths - must be sourced
+export h1data_path=$1\;$h1data_path
+for pth in mirnov electr_dens oriel_260i fluctuations spectroscopy;
+do export ${pth}_path=$h1data_path
+done
+

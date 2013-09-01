@@ -59,13 +59,17 @@ class DA():
     Extract can be used over and over to get different data sets.
 
     mainkey is not necessarily a unique identifier - e.g it can be shot.
+    decimate (via limit=) here applies at the load into memory stage (in self.da) - it 
+    is the most effective space saver, but you need to reload if more data
+    is needed.  The alternative is to decimate at the extract stage (but this
+    applies only to the variables extracted into namespace (e.g. locals())
     """
-    def __init__(self, fileordict, debug=0, verbose=0, load=0, mainkey=None):
+    def __init__(self, fileordict, debug=0, verbose=0, load=0, limit=None, mainkey=None):
         # may want to make into arrays here...
         self.debug = debug
         self.verbose = verbose
         self.loaded = False
-
+        
         start_mem = report_mem(msg='init')
         if (type(fileordict) == dict) or hasattr(fileordict,'zip'): 
             self.da = fileordict
@@ -74,10 +78,7 @@ class DA():
         else:
             self.da = np.load(fileordict)
             self.name = fileordict
-            if load == 0:
-                self.loaded = 0
-            else:
-                self.loaded = self.load()
+            self.loaded = 0
 
         self.keys = self.da.keys()
         if 'dd' in self.keys:  # old style, all in one
@@ -86,15 +87,20 @@ class DA():
             self.keys = self.da.keys()
 
         # make the info available to self.
-        if self.da.has_key('info'):
-            self.infodict = self.da['info']
+        # needs different actions if npzfile and not yet loaded
+        # we don't load yet, as we may want to decimate
+        if 'info' in self.keys:
+            if (hasattr(self.da['info'],'dtype') and                 self.da['info'].dtype == np.dtype('object')):
+                self.infodict = self.da['info'].tolist()
+            else:
+                self.infodict = self.da['info']
         else:
             self.infodict = {}
 
         self.mainkey = mainkey  # may be None!
         debug_(self.debug, 2)
         if self.mainkey is None:
-            if self.infodict.has_key('mainkey'):
+            if 'mainkey' in self.infodict.keys():
                 self.mainkey = self.infodict['mainkey']
             else:
                 if 'shot' in self.keys:
@@ -103,9 +109,30 @@ class DA():
                     self.mainkey = self.da.keys()[0]
 
         self.infodict.update({'mainkey':self.mainkey}) # update in case it has changed
-        self.da.update({'info': self.infodict})
+        if type(self.da) == dict:
+            self.da.update({'info': self.infodict})
         
         self.len = len(self.da[self.mainkey])
+
+        if (limit is None) or (self.len < abs(limit)):
+            self.sel = None
+        else:  # decimate to a maximum of approx "limit"
+            #if load != 0:
+            #    raise ValueError('decimate not applicable to ' + self.name)
+            if limit<0: 
+                print('repeatably' ),
+                np.random.seed(0)  # if positive, should be random
+                                   # negative will repeat the sequence
+            else: print('randomly'),
+
+            print('decimating from sample of {n}'.format(n=self.len))
+            self.sel = np.where(np.random.random(self.len)
+                                < float(abs(limit))/self.len)[0]
+
+        if load == 0:
+            self.loaded = 0
+        else:
+            self.loaded = self.load()
 
         start_mem = report_mem(start_mem)
     #shallow_copy = try:if da.copy
@@ -302,9 +329,16 @@ class DA():
                 else: print('')  # to close line
         print(self.name)
 
-    def load(self):
+    def load(self, sel=None):
         start_mem = report_mem(msg='load')
         st = seconds()
+        if sel is None: # the arg overrides the object value
+            sel = self.sel
+        else:
+            print('Overriding any decimation - selecting {s,} instances'
+                  .format(len(sel)))
+            self.sel = sel
+
         if self.verbose>0: print('loading {nm}'.format(nm=self.name)), 
         if self.loaded:
             if self.verbose: ('print {nm} already loaded'.format(nm=self.name))
@@ -312,8 +346,17 @@ class DA():
         else:
             dd = {}
             for k in self.da.keys():
-                dd.update({k: self.da[k]})
+                if sel is None:
+                    dd.update({k: self.da[k]})
+                else: # selective (decimated to limit)
+                    try:
+                        dd.update({k: self.da[k][sel]})
+                    except Exception, reason:
+                        dd.update({k: self.da[k]})
+                        print('{k} loaded in full: {reason}'
+                              .format(k=k,reason=reason))
                 # dictionaries get stored as an object, need "to list"
+                debug_(self.debug, 1, key='limit')
                 if hasattr(dd[k],'dtype'):
                     if dd[k].dtype == np.dtype('object'):
                         dd[k] = dd[k].tolist()
@@ -325,12 +368,13 @@ class DA():
                         dd[k] = dd[k].tolist()
                         print('*** Second object conversion for {k}!!!'
                               .format(k=k))
-
+        # key 'info' should be replaced by the more up-to-date self. copy
+        dd.update({'info': self.infodict})
         if self.verbose: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
         self.da = dd
         report_mem(start_mem)
 
-    def save(self, filename, verbose=None, use_dictionary=False,tempdir=None):
+    def save(self, filename, verbose=None, use_dictionary=False,tempdir=None, zipopt=None):
         """ Save as an npz file, using an incremental method, which
         only uses as much /tmp space as required by each var at a time.
         if use_dictionary is a valid dictionary, save the values of
@@ -346,7 +390,7 @@ class DA():
         os.environ.__setitem__('TMPDIR',os.getenv('HOME'))
         reload tempfile
         tempfile.gettempdir()
-        also ('ZIPOPT','"-1"')
+        also ('ZIPOPT','"-1"')  (Noe incorporated into args, not tested)
         """
         if verbose == None: verbose = self.verbose
         st = seconds()
@@ -359,6 +403,11 @@ class DA():
             if tempfile.gettempdir() != tempdir:
                 warn('failed to set tempdir = {t}: Value is {v}'
                      .format(t=tempdir, v=tempfile.gettempdir()))
+
+        if zipopt is not None:
+            import os
+            print('overriding default zip compression to {z}'.format(z=zipopt))
+            os.environ.__setitem__('ZIPOPT', str(zipopt))
 
         if use_dictionary == False: 
             save_dict = self.da # the dict used to get data

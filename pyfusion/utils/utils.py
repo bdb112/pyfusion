@@ -58,7 +58,7 @@ def compact_str(shot_numbers, max_changing_digits=2, min_run=4,  debug=False):
 
             shots=shots[1:]
 
-    if sstr[0] in ' ,': sstr = sstr[1:]
+    if (sstr != '') and (sstr[0]) in ' ,': sstr = sstr[1:]
     return(sstr)
     #return str(shot_numbers)   # not yet implemented!
 

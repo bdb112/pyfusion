@@ -14,6 +14,9 @@ import scipy.optimize as opt
 
 pilims = [-np.pi,np.pi]
 pilims = [-3.3,3.3]  # make more room for the lables 3 and -3
+colours0 = ['r','k','b','y','m']   # SHauns original list for phase_vs_phase
+colours1 = ['r','k','b','y','m','g','c','orange','purple','lightgreen','lightgray'] # extended
+
 
 def compare_several_kappa_values(clusters, pub_fig = 0, alpha = 0.05,decimation=10, labels=None, plot_style_list=None, filename='extraction_comparison.pdf',xaxis='sigma_eq',max_cutoff_value = 35, vline = None):
     '''xaxis can be sigma_eq, kappa_bar or sigma_bar
@@ -150,7 +153,7 @@ def compare_several_clusters(clusters, pub_fig = 0, alpha = 0.05,decimation=10, 
     if (n_plots - (nrows * ncols))>0.01: nrows+=1
     print n_plots, ncols, nrows
     print clusters
-    fig, ax = pt.subplots(ncols=ncols,nrows=nrows, sharex = 1, sharey = 1)
+    fig, ax = pt.subplots(ncols=ncols,nrows=nrows, sharex = 'all', sharey = 'all')
     ax = ax.flatten()
     if pub_fig:
         fig.set_figwidth(8.48*cm_to_inch)
@@ -234,8 +237,8 @@ def compare_two_cluster_results(cluster1, cluster2):
     else:
         n_rows = n_clusters/n_cols
     #n_rows = 4; n_cols = 4
-    fig, ax = pt.subplots(nrows = n_rows, ncols = n_cols, sharex = 1, sharey=1); ax = ax.flatten()
-    fig2, ax2 = pt.subplots(nrows = n_rows, ncols = n_cols, sharex = 1, sharey=1); ax2 = ax2.flatten()
+    fig, ax = pt.subplots(nrows = n_rows, ncols = n_cols, sharex = 'all', sharey='all'); ax = ax.flatten()
+    fig2, ax2 = pt.subplots(nrows = n_rows, ncols = n_cols, sharex = 'all', sharey='all'); ax2 = ax2.flatten()
     for i,cluster,best_match in zip(range(len(clusters1)),clusters1,best_match_for_c1):
         current_items1 = cluster1.cluster_assignments==cluster
         current_items2 = cluster2.cluster_assignments==best_match
@@ -265,14 +268,15 @@ def compare_two_cluster_results(cluster1, cluster2):
     fig2.canvas.draw(); fig2.show()
     return similarity
 
-defcor = 'indx,serial t_mid,time amp,RMS'
-def convert_DA_file(filename, correspondence=defcor, debug=1, limit=None):
+default_correspondence = 'indx,serial t_mid,time amp,RMS freq,freq p,p a12,a12, shot,shot'
+def convert_DA_file(filename, correspondence=default_correspondence, debug=1, limit=None, load_all=False):
     """ Converts a DA_datamining file to a form compatible with this package.
     returns(instance_array, misc_data) with names converted according to 
     correspondence, input as pairs separated by spaces.
     
-    limit=10000 selects ~10000 samples randowmly ( -10000 for repeatable sec)
-
+    limit = 10000  selects ~10000 samples randowmly ( -10000 for repeatable sec)
+    load_all = True   will load all misc data, even those not in the 
+    correspondence list.
     """
     from pyfusion.data.DA_datamining import DA
     pairs = correspondence.split(' ')
@@ -281,11 +285,16 @@ def convert_DA_file(filename, correspondence=defcor, debug=1, limit=None):
         corr_dict.update({pair.split(',')[0]: pair.split(',')[1]})
 
     # don't save DA - wasteful of space
-    dd = DA(filename, load=1, limit=limit).da
-    inst_arr = dd.pop('phases')
-    for k in dd.keys():
+    ddin = DA(filename, load=1, limit=limit).da
+    inst_arr = ddin.pop('phases')
+    if load_all:
+        dd = ddin
+    else:
+        dd = {}
+    for k in ddin.keys():
         if corr_dict.has_key(k):
-            dd.update({corr_dict[k]:dd.pop(k)})
+            dd.update({corr_dict[k]:ddin.pop(k)})
+
     misc_data = dd
     return(inst_arr, misc_data)
 
@@ -404,7 +413,7 @@ class clustering_object():
         freq_plot_item = 'freq'
         cluster_list = list(set(self.cluster_assignments))
         n_clusters = len(cluster_list)
-        fig_kh, ax_kh = make_grid_subplots(n_clusters, sharex=1, sharey=1)
+        fig_kh, ax_kh = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         misc_data_dict = self.feature_obj.misc_data_dict
         if color_by_cumul_phase:
             instance_array2 = modtwopi(self.feature_obj.instance_array, offset=0)
@@ -441,7 +450,7 @@ class clustering_object():
         freq_plot_item = 'freq'
         cluster_list = list(set(self.cluster_assignments))
         n_clusters = len(cluster_list)
-        fig_kh, ax_kh = make_grid_subplots(n_clusters, sharex=1, sharey=1)
+        fig_kh, ax_kh = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         misc_data_dict = self.feature_obj.misc_data_dict
         if color_by_cumul_phase:
             instance_array2 = modtwopi(self.feature_obj.instance_array, offset=0)
@@ -480,7 +489,7 @@ class clustering_object():
         suptitle = self.settings.__str__().replace("'",'').replace("{",'').replace("}",'')
         cluster_list = list(set(self.cluster_assignments))
         n_clusters = np.max([len(cluster_list),np.max(cluster_list)])
-        fig, ax = make_grid_subplots(n_clusters, sharex=1, sharey=1)
+        fig, ax = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         delta = 300
         x = np.linspace(-np.pi, np.pi, delta)
         instance_array = self.feature_obj.instance_array
@@ -543,7 +552,7 @@ class clustering_object():
             mpl.rcParams['savefig.dpi']=300
         if specific_dimensions == None:
             specific_dimensions = range(instance_array.shape[1])
-        fig, ax = make_grid_subplots(len(specific_dimensions), sharex=1, sharey=1)
+        fig, ax = make_grid_subplots(len(specific_dimensions), sharex = 'all', sharey = 'all')
         if pub_fig:
             fig.set_figwidth(8.48*cm_to_inch)
             fig.set_figheight(8.48*0.8*cm_to_inch)
@@ -633,7 +642,7 @@ class clustering_object():
             mpl.rcParams['savefig.dpi']=300
         if specific_dimensions == None:
             specific_dimensions = range(instance_array_amps.shape[1])
-        fig, ax = make_grid_subplots(len(specific_dimensions), sharex=1, sharey=1)
+        fig, ax = make_grid_subplots(len(specific_dimensions), sharex = 'all', sharey = 'all')
         if pub_fig:
             fig.set_figwidth(8.48*cm_to_inch)
             fig.set_figheight(8.48*0.8*cm_to_inch)
@@ -685,7 +694,7 @@ class clustering_object():
 
 
 
-    def plot_phase_vs_phase(self,pub_fig = 0, filename = 'phase_vs_phase.pdf',compare_dimensions=None, kappa_ave_cutoff=0, plot_means = 0, alpha = 0.05, decimation = 1, limit=None, xlabel_loc = 3, ylabel_loc = 3):
+    def plot_phase_vs_phase(self,pub_fig = 0, filename = 'phase_vs_phase.pdf',compare_dimensions=None, kappa_ave_cutoff=0, plot_means = 0, alpha = 0.05, decimation = 1, limit=None, xlabel_loc = 3, ylabel_loc = 3, colours=None):
         '''
         SH: 9May2013
 
@@ -731,10 +740,12 @@ class clustering_object():
             instance_array[instance_array>np.pi]-=(2.*np.pi)
         suptitle = self.settings.__str__().replace("'",'').replace("{",'').replace("}",'')
         cluster_list = list(set(self.cluster_assignments))
-        colours = ['r','k','b','y','m','r','k','b','y','m']
+        if colours is None:
+            colours = colours1 #['r','k','b','y','m','g','c','w','orange','purple','lightgreen'] # 'r','k','b','y','m']
+        marker = ['o' for i in colours]
         colours.extend(colours)
-        marker = ['o','o','o','o','o','x','x','x','x','x','x']
-        marker.extend(marker)
+        marker.extend(['x' for i in colours])
+
         n_dimensions = instance_array.shape[1]
         if compare_dimensions is None:
             dims = []
@@ -743,7 +754,7 @@ class clustering_object():
         else:
             dims = compare_dimensions
         n_dimensions = instance_array.shape[1]
-        fig_kh, ax_kh = make_grid_subplots(len(dims), sharex=1, sharey=1)
+        fig_kh, ax_kh = make_grid_subplots(len(dims), sharex = 'all', sharey = 'all')
         if pub_fig:
             fig_kh.set_figwidth(8.48*cm_to_inch)
             fig_kh.set_figheight(8.48*0.8*cm_to_inch)
@@ -773,22 +784,26 @@ class clustering_object():
         fig_kh.canvas.draw(); fig_kh.show()
         return fig_kh, ax_kh
 
-    def plot_clusters_phase_lines(self,decimation=1):
+    def plot_clusters_phase_lines(self,decimation=4000, linewidth=0.05, colours = colours1):
         '''Plot all the phase lines for the clusters
         Good clusters will show up as dense areas of line
+        if decimation > 2000, it is the number of points desired
 
         SH: 9May2013
         '''
+        npts = len(self.cluster_assignments)
+        if decimation>2000 and npts > 3*decimation:
+            decimation = npts/decimation
         cluster_list = list(set(self.cluster_assignments))
         suptitle = self.settings.__str__().replace("'",'').replace("{",'').replace("}",'')
         n_clusters = len(cluster_list)
-        fig, ax = make_grid_subplots(n_clusters, sharex=1, sharey=1)
+        fig, ax = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         for cluster in cluster_list:
             current_items = self.cluster_assignments==cluster
             if np.sum(current_items)>10:
                 tmp = self.feature_obj.instance_array[current_items,:]%(2.*np.pi)
                 tmp[tmp>np.pi]-=(2.*np.pi)
-                ax[cluster].plot(tmp[::decimation,:].T,'k-',linewidth=0.05)
+                ax[cluster].plot(tmp[::decimation,:].T,'-',color = colours[cluster % len(colours)], linewidth=0.05)
                 ax[cluster].legend(loc='best')
         fig.subplots_adjust(hspace=0, wspace=0,left=0.05, bottom=0.05,top=0.95, right=0.95)
         fig.suptitle(suptitle, fontsize = 8)
@@ -804,7 +819,7 @@ class clustering_object():
         cluster_list = list(set(self.cluster_assignments))
         suptitle = self.settings.__str__().replace("'",'').replace("{",'').replace("}",'')
         n_clusters = len(cluster_list)
-        fig, ax = make_grid_subplots(n_clusters, sharex=1, sharey=1)
+        fig, ax = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         for cluster in cluster_list:
             current_items = self.cluster_assignments==cluster
             if np.sum(current_items)>10:
@@ -825,7 +840,7 @@ class clustering_object():
         cluster_list = list(set(self.cluster_assignments))
         suptitle = self.settings.__str__().replace("'",'').replace("{",'').replace("}",'')
         n_clusters = len(cluster_list)
-        fig, ax = make_grid_subplots(n_clusters, sharex=1, sharey=1)
+        fig, ax = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         for cluster in cluster_list:
             current_items = self.cluster_assignments==cluster
             if np.sum(current_items)>10:
@@ -849,9 +864,9 @@ class clustering_object():
         cluster_list = list(set(self.cluster_assignments))
         suptitle = self.settings.__str__().replace("'",'').replace("{",'').replace("}",'')
         n_clusters = len(cluster_list)
-        fig, ax = make_grid_subplots(n_clusters, sharex=1, sharey=1)
+        fig, ax = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         for i in ax: i.set_rasterization_zorder(1)
-        if plot_phases : fig_phase, ax_phase = make_grid_subplots(n_clusters, sharex=1, sharey=1)
+        if plot_phases : fig_phase, ax_phase = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         passed = True; i=1; ne_omega_data = []
         misc_data_dict = self.feature_obj.misc_data_dict
         #strange way to determine the number of channels we have.... need to figureout a better way
@@ -996,7 +1011,7 @@ class clustering_object():
         cluster_list = list(set(self.cluster_assignments))
         suptitle = self.settings.__str__().replace("'",'').replace("{",'').replace("}",'')
         n_clusters = len(cluster_list)
-        fig, ax = make_grid_subplots(n_clusters, sharex=1, sharey=1)
+        fig, ax = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         for cluster in cluster_list:
             cluster_phases = means[cluster][:]
             cumulative_phase = [0]
@@ -1049,7 +1064,7 @@ class clustering_object():
         tmp1 = np.sum(self.cluster_details['zij'],axis=1)
         print 'best prob: {best_prob:.3f}, worst_prob: {worst_prob:.3f}, max row sum: {max_row:.2f}, min row sum: {min_row:.2f}'.format(best_prob = np.max(tmp), worst_prob=np.min(tmp), max_row=np.max(tmp1), min_row=np.min(tmp1))
         n_clusters = len(list(set(self.cluster_assignments)))
-        fig, ax = make_grid_subplots(n_clusters, sharex=1, sharey=1)
+        fig, ax = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         for i in list(set(self.cluster_assignments)):
             curr_probs = tmp[self.cluster_assignments==i]
             print 'cluster {clust}, min prob {min:.2f}, max prob {max:.2f}, mean prob {mean:.2f}, std dev {std:.2f}'.format(clust = i, min = np.min(curr_probs), max = np.max(curr_probs), mean = np.mean(curr_probs), std= np.std(curr_probs))
@@ -1078,6 +1093,7 @@ class clusterer_wrapper(clustering_object):
     def __init__(self, feature_obj, method='k-means', **kwargs):
         self.feature_obj = feature_obj
         print 'kwargs', kwargs
+
         #Default settings are declared first, which are overwritten by kwargs
         #if appropriate- this is for record keeping of all settings that are used
         cluster_funcs = {'k_means': k_means_clustering, 'EM_GMM' : EM_GMM_clustering,
@@ -1123,7 +1139,7 @@ class clusterer_wrapper(clustering_object):
 
 ###############################################################
 def show_covariances(gmm_covars_tmp, clim=None,individual=None,fig_name=None):
-    fig, ax = make_grid_subplots(gmm_covars_tmp.shape[0], sharex=1, sharey=1)
+    fig, ax = make_grid_subplots(gmm_covars_tmp.shape[0], sharex = 'all', sharey = 'all')
     im = []
     for i in range(gmm_covars_tmp.shape[0]):
         im.append(ax[i].imshow(np.abs(gmm_covars_tmp[i,:,:]),aspect='auto', interpolation='nearest'))
@@ -1133,7 +1149,7 @@ def show_covariances(gmm_covars_tmp, clim=None,individual=None,fig_name=None):
         else:
             im[-1].set_clim(clim)
     if individual!=None:
-        fig_ind,ax_ind = pt.subplots(nrows=len(individual),sharex=1,sharey=1)
+        fig_ind,ax_ind = pt.subplots(nrows=len(individual),sharex = 'all',sharey = 'all')
         if fig_name!=None:
             cm_to_inch=0.393701
             import matplotlib as mpl
@@ -1182,7 +1198,7 @@ def EM_GMM_clustering(instance_array, n_clusters=9, sin_cos = 0, number_of_start
     LL = np.sum(gmm.score(input_data))
     gmm_covars_tmp = np.array(gmm._get_covars())
     if show_covariances:
-        fig, ax = make_grid_subplots(gmm_covars_tmp.shape[0], sharex=1, sharey=1)
+        fig, ax = make_grid_subplots(gmm_covars_tmp.shape[0], sharex = 'all', sharey = 'all')
         im = []
         for i in range(gmm_covars_tmp.shape[0]):
             im.append(ax[i].imshow(np.abs(gmm_covars_tmp[i,:,:]),aspect='auto'))
@@ -2304,7 +2320,7 @@ def generate_artificial_data(n_clusters, n_dimensions, n_instances, prob=None, m
     feat_obj.clustered_objects.append(tmp)
     return feat_obj
 
-def make_grid_subplots(n_subplots, sharex=1, sharey=1):
+def make_grid_subplots(n_subplots, sharex = 'all', sharey = 'all'):
     '''This helper function generates the many subplots
     on a regular grid
 
@@ -2315,7 +2331,7 @@ def make_grid_subplots(n_subplots, sharex=1, sharey=1):
         n_rows = n_subplots/n_cols + 1
     else:
         n_rows = n_subplots/n_cols
-    fig, ax = pt.subplots(nrows = n_rows, ncols = n_cols, sharex = 1, sharey=1); ax = ax.flatten()
+    fig, ax = pt.subplots(nrows = n_rows, ncols = n_cols, sharex = 'all', sharey = 'all'); ax = ax.flatten()
     #fig, ax = pt.subplots(nrows = n_rows, ncols = n_cols,subplot_kw=dict(projection='polar')); ax = ax.flatten()
     return fig, ax
 

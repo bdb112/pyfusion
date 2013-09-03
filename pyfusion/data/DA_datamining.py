@@ -3,6 +3,11 @@ import pylab as pl
 from time import time as seconds
 from warnings import warn
 
+""" Note: in programming, be careful not to refer to .da[k] unnecessarily
+if it is not loaded - typically, if you plan to test it thne use it,
+save to a var first, then test, then use it.  see "dak" below
+"""
+
 # first, arrange a debug one way or another
 try: 
     from pyfusion.debug_ import debug_
@@ -495,10 +500,13 @@ class DA():
         for k in varlist:
             if k in self.keys:
                 debug_(debug,key='extract')
-                if hasattr(self.da[k],'keys'):
-                    allvals = self.da[k]
+                # used to refer to da[k] twice - two reads if npz
+                dak = self.da[k]  # we know we want it - let's 
+                                  # hope space is not wasted
+                if hasattr(dak,'keys'): # used to be self.da[k]
+                    allvals = dak
                 else:
-                    allvals = np.array(self.da[k])
+                    allvals = np.array(dak)
 
                 if len(np.shape(allvals)) == 0:
                     sel_vals = allvals

@@ -5,6 +5,8 @@ DA_file=DA300.name
 from pyfusion.data.DA_datamining import DA, report_mem
 DA_file = '/data/datamining/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz'
 DA_file='../../../datamining/dd/300_384_RMSv2_neNBecVA.npz'
+#DA_file='/data/datamining/PF2_130813_6X_1.5_5b_rms_1_diags.npz'
+# too big - 8GB for phase - DA_file='/data/datamining/PF2_130813_8X_1.5_5b_rms_1._diags.npz'
 import pyfusion.clustering as clust
 (phases, misc) = clust.convert_DA_file(DA_file,limit=50000)
 fo = clust.feature_object(phases, misc)

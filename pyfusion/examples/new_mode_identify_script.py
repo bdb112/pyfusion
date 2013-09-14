@@ -72,9 +72,9 @@ class Mode():
             dd['phases'] = np.array(dd['phases'].tolist())
 
         if mask != None:
-            sd = self.std_masked(dd['phases'],mask=mask)
+            sd = self.std_masked(phases,mask=mask)
         else:
-            sd = self.std(dd['phases'])
+            sd = self.std(phases)
 
         w = np.where(sd<threshold)[0]
 
@@ -114,9 +114,9 @@ class Mode():
 
         dd['NN'][w]=NNval
         dd['N'][w]=Nval
-        print("set {s:.1f}%, total N set is now {t:.1f}%".
-              format(s=100*float(len(w))/len(dd['shot']),
-                     t=100*float(len(where(dd['N']>=0)[0]))/len(dd['shot'])
+        print("N={N}: set {s:.1f}%, total N set is now {t:.1f}%".
+              format(s=100*float(len(w))/len(dd['shot']),N=Nval,
+                     t=100*float(len(where(dd['N']>min(dd['N']))[0]))/len(dd['shot'])
                      ))
            
     def storeM(self, dd, threshold=None,Mval=None,MMval=None,shot_list=None,quiet=0):
@@ -136,7 +136,7 @@ class Mode():
             askif('convert phases to nd.array?',quiet=quiet)
             dd['phases'] = np.array(dd['phases'].tolist())
 
-        sd = self.std(dd['phases'])
+        sd = self.std(phases)
         w = np.where(sd<threshold)[0]
 
         # normally apply to all shots, but can restrict to a particular
@@ -344,21 +344,37 @@ MP2010.append(Mode('N~0',N=0, NN=0, cc=[-0.829, -0.068, -0.120, 0.140, -0.032],c
 # and this from the other ones (N ~ -1)
 MP2010.append(Mode('N=-1',N=-1, NN=-101, cc=[-0.454, -0.775, -1.348, -1.172, -1.221],  csd=[ 3, 0.071, 0.048, 0.133, 0.113]))
 
+ideal_modes=[]
+ideal = np.load('ideal_toroidal_modes.npz')['subset']
+ideal = ideal[:,arange(5)]  # need to adjust
+for i in range(10):
+    N=i-5
+    ideal_modes.append(Mode('N={N}'.format(N=N),N=N, NN=i*(100), cc=ideal[i], csd=0.5*np.ones(len(ideal[0]))))
+
 ind = None
 modelist = MP2010
+modelist = ideal_modes
 mode=None
 threshold=None
 mask=None
 doM = False
 doN = False
+sel = arange(11,16)
 
 import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
 
 if mode==None: mode = modelist[0]
+if not(doM) and not(doN): raise ValueError('Need to choose doN=True and/or doM=True')
 
 if ind == None: ind = arange(len(dd['shot']))
-phases = dd["phases"][ind]
+# these forms consume less memory
+if (sel==arange(11,16)).all(): phases = dd['phases'][ind,11:16]
+elif (sel==arange(10,16)).all(): phases = dd['phases'][ind,10:16]
+else:
+    phases = dd["phases"][ind]
+    if sel is not None:
+        phases = phases.T[sel].T
 #phases = np.array(phases.tolist())
 
 sd = mode.std(phases)
@@ -371,7 +387,6 @@ for mname in 'N,NN,M,MM'.split(','):
 
 tot_set, tot_reset = (0,0)
 
-if not(doM) and not(doN): raise ValueError('Need to choose doN=True and/or doM=True')
 
 for mode in modelist:
     if doN: mode.store(dd, threshold, mask=mask)

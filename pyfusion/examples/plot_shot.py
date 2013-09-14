@@ -38,24 +38,30 @@ def plot_shots(DA, shots=None, nx=6, ny=4, diags=None, fontsize=None, save=''):
         if nx*ny>4:
             pl.subplots_adjust(.02,.03,.97,.97,.24,.13)
 
-def plot_shot(DA, sh, ax=None, diags = None, debug=0, fontsize=None):
+def plot_shot(DA, sh, ax=None, diags = None, extra_diags=None, debug=0, fontsize=None, hold=1):
     """ more flexible - no need to check for errors
     """
-    if fontsize != None:     
+    if fontsize is not None:     
         pl.rcParams['legend.fontsize']=fontsize
 
-    if diags == None:
+    if diags is None:
         diags = 'i_p,w_p,flat_level,NBI,ech,p_frac'
+
+    if extra_diags is not None:
+        diags += "," + extra_diags
 
     inds=np.where(sh==DA.da['shot'])[0]
     pl.rcParams['legend.fontsize']='small'
-    if ax == None: ax = pl.gca()
+    if ax == None: 
+        if hold==0: pl.plot(hold=0)
+        ax = pl.gca()
     #(t_mid,w_p,dw_pdt,dw_pdt2,b_0,ech,NBI,p_frac,flat_level)=9*[None]
     t = DA.da['t_mid'][inds]
     b_0 = DA.da['b_0'][inds]
+
     if (len(np.shape(diags)) == 0): diags = diags.split(',')
-    for diag in diags:
-        if DA.da.has_key(diag):
+    for (i,diag) in enumerate(diags):
+        if diag in DA.keys:
             dat = DA.da[diag][inds] ; lab = diag; linestyle='-'
             if diag in 'p_frac': 
                 dat=dat*100
@@ -69,6 +75,7 @@ def plot_shot(DA, sh, ax=None, diags = None, debug=0, fontsize=None):
                 
             if diag == 'p_frac': linestyle = ':'    
             ax.plot(t,dat, linestyle=linestyle, label=lab)
+            ## no hold keyword in ax.plot #, hold=(hold & (i==0)))
     pl.legend()
     debug_(debug,1,key='plot_shot')
 

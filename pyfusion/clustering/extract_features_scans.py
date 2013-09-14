@@ -2,7 +2,7 @@ import clustering as clust
 from pyfusion.devices.H1 import H1_scan_list
 from multiprocessing import Process, Pool
 import pyfusion as pf
-import MDSplus as MDS
+#import MDSplus as MDS
 import numpy as np
 import time, os, copy, itertools
 

@@ -29,6 +29,8 @@ _var_defaults="""
 sel=None      # operates on phase data
 subsel=None   # operates on cluster data
 cl = 18
+show_cc=True  # show cluster (not actually centroid - just first elt of cluster
+show_dc=True # show data centroid
 d_big = 0.5
 d_sml = 0.1 # rms dist criterion for red points
 d_med = 0.3 # rms dist criterion for green points
@@ -108,7 +110,11 @@ for cl in cls:
     if clearfigs: pl.clf()
     for (i,ph) in enumerate(decimate(ph5,limit=1000)): pl.plot(ph[sel],'k',linewidth=.03,hold=i>0)
     for (i,ph) in enumerate(decimate(ph5[wc],limit=1000)): pl.plot(ph[sel],'g',linewidth=.01,hold=i>-1)
-    for (i,ph) in enumerate(decimate(ph5[wcc],limit=1000)): pl.plot(ph[sel],'r',linewidth=.01,hold=i>-1)
+    if len(wcc)>0: 
+        for (i,ph) in enumerate(decimate(ph5[wcc],limit=1000)): pl.plot(ph[sel],'r',linewidth=.01,hold=i>-1)
+    if show_cc: plot(subset[clinds[cl][0]],'y',linewidth=2,label='cluster ')
+    if show_dc: plot(np.average(ph5,0),'--c',linewidth=2, label='data_centroid')
+    pl.legend()
     pl.title(titl)
     pl.suptitle(suptitl)
     pl.xlabel(xlab)
@@ -128,6 +134,7 @@ for cl in cls:
     pl.title('{pc:.1g}% up to d_rms={d_big:.2g} rad'
              .format(pc=100*len(ph5)/float(len(phases)),
                      d_big=d_big))
+    pl.ylabel('insts')
     pl.xlabel(xlab)
     if pl.isinteractive():
         pl.show()

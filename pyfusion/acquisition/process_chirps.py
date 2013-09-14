@@ -7,6 +7,10 @@ pseudocode:
 saving back into the original data set via the indx
 v1: does 250k shots in ~ 1min.  uses maxd and dfdtunit, bool for islead
 v2: islead is now the count of points linked, minlen, tidy output
+
+9/2013
+run -i pyfusion/examples/process_chirps.py Ns=None debug=0 Ms=[None] shots=unique(shot) verbose=5
+
 """
 import pylab as pl
 import numpy as np
@@ -100,6 +104,13 @@ def process_chirps_m_shot(t_mid, freq, indx, maxd = 4, dfdtunit=1000, minlen=2, 
                                 (t_mid[line[1:]] - t_mid[line[0:-1]])/
                                 dfdtunit).astype(np.float32)
     print("{0} connected of {1} chirping,".format(chirping, len(freq))),
+    try:
+        print("dfdt between {dfmin:.1f} and {dfmax:.1f}"
+              .format(dfmin=float(np.nanmin(dfdt)),
+                      dfmax=float(np.nanmin(dfdt)))),
+    except:
+        print('No max/min'),
+        
     debug_(debug, 4, key='detail')
     return(islead, lead, dfdt)
 
@@ -111,8 +122,12 @@ def process_chirps(dd, shots=None, Ns=None, Ms=None, maxd = 4, dfdtunit=1000, mi
     # add islead, lead, dfdt entries
     if plot>0 and hold==0: pl.clf()  # plot(hold=0) runs slower here
     num = len(dd['shot'])
-    if not dd.has_key('indx'): raise LookupError('dd needs and indx!')
+    if not dd.has_key('indx'): raise LookupError('dd needs an indx!')
     indx = dd['indx']
+
+    # warn("need to choose a 'nan' equivalent in process_chirps")
+    undef_int = np.iinfo(dd['N'].dtype).min
+
     if clear_dfdt or not dd.has_key('dfdt'):
         print('******* initialising dfdt data ************')
         dd.update({'islead': np.zeros(num, dtype=int)})
@@ -120,30 +135,47 @@ def process_chirps(dd, shots=None, Ns=None, Ms=None, maxd = 4, dfdtunit=1000, mi
         dd['lead'][:]= -1
         dd.update({'dfdt': np.zeros(num, dtype=np.float32)})
         dd['dfdt'][:]=np.nan
+
     # extract the shot, M and N
-
-    warn("need to choose a 'nan' equivalent in process_chirps")
+    # objective is to consider only shots where N and M are defined.
+    # initially we only require N to be defined
+    # this line was originally inside the loop, and for each k - don't understand?
+    # Also NOTE!! if we select a subset, Ndef then further "where" should index 
+    # through wNdef!!
+    wNdef = np.where(dd['N']!= undef_int)[0]  
+    wNdef = np.arange(len(dd['shot']))
     for k in ['shot', 'M', 'N']: 
-
-        w = np.where(dd[k]!= -4)[0]  # right now it is -4 - but effect on colorscale?
-        exec("all_{0}=np.array(dd['{0}'])[w]".format(k))
+        exec("all_{0}=np.array(dd['{0}'])[wNdef]".format(k))
 
     if Ms == None: 
         Ms = np.unique(all_M) 
         warn('defaulting Ms to {0}'.format(Ms))
     if Ns == None: 
         Ns = np.unique(all_N) 
+        # remove "undefined"
+        w = np.where(Ns != undef_int)[0]
+        if len(w) > 0:
+            Ns = Ns[w]
         warn('defaulting Ns to {0}'.format(Ns))
+        
     debug_(debug,2,key='start_chirps')
     for shot_ in shots:    
         if verbose>0: print("\n{0}:".format(shot_)),
         for N_ in Ns:
             if verbose>0: print(" {0}:".format(N_)),
             for M_ in Ms:
-                inds = np.where((shot_ == all_shot) & 
-                             (M_ == all_M) & (N_ == all_N))[0]
+                if M_ is None:
+                    print('ignoring M')
+                    inds = np.where((shot_ == all_shot) & (N_ == all_N))[0]
+                else:
+                    inds = np.where((shot_ == all_shot) & 
+                                    (M_ == all_M) & (N_ == all_N))[0]
     # extract, but order in time
-                tord=np.argsort(dd['t_mid'][inds])
+    # usually not necessary to reorder in time.
+                tord=np.argsort(dd['t_mid'][wNdef[inds]])
+                if np.min(np.diff(tord) < 0): 
+                    warn('***** time out of order in shot {s} at {ind}'
+                          .format(s=shot_, ind=np.where(np.diff(tord)<0)[0]))
                 if verbose > 4:
                     print("shot {0}, len tord={1}".format(shot_,len(tord)))
                 for k in dd.keys(): 
@@ -160,8 +192,8 @@ def process_chirps(dd, shots=None, Ns=None, Ms=None, maxd = 4, dfdtunit=1000, mi
                     dd['lead'][indx] = lead
                     dd['dfdt'][indx] = dfdt
                 debug_(debug, 3, key='write_back')
-    print("minlen = {m}, maxd = {d}, dfdtunit={df}".
-          format(m=minlen, d=maxd, df=dfdtunit))
+    print("minlen = {m}, maxd = {d}, dfdtunit={df}, setting {s}".
+          format(m=minlen, d=maxd, df=dfdtunit, s=len(np.where(0==np.isnan(dd['dfdt'])))))
     if plot>0: pl.show()
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ def timeinfo(message, outstream=sys.stdout):
     return
 
 _var_default="""
-lhd = pyfusion.getDevice('LHD')
+dev_name = 'LHD'
 
 #min_shot = 84000
 #max_shot = 94000
@@ -73,7 +73,7 @@ exec(pyfusion.utils.process_cmd_line_args())
 from pyfusion.data.filters import next_nice_number
 
 count = 0  #  we print the header right before the first data
-
+dev = pyfusion.getDevice(dev_name)
 for shot in shot_range:
     while(os.path.exists(pyfusion.root_dir+'/pause')):
         print('paused until '+ pyfusion.root_dir+'/pause'+ ' is removed')
@@ -81,7 +81,7 @@ for shot in shot_range:
 
     timeinfo('start shot {s}'.format(s=shot))
     try:
-        d = lhd.acq.getdata(shot, diag_name)
+        d = dev.acq.getdata(shot, diag_name)
         timeinfo('data read')
         n_channels = len(d.channels)
         dt = np.average(np.diff(d.timebase))

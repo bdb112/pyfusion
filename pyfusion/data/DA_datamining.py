@@ -340,8 +340,8 @@ class DA():
         if sel is None: # the arg overrides the object value
             sel = self.sel
         else:
-            print('Overriding any decimation - selecting {s,} instances'
-                  .format(len(sel)))
+            print('Overriding any decimation - selecting {s:,} instances'
+                  .format(s=len(sel)))
             self.sel = sel
 
         if self.verbose>0: print('loading {nm}'.format(nm=self.name)), 

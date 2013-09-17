@@ -268,8 +268,8 @@ def compare_two_cluster_results(cluster1, cluster2):
     fig2.canvas.draw(); fig2.show()
     return similarity
 
-default_correspondence = 'indx,serial t_mid,time amp,RMS freq,freq p,p a12,a12, shot,shot'
-def convert_DA_file(filename, correspondence=default_correspondence, debug=1, limit=None, load_all=False):
+default_correspondence = 'indx,serial t_mid,time amp,RMS freq,freq p,p a12,a12, shot,shot k_h,kh, ne_1,ne1, ne_2,ne2 ne_3,ne3 ne_4,ne4 ne_5,ne5 ne_6,ne6 ne_7,ne7 b_0,b_0 p_rf,p_rf'
+def convert_DA_file(filename, correspondence=default_correspondence, debug=1, limit=None, Kilohertz=1, load_all=False, sel=None):
     """ Converts a DA_datamining file to a form compatible with this package.
     returns(instance_array, misc_data) with names converted according to 
     correspondence, input as pairs separated by spaces.
@@ -284,17 +284,25 @@ def convert_DA_file(filename, correspondence=default_correspondence, debug=1, li
     for pair in pairs:
         corr_dict.update({pair.split(',')[0]: pair.split(',')[1]})
 
-    # don't save DA - wasteful of space
-    ddin = DA(filename, load=1, limit=limit).da
+    # don't save DA if we are taking all - wasteful of space
+    if sel is None: ddin = DA(filename, load=1, limit=limit).da
+    else:  # this should be raionalised
+        print('selecting {n} instances'. format(n=len(sel)))
+        DAsel = DA(filename)
+        DAsel.load(sel=sel)
+        ddin = DAsel.copyda()
+
     inst_arr = ddin.pop('phases')
     if load_all:
         dd = ddin
     else:
         dd = {}
+    print('corr_dict={}'.format(corr_dict))    
     for k in ddin.keys():
         if corr_dict.has_key(k):
             dd.update({corr_dict[k]:ddin.pop(k)})
 
+    if dd.has_key('freq'): dd['freq'] = 1000*np.array(dd['freq'])
     misc_data = dd
     return(inst_arr, misc_data)
 
@@ -791,9 +799,15 @@ class clustering_object():
 
         SH: 9May2013
         '''
+        # autodecimation has problems with fewer than 5000 points
         npts = len(self.cluster_assignments)
         if decimation>2000 and npts > 3*decimation:
             decimation = npts/decimation
+
+        if npts/decimation < 500:
+            print('decimation of {d} is probably too high'.
+                  format(d=decimation))
+
         cluster_list = list(set(self.cluster_assignments))
         suptitle = self.settings.__str__().replace("'",'').replace("{",'').replace("}",'')
         n_clusters = len(cluster_list)
@@ -803,14 +817,14 @@ class clustering_object():
             if np.sum(current_items)>10:
                 tmp = self.feature_obj.instance_array[current_items,:]%(2.*np.pi)
                 tmp[tmp>np.pi]-=(2.*np.pi)
-                ax[cluster].plot(tmp[::decimation,:].T,'-',color = colours[cluster % len(colours)], linewidth=0.05)
+                ax[cluster].plot(tmp[::decimation,:].T,'-',color = colours[cluster % len(colours)], linewidth=linewidth)
                 ax[cluster].legend(loc='best')
         fig.subplots_adjust(hspace=0, wspace=0,left=0.05, bottom=0.05,top=0.95, right=0.95)
         fig.suptitle(suptitle, fontsize = 8)
         fig.canvas.draw(); fig.show()
         return fig, ax
 
-    def plot_clusters_amp_lines(self,decimation=1):
+    def plot_clusters_amp_lines(self,decimation=1, linewidth=0.05):
         '''Plot all the phase lines for the clusters
         Good clusters will show up as dense areas of line
 
@@ -825,7 +839,7 @@ class clustering_object():
             if np.sum(current_items)>10:
                 #tmp = (np.abs(self.feature_obj.misc_data_dict['mirnov_data'][current_items,:]).T / np.abs(self.feature_obj.misc_data_dict['mirnov_data'][current_items,0])).T
                 tmp = (np.abs(self.feature_obj.misc_data_dict['mirnov_data'][current_items,1:]) / np.abs(self.feature_obj.misc_data_dict['mirnov_data'][current_items,0:-1]))
-                ax[cluster].plot(tmp[::decimation,:].T,'k-',linewidth=0.05)
+                ax[cluster].plot(tmp[::decimation,:].T,'k-',linewidth=linewidth)
         fig.subplots_adjust(hspace=0, wspace=0,left=0.05, bottom=0.05,top=0.95, right=0.95)
         fig.suptitle(suptitle, fontsize = 8)
         fig.canvas.draw(); fig.show()
@@ -1044,6 +1058,10 @@ class clustering_object():
         ax[-1].set_ylim([-3,0])
         fig.subplots_adjust(hspace=0, wspace=0,left=0.05, bottom=0.05,top=0.95, right=0.95)
         fig.suptitle(suptitle,fontsize=8)
+
+        leg = ax[-1].legend(prop={'size':8.0})
+        leg.get_frame().set_alpha(0.5)
+
         fig.canvas.draw(); fig.show()
 
     def plot_EMM_GMM_amps(self,suptitle = ''):

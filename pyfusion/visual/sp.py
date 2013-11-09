@@ -14,6 +14,10 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
     """ Scatter plot front end, size_scale 
     x, y, sz, col can be keys or variables (of matching size to ds)
     decimate = 0.1 selects 10% of the input, -0.1 uses a fixed key. 
+    Note: This code is messy, but the idea is sound - that is
+    1: Exploit the flexible colour and size of scatter
+    2: flexible inputs via string names or by arrays
+    3: Treat mode numbers specially to suppress "undefined" mode numbers
     """
     def size_val(marker_size):
         if size_scale<0: 

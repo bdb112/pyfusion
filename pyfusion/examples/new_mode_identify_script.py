@@ -1,4 +1,6 @@
 """
+Replaced by mode_identify_script.py
+
 w=where(array(sd)<10)[0]
 for ii in decimate(w,limit=2000): pl.plot(dd["phases"][ii],'k',linewidth=0.02)
 mode.plot()
@@ -352,8 +354,8 @@ for i in range(10):
     ideal_modes.append(Mode('N={N}'.format(N=N),N=N, NN=i*(100), cc=ideal[i], csd=0.5*np.ones(len(ideal[0]))))
 
 ind = None
-modelist = MP2010
-modelist = ideal_modes
+mode_list = MP2010
+mode_list = ideal_modes
 mode=None
 threshold=None
 mask=None
@@ -364,13 +366,13 @@ sel = arange(11,16)
 import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
 
-if mode==None: mode = modelist[0]
+if mode==None: mode = mode_list[0]
 if not(doM) and not(doN): raise ValueError('Need to choose doN=True and/or doM=True')
 
 if ind == None: ind = arange(len(dd['shot']))
-# these forms consume less memory
-if (sel==arange(11,16)).all(): phases = dd['phases'][ind,11:16]
-elif (sel==arange(10,16)).all(): phases = dd['phases'][ind,10:16]
+# the form phases = dd['phases'][ind,11:16] consumes less memory
+if (sel is not None) and  (np.average(np.diff(sel))==1):   # smarter version
+    phases = dd['phases'][ind,sel[0]:sel[-1]+1]
 else:
     phases = dd["phases"][ind]
     if sel is not None:
@@ -388,7 +390,7 @@ for mname in 'N,NN,M,MM'.split(','):
 tot_set, tot_reset = (0,0)
 
 
-for mode in modelist:
+for mode in mode_list:
     if doN: mode.store(dd, threshold, mask=mask)
     if doM: mode.storeM(dd, threshold)
 

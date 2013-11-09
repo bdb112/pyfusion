@@ -28,7 +28,7 @@ q=db.summary.filter(db.summary.shot.between(000,80000))
 #q=db.summary.filter(db.summary.shot.between(79300,79350))
 allres=q.all()
 summary = {}
-for k in "shot,kappa_h,rf_drive,rfp_req,im1,im2,im3,is1,is2,is3,sec_t1,sec_t2,i_main,i_ring,i_sec,"\
+for k in "shot,kappa_h,rf_drive,timestamp,rfp_req,im1,im2,im3,is1,is2,is3,sec_t1,sec_t2,i_main,i_ring,i_sec,"\
         "rf1_cool,rf2_cool,rf3_cool,rf4_cool,PHDIFF_COOL,rf_freq_mhz,"\
         "ne18_bar,lcu_gas_1_flow,lcu_gas_2_flow,lcu_gas_3_flow".split(','):
     dat = [eval('r.'+k) for r in allres]
@@ -37,6 +37,8 @@ for k in "shot,kappa_h,rf_drive,rfp_req,im1,im2,im3,is1,is2,is3,sec_t1,sec_t2,i_
 # probably should do this for all.
 for k in "im1,im2,im3,is1,is2,is3,kappa_h,rfp_req".split(','):
     summary.update({k:replace_none(summary[k], np.nan)})
+
+summary.update({'ymd':np.array([d.date() for d in summary['timestamp']])})
 
 fig, axs = pl.subplots(4,1,sharex='all')
 axs[0].plot(summary['kappa_h'],'+-', ms=3, label='k_h')

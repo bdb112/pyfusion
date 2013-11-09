@@ -5,26 +5,32 @@ DA_file=DA300.name
 from pyfusion.data.DA_datamining import DA, report_mem
 DA_file = '/data/datamining/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz'
 DA_file='../../../datamining/dd/300_384_RMSv2_neNBecVA.npz'
-DA_file='DAnov1516diag.npz'
+#DA_file='DAnov1516diag.npz'
 
 #DA_file='/data/datamining/PF2_130813_6X_1.5_5b_rms_1_diags.npz'
 # too big - 8GB for phase - DA_file='/data/datamining/PF2_130813_8X_1.5_5b_rms_1._diags.npz'
 import pyfusion.clustering as clust
 
 _var_default="""
-phase_sign = -1
+phase_sign = 1              # NEVER leave this at -1 - too dangerous
+number_of_starts = 2
 max_instances=50000
+n_clusters=6
+n_iterations=10
+n_cpus=2
 sel=None
 """
 exec(_var_default)
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
+if phase_sign != 1: print('**** Warning! - you are fiddling with the phase ****')
+
 (phases, misc) = clust.convert_DA_file(DA_file,sel=sel,limit=max_instances)
-phases = phase_sign*phases  # -1 for boyd's code sep 2013
+phases = phase_sign*phases  # -1 to compare boyd's code sep 2013 on H-1
 fo = clust.feature_object(phases, misc)
 # 10 iterations is not enough (50 is better), but this is just a demo.
-co = fo.cluster(method='EM_VMM',n_clusters = 6,n_iterations = 10,start = 'k_means',n_cpus=2,number_of_starts = 2)
+co = fo.cluster(method='EM_VMM',n_clusters = n_clusters, n_iterations = n_iterations,start = 'k_means',n_cpus=n_cpus,number_of_starts = number_of_starts)
 
 
 """

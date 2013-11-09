@@ -10,7 +10,10 @@ v2: islead is now the count of points linked, minlen, tidy output
 
 9/2013
 run -i pyfusion/examples/process_chirps.py Ns=None debug=0 Ms=[None] shots=unique(shot) verbose=5
-
+11/2013
+killed bug that prevent correct write back (used indx, should be inds[tord])
+Also try maxd ~ 10 (5 missed fast chirps).  However it is becoming clear that 
+separate time and freq scale units should replace dfdtunit.
 """
 import pylab as pl
 import numpy as np
@@ -89,6 +92,7 @@ def process_chirps_m_shot(t_mid, freq, indx, maxd = 4, dfdtunit=1000, minlen=2, 
     num = len(indx)
     lead = indx*0 - 1
     islead = np.zeros(num, dtype=int)
+    indx_subset = indx*0   # copy to cross checkupon return to catch index err
     dfdt = np.zeros(num, dtype=np.float32)
     dfdt[:]=np.nan
     chirping = 0
@@ -103,16 +107,23 @@ def process_chirps_m_shot(t_mid, freq, indx, maxd = 4, dfdtunit=1000, minlen=2, 
             dfdt[line[0:-1]] = ((freq[line[1:]] - freq[line[0:-1]])/
                                 (t_mid[line[1:]] - t_mid[line[0:-1]])/
                                 dfdtunit).astype(np.float32)
-    print("{0} connected of {1} chirping,".format(chirping, len(freq))),
-    try:
+            dfdt[line[-1]] = 0  # because we will smooth in next line
+            # average with nearest neighbour, simple, result is OK
+            dfdt[line[1:]] = (dfdt[line[0:-1]] + dfdt[line[1:]])/2
+            indx_subset[line[0:-1]] = indx[line[0:-1]]
+    print("{c} connected of {f} chirping to make {l} lines,"
+          .format(c=chirping, f=len(freq),l=len(lines))),
+
+    # originally caught this with exception - maybe never worked that way
+    if np.isnan(np.nanmin(dfdt)):          
+        print('no chirps of length at least {m}'.format(m=minlen))
+    else:
         print("dfdt between {dfmin:.1f} and {dfmax:.1f}"
               .format(dfmin=float(np.nanmin(dfdt)),
-                      dfmax=float(np.nanmin(dfdt)))),
-    except:
-        print('No max/min'),
+                      dfmax=float(np.nanmax(dfdt)))),
         
     debug_(debug, 4, key='detail')
-    return(islead, lead, dfdt)
+    return(islead, lead, dfdt, indx_subset)
 
 def process_chirps(dd, shots=None, Ns=None, Ms=None, maxd = 4, dfdtunit=1000, minlen=2,
                    plot=0, hold=0, clear_dfdt=False, debug=0, verbose=0):
@@ -173,7 +184,7 @@ def process_chirps(dd, shots=None, Ns=None, Ms=None, maxd = 4, dfdtunit=1000, mi
     # extract, but order in time
     # usually not necessary to reorder in time.
                 tord=np.argsort(dd['t_mid'][wNdef[inds]])
-                if np.min(np.diff(tord) < 0): 
+                if np.min(np.diff(tord)) < 0:    # paren had been in wrong place
                     warn('***** time out of order in shot {s} at {ind}'
                           .format(s=shot_, ind=np.where(np.diff(tord)<0)[0]))
                 if verbose > 4:
@@ -181,16 +192,19 @@ def process_chirps(dd, shots=None, Ns=None, Ms=None, maxd = 4, dfdtunit=1000, mi
                 for k in dd.keys(): 
                     if not hasattr(dd[k],'keys'):
                         exec("{0}=np.array(dd['{0}'])[inds[tord]]".format(k))
-                (islead, lead, dfdt) = \
+                (islead, lead, dfdt, indx_subset) = \
                     process_chirps_m_shot(t_mid, freq, indx, maxd=maxd, 
                                           dfdtunit=dfdtunit, minlen=minlen,
                                           plot=plot, debug=debug)
     # write them back into the dict dd
                 if len(islead) != 0:            
                     if verbose > 2: print("indx={0}".format(indx))
-                    dd['islead'][indx] = islead
-                    dd['lead'][indx] = lead
-                    dd['dfdt'][indx] = dfdt
+                    #was  dd['islead'][indx] = islead
+                    dd['islead'][inds[tord]] = islead
+                    dd['lead'][inds[tord]] = lead
+                    dd['dfdt'][inds[tord]] = dfdt
+                    if not (dd['indx'][inds[tord]] != indx_subset).any():
+                        raise IndexError("indx values don't match")
                 debug_(debug, 3, key='write_back')
     print("minlen = {m}, maxd = {d}, dfdtunit={df}, setting {s}".
           format(m=minlen, d=maxd, df=dfdtunit, s=len(np.where(0==np.isnan(dd['dfdt'])))))

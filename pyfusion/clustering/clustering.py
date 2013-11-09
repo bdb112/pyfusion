@@ -268,6 +268,8 @@ def compare_two_cluster_results(cluster1, cluster2):
     fig2.canvas.draw(); fig2.show()
     return similarity
 
+
+# this 'constant' is defined for convenience when using convert_DA_file
 default_correspondence = 'indx,serial t_mid,time amp,RMS freq,freq p,p a12,a12, shot,shot k_h,kh, ne_1,ne1, ne_2,ne2 ne_3,ne3 ne_4,ne4 ne_5,ne5 ne_6,ne6 ne_7,ne7 b_0,b_0 p_rf,p_rf'
 def convert_DA_file(filename, correspondence=default_correspondence, debug=1, limit=None, Kilohertz=1, load_all=False, sel=None):
     """ Converts a DA_datamining file to a form compatible with this package.
@@ -286,7 +288,7 @@ def convert_DA_file(filename, correspondence=default_correspondence, debug=1, li
 
     # don't save DA if we are taking all - wasteful of space
     if sel is None: ddin = DA(filename, load=1, limit=limit).da
-    else:  # this should be raionalised
+    else:  # this should be rationalised
         print('selecting {n} instances'. format(n=len(sel)))
         DAsel = DA(filename)
         DAsel.load(sel=sel)
@@ -408,6 +410,23 @@ class clustering_object():
     attributes instance_array : array of phase differences
 
     SH : 6May2013 '''
+
+    def make_mode_list(self, min_kappa = 4):
+        """ Return a mode_list (such as used in new_mode_identify_script from 
+        a cluster_object,
+        ps: this is another reason for make new_modeidentifier _script a class.
+        """
+        from pyfusion.clustering.modes import Mode
+        mode_list = []
+        means = self.cluster_details['EM_VMM_means']
+        kappas = self.cluster_details['EM_VMM_kappas']
+
+        for (i,k) in enumerate(kappas):
+            if np.min(k)>min_kappa:
+                mode_list.append(Mode('cl{n}'.format(n=i), -99, -00, 
+                                      means[i], np.sqrt(1/k),id=i))
+
+        return(mode_list)
     def plot_kh_freq_all_clusters(self,color_by_cumul_phase = 1):
         '''plot kh vs frequency for each cluster - i.e looking for
         whale tails The colouring of the points is based on the total
@@ -792,10 +811,11 @@ class clustering_object():
         fig_kh.canvas.draw(); fig_kh.show()
         return fig_kh, ax_kh
 
-    def plot_clusters_phase_lines(self,decimation=4000, linewidth=0.05, colours = colours1):
+    def plot_clusters_phase_lines(self,decimation=4000, linewidth=0.05, colours = colours1,xlabel_loc=0.5, ylabel_loc=3.2, yline=0):
         '''Plot all the phase lines for the clusters
         Good clusters will show up as dense areas of line
         if decimation > 2000, it is the number of points desired
+        set yline to draw a constant y line for reference (or None)
 
         SH: 9May2013
         '''
@@ -805,8 +825,8 @@ class clustering_object():
             decimation = npts/decimation
 
         if npts/decimation < 500:
-            print('decimation of {d} is probably too high'.
-                  format(d=decimation))
+            print('decimation of {d} is probably too high for {n} points'.
+                  format(d=decimation, n=npts))
 
         cluster_list = list(set(self.cluster_assignments))
         suptitle = self.settings.__str__().replace("'",'').replace("{",'').replace("}",'')
@@ -814,11 +834,27 @@ class clustering_object():
         fig, ax = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         for cluster in cluster_list:
             current_items = self.cluster_assignments==cluster
-            if np.sum(current_items)>10:
+            if np.sum(current_items)<=10:  # don't bother with small ones
+                print('omitting cluster {c}'.format(c=c))
+            else:
                 tmp = self.feature_obj.instance_array[current_items,:]%(2.*np.pi)
                 tmp[tmp>np.pi]-=(2.*np.pi)
-                ax[cluster].plot(tmp[::decimation,:].T,'-',color = colours[cluster % len(colours)], linewidth=linewidth)
-                ax[cluster].legend(loc='best')
+                pcent = str('{cl}: {pc:.1f}%'
+                            .format(cl=cluster, 
+                                    pc=100*np.sum(current_items)/float(npts)))
+                if yline is not None:
+                    ax[cluster].plot([0,len(tmp[0])], [yline,yline],
+                                     'gray',linewidth=0.5)
+                ax[cluster].plot(tmp[::decimation,:].T,'-'
+                                 ,color = colours[cluster % len(colours)]
+                                 , linewidth=linewidth)
+                ax[cluster].text(xlabel_loc,ylabel_loc, pcent, 
+                                 horizontalalignment='left',
+                                 verticalalignment='bottom',
+                                 bbox=dict(facecolor='lightgray',
+                                           alpha=0.4,color='gray'))
+                # ax[cluster].legend(loc='best')  # get too many
+
         fig.subplots_adjust(hspace=0, wspace=0,left=0.05, bottom=0.05,top=0.95, right=0.95)
         fig.suptitle(suptitle, fontsize = 8)
         fig.canvas.draw(); fig.show()

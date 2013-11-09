@@ -1,4 +1,9 @@
 """ timing on E4300  
+Copy/translate a pyfusion DA file into a pytables h5 format (DF)
+Advantage is very fast load of subranges (contiguous), and operation
+directly on the data in files (out of core)
+
+See also read_DF.py and other code in ~/python/pytables_blosc/
 
 72 sec translate PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' to 2.6G blosc 2
 162  zlib 2 1.4GB
@@ -27,8 +32,8 @@ DAfilename='/data/datamining/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz'
 outfilename=None
 keep_open = 0
 complevel=2
-complib = 'zlib'
-var='phases'
+complib = 'zlib'   # 'blosc' is fastest
+var='phases'  # ?? maybe was used to develop 
 """
 exec(_var_defaults)
 exec(process_cmd_line_args())

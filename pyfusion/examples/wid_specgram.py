@@ -91,8 +91,7 @@ def local_flat_top_freq(vec):
          -0.388*cos(6*pi*k/(N-1)) +0.032*cos(8*pi*k/(N-1)))
     return(w)
 
-global shot_number, shot_list, channel_number, chan_name, marker_size, wild_card, diag_name
-
+global shot_number, shot_list, channel_number, chan_name, marker_size, wild_card, diag_name, hold
 def get_local_shot_numbers(partial_name):
     """ This used to be in utils.  For now replace by shot_list variable
     Probably good to keep for locals, and systems that have an easily accessible
@@ -115,6 +114,7 @@ cmap=None
 #xextent=None  # was here, really belongs in data.spectrogram
 NFFT=512
 Fsamp=2
+hold=1
 Fcentre=0
 marker_size=0
 detrend=pl.detrend_none
@@ -179,7 +179,7 @@ tm=arange(0,0.02,1e-6)
 y=sin((2e5 + 5e3*sin(fmod*2*pi*tm))*2*pi*tm)
 
 def call_spec():
-    global y,NFFT,Fsamp,Fcentre,foverlap,detrend,_window, _type, fmod, chan_name, diag_name
+    global y,NFFT,Fsamp,Fcentre,foverlap,detrend,_window, _type, fmod, chan_name, diag_name, hold
     print len(y), NFFT,foverlap, _type, fmod
     ax = pl.subplot(111)
     z=_window(y)
@@ -208,6 +208,7 @@ def call_spec():
         elif _window==local_hanning: windowfn=pl.window_hanning
         else: windowfn=_window(arange(NFFT))
         clim=(-60,20)   # eventually make this adjustable
+        if hold==0:  pl.clf()
 # colorbar commented out because it keeps adding itself
         data.plot_spectrogram(NFFT=NFFT, windowfn=windowfn, noverlap=foverlap*NFFT, 
                               channel_number=channel_number)

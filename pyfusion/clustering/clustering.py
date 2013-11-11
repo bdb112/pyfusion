@@ -811,7 +811,7 @@ class clustering_object():
         fig_kh.canvas.draw(); fig_kh.show()
         return fig_kh, ax_kh
 
-    def plot_clusters_phase_lines(self,decimation=4000, linewidth=0.05, colours = colours1,xlabel_loc=0.5, ylabel_loc=3.2, yline=0):
+    def plot_clusters_phase_lines(self,decimation=4000, linewidth=0.05, colours = colours1,xlabel_loc=0.5, ylabel_loc=3.2, yline=0,xlabel=''):
         '''Plot all the phase lines for the clusters
         Good clusters will show up as dense areas of line
         if decimation > 2000, it is the number of points desired
@@ -855,7 +855,13 @@ class clustering_object():
                                            alpha=0.4,color='gray'))
                 # ax[cluster].legend(loc='best')  # get too many
 
-        fig.subplots_adjust(hspace=0, wspace=0,left=0.05, bottom=0.05,top=0.95, right=0.95)
+        bottom = 0.05
+        if xlabel != '': #ax[cluster].set_xlabel(xlabel)
+            fig.text(0.5, 0.01,xlabel)
+            bottom += .015
+
+
+        fig.subplots_adjust(hspace=0, wspace=0,left=0.05, bottom=bottom ,top=0.95, right=0.95)
         fig.suptitle(suptitle, fontsize = 8)
         fig.canvas.draw(); fig.show()
         return fig, ax
@@ -1783,7 +1789,8 @@ def _EM_VMM_expectation_step_soft(mu_list, kappa_list, instance_array, pi_hat, c
     return zij, L
 
 
-def EM_VMM_clustering(instance_array, n_clusters = 9, n_iterations = 20, n_cpus=1, start='random'):
+def EM_VMM_clustering(instance_array, n_clusters = 9, n_iterations = 20, n_cpus=1, start='random', comment=''):
+    # should really have some record of what was done here.
     #This is for the new method...
     instance_array_complex = np.exp(1j*instance_array)
 

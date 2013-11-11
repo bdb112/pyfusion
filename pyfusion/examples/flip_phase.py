@@ -23,6 +23,23 @@ exec(_var_defaults)
 from  pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
+try:
+    print('Using dd file from {fn}'.format(fn=dd.zip.filename))
+except:
+    print('could not find original filename')
+
+wnan=np.where(isnan(dd['b_0']))[0];len(wnan)
+wzero=np.where((dd['b_0']==0))[0];len(wzero)
+wneg=np.where((dd['b_0']<0))[0];len(wneg)
+wpos=np.where((dd['b_0']>0))[0];len(wpos)
+print('negative:{wn:,}; zero:{wz:,}; positive:{wp:,}; NaN:{wnan:,};'
+      .format(wn=len(wneg), wz=len(wzero), wp=len(wpos), wnan=len(wnan))),
+if (len(wneg)+len(wpos)+len(wnan)+len(wzero)!=len(dd['b_0'])):
+    raise ValueError("above do not add up to total of {t:,}".format(t=len(dd['b_0'])))
+else:
+    print('  => total consistent')
+
+
 o_copy = 1*dd['phorig']
 if (o_copy*dd['phases'][:,0] >= 0).all():
     print('appears to be untouched')
@@ -50,6 +67,8 @@ else:
 
 if (o_copy*dd['phases'][:,0] >= 0).all():
     print('{m} OK!'.format(m=method))
+elif (dd['phorig']*dd['b_0']*dd['phases'][:,0] <= 0).all():
+    print('phase sign consistent with invertB')
 else:
     print('Error - phase sign not consistent with B')
 

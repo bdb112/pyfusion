@@ -21,18 +21,20 @@ in 8GB system, took 528 sec to read 7.9GB phase from 8X
 """
 import tables as tb
 import os
+import numpy
 import numpy as np
-from bdb_utils import process_cmd_line_args
 from time import time as seconds
 from pyfusion.data.DA_datamining import DA, report_mem
 
+from pyfusion.utils import process_cmd_line_args
 
 _var_defaults = """
-DAfilename='/data/datamining/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz'
+DAfilename='../../datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz'
 outfilename=None
 keep_open = 0
 complevel=2
-complib = 'zlib'   # 'blosc' is fastest
+complib = 'zlib'   # 'blosc' is fastest, but zlib can be compressed further "offline"
+# with blosc, get dataset </w_p> cannot be read, user defined filter is not available
 var='phases'  # ?? maybe was used to develop 
 """
 exec(_var_defaults)
@@ -75,7 +77,7 @@ for var in dd.keys():
     dt_write = seconds() - st_write
 
     st_slice = seconds()
-    res0 =  result[len(shape(result))*(0,)]
+    res0 =  result[len(np.shape(result))*(0,)]
     dt_slice = seconds() - st_slice
     MB = np.product(result.shape)*res0.nbytes/1e6
 

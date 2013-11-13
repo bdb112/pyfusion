@@ -1,8 +1,23 @@
 def debug_(debug,level=1,key=None,msg=''):
-    """ Nice debug function, breaks to debugger if debug>level, or if
-    key is asubstring of the string value in debug.  This way, one
-    debug input can control several breakpoints, without too much
-    recoding.  Works interactively with python and/or with iptyhon.
+    """ Nice debug function, a line 
+           debug_(deb, level, key="foo", msg="hello") 
+     breaks to the debugger 
+        if deb >=level, or 
+        if <key> is a substring ("foo") of the string value in the debug_ line
+
+    e.g. debug_(debug_num, 3)   breaks if debug_num > 3
+         debug_(debug_var, 2, key='svd')   breaks if debug var contains 
+                                          any string containing svd
+                                          or if debug_var is an int >= 2
+    Variables containing strings, numbers or mixed lists of both can
+    be given as the first argument.
+    If more than one variable is given, all are tested in sequence
+         debug_((pyfusion.DEBUG,local_debug), 3, key='svd', msg=' at foobar') 
+             will break if either var meets either condition.
+
+    This way, one debug input can control several breakpoints, 
+    without too much recoding.  
+    Works interactively with python and/or with iptyhon.
 
     Once a possible debug point is reasonably OK, its level can be
     raised, (level=3 etc) so that it is still accessible, but only at
@@ -37,12 +52,23 @@ def debug_(debug,level=1,key=None,msg=''):
 
     e.g key='lookup' and debug='lookup,open' then execution breaks
     """
+    from numpy import isscalar
     import warnings
-    if type(debug) == type('abc'):
-        if key.find(debug) < 0: return            
+    if isscalar(debug): debug = [debug]
+    reason = None   # continue only if there is no reason to stop
+    for deb in debug:
+        if type(deb) == type('abc'):
+            if key.find(deb) >= 0: 
+                reason = str('debug_ string "{deb}" found in "{key}"'
+                             .format(deb=deb, key=key))
     
-    elif debug<level: return
+        elif deb>=level: 
+            reason = str('debug_ paramater {deb} >= {level}'
+                         .format(deb=deb, level=level))
 
+    if reason is None: return
+    # the rest of this is essentially the 'else' clause of the test above.
+    print('** debug_: {r}'.format(r=reason))
     try:
         """
         # pydbgr is nice, but only works once - then debug is ignored

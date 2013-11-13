@@ -17,7 +17,9 @@ phase deg/10  *48MB/s                               *620M
                *68%                                 *50%
 
 in 8GB system, took 528 sec to read 7.9GB phase from 8X
-* means relative to 4bye float.
+Not sure how I made the 8X h5 file?  I thought I was away from home.
+On h1svr, it seems to need 20GB memory.
+* means relative to 4byte float.
 """
 import tables as tb
 import os

@@ -10,20 +10,23 @@ from pyfusion.utils import read_csv_data
 import numpy as np
 import re
 
+hack_merge_another_file=False
+
 print('reading..')
-lhd=read_csv_data.read_csv_data('/LINUX23/home/bdb112/LHD_Summary_Long.csv',header=3)
+lhd=read_csv_data.read_csv_data('LHD_Summary_Long.csv',header=3)
 print('{k} keys, {n} entries read'.format(n=len(lhd['nShotnumber']), 
                                           k=len(lhd.keys())))
 
 # this is hacked in because I missed GAMMA and another in my big file
-lhd2 = read_csv_data.read_csv_data('/home/bdb112/datamining/lhd_summary_data.csv',header=3)
-ksh='nShotnumber'
-ws2 = np.where(lhd[ksh] != lhd2[ksh])[0]
-if len(ws2) != 0: raise LookupError('{n} mismatched shots'.format(n=len(ws2)))
-# if we already have the key, give this one a different name -otherwise same
-for k in lhd2.keys(): 
-    if k in lhd.keys(): lhd[k+'1']=lhd2[k]
-    else: lhd[k]=lhd2[k]
+if hack_merge_another_file:
+    lhd2 = read_csv_data.read_csv_data('/home/bdb112/datamining/lhd_summary_data.csv',header=3)
+    ksh='nShotnumber'
+    ws2 = np.where(lhd[ksh] != lhd2[ksh])[0]
+    if len(ws2) != 0: raise LookupError('{n} mismatched shots'.format(n=len(ws2)))
+    # if we already have the key, give this one a different name -otherwise same
+    for k in lhd2.keys(): 
+        if k in lhd.keys(): lhd[k+'1']=lhd2[k]
+        else: lhd[k]=lhd2[k]
 
 def nansort(arr):
     return(np.sort(arr[np.where(np.invert(isnan(arr)))]))
@@ -132,7 +135,7 @@ if __name__ == "__main__":
     if 'y' in raw_input('save ? ').lower():
         fn = 'LHD_summary_new'
         print('saving as {n}..'.format(n=fn))
-        savez_compressed(fn,LHD=LHD)
+        np.savez_compressed(fn,LHD=LHD)
     else:
         print('not saved')
 

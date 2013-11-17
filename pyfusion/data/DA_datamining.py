@@ -385,20 +385,23 @@ class DA():
     def save(self, filename, verbose=None, sel=None, use_dictionary=False,tempdir=None, zipopt=None):
         """ Save as an npz file, using an incremental method, which
         only uses as much /tmp space as required by each var at a time.
-        if use_dictionary is a valid dictionary, save the values of
+        Select which to save with sel: if sel is None, save all except
+        for use_dictionary below.
+        If use_dictionary is a valid dictionary, save the values of
         ANY AND ONLY the LOCAL variables whose names are in the keys for
         this set.
         So if you have extracted a subset, and you specify 
-        use_dictionary=locals(),
-        only that subset is saved (both in array length, and variables chosen).
+        use_dictionary=locals(), only that subset is saved (both in array 
+        length, and variables chosen).
         Beware locals that are not your variables - e.g. mtrand.beta
         To avoid running out of space on tmp, or to speed up zip - 
         Now included as an argument
-        (Note that the normal os.putenv() doesn't seem to write the THIS environment)
+        (Note that the normal os.putenv() doesn't seem to write
+        THIS environment use the fudge below - careful - no guarantees)
         os.environ.__setitem__('TMPDIR',os.getenv('HOME'))
         reload tempfile
         tempfile.gettempdir()
-        also ('ZIPOPT','"-1"')  (Noe incorporated into args, not tested)
+        also ('ZIPOPT','"-1"')  (Now incorporated into args, not tested)
         """
         if verbose == None: verbose = self.verbose
         st = seconds()

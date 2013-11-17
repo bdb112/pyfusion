@@ -41,8 +41,10 @@ class Mode():
         self.num_reset = 0
 
     def store(self, dd, sel=None, threshold=None,Nval=None,NNval=None,shot_list=None,quiet=0, mask=None):
-        """ store coarse and fine mode (N, NN) numbers according to a threshold std and an optional shot_list.
-       If None the internal shot_list is used which would have defaulted to [] at __init__
+        """ store coarse and fine mode (N, NN) numbers according to a threshold
+        std a selection of channels and an optional shot_list.
+       If None the internal shot_list is used which would have been set or
+       defaulted to [] at __init__
 
        sel selects the probes - if None, select all.
         """
@@ -111,7 +113,7 @@ class Mode():
             print("NN={0} is most frequent ({1} inst.)"
                   .format(amx[-1],cnts[amx[-1]]))
             fract = len(w_already)/float(len(w))
-            if fract>0.2: askif("{0:.1f}% of intended insts already set?".
+            if fract>0.2: askif("{0:.1f}% of intended NN insts already set?".
                                 format(fract*100),quiet=quiet)
 
         self.num_set += len(w)
@@ -173,7 +175,7 @@ class Mode():
             print("MM={0} is most frequent ({1} inst.)"
                   .format(amx[-1],cnts[amx[-1]]))
             fract = len(w_already)/float(len(w))
-            if fract>0.2: askif("{0:.1f}% of intended insts already set?".
+            if fract>0.2: askif("{0:.1f}% of intended MM insts already set?".
                                 format(fract*100),quiet=quiet)
 
         self.num_set += len(w)

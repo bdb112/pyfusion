@@ -1,6 +1,8 @@
 """
-This version is a memory hog - 9X , 5 modes took 90gB (14 Nov 2013)
+This version is just before allowing for omitting one probe.
 
+This version is a memory hog - 9X , 5 modes took 90gB (14 Nov 2013)
+Maybe the same techniques as used in cluster_phases_three_colour.py will help.
 w=where(array(sd)<10)[0]
 for ii in decimate(w,limit=2000): pl.plot(dd["phases"][ii],'k',linewidth=0.02)
 mode.plot()
@@ -25,6 +27,7 @@ from numpy import intersect1d, pi
 from numpy import loadtxt
 import numpy as np
 from pyfusion.clustering.modes import Mode
+from pyfusion.data.convenience import between, bw, btw, decimate, his, broaden
 
 # This simple strategy works when the number is near zero +- 2Npi,
 # which is true for calculating the deviation from the cluster centre.
@@ -152,7 +155,7 @@ MP2010.append(Mode('N=-1',N=-1, NN=-101, cc=[-0.454, -0.775, -1.348, -1.172, -1.
 
 ideal_modes=[]
 ideal = np.load('ideal_toroidal_modes.npz')['subset']
-ideal = ideal[:,arange(5)]  # need to adjust
+ideal = ideal[:,np.arange(5)]  # need to adjust
 for i in range(10):
     N=i-5
     ideal_modes.append(Mode('N={N}'.format(N=N),N=N, NN=i*(100), cc=ideal[i], csd=0.5*np.ones(len(ideal[0]))))
@@ -165,10 +168,23 @@ threshold=None
 mask=None
 doM = False
 doN = False
-sel = arange(11,16)
+clear_modes=True    # silently remove all mode keys if any
+sel = np.arange(11,16)
+DA_file='DA65MP2010HMPno612b5_M_N_fmax.npz'
+#DA_file=None
 
 import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
+
+if DA_file is not None:
+    from pyfusion.data.DA_datamining import DA, report_mem
+    thisDA=DA(DA_file, load=1)
+    dd=thisDA.copyda()
+
+if clear_modes:
+    print('clearing modes')
+    for key in 'N,NN,M,MM,indx,mode_id':
+        dd.pop(key,None)   #clear all the mode keys
 
 if not hasattr(dd,'has_key'):
     raise LookupError("dd not loaded into memory - can't store")
@@ -176,7 +192,7 @@ if not hasattr(dd,'has_key'):
 if mode==None: mode = mode_list[0]
 if not(doM) and not(doN): raise ValueError('Need to choose doN=True and/or doM=True')
 
-if ind == None: ind = arange(len(dd['shot']))
+if ind == None: ind = np.arange(len(dd['shot']))
 # the form phases = dd['phases'][ind,11:16] consumes less memory
 if (sel is not None) and  (np.average(np.diff(sel))==1):   # smarter version
     phases = dd['phases'][ind,sel[0]:sel[-1]+1]

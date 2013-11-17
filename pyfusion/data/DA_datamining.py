@@ -262,7 +262,10 @@ class DA():
                 print(quest)
 
         if self.loaded == 0: self.load()
-        return(deepcopy(self.da))
+        start_mem = report_mem(msg='copying')
+        cpy = deepcopy(self.da)
+        report_mem(start_mem)
+        return(cpy)
 
     def info(self, verbose=None):
         if verbose == None: verbose = self.verbose
@@ -379,7 +382,7 @@ class DA():
         self.da = dd
         report_mem(start_mem)
 
-    def save(self, filename, verbose=None, use_dictionary=False,tempdir=None, zipopt=None):
+    def save(self, filename, verbose=None, sel=None, use_dictionary=False,tempdir=None, zipopt=None):
         """ Save as an npz file, using an incremental method, which
         only uses as much /tmp space as required by each var at a time.
         if use_dictionary is a valid dictionary, save the values of
@@ -421,10 +424,13 @@ class DA():
             print('Warning - saving only a subset')
 
 
-        use_keys = []
-        for k in self.da.keys():
-            if k in save_dict.keys():
-                use_keys.append(k)
+        if sel is not None:
+            use_keys = sel
+        else:
+            use_keys = []
+            for k in self.da.keys():
+                if k in save_dict.keys():
+                    use_keys.append(k)
 
         if verbose: print(' Saving only {k}'.format(k=use_keys))
 

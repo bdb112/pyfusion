@@ -94,6 +94,7 @@ maxline=None  # fold suptitle lines to be about this length
 # set uniform random_like this to test on uniformly distributed phases
 uniform_random = '2*np.pi*(np.random.random([int(1e6), 16])-0.5)'
 uniform_random = None
+num_bins=50   # number of bins in the histogram
 """
 exec(_var_defaults)
 from pyfusion.utils import process_cmd_line_args
@@ -217,7 +218,7 @@ for cl in cls:
 
     pl.figure(num='cl[{cl}] histo'.format(cl=cl))
     if clearfigs: pl.clf()
-    hst = pl.hist(dists(subset[clinds[cl][0]], ph5[:,sel]),50,log=True)
+    hst = pl.hist(dists(subset[clinds[cl][0]], ph5[:,sel]),num_bins,log=True)
     lines, excess = overlay_uniform_curve(hst, Nd = len(sel), 
                                           peak=1, background=1)
     pl.title('excess of {expc:.2g}% of {pc:.2g}% up to d_rms={d_big:.2g} rad'

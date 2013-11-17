@@ -145,4 +145,4 @@ history -s source $source_file $*
 
 echo Here are some relevant env vars
 env |grep PY
-ipython --pylab --profile pyfusion
+ipython --pylab='tk' --profile pyfusion

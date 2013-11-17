@@ -13,9 +13,10 @@ def askif(message, quiet=0):
     else: suffix = "continuing, set quiet=0 to stop..."
     if quiet==0: 
         ans = raw_input("Warning: {0}: {1}".format(message, suffix))
-        if len(ans) ==0 or ans[0].lower() != 'y':
+        if len(ans) ==0 or ans[0].lower() == 'n':
             raise LookupError(message)
-
+        elif ans[0] in '0123456789':
+            return(int(ans))
 
 class Mode():
     def __init__(self,name, N, NN, cc, csd, id=None, threshold=None, shot_list=[],MP2010_trick=False):
@@ -39,9 +40,11 @@ class Mode():
         self.num_set = 0  # these are counters used when classifying
         self.num_reset = 0
 
-    def store(self, dd, threshold=None,Nval=None,NNval=None,shot_list=None,quiet=0, mask=None):
-        """ store coarse and fine mode (N, NN) numbers according to a threshold std and an optional shot_list.  If None the internal shot_list is used.
-        which would have defaulted to [] at __init__
+    def store(self, dd, sel=None, threshold=None,Nval=None,NNval=None,shot_list=None,quiet=0, mask=None):
+        """ store coarse and fine mode (N, NN) numbers according to a threshold std and an optional shot_list.
+       If None the internal shot_list is used which would have defaulted to [] at __init__
+
+       sel selects the probes - if None, select all.
         """
         if shot_list == None: shot_list = self.shot_list
         if threshold == None: threshold=self.threshold
@@ -49,17 +52,34 @@ class Mode():
 
         if Nval==None: Nval = self.N
         if NNval==None: NNval = self.NN
-        if self.id in np.unique(dd['mode_id']): 
-            askif('mode_id {0} already used'.format(self.id),quiet=quiet)
+
+        uniq_modes = np.unique(dd['mode_id'][np.where(dd['mode_id']>=0)[0]])
+        if self.id is None:
+            if len(np.unique(dd['mode_id'])) == 0:
+                self.id = 100
+            else:
+                self.id = np.max(np.unique(dd['mode_id']))+1
+
+        while self.id in uniq_modes: 
+            new_num = askif('mode_id {0} already used in this data'
+                            'set - enter new number or y for next, n to abort '
+                            .format(self.id),quiet=quiet)
+            if newnum is None:  # none is the return from 'yes'
+                self.id = np.max(uniq_modes)+1
+            else: 
+                self.id = new_num
 
         if not(hasattr(dd['phases'],'std')):
             askif('convert phases to nd.array?',quiet=quiet)
             dd['phases'] = np.array(dd['phases'].tolist())
 
+        if sel is None: sel = np.arange(np.shape(dd['phases'])[1])
+
+
         if mask != None:
-            sd = self.std_masked(dd['phases'],mask=mask)
+            sd = self.std_masked(dd['phases'][:,sel],mask=mask)
         else:
-            sd = self.std(dd['phases'])
+            sd = self.std(dd['phases'][:,sel])
 
         w = np.where(sd<threshold)[0]
 
@@ -105,7 +125,7 @@ class Mode():
                      t=100*float(len(np.where(dd['N']>min(dd['N']))[0]))/len(dd['shot'])
                      ))
            
-    def storeM(self, dd, threshold=None,Mval=None,MMval=None,shot_list=None,quiet=0):
+    def storeM(self, dd, threshold=None,sel=None, Mval=None,MMval=None,shot_list=None,quiet=0):
         """ store coarse and fine mode (M, MM) numbers according to a threshold std and an optional shot_list.  If None the internal shot_list is used.
         which would have defaulted to [] at __init__
         """

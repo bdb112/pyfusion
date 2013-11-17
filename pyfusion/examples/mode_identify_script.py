@@ -1,4 +1,6 @@
 """
+This version is a memory hog - 9X , 5 modes took 90gB (14 Nov 2013)
+
 w=where(array(sd)<10)[0]
 for ii in decimate(w,limit=2000): pl.plot(dd["phases"][ii],'k',linewidth=0.02)
 mode.plot()
@@ -186,6 +188,7 @@ else:
 
 sd = mode.std(phases)
 
+#  generate mode number entries if not already there.
 for mname in 'N,NN,M,MM,mode_id'.split(','):
     if not(mname in dd.keys()):
         use_dtype=int16
@@ -198,8 +201,9 @@ tot_set, tot_reset = (0,0)
 
 
 for mode in mode_list:
-    if doN: mode.store(dd, threshold, mask=mask)
-    if doM: mode.storeM(dd, threshold)
+    # careful - better to use keywords than positional args
+    if doN: mode.store(dd, threshold=threshold, mask=mask, sel=sel)
+    if doM: mode.storeM(dd, threshold=threshold, sel=sel)
 
     tot_set   += mode.num_set
     tot_reset += mode.num_reset

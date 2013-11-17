@@ -48,5 +48,5 @@ def his(xa):
     xa = np.array(xa)
     for x in np.unique(xa):
         w = np.where(xa == x)[0]
-        print('{x:3d}: {nx:10d}  {fx:10.1f}%'.
+        print('{x:3d}: {nx:10d}  {fx:10.2f}%'.
               format(x = x+0, nx = len(w), fx=float(100*len(w))/len(xa)))

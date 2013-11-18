@@ -1,6 +1,21 @@
 import numpy as np
 import pylab as pl
 
+""" 
+17 Nov
+This version allows omitting channels by adding two differences.  
+This is accomplished by using a matrix for mask instead of a vector, allowing much more than just omission.
+
+Big change - the phases are passed directly - the calling routine does the masking both in mask and shot. Goes with mode_identify_script.py
+
+Example - adding two deltas (last two), and ignoring one(the first
+dot(array([200,1,20,20]), array([[0,1, 0, 0],[0,0, 1, 1]]).T)
+==> array([ 1, 40])
+This case illustrates matching with the entire cc
+If we want to  match with part of the cc, then we use csel=(vector)
+
+"""
+
 
 def twopi(x, offset=np.pi):
     return ((offset+np.array(x)) % (2*np.pi) -offset)
@@ -40,16 +55,16 @@ class Mode():
         self.num_set = 0  # these are counters used when classifying
         self.num_reset = 0
 
-    def store(self, dd, sel=None, threshold=None,Nval=None,NNval=None,shot_list=None,quiet=0, mask=None):
+    def store(self, phases, dd, inds, csel=None, mask=None, threshold=None,Nval=None,NNval=None,shot_list=None,quiet=0):
         """ store coarse and fine mode (N, NN) numbers according to a threshold
-        std a selection of channels and an optional shot_list.
+        std a selection of channels (mask) and an optional shot_list.
        If None the internal shot_list is used which would have been set or
        defaulted to [] at __init__
 
-       sel selects the probes - if None, select all.
+       mask selects the probes - if None, select all.
         """
         if shot_list == None: shot_list = self.shot_list
-        if threshold == None: threshold=self.threshold
+        if threshold == None: threshold = self.threshold
         else: self.threshold=threshold  # save the last manually set.
 
         if Nval==None: Nval = self.N
@@ -71,17 +86,14 @@ class Mode():
             else: 
                 self.id = new_num
 
-        if not(hasattr(dd['phases'],'std')):
+        if not(hasattr(phases,'std')):
             askif('convert phases to nd.array?',quiet=quiet)
-            dd['phases'] = np.array(dd['phases'].tolist())
+            phases = np.array(phases)
 
-        if sel is None: sel = np.arange(np.shape(dd['phases'])[1])
+        if mask is None: mask = np.identity(np.shape(phases)[1])
+        if csel is None: csel = np.arange(len(self.cc))
 
-
-        if mask != None:
-            sd = self.std_masked(dd['phases'][:,sel],mask=mask)
-        else:
-            sd = self.std(dd['phases'][:,sel])
+        sd = self.std(phases, csel=csel, mask=mask)
 
         w = np.where(sd<threshold)[0]
 
@@ -91,8 +103,8 @@ class Mode():
                              # two shot_list's one in mode, one input here
             where_in_shot = []
             for sht in shot_list:
-                ws = np.where(dd['shot'][w] == sht)[0]
-                where_in_shot.extend(w[ws])
+                ws = np.where(dd['shot'][inds[w]] == sht)[0]
+                where_in_shot.extend(w[ws])  # relative to inds
             # this unique should not be required, but if the above logic
             # is changed, it might
             w = np.unique(where_in_shot)    
@@ -103,9 +115,9 @@ class Mode():
                   .format(th=threshold, m=self.name, sd=1*np.min(sd))) # format bug fix
             return()
 
-        w_already = np.where(dd['NN'][w]>=0)[0]
+        w_already = np.where(dd['NN'][inds[w]]>=0)[0]
         if len(w_already)>0:
-            (cnts,bins) = np.histogram(dd['NN'][w], np.arange(-0.5,1.5+max(dd['NN'][w]),1))
+            (cnts,bins) = np.histogram(dd['NN'][inds[w]], np.arange(-0.5,1.5+max(dd['NN'][inds[w]]),1))
             amx = np.argsort(cnts)
             print("NN already set in {0}/{1} locations {2:.1f}% of all data"
                   .format(len(w_already), len(w),
@@ -119,15 +131,17 @@ class Mode():
         self.num_set += len(w)
         self.num_reset += len(w_already)
 
-        dd['NN'][w]=NNval
-        dd['N'][w]=Nval
-        dd['mode_id'][w]=self.id
+        dd['NN'][inds[w]]=NNval
+        dd['N'][inds[w]]=Nval
+        dd['mode_id'][inds[w]]=self.id
         print("N={N}: set {s:.1f}%, total N set is now {t:.1f}%".
               format(s=100*float(len(w))/len(dd['shot']),N=Nval,
                      t=100*float(len(np.where(dd['N']>min(dd['N']))[0]))/len(dd['shot'])
                      ))
            
-    def storeM(self, dd, threshold=None,sel=None, Mval=None,MMval=None,shot_list=None,quiet=0):
+    def storeM(self, dd, threshold=None, mask=None, Mval=None,MMval=None,shot_list=None,quiet=0):
+        raise ValueError('Not updated to phases as a var yet')
+        
         """ store coarse and fine mode (M, MM) numbers according to a threshold std and an optional shot_list.  If None the internal shot_list is used.
         which would have defaulted to [] at __init__
         """
@@ -188,19 +202,22 @@ class Mode():
                      t=100*float(len(np.where(dd['M']>=0)[0]))/len(dd['shot'])
                      ))
            
-    def plot(self, axes=None, label=None, color=None, suptitle=None, **kwargs):
+    def plot(self, axes=None, label=None, csel=None, color=None, suptitle=None, **kwargs):
+        """ plot a mode showing its SD as error bars
+        """
+        if csel is None: csel = np.arange(len(self.cc))
         if suptitle==None:
             pl.suptitle("{0}, cc={1} sd={2} ".
-                        format(self.name,self.cc,self.csd))               
+                        format(self.name,self.cc[csel],self.csd[csel]))               
 
-        xd = np.arange(len(self.cc))
+        xd = np.arange(len(self.cc[csel]))
         #pl.plot(xd, self.cc, label=self.name, **kwargs)
         if axes != None: ax = axes
         else: ax=pl.gca()
         if label == None: label =self.name
-        ax.plot(xd, self.cc,label=label, color=color, **kwargs)
+        ax.plot(xd, self.cc[csel],label=label, color=color, **kwargs)
         current_color = ax.get_lines()[-1].get_color()
-        ax.errorbar(xd, self.cc, self.csd, ecolor=current_color, color=current_color,**kwargs)
+        ax.errorbar(xd, self.cc[csel], self.csd[csel], ecolor=current_color, color=current_color,**kwargs)
         ax.set_xlim(xd[0]-0.1,xd[-1]+.1)
 
     def hist(self, phases, first_std, NDim=None, n_bins=20, n_iters=10, histtype='bar',linewidth=None, equal_bins=False):
@@ -250,13 +267,15 @@ class Mode():
         """
         return(np.sqrt(np.average((twopi(self.cc-phases)/self.csd)**2)))
 
-    def std(self, phase_array):
+    def old_std(self, phase_array, mask=None):
         """ Return the standard deviation normalised to the cluster sds
             a point right on the edge of each sd would return 1
             Need to include a mask to allow dead probes to be ignored
 
             the following should return [1.,0.5]
             ml[0].std(array([ml[0].cc+ml[0].csd,ml[0].cc+0.5*ml[0].csd]))
+            masl selects the channels, but only for the modes - the phases
+            data is already selected.
         """
         if not(hasattr(phase_array, 'std')):
             print('make phase_array into an np arry to speed up 100x')
@@ -267,19 +286,29 @@ class Mode():
         sq = (twopi(phase_array-cc)/csd)**2
         return(np.sqrt(np.average(sq,1)))
 
-    def std_masked(self, phase_array, mask=None):
+    def std(self, phase_array, csel=None, mask=None):
         """ Return the standard deviation normalised to the cluster sds
             a point right on the edge of each sd would return 1
-            Innclude a mask to allow dead probes to be ignored
+            mask replaced by the mask matrix to allow dead probes to be ignored
+            or compbined with others
+
+            the following should return [1.,0.5]
+            ml[0].std(array([ml[0].cc+ml[0].csd,ml[0].cc+0.5*ml[0].csd]))
+            mask selects the channels, but only for the modes - the phases
+            data is already selected.
         """
-        if mask is None: mask=np.arange(len(self.cc))
+        if mask is None: mask=np.identity(len(self.cc))
+        if csel is None: csel = np.arange(len(self.cc))
 
         if not(hasattr(phase_array, 'std')):
             print('make phase_array into an np array to speed up 100x')
             phase_array = np.array(phase_array.tolist())
 
-        cc = np.tile(self.cc[mask], (np.shape(phase_array)[0],1))
-        csd = np.tile(self.csd[mask], (np.shape(phase_array)[0],1))
-        sq = (twopi(phase_array[:,mask]-cc)/csd)**2
+        cc_t = np.tile((np.dot(self.cc[csel],mask)),
+                     (np.shape(phase_array)[0],1))
+        # for csd, sqrt sum squares.
+        csd_t = np.tile(np.sqrt(np.dot(self.csd[csel]**2,mask)),
+                      (np.shape(phase_array)[0],1))
+        sq = (twopi(phase_array-cc_t)/csd_t)**2
         return(np.sqrt(np.average(sq,1)))
 

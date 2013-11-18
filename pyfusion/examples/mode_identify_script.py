@@ -1,5 +1,28 @@
 """
-This version is just before allowing for omitting one probe.
+This version is the first to allow omitting one or more probes.  Use
+a matrix or vector for mask, which does the job of the old sel.
+
+Tests:
+run -i pyfusion/examples/mode_identify_script.py doN=True DA_file='DA65MP2010HMPno612b5_M_N_fmax.npz' sel=np.arange(11,16)   #  Total set = 8450, reset = 2055
+run -i pyfusion/examples/mode_identify_script.py doN=True csel=[1,2] sel=[11,12]  #  Total set = 22550, reset = 2748
+
+# "straigthforward" usage - add last two together, (eliminate 2nd last (MP5)) cluster on that.
+run -i pyfusion/examples/mode_identify_script.py doN=True mask=array([[1,0,0,0,0],[0,1,0,0,0],[0,0,1,0,0],[0,0,0,1,1]]).T
+
+# again (MP5) on 86200...
+run -i pyfusion/examples/mode_identify_script.py DA_file='/data/datamining/DA86200_86600_sml.npz' doN=True  mask=array([[1,0,0,0,0],[0,1,0,0,0],[0,0,1,0,0],[0,0,0,1,1]]).T
+
+# this one tries to close around MP1-MP6
+run -i pyfusion/examples/mode_identify_script.py sel=arange(10,16) doN=True mask=array([[1,0,0,0,0],[0,1,0,0,0],[0,0,1,0,0],[0,0,0,1,0],[0,0,0,0,1],[-1,-1,-1,-1,-1]]).T csel=[0,1,2,3,4] sel=range(11,16)
+
+figure()
+w=where(dd['N']==-1)[0]
+plot modtwopi(sum(phases[w],1),offset=0),'.',alpha=.05
+w=where(dd['N']==1)[0]
+plot modtwopi(sum(phases[w],1),offset=0),'.',alpha=.05
+w=where(dd['N']==3)[0]
+plot modtwopi(sum(phases[w],1),offset=-2),'.',alpha=.05
+
 
 This version is a memory hog - 9X , 5 modes took 90gB (14 Nov 2013)
 Maybe the same techniques as used in cluster_phases_three_colour.py will help.
@@ -15,7 +38,7 @@ ml = co.make_mode_list(min_kappa=3.5)
 from pyfusion.data.DA_datamining import DA, report_mem
 DA233=DA(DA_file,load=1)
 dd=DA233.da.copy()  # use copy here to allow re-runs 
-run -i pyfusion/examples/mode_identify_script.py doN=1 sel=arange(0,6) threshold=1 mode_list=ml
+run -i pyfusion/examples/mode_identify_script.py doN=1 mask=arange(0,6) threshold=1 mode_list=ml
 from pyfusion.data.convenience import between, bw, btw, decimate, his, broaden
 his NN
 
@@ -160,7 +183,7 @@ for i in range(10):
     N=i-5
     ideal_modes.append(Mode('N={N}'.format(N=N),N=N, NN=i*(100), cc=ideal[i], csd=0.5*np.ones(len(ideal[0]))))
 
-ind = None
+inds = None
 mode_list = MP2010
 mode_list = ideal_modes
 mode=None
@@ -170,11 +193,15 @@ doM = False
 doN = False
 clear_modes=True    # silently remove all mode keys if any
 sel = np.arange(11,16)
+mask = None # mask is relative to the selected ones defaults to  np.identity(len(sel))
+csel=np.arange(len(sel))
 DA_file='DA65MP2010HMPno612b5_M_N_fmax.npz'
 #DA_file=None
 
 import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
+
+if mask is None: mask = np.identity(len(sel))
 
 if DA_file is not None:
     from pyfusion.data.DA_datamining import DA, report_mem
@@ -182,9 +209,11 @@ if DA_file is not None:
     dd=thisDA.copyda()
 
 if clear_modes:
+    old_modes = {}
     print('clearing modes')
-    for key in 'N,NN,M,MM,indx,mode_id':
-        dd.pop(key,None)   #clear all the mode keys
+    for key in 'N,NN,M,MM,indx,mode_id'.split(','):
+        #print(key, len(dd[key]))
+        old_modes.update({key: dd.pop(key,None)})   #clear all the mode keys
 
 if not hasattr(dd,'has_key'):
     raise LookupError("dd not loaded into memory - can't store")
@@ -192,17 +221,20 @@ if not hasattr(dd,'has_key'):
 if mode==None: mode = mode_list[0]
 if not(doM) and not(doN): raise ValueError('Need to choose doN=True and/or doM=True')
 
-if ind == None: ind = np.arange(len(dd['shot']))
-# the form phases = dd['phases'][ind,11:16] consumes less memory
+if inds == None: inds = np.arange(len(dd['shot']))
+# the form phases = dd['phases'][inds,11:16] consumes less memory
 if (sel is not None) and  (np.average(np.diff(sel))==1):   # smarter version
-    phases = dd['phases'][ind,sel[0]:sel[-1]+1]
+    phases = dd['phases'][inds,sel[0]:sel[-1]+1]
 else:
-    phases = dd["phases"][ind]
+    phases = dd["phases"][inds]
     if sel is not None:
         phases = phases.T[sel].T
 #phases = np.array(phases.tolist())
 
-sd = mode.std(phases)
+if (np.shape(mask) != np.shape(identity(len(sel)))) or (mask != identity(len(sel))).any():
+    phases = np.dot(phases, mask)
+
+sd = mode.std(phases, csel=csel, mask=mask)
 
 #  generate mode number entries if not already there.
 for mname in 'N,NN,M,MM,mode_id'.split(','):
@@ -218,8 +250,9 @@ tot_set, tot_reset = (0,0)
 
 for mode in mode_list:
     # careful - better to use keywords than positional args
-    if doN: mode.store(dd, threshold=threshold, mask=mask, sel=sel)
-    if doM: mode.storeM(dd, threshold=threshold, sel=sel)
+    if doN: mode.store(phases=phases, dd=dd, inds=inds, threshold=threshold, csel=csel, mask=mask)
+    if doM: mode.storeM(phases=phases, dd=dd, inds=inds, threshold=threshold, csel=csel, mask=mask)
+
 
     tot_set   += mode.num_set
     tot_reset += mode.num_reset
@@ -234,7 +267,7 @@ sdred = []
 
 sh = []
 amp = []
-ind = []
+inds = []
 #arr=loadtxt('MP_27233_cf_syama.txt',skiprows=4)
 # arr=loadtxt('MP512all.txt',skiprows=4)
 # read in the delta phases from the aggregated pyfusion database
@@ -248,7 +281,7 @@ ind = []
 #skip=4
 hold=1
 dt=140e-6
-ind = None
+inds = None
 mode=redlow
 
 import pyfusion.utils
@@ -259,10 +292,10 @@ exec(pyfusion.utils.process_cmd_line_args())
 
 #execfile("./examples/plot_text_pyfusion.py") 
 
-if ind == None: ind = arange(len(dd['shot']))
-phases = dd["phases"][ind]
+if inds == None: inds = arange(len(dd['shot']))
+phases = dd["phases"][inds]
 
-for i in ind:
+for i in inds:
     if (i % 100000) == 0: print(i),
     sd.append(sum((twopi(dd["phases"][i]-mode.cc)/mode.csd)**2))
     sh.append(dd["shot"][i])

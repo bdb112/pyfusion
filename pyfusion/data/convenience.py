@@ -1,4 +1,6 @@
 import numpy as np
+import os
+
 def broaden(inds, data=None, dw=1):
     """ broaden a set of indices or data in width by dw each side """
     # 
@@ -40,7 +42,7 @@ def decimate(data, limit=None, fraction=None):
         step = np.max([int(len(data)/limit),1])
     return(np.array(data)[np.arange(0,len(data), step)])        
 
-def his(xa):
+def his(xa, tabs=False):
     """ print the counts and fraction of xa binned as integers
     """
     #    xmin = np.nanmin(xa)
@@ -48,5 +50,11 @@ def his(xa):
     xa = np.array(xa)
     for x in np.unique(xa):
         w = np.where(xa == x)[0]
-        print('{x:3d}: {nx:10d}  {fx:10.2f}%'.
-              format(x = x+0, nx = len(w), fx=float(100*len(w))/len(xa)))
+        # fails to generate tabs - is it the terminal software?
+        if tabs:
+            fmt = '{x:3d}:\t{nx:10d}\t{fx:10.2f}%\n'
+        else:
+            fmt = '{x:3d}: {nx:10d}  {fx:10.2f}%\n'
+        os.write(1,fmt.
+                 format(x = x+0, nx = len(w), 
+                        fx=float(100*len(w))/len(xa)))

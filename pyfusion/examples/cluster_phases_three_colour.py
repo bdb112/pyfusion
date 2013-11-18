@@ -3,7 +3,9 @@
  lenny 16  42/16 (3threads)
        32  47/13.4 3 threads
 
-To change clusters centre to the value calculated
+Use the cluster output from density clustering to cluster mode data
+Presently works on the cluster lead (the most common element in the cluster)
+To change cluster lead to the value calculated:
        subset[clinds[cl][0]][:]=cc5[0]
 
 """
@@ -79,7 +81,7 @@ def overlay_uniform_curve(hst, Nd, peak=1, background=0, colors=['r','g'], debug
 
 _var_defaults="""
 sel=None      # operates on phase data
-subsel=None   # operates on cluster data
+csel=None   # operates on cluster data  (previously 'subsel')
 cl = 18
 show_cc=True  # show cluster (not actually centroid - just first elt of cluster
 show_dc=True # show data centroid
@@ -118,8 +120,8 @@ except:
     da.extract(locals(),'shot,phases,beta,freq,frlow,frhigh,t_mid,amp,a12')
     print('loading {f}'.format(f=clusterfile))
 
-    if (sel is not None) and (subsel is not None) and len(subsel) != len(sel):
-        raise ValueError('sel and subsel must have the same length')
+    if (sel is not None) and (csel is not None) and len(csel) != len(sel):
+        raise ValueError('sel and csel must have the same length')
 
 try:
     cldata
@@ -137,8 +139,8 @@ except:
         warn('sel value tried to change from {o} to {n}'.
              format(o=oldsel, n=sel))
         sel = oldsel
-    if subsel is not None:
-        subset=subset[:,subsel]
+    if csel is not None:
+        subset=subset[:,csel]
 # this contrivance allows us to test on uniformly distributed phases
 if uniform_random is not None:
     print('evaluating {ur}'.format(ur=uniform_random))

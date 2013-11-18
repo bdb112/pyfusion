@@ -38,8 +38,8 @@ try:
         """
         if msg is None: msg=''
         else: msg += ': '
-        pm = psutil.avail_phymem()
-        vm = psutil.avail_virtmem()
+        pm = psutil.phymem_usage().free # was .avail_phymem()
+        vm =psutil.virtmem_usage().free # avail_virtmem()
         tim = seconds()
         print('{msg}{pm:.2g} GB phys mem, {vm:.2g} GB virt mem avail'
               .format(msg=msg, pm=pm/1e9, vm=vm/1e9)),
@@ -382,7 +382,7 @@ class DA():
         self.da = dd
         report_mem(start_mem)
 
-    def save(self, filename, verbose=None, sel=None, use_dictionary=False,tempdir=None, zipopt=None):
+    def save(self, filename, verbose=None, sel=None, use_dictionary=False,tempdir=None, zipopt=-1):
         """ Save as an npz file, using an incremental method, which
         only uses as much /tmp space as required by each var at a time.
         Select which to save with sel: if sel is None, save all except
@@ -402,6 +402,7 @@ class DA():
         reload tempfile
         tempfile.gettempdir()
         also ('ZIPOPT','"-1"')  (Now incorporated into args, not tested)
+        ** superseded by zlib.Z_DEFAULT_COMPRESSION 0--9  (or -1 for default)
         """
         if verbose == None: verbose = self.verbose
         st = seconds()
@@ -415,10 +416,13 @@ class DA():
                 warn('failed to set tempdir = {t}: Value is {v}'
                      .format(t=tempdir, v=tempfile.gettempdir()))
 
-        if zipopt is not None:
-            import os
-            print('overriding default zip compression to {z}'.format(z=zipopt))
-            os.environ.__setitem__('ZIPOPT', str(zipopt))
+        import zlib
+        zlib.Z_DEFAULT_COMPRESSION = int(zipopt)
+        #""" now obsolete zipfile calls zlin with Z_DEFAULT_COMPRESION arg
+        #import os
+        #print('overriding default zip compression to {z}'.format(z=zipopt))
+        #os.environ.__setitem__('ZIPOPT', str(zipopt))
+        #"""
 
         if use_dictionary == False: 
             save_dict = self.da # the dict used to get data

@@ -10,7 +10,7 @@ debug=0
 
 
 def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=None,
-       size_scale=None, dot_size=30, hold=0, seed=None, colorbar=None, legend=True, marker='o'):
+       size_scale=None, dot_size=30, hold=0, seed=None, colorbar=None, legend=True, marker='o',**kwargs):
     """ Scatter plot front end, size_scale 
     x, y, sz, col can be keys or variables (of matching size to ds)
     decimate = 0.1 selects 10% of the input, -0.1 uses a fixed key. 
@@ -122,7 +122,7 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
     debug_(debug,3)
 
     if hold==0: pl.clf()    
-    coll = pl.scatter(x[ind],y[ind],sz,col, hold=hold,marker=marker,label='')
+    coll = pl.scatter(x[ind],y[ind],sz,col, hold=hold,marker=marker,label='',**kwargs)
 #    pl.legend(coll   # can't select an element out of a CircleCollection
     sizes = coll.get_sizes()
     max_size=max(sizes)

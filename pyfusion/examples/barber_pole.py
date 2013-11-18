@@ -25,7 +25,11 @@ def eff(th, phH):
 phi, theta = np.mgrid[-.5: .5: res*1j, 0: 1: 2*res*1j]
 wave = np.cos(2*pi*M*theta - 2*pi*N*phi)
 pl.imshow(wave, extent = [np.min(phi), np.max(phi), np.min(theta), np.max(theta)],hold=hold)
-pl.bone
+#if cm is None: 
+#    cm = pl.jet
+#cm()
+pl.title('N={N}, M={M}'.format(N=N, M=M))
+pl.show()
 
 MPPhi = np.array([ 0.31415927,  1.57079633,  2.19911486,  3.45575192,  4.71238898, 5.96902604])
 MPTheta = np.array([ 1.70571028,  1.70571028,  1.70571028,  1.70571028,  1.70571028, 1.70571028])

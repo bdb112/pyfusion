@@ -176,12 +176,6 @@ MP2010.append(Mode('N~0',N=0, NN=0, cc=[-0.829, -0.068, -0.120, 0.140, -0.032],c
 # and this from the other ones (N ~ -1)
 MP2010.append(Mode('N=-1',N=-1, NN=-101, cc=[-0.454, -0.775, -1.348, -1.172, -1.221],  csd=[ 3, 0.071, 0.048, 0.133, 0.113]))
 
-ideal_modes=[]
-ideal = np.load('ideal_toroidal_modes.npz')['subset']
-ideal = ideal[:,np.arange(5)]  # need to adjust
-for i in range(10):
-    N=i-5
-    ideal_modes.append(Mode('N={N}'.format(N=N),N=N, NN=i*(100), cc=ideal[i], csd=0.5*np.ones(len(ideal[0]))))
 
 inds = None
 mode_list = MP2010
@@ -197,8 +191,19 @@ mask = None # mask is relative to the selected ones defaults to  np.identity(len
 csel=np.arange(len(sel))
 DA_file='DA65MP2010HMPno612b5_M_N_fmax.npz'
 #DA_file=None
+ideal_sd = 0.5
 
 import pyfusion.utils
+exec(pyfusion.utils.process_cmd_line_args())
+
+ideal_modes=[]
+ideal = np.load('ideal_toroidal_modes.npz')['subset']
+ideal = ideal[:,np.arange(5)]  # need to adjust
+for i in range(10):
+    N=i-5
+    ideal_modes.append(Mode('N={N}'.format(N=N),N=N, NN=i*(100), cc=ideal[i], csd=ideal_sd*np.ones(len(ideal[0]))))
+
+# repeat so we can tune ideal modes
 exec(pyfusion.utils.process_cmd_line_args())
 
 if mask is None: mask = np.identity(len(sel))

@@ -8,10 +8,18 @@ def broaden(inds, data=None, dw=1):
     inds_new = np.unique(np.concatenate([inds[1:]-1,inds,inds[0:-1]+1]))
     return(inds_new)
 
-def between(var, lower, upper, closed=True):
+def between(var, lower, upper=None, closed=True):
     """ return whether var is between lower and upper 
     includes end points if closed=True
+    alternative call is between(var, range)   e.g. between(x, [1, 2])
     """
+    if len(np.shape(lower))>0:
+        if upper is None:
+            upper = lower[1]
+            lower = lower[0]
+        else:
+            raise ValueError(' if arg 2 is a range, arg3 must not be given')
+
     if len(np.shape(var)) == 0:
         if closed:
             return ((var >= lower) & (var <= upper))
@@ -50,11 +58,12 @@ def his(xa, tabs=False):
     xa = np.array(xa)
     for x in np.unique(xa):
         w = np.where(xa == x)[0]
-        # fails to generate tabs - is it the terminal software?
+        # fails to generate tabs - is it the terminal software that detabifies?
+        # Use a single space instead - soffice doesn't combine spaces.
         if tabs:
-            fmt = '{x:3d}:\t{nx:10d}\t{fx:10.2f}%\n'
+            fmt = '{x:0d}: {nx:0d} {fx:.2f}%\n'
         else:
-            fmt = '{x:3d}: {nx:10d}  {fx:10.2f}%\n'
-        os.write(1,fmt.
+            fmt = '{x:0d}: {nx:10d}  {fx:10.2f}%\n'
+        os.write(1,fmt.          # I had hoped os.write would be "raw" - but not
                  format(x = x+0, nx = len(w), 
                         fx=float(100*len(w))/len(xa)))

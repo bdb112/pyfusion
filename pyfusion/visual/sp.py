@@ -10,7 +10,8 @@ debug=0
 
 
 def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=None,
-       size_scale=None, dot_size=30, hold=0, seed=None, colorbar=None, legend=True, marker='o',**kwargs):
+       size_scale=None, dot_size=30, hold=0, seed=None, colorbar=None, 
+       dither=0, legend=True, marker='o',**kwargs):
     """ Scatter plot front end, size_scale 
     x, y, sz, col can be keys or variables (of matching size to ds)
     decimate = 0.1 selects 10% of the input, -0.1 uses a fixed key. 
@@ -18,6 +19,8 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
     1: Exploit the flexible colour and size of scatter
     2: flexible inputs via string names or by arrays
     3: Treat mode numbers specially to suppress "undefined" mode numbers
+    dither 0: no effect
+    -ve random seed,  +ve repeated seed
     """
     def size_val(marker_size):
         if size_scale<0: 
@@ -95,6 +98,15 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
             # shrink ind further to avoid displaying unidentified modes
     ind = ind[w_not_nomode]
     col = col[w_not_nomode]
+
+    if dither != 0:  # 
+        if dither>0:
+            np.random.seed(0)
+        xdither = dither*(np.max(x) - np.min(x))
+        ydither = dither*(np.max(y) - np.min(y))
+
+        x = x + xdither * (np.random.random(len(x))-0.5)
+        y = y + ydither * (np.random.random(len(x))-0.5)
 
     if sz == None: sz=20 * np.ones(len(x))
     if pl.is_string_like(sz): 

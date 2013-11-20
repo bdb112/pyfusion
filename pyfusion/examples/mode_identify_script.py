@@ -176,15 +176,29 @@ MP2010.append(Mode('N~0',N=0, NN=0, cc=[-0.829, -0.068, -0.120, 0.140, -0.032],c
 # and this from the other ones (N ~ -1)
 MP2010.append(Mode('N=-1',N=-1, NN=-101, cc=[-0.454, -0.775, -1.348, -1.172, -1.221],  csd=[ 3, 0.071, 0.048, 0.133, 0.113]))
 
+def make_ideal_modes(filename='ideal_toroidal_modes.npz', ideal_sd=0.5, sel = None):
+    """ 
+    sel    default to selecting MP2-MP1 ... MP6-MP5
+    """
+    if sel is None: sel = np.arange(5)
+    ideal = np.load(filename)['subset']
+    ideal = ideal[:,sel]
+    ideal_modes=[]
+    for i in range(10):
+        N=i-5
+        ideal_modes.append(Mode('N={N}'.format(N=N),N=N, NN=i*(100), cc=ideal[i], csd=ideal_sd*np.ones(len(ideal[0]))))
 
+    return(ideal_modes)
+
+_var_default="""
 inds = None
-mode_list = MP2010
-mode_list = ideal_modes
+mode_list=None   # should always specify mode list in command line
 mode=None
 threshold=None
 mask=None
 doM = False
 doN = False
+verbose=1
 clear_modes=True    # silently remove all mode keys if any
 sel = np.arange(11,16)
 mask = None # mask is relative to the selected ones defaults to  np.identity(len(sel))
@@ -192,30 +206,29 @@ csel=np.arange(len(sel))
 DA_file='DA65MP2010HMPno612b5_M_N_fmax.npz'
 #DA_file=None
 ideal_sd = 0.5
+"""
 
 import pyfusion.utils
+exec(_var_default)
 exec(pyfusion.utils.process_cmd_line_args())
 
-ideal_modes=[]
-ideal = np.load('ideal_toroidal_modes.npz')['subset']
-ideal = ideal[:,np.arange(5)]  # need to adjust
-for i in range(10):
-    N=i-5
-    ideal_modes.append(Mode('N={N}'.format(N=N),N=N, NN=i*(100), cc=ideal[i], csd=ideal_sd*np.ones(len(ideal[0]))))
+ideal_modes = make_ideal_modes(ideal_sd=ideal_sd)
+if mode_list is None:
+    mode_list = ideal_modes
 
-# repeat so we can tune ideal modes
+# repeat so we can tune ideal modes, or use a different set of modes
 exec(pyfusion.utils.process_cmd_line_args())
 
 if mask is None: mask = np.identity(len(sel))
 
-if DA_file is not None:
+if DA_file is not None and DA_file != 'None':
     from pyfusion.data.DA_datamining import DA, report_mem
     thisDA=DA(DA_file, load=1)
     dd=thisDA.copyda()
 
 if clear_modes:
     old_modes = {}
-    print('clearing modes')
+    if verbose>0: print('clearing modes')
     for key in 'N,NN,M,MM,indx,mode_id'.split(','):
         #print(key, len(dd[key]))
         old_modes.update({key: dd.pop(key,None)})   #clear all the mode keys
@@ -236,8 +249,12 @@ else:
         phases = phases.T[sel].T
 #phases = np.array(phases.tolist())
 
+if verbose>0: start_mem = report_mem(msg='phases selected')
+
 if (np.shape(mask) != np.shape(identity(len(sel)))) or (mask != identity(len(sel))).any():
     phases = np.dot(phases, mask)
+
+if verbose>0: report_mem(start_mem, msg='phases masked')
 
 sd = mode.std(phases, csel=csel, mask=mask)
 

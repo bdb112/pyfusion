@@ -38,8 +38,19 @@ try:
         """
         if msg is None: msg=''
         else: msg += ': '
-        pm = psutil.phymem_usage().free # was .avail_phymem()
-        vm =psutil.virtmem_usage().free # avail_virtmem()
+        if type(prev_values) == type(''):  # catch error in prev_values
+            msg += prev_values
+            prev_values = None
+            print('need msg= in call to report_mem')
+
+        # available in linux is free + buffers + cached
+        if hasattr(psutil,'swap_memory'):  # new version (0.7+)
+            pm = psutil.virtual_memory().available     # was psutil.avail_phymem()
+            vm =  psutil.swap_memory().free            # was psutil.avail_virtmem()
+        else:
+            pm = psutil.phymem_usage().free # was .avail_phymem()
+            vm =psutil.virtmem_usage().free # avail_virtmem()
+
         tim = seconds()
         print('{msg}{pm:.2g} GB phys mem, {vm:.2g} GB virt mem avail'
               .format(msg=msg, pm=pm/1e9, vm=vm/1e9)),
@@ -396,7 +407,7 @@ class DA():
         Beware locals that are not your variables - e.g. mtrand.beta
         To avoid running out of space on tmp, or to speed up zip - 
         Now included as an argument
-        (Note that the normal os.putenv() doesn't seem to write
+        (Note that the normal os.putenv() doesn't seem to write to
         THIS environment use the fudge below - careful - no guarantees)
         os.environ.__setitem__('TMPDIR',os.getenv('HOME'))
         reload tempfile

@@ -278,11 +278,12 @@ class Mode():
             data is already selected.
         """
         if not(hasattr(phase_array, 'std')):
-            print('make phase_array into an np arry to speed up 100x')
+            print('make phase_array into an np.array to speed up 100x')
             phase_array = np.array(phase_array.tolist())
 
-        cc = np.tile(self.cc, (np.shape(phase_array)[0],1))
-        csd = np.tile(self.csd, (np.shape(phase_array)[0],1))
+        phstype = type(phase_array[0][0])     # maybe less of a memory hog if we use the same type as phases
+        cc = np.tile(self.cc.astype(phstype), (np.shape(phase_array)[0],1))
+        csd = np.tile(self.csd.astype(phstype), (np.shape(phase_array)[0],1))
         sq = (twopi(phase_array-cc)/csd)**2
         return(np.sqrt(np.average(sq,1)))
 

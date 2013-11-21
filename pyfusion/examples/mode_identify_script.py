@@ -224,12 +224,13 @@ if mask is None: mask = np.identity(len(sel))
 if DA_file is not None and DA_file != 'None':
     from pyfusion.data.DA_datamining import DA, report_mem
     thisDA=DA(DA_file, load=1)
-    dd=thisDA.copyda()
+    # wasteful for large files: dd=thisDA.copyda()
+    dd = thisDA.da
 
 if clear_modes:
     old_modes = {}
     if verbose>0: print('clearing modes')
-    for key in 'N,NN,M,MM,indx,mode_id'.split(','):
+    for key in 'N,NN,M,MM,mode_id'.split(','):
         #print(key, len(dd[key]))
         old_modes.update({key: dd.pop(key,None)})   #clear all the mode keys
 

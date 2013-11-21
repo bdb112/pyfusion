@@ -58,7 +58,7 @@ def his(xa, tabs=False):
     xa = np.array(xa)
     for x in np.unique(xa):
         w = np.where(xa == x)[0]
-        # fails to generate tabs - is it the terminal software that detabifies?
+        # fails to generate tabs (\t)- is it the terminal software that detabifies?
         # Use a single space instead - soffice doesn't combine spaces.
         if tabs:
             fmt = '{x:0d}: {nx:0d} {fx:.2f}%\n'

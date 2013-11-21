@@ -53,9 +53,12 @@ class LHDTimeseriesDataFetcher(LHDBaseDataFetcher):
         filename_dict = {'diag_name':chan_name, 
                          'shot':self.shot}
 
-        self.basename = path.join(pf.config.get('global', 'localdatapath'), data_filename %filename_dict)
+        for each_path in pf.config.get('global', 'localdatapath').split(':'):
+            self.basename = path.join(each_path, data_filename %filename_dict)
     
-        files_exist = path.exists(self.basename)
+            files_exist = path.exists(self.basename)
+            if files_exist: continue
+
         if not files_exist:
             raise Exception, "file " + self.basename + " not found."
         else:

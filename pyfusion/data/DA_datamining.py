@@ -66,6 +66,39 @@ except None:
     def report_mem(prev_values=None, msg=None):
         return((None, None))
     
+def append_to_DA(filename, dic, force=False):
+    """ open filename with mode=a, after checking if the indx variables align
+    force=1 ignores checks for consistent length c.f. the var shot
+    Not a member of the class DA, because the class has memory copies of the
+    file, so it would be confusing.
+    """
+    import zipfile, os
+    import pyfusion
+    dd = np.load(filename)
+    error = None
+    if 'indx' in dd.keys() and 'indx' in dic.keys():
+        check = dd['indx']
+        if (dic['indx']!=check).all():
+            error=('mismatched indx vars in ' + filename)
+
+    else:
+        print('indx missing from one or both dictionaries - just checking size')
+        check=dd['shot']
+        if (len(check) != len(dd[dd.keys()[0]])):
+            error=('mismatched var lengths in ' + filename)
+
+    if error is not None:
+        if force:  warn(error)
+        else:      raise ValueError(error)
+
+    zf = zipfile.ZipFile(filename,mode='a')
+    tmp =  pyfusion.config.get('global', 'my_tmp')
+    for key in dd.keys():
+        tfile = tmp+'/'+ key+'.npy'
+        np.save(tfile, dd[key])
+        zf.write(tfile,arcname=key)
+        os.remove(tfile)
+    zf.close()
 
 class DA():
     """ class to handle and save data in a dictionary of arrays

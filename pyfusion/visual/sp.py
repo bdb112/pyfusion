@@ -90,9 +90,9 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
             nomode = minint
         else:
             if len(col) != 0:
-                nomode = dp.iinfo(col[0]).min
+                nomode = np.iinfo(col[0]).min
             else:
-                nomode = dp.iinfo(col).min
+                nomode = np.iinfo(col).min
 
     w_not_nomode = np.where(nomode != col)[0]
             # shrink ind further to avoid displaying unidentified modes

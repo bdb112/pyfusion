@@ -11,6 +11,6 @@ exec(_var_defaults)
 from  pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
-h1=pyfusion.getDevice(dev_name)
-data=h1.acq.getdata(shot_number,diag_name)
+dev = pyfusion.getDevice(dev_name)
+data = dev.acq.getdata(shot_number,diag_name)
 data.plot_signals()

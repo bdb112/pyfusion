@@ -2,9 +2,11 @@ import pyfusion
 import numpy as np
 import pylab as pl
 from pyfusion.utils import fix2pi_skips, modtwopi
+diag_name = 'VSL_SMALL'
+diag_name = 'MP'
 
 dev=pyfusion.getDevice("LHD")
-data=dev.acq.getdata(27233,'MP')
+data=dev.acq.getdata(27233,diag_name)
 #data.plot_signals()
 Phi = np.array([2*np.pi/360*float(pyfusion.config.get
                                   ('Diagnostic:{cn}'.

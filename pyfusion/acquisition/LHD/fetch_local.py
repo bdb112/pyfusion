@@ -3,6 +3,7 @@ Large chunks of code copied from Boyd, not covered by unit tests,
 then copied back to this version to read .npz local data.  THis is different
 to reading the files obtained by retrieve
 """
+from pyfusion.debug_ import debug_
 
 def newload(filename, verbose=1):
     """ Intended to replace load() in numpy
@@ -37,8 +38,12 @@ from pyfusion.data.timeseries import TimeseriesData, Signal, Timebase
 from pyfusion.data.base import Coords, Channel, ChannelList, get_coords_for_channel
 
 VERBOSE = 1
+# this form is the default returned by retrieve
 #data_filename = "%(diag_name)s-%(shot)d-1-%(channel_number)s"
-data_filename = "%(shot)d_%(diag_name)s.npz"
+# this form was used to recover a mistake.
+#data_filename = "%(shot)d_%(diag_name)s-%(channel_number)s.npz"
+# this form is the way boyd stores them (since 2007...)
+data_filename = "%(shot)d_%(config_name)s.npz"  # MP1
 
 class LHDBaseDataFetcher(BaseDataFetcher):
     pass
@@ -50,17 +55,25 @@ class LHDTimeseriesDataFetcher(LHDBaseDataFetcher):
 
     def do_fetch(self):
         chan_name = (self.diag_name.split('-'))[-1]  # remove -
-        filename_dict = {'diag_name':chan_name, 
-                         'shot':self.shot}
+        filename_dict = {'shot':self.shot, # goes with Boyd's local stg
+                         'config_name':self.config_name}
 
+        #filename_dict = {'diag_name':self.diag_name, # goes with retrieve names
+        #                 'channel_number':self.channel_number,
+        #                 'shot':self.shot}
+
+        debug_(pf.DEBUG, 4, key='local_fetch')
         for each_path in pf.config.get('global', 'localdatapath').split(':'):
             self.basename = path.join(each_path, data_filename %filename_dict)
     
             files_exist = path.exists(self.basename)
-            if files_exist: continue
+            if files_exist: break
 
         if not files_exist:
-            raise Exception, "file " + self.basename + " not found."
+            raise Exception("file {fn} not found. (localdatapath was {p})"
+                            .format(fn=self.basename, 
+                                    p=pf.config.get('global', 
+                                                    'localdatapath').split(':')))
         else:
             signal_dict = newload(self.basename)
             

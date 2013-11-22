@@ -269,7 +269,7 @@ get_basic_diagnostics.__doc__ += 'Some diagnostics are \n' + ', '.join(file_info
 
 
 if __name__ == "__main__":
-    global lhd_summary
+    global lhd_summary             # not sure if this does anything useful
     _var_default = """
 numints=100
 times=np.linspace(2,3,numints)

@@ -190,8 +190,8 @@ def make_ideal_modes(filename='ideal_toroidal_modes.npz', ideal_sd=0.5, sel = No
 
     return(ideal_modes)
 
-def make_ML_modes(sd=0.2):
-    mode_phases=np.array([[-3,-2.2,-3.1,-2.9,-2.2]])
+def make_ML_modes(sd=0.2):    # modes to match with VSL flux loops
+    mode_phases=np.array([[-3,-2.2,-3.1,-2.9,-2.2]])  # goes with VSL_6
     ML_modes=[]
     N=1
     for i in range(shape(mode_phases)[0]):

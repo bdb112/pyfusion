@@ -61,7 +61,7 @@ seg_dt=1.5e-6 # time interval - overrides n_samples if None
 df = 2e3  #Hz
 fmax = None
 max_bands = 4
-toff=0
+toff=0                 # offset time needed for VSL retrieve - try retrieve16?
 
 # ids are usually handled by sqlalchemy, without SQL we need to look after them ourselves
 fs_id = 0
@@ -113,7 +113,7 @@ for shot in shot_range:
 
         for idx in ord:
             t_seg = ord_segs[idx]
-            if max_bands>1:
+            if max_bands>1:              # keep it simple if one band
                 (ipk, fpk, apk) = find_signal_spectral_peaks(t_seg.timebase, t_seg.signal[0],minratio=0.1)
                 w_in_range = np.where(fpk < fmax)[0]
                 (ipk, fpk, apk) = (ipk[w_in_range], fpk[w_in_range], apk[w_in_range])

@@ -137,6 +137,7 @@ def fetch_data_from_file(fetcher):
                 dat_arr = Array.array('h')
                 offset = 0
                 dtyp = np.dtype('int16')
+            # this was added for the VSL digitisers
             elif prm_dict['BinaryCoding'][0] == "2's_complementary": # not sure about this
                 dat_arr = Array.array('h')
                 offset = 0
@@ -158,7 +159,7 @@ def fetch_data_from_file(fetcher):
         clockHz =  double(prm_dict['SamplingClock'][0])
     if prm_dict.has_key('SamplingInterval'): 
         clockHz =  clockHz/double(prm_dict['SamplingInterval'][0])
-    if prm_dict.has_key('ClockInterval(uSec)'):
+    if prm_dict.has_key('ClockInterval(uSec)'):  # VSL dig
          clockHz =  1e6/double(prm_dict['ClockInterval(uSec)'][0])
     if prm_dict.has_key('ClockSpeed'): 
         if clockHz != None:
@@ -187,7 +188,7 @@ def fetch_data_from_file(fetcher):
 
     # not sure if this needs a factor of two for RangePolarity,Bipolar (A14)
     rng=None
-    for key in 'Range,Range(V)'.split(','):
+    for key in 'Range,Range(V)'.split(','):  # equivalent alteratives
          rng=prm_dict.get(key)
          if rng is not None: break
 

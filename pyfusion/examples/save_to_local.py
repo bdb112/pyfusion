@@ -6,19 +6,15 @@ doesn't check if the file is already compressed!
 Examples:
 
 # This compresses local data using newer compression methods
-run pyfusion/examples/save_to_local.py shot_number=27233 compress_local=1 diag_name="MP"
+run pyfusion/examples/save_to_local.py shot_list=27233 compress_local=1 diag_name="MP"
 # note the extra quotes on compress_local below, as its default is None
-run examples/save_to_local.py shot_number=18993 'compress_local="/tmp"' diag_name="MP2010"
+run examples/save_to_local.py shot_list=18993 'compress_local="/tmp"' diag_name="MP2010"
 
 (or in windows  'compress_local="c:/cygwin/tmp"')
 # tuning compression parameters - (this example shows very little difference
 run examples/save_to_local.py shot_number=18993 'compress_local="c:/cygwin/tmp"' diag_name="mirnov_small" save_kwargs='{"delta_encode_signal":True}'
 
-    You can cut down file size to include only data between
-    PYFUSION_SHOT_T_MIN and MAX by saving to local (twice).
-    The first time, data are saved in full, but only the desired part is
-    retrieved form local.  You can save a second time, to a different path
-    and in that case, only the MIN to MAX are saved locally.
+from the old pyfusion - may need to tidy up
 
 """
 import pyfusion
@@ -72,10 +68,11 @@ for shot_number in shot_list:
 	    tb = data.timebase
 	    for (c,chan) in enumerate(data.channels):
 		if is_string_like(compress_local):
+			#probably should be chan.config_name here (not chan.name)
 		    localfilename = getlocalfilename(
-			shot_number, chan.name, local_dir = compress_local)
+			shot_number, chan.config_name, local_dir = compress_local)
 		else:
-		    localfilename = getlocalfilename(shot_number, chan.name)
+		    localfilename = getlocalfilename(shot_number, chan.config_name)
 
 		signal = data.signal[c]
 		savez_new(signal=signal, timebase=tb, filename=localfilename,

@@ -172,6 +172,7 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                     test=lhd_summary.keys()
                 except:    
                     csvfilename = acq_LHD+'/'+info['format']
+                    if pyfusion.DEBUG>1: print('looking for lhd summary in' + csvfilename)
                     if not os.path.exists(csvfilename):
                         csvfilename += ".bz2"
                     print('reloading {0}'.format(csvfilename))
@@ -268,17 +269,18 @@ get_basic_diagnostics.__doc__ += 'Some diagnostics are \n' + ', '.join(file_info
 
 
 if __name__ == "__main__":
+    global lhd_summary
     _var_default = """
-    numints=100
-    times=np.linspace(2,3,numints)
-    localigetfilepath = '/LINUX23/home/bdb112/datamining/cache/'
+numints=100
+times=np.linspace(2,3,numints)
+localigetfilepath = '/LINUX23/home/bdb112/datamining/cache/'
 
-    #shots=np.loadtxt('lhd_clk4.txt',dtype=type(1))
-    shots=[54194]
-    separate=0
-    diags="<n_e19>,b_0,i_p,w_p,dw_pdt,dw_pdt2,beta".split(',')
-    exception = IOError
-    verbose = 0
+#shots=np.loadtxt('lhd_clk4.txt',dtype=type(1))
+shots=[54194]
+separate=0
+diags="<n_e19>,b_0,i_p,w_p,dw_pdt,dw_pdt2,beta".split(',')
+exception = IOError
+verbose = 0
     """
 
     exec(_var_default)
@@ -290,7 +292,7 @@ if __name__ == "__main__":
     good_shots =[]
     for shot in shots:
         try:
-            basic_data=get_basic_params(diags,shot=shot,times=times)
+            basic_data=get_basic_diagnostics(diags,shot=shot,times=times)
             good_shots.append(shot)
         except exception:		
             missing_shots.append(shot)

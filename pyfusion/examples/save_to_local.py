@@ -24,13 +24,14 @@ run examples/save_to_local.py shot_number=18993 'compress_local="c:/cygwin/tmp"'
 import pyfusion
 from pyfusion.data.save_compress import discretise_signal as savez_new
 import pyfusion.utils
+import numpy as np
 
 _var_default="""
 diag_name = 'SLOW2k'
 diag_name = "MP1"
 dev_name='LHD'
 readback=False
-shot_number=33343
+shot_list=33343  # number or a list
 compress_local=None
 save_kwargs = {} 
 """
@@ -41,9 +42,6 @@ exec(pyfusion.utils.process_cmd_line_args())
 #s = pyfusion.get_shot(shot_number)
 #s.load_diag(diag_name, savelocal=True, ignorelocal=(compress_local==None), downsample=True)
 
-h1=pyfusion.getDevice(dev_name)
-data=h1.acq.getdata(shot_number,diag_name)
-
 def getlocalfilename(shot_number, channel_name, local_dir=None):
 	"""
 	At present, we assume the numpy savez method is used - other save options may be added later
@@ -52,28 +50,33 @@ def getlocalfilename(shot_number, channel_name, local_dir=None):
 		local_dir =  pyfusion.config.get('global', 'localdatapath').split(':')[0]
 	return local_dir+'/%d_%s.npz' %(shot_number, channel_name)
 
+# main
+if len(np.shape(shot_list))==0:
+	shot_list = [shot_list]
 
-# That's all for simple save
+for shot_number in shot_list:
+	h1=pyfusion.getDevice(dev_name)
+	data=h1.acq.getdata(shot_number,diag_name)
 
-# I don't believe this test - always true!
+	# I don't believe this test - always true!
 
-if readback:
-    srb = pyfusion.get_shot(shot_number)
-    srb.load_diag(diag_name, savelocal=False, ignorelocal=False)
-    srb==s
+	if readback:
+	    srb = pyfusion.get_shot(shot_number)
+	    srb.load_diag(diag_name, savelocal=False, ignorelocal=False)
+	    srb==s
 
-if (compress_local is not None):
-    from pyfusion.data.save_compress import discretise_signal as savez_new
-    from matplotlib.cbook import is_string_like
+	if (compress_local is not None):
+	    from pyfusion.data.save_compress import discretise_signal as savez_new
+	    from matplotlib.cbook import is_string_like
 
-    tb = data.timebase
-    for (c,chan) in enumerate(data.channels):
-        if is_string_like(compress_local):
-            localfilename = getlocalfilename(
-                shot_number, chan.name, local_dir = compress_local)
-        else:
-            localfilename = getlocalfilename(shot_number, chan.name)
+	    tb = data.timebase
+	    for (c,chan) in enumerate(data.channels):
+		if is_string_like(compress_local):
+		    localfilename = getlocalfilename(
+			shot_number, chan.name, local_dir = compress_local)
+		else:
+		    localfilename = getlocalfilename(shot_number, chan.name)
 
-        signal = data.signal[c]
-        savez_new(signal=signal, timebase=tb, filename=localfilename,
-                  verbose=pyfusion.VERBOSE, **save_kwargs)
+		signal = data.signal[c]
+		savez_new(signal=signal, timebase=tb, filename=localfilename,
+			  verbose=pyfusion.VERBOSE, **save_kwargs)

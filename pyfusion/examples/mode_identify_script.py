@@ -190,6 +190,14 @@ def make_ideal_modes(filename='ideal_toroidal_modes.npz', ideal_sd=0.5, sel = No
 
     return(ideal_modes)
 
+def make_ML_modes(sd=0.2):
+    mode_phases=np.array([[-3,-2.2,-3.1,-2.9,-2.2]])
+    ML_modes=[]
+    N=1
+    for i in range(shape(mode_phases)[0]):
+        ML_modes.append(Mode('N={N}'.format(N=N),N=N, NN=i*(100), cc=mode_phases[i], csd=sd*np.ones(len(mode_phases[0]))))
+    return(ML_modes)
+
 _var_default="""
 inds = None
 mode_list=None   # should always specify mode list in command line

@@ -91,7 +91,10 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
                 
             if 'frlow' in header_toks:  # add the two extra fields
                 fs_dtype= [ ('shot','i8'), ('t_mid','f8'), 
-                            ('_binary_svs','i8'), 
+                            ('_binary_svs','f8'),    # really want i8 here, but npyio 
+                                                      #has problem converting 10000000000000000000000000
+                                                      #OverflowError: Python int too large to convert to C long
+                                                      # doesn't happen if text is read in directly with loadtxt
                             ('freq','f8'), ('amp', 'f8'), ('a12','f8'),
                             ('p', 'f8'), ('H','f8'), 
                             ('frlow','f8'), ('frhigh', 'f8'),('phases',ph_dtype)]

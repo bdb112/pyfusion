@@ -147,7 +147,7 @@ class BaseDataFetcher(object):
         :py:class:`~pyfusion.data.base.BaseDataSet` returned by \
         :py:meth:`do_fetch`
         """        
-        if pyfusion.DEBUG>3:
+        if pyfusion.DEBUG>2:
             exception = None  # defeat the try/except
         else: exception = Exception
 

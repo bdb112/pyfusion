@@ -61,6 +61,7 @@ seg_dt=1.5e-6 # time interval - overrides n_samples if None
 df = 2e3  #Hz
 fmax = None
 max_bands = 4
+toff=0
 
 # ids are usually handled by sqlalchemy, without SQL we need to look after them ourselves
 fs_id = 0
@@ -112,14 +113,19 @@ for shot in shot_range:
 
         for idx in ord:
             t_seg = ord_segs[idx]
-            (ipk, fpk, apk) = find_signal_spectral_peaks(t_seg.timebase, t_seg.signal[0],minratio=0.1)
-            w_in_range = np.where(fpk < fmax)[0]
-            (ipk, fpk, apk) = (ipk[w_in_range], fpk[w_in_range], apk[w_in_range])
-            if len(ipk)>max_bands: 
-                warn('too many peaks - reducing to {mb}'.format(mb=max_bands))
-                fpk = np.sort(fpk[np.argsort(apk)[-(max_bands+1):]])
+            if max_bands>1:
+                (ipk, fpk, apk) = find_signal_spectral_peaks(t_seg.timebase, t_seg.signal[0],minratio=0.1)
+                w_in_range = np.where(fpk < fmax)[0]
+                (ipk, fpk, apk) = (ipk[w_in_range], fpk[w_in_range], apk[w_in_range])
+                if len(ipk)>max_bands: 
+                    warn('too many peaks - reducing to {mb}'.format(mb=max_bands))
+                    fpk = np.sort(fpk[np.argsort(apk)[-(max_bands+1):]])
 
-            (lfs, hfs) = subdivide_interval(np.append(fpk, fmax), debug=0, overlap=(df/2,df*2))
+                
+                (lfs, hfs) = subdivide_interval(np.append(fpk, fmax), debug=0, overlap=(df/2,df*2))
+            else:
+                (lfs,hfs) = ([0],[fmax])
+
             for i in range(len(lfs)):
                 (frlow,frhigh)= (lfs[i],hfs[i])
                 f_seg = t_seg.filter_fourier_bandpass(
@@ -152,7 +158,7 @@ for shot in shot_range:
                             SV_fmt = "{{0:{w}b}}".format(w=2+n_channels)
                             print ("%d %8.5g %s %6.3g %6.5f %.2f %.3f %.3f %5.1f %5.1f %5.1f %5.1f %s" % (
                                     #shot, fs.t0, "{0:11b}".format(fs._binary_svs), 
-                                    shot, fs.t0, SV_fmt.format(fs._binary_svs), 
+                                    shot, fs.t0-toff, SV_fmt.format(fs._binary_svs), 
                                     fs.freq/1000., sqrt(fs.p)*RMS_scale, # was sqrt(fs.E*fs.p)*RMS_scale see above
                                     fs.a12, fs.p, fs.H, frlow/1e3, frhigh/1e3, 
                                     fs.cpkf, fs.fpkf, #fs.E, fs.E is constant!

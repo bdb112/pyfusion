@@ -63,7 +63,7 @@ class LHDTimeseriesDataFetcher(LHDBaseDataFetcher):
         # the clever "-" thing should only be used in members of multi signal diagnostics.
         # so I moved it to base.py
         # dggn = (self.diag_name.split('-'))[-1]  # remove -
-        debug_(pyfusion.DEBUG, level=4, key='LHD fetch debug') 
+        debug_(pyfusion.DEBUG, level=5, key='LHD fetch debug') 
 
         if (dggn == 'FMD'):
             if (self.shot < 72380):
@@ -137,7 +137,11 @@ def fetch_data_from_file(fetcher):
                 dat_arr = Array.array('h')
                 offset = 0
                 dtyp = np.dtype('int16')
-            else: raise NotImplementedError,' binary coding ' + prm_dict['BinaryCoding']
+            elif prm_dict['BinaryCoding'][0] == "2's_complementary": # not sure about this
+                dat_arr = Array.array('h')
+                offset = 0
+                dtyp = np.dtype('int16')
+            else: raise NotImplementedError(' binary coding {pd}'.format(pd=prm_dict['BinaryCoding']))
 
     """
     fp = open(fetcher.basename + '.dat', 'rb')
@@ -154,6 +158,8 @@ def fetch_data_from_file(fetcher):
         clockHz =  double(prm_dict['SamplingClock'][0])
     if prm_dict.has_key('SamplingInterval'): 
         clockHz =  clockHz/double(prm_dict['SamplingInterval'][0])
+    if prm_dict.has_key('ClockInterval(uSec)'):
+         clockHz =  1e6/double(prm_dict['ClockInterval(uSec)'][0])
     if prm_dict.has_key('ClockSpeed'): 
         if clockHz != None:
             pyfusion.utils.warn('Apparent duplication of clock speed information')
@@ -163,6 +169,7 @@ def fetch_data_from_file(fetcher):
         timebase = arange(len(dat_arr))/clockHz
     else:  raise NotImplementedError, "timebase not recognised"
     
+    debug_(pyfusion.DEBUG, level=4, key='LHD fetch debug') 
     ch = Channel("%s-%s" %(fetcher.diag_name, fetcher.channel_number), Coords('dummy', (0,0,0)))
 #    if fetcher.gain != None:   # this may have worked once...not now!
 #        gain = fetcher.gain
@@ -179,7 +186,12 @@ def fetch_data_from_file(fetcher):
     flip = 1
 
     # not sure if this needs a factor of two for RangePolarity,Bipolar (A14)
-    scale_factor = flip*double(prm_dict['Range'][0])/(2**bits)
+    rng=None
+    for key in 'Range,Range(V)'.split(','):
+         rng=prm_dict.get(key)
+         if rng is not None: break
+
+    scale_factor = flip*double(rng[0])/(2**bits)
     # not sure how this worked before I added array() - but has using
     # array slowed things?  I clearly went to trouble using tailored ints above?
     # - yes array(dat_arr) takes 1.5 sec for 4MS!!

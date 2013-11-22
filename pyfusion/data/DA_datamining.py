@@ -84,7 +84,7 @@ def append_to_DA(filename, dic, force=False):
     else:
         print('indx missing from one or both dictionaries - just checking size')
         check=dd['shot']
-        if (len(check) != len(dd[dd.keys()[0]])):
+        if (len(check) != len(dic[dic.keys()[0]])):
             error=('mismatched var lengths in ' + filename)
 
     if error is not None:

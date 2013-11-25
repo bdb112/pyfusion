@@ -36,7 +36,7 @@ def register(*class_names):
     return reg_item
 
 @register("TimeseriesData")
-def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="%(short_name)s", filldown=True, suptitle='shot {shot}'):
+def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="%(short_name)s", filldown=True, suptitle='shot {shot}',raw_names=False):
     """ 
     Plot a figure full of signals using n_columns[1], 
         sharey [=1]  "gangs" y axes  - sim for sharex - sharex=None stops this
@@ -52,6 +52,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
             e.g. marker of '.' and markersize<1 will produce "shaded" waveforms, 
             good to see harmonic structure even without zooming in (need to 
             adjust markersize or plot size for best results.
+        raw_names uses "digitiser" names, otherwise use names from the config file
         Note = sharex that to allow implicit overlay by using the same subplot
         specs the sharex must be the same between main and overlay - hence the 
         use of explicit sharex = None
@@ -67,7 +68,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
     if pyfusion.VERBOSE > 3: print str(n_rows) + ' ' + str(n_columns)
 
     if labelfmt != None:
-        if len(make_title(labelfmt, input_data, 0)) > 8: 
+        if len(make_title(labelfmt, input_data, 0, raw_names=raw_names)) > 8: 
             mylabel = pl.xlabel
         else:
             mylabel = pl.ylabel

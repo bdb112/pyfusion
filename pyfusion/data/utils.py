@@ -233,7 +233,7 @@ def split_names(names, pad=' ',min_length=3):
             ''.join(nms_arr[0,0:first]),
             ''.join(nms_arr[0,last+1:maxlen+1])))
 
-def make_title(formatstr, input_data, channum=None, dict = {}, min_length=3):
+def make_title(formatstr, input_data, channum=None, dict = {}, min_length=3, raw_names=False):
     """ return a string describing the shot number, channel name etc using a formatstr
     which referes to items in a dictionary, assembled in this routine, based on input_data
     and an optional dictionary which contains anything not otherwise available in input_data
@@ -246,9 +246,13 @@ def make_title(formatstr, input_data, channum=None, dict = {}, min_length=3):
         if channum == None:
             name = ''
         else:
-            try: name = input_data.channels[channum].name
-            except: name = input_data.channels.name
-
+            if raw_names:
+                try: name = input_data.channels[channum].name
+                except: name = input_data.channels.name
+            else:
+                try: name = input_data.channels[channum].config_name
+                except: name = input_data.channels.config_name
+                
         dict.update({'name': name})
 # replace internal strings of non-numbers with a single .  a14_input03 -> 14.03
         short_name=''

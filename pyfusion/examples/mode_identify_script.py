@@ -190,8 +190,13 @@ def make_ideal_modes(filename='ideal_toroidal_modes.npz', ideal_sd=0.5, sel = No
 
     return(ideal_modes)
 
-def make_ML_modes(sd=0.2):    # modes to match with VSL flux loops
-    mode_phases=np.array([[-3,-2.2,-3.1,-2.9,-2.2]])  # goes with VSL_6
+def make_ML_modes(sd=0.2, mode_phases=None):    # modes to match with VSL flux loops
+    if mode_phases is None:
+        mode_phases=np.array([[-3,-2.2,-3.1,-2.9,-2.2]])  # goes with VSL_6
+
+    if len(np.shape(mode_phases))<2: 
+        raise ValueError('mode_phases should be 2D')
+
     ML_modes=[]
     N=1
     for i in range(shape(mode_phases)[0]):
@@ -200,7 +205,7 @@ def make_ML_modes(sd=0.2):    # modes to match with VSL flux loops
 
 _var_default="""
 inds = None
-mode_list=None   # should always specify mode list in command line
+mode_list=[]   # should always specify mode list in command line
 mode=None
 threshold=None
 mask=None
@@ -230,6 +235,7 @@ exec(pyfusion.utils.process_cmd_line_args())
 if mask is None: mask = np.identity(len(sel))
 
 if DA_file is not None and DA_file != 'None':
+    print("reading in {d}".format(d=DA_file))
     from pyfusion.data.DA_datamining import DA, report_mem
     thisDA=DA(DA_file, load=1)
     # wasteful for large files: dd=thisDA.copyda()
@@ -260,7 +266,7 @@ else:
 
 if verbose>0: start_mem = report_mem(msg='phases selected')
 
-if (np.shape(mask) != np.shape(identity(len(sel)))) or (mask != identity(len(sel))).any():
+if (np.shape(mask) != np.shape(np.identity(len(sel)))) or (mask != np.identity(len(sel))).any():
     phases = np.dot(phases, mask)
 
 if verbose>0: report_mem(start_mem, msg='phases masked')
@@ -270,7 +276,7 @@ sd = mode.std(phases, csel=csel, mask=mask)
 #  generate mode number entries if not already there.
 for mname in 'N,NN,M,MM,mode_id'.split(','):
     if not(mname in dd.keys()):
-        use_dtype=int16
+        use_dtype=np.int16
         minint = np.iinfo(use_dtype).min
         dd[mname] = minint*np.ones(len(dd['shot']),dtype=use_dtype)
 

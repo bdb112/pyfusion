@@ -19,6 +19,11 @@ processing of multiple shots.
 Job controller for preprocessing pyfusion flucstruc data.  Replaces 
 do_range script, so that a nice argument form can be used, and eventually 
 multi-processing.
+
+Heliotron:
+run pyfusion/examples/gen_fs_bands.py dev_name='HeliotronJ' diag_name='HeliotronJ_PMP_array' time_range=[100,250] shot_range=[50000] seg_dt=1 info=1 max_bands=1 df=2.
+
+
 """
 from warnings import warn
 import subprocess

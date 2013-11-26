@@ -7,6 +7,10 @@ python dm/gen_fs.py shot_range=[27233] exception=None
 71 secs to sqlite.txt (9MB) (21.2k in basedata, 3.5k fs, 17.7k float_delta
 34 secs with db, but no fs_set.save()
 17 secs to text 86kB - but only 1k fs
+
+HeliotronJ  
+run pyfusion/examples/gen_fs_bands.py dev_name='HeliotronJ' diag_name='HeliotronJ_MP_array' time_range=[100,250] shot_range=[50000] seg_dt=1 info=1
+
 """
 import subprocess, sys, warnings
 from pyfusion.utils.utils import warn

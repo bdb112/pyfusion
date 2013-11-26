@@ -9,9 +9,27 @@ from pyfusion.data.base import Coords, ChannelList, Channel
 try:
     import gethjdata
 except:
-    # don't raise an exception - otherwise tests will fail.
-    # TODO: this should go into logfile
-    print ImportError, "Can't import Heliotron J data aquisition library"
+    import commands, os
+    import pyfusion
+    print 'Compiling Heliotron J data aquisition library, please wait...'
+    cdir = os.path.dirname(os.path.abspath(__file__))
+## Note: g77 will do, (remove --fcompiler-g95)  but can't use TRIM function etc 
+    if pyfusion.VERBOSE > 4: tmp = os.system(
+        'cd %s; f2py --fcompiler=gnu95 -c -m gethjdata -lm -lfdata hj_get_data.f' %cdir)
+    else: tmp = commands.getstatusoutput(
+        'cd %s; f2py --fcompiler=gnu95 -c -m gethjdata -lm -lfdata hj_get_data.f' %cdir)
+    try:
+        print('try after compiling...'),
+        import gethjdata
+    except:
+        raise ImportError, "Can't import Heliotron J data acquisition library"
+
+# Dave had some reason for not including the auto compile - Boyd added 2013
+# probably should suppress the auto compile during tests - this was his code.
+#except:
+#    # don't raise an exception - otherwise tests will fail.
+#    # TODO: this should go into logfile
+#    print ImportError, "Can't import Heliotron J data aquisition library"
 
 VERBOSE = 0
 OPT = 0

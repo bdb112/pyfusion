@@ -38,6 +38,9 @@ if dev_name == 'LHD':
 elif dev_name[0:1] == "H1":
     if shot_number == None: shot_number = 69270
     if diag_name == None: diag_name = "H1DTacqAxial"
+elif dev_name == "HeliotronJ":
+    if shot_number == None: shot_number = 27633
+    if diag_name == None: diag_name = "HeliotronJ_MP2"
 
 exec(pf.utils.process_cmd_line_args())
 

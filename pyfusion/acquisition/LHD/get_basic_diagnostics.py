@@ -135,6 +135,7 @@ def get_delay(shot):
 def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, exception=False, debug=0):
     """ return a list of np.arrays of normally numeric values for the 
     times given, for the given shot.
+    Will access server if env('IGETFILE') points to an exe, else accesses cache
     """
 
     global lhd_summary

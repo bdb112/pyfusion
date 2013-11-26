@@ -443,6 +443,9 @@ class DA():
         (Note that the normal os.putenv() doesn't seem to write to
         THIS environment use the fudge below - careful - no guarantees)
         os.environ.__setitem__('TMPDIR',os.getenv('HOME'))
+        actually - this seems OK
+        os.environ['IGETFILE']='/data/datamining/myView/bin/linux/igetfile'
+
         reload tempfile
         tempfile.gettempdir()
         also ('ZIPOPT','"-1"')  (Now incorporated into args, not tested)

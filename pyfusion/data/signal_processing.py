@@ -3,6 +3,7 @@
 Stuff that imports pyfusion should live in pyfusion_sigproc.py.  Put stuff here so that recompilation doesn't require restarting pyfusion.
 """
 from numpy import cumsum, double, arange, array, shape, sqrt, cos, sin, size, shape
+import numpy as np
 import pylab as pl
 
 VERBOSE=2
@@ -30,6 +31,7 @@ def smooth(data, n_smooth=3, timebase=None, causal=False, indices=False, keep=Fa
     data = (timebase, data) is a shorthand way to pass timebase
     n_smooth - apply recursively if an array  e.g. n_smooth=[33,20,14,11] 
                removes 3rd, 5th, 7th, 9th harmonics
+               fraction values are interpreted as timeintervals.
 
     >>> smooth([1,2,3,4],3) 
     array([ 2.,  3.])
@@ -57,6 +59,14 @@ def smooth(data, n_smooth=3, timebase=None, causal=False, indices=False, keep=Fa
     if len(data) == 2:  # a tuple (timebase, data)
         timebase=data[0]
         data = data[1]
+    if n_sm < 1:  # assume it is an interval
+        if timebase is None:
+            raise ValueError('fractional n_smooth {n_sm} implies a smoothing '
+                             ' time interval, but no timebase given'
+                             .format(n_sm-n_sm))
+        else:
+            n_sm = int(0.05 + n_sm/np.average(np.diff(timebase)))
+
     csum = cumsum(data)
     if not(keep):
         sm_sig = csum[n_sm-1:]
@@ -111,15 +121,22 @@ if __name__ == "__main__":
     st=time.time()
     ntest=1e5
     loops=100
-    for n in arange(loops): x=smooth(arange(0,ntest,1.),3)
+    xn=smooth(arange(ntest),7)
+    xt=smooth(arange(ntest), timebase=arange(ntest)/100,n_smooth=.07)
+    print('fractional test '),
+    if (xn==xt[1]).all(): print('OK')
+    else:
+        print('failed: results don''t match', xn,xt[1])
+
+    for n in arange(loops): x=smooth(arange(0,ntest,1.),20)
     dt=time.time()-st
-    print("%.3g ns/number" % (1e9*dt/ntest/loops))
+    print("%.3g ns/number" % (1e9*dt/ntest/loops)),
 
     st=time.time()
     x=convolve(arange(0,1e6,1.), [1,1,1])
-    print("compared with convolve: %.3g ns" % ((time.time()-st)*1e9/len(x))),
-    x=convolve(arange(0,1e6,1.), [1,1,1,1,1,1])
-    print("for smooth(3) and %.3g ns for smooth(6) using convolve" %
+    print("for smooth(20) compared with convolve: \n%.3g ns" % ((time.time()-st)*1e9/len(x))),
+    x=convolve(arange(0,1e6,1.), np.ones(20))
+    print("for smooth(3) and %.3g ns for smooth(20)" %
           ((time.time()-st)*1e9/len(x)))
 ## 35ns compared to 25 ns for IDL - not bad! (but overhead adds 10% at array size of 1e3!)
 ## st=systime(1)& for i=1,10 do x=smooth(findgen(1e6),3) & en=systime(1) & print, 1e9/10*(en-st)/n_elements(x)

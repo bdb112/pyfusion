@@ -8,7 +8,8 @@ python dm/gen_fs.py shot_range=[27233] exception=None
 34 secs with db, but no fs_set.save()
 17 secs to text 86kB - but only 1k fs
 
-HeliotronJ  
+# HeliotronJ: Using the "long form" of the probes - needed if in the same file
+# as LHD with the same name.
 run pyfusion/examples/gen_fs_bands.py dev_name='HeliotronJ' diag_name='HeliotronJ_MP_array' time_range=[100,250] shot_range=[50000] seg_dt=1 info=1
 
 """

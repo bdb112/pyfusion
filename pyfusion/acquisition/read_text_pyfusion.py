@@ -222,3 +222,21 @@ def merge_ds(ds_list, comment_list=[], old_dd=None, debug=True, force=False):
 
     return(dd)
     
+if __name__ == "__main__":
+    from glob import glob
+    """    import doctest
+    doctest.testmod()
+    """
+    (ds_list, comment_list) = read_text_pyfusion(glob('pyfusion/test_files/bad_PF2_dat/PF*2'))
+    print('expected result is 3 exceptions, and 2 out of 5 files')
+    if len(ds_list)!=2: print('test failed')
+
+
+
+
+
+
+
+
+
+

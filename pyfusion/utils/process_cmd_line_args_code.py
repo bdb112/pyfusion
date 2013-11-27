@@ -121,16 +121,22 @@ for _expr in _sys.argv[1:]:
         else: _lastw = ""
         _rhs=_lastw.strip()
         try:
-            exec(_lhs)  # this tests for existence of the LHS (target)
-            exec('is_str = is_string_like('+_lhs+')')
+            _expr_to_exec = _lhs
+            exec(_expr_to_exec)  # this tests for existence of the LHS (target)
+            _expr_to_exec = 'is_str = is_string_like('+_lhs+')'
+            exec(_expr_to_exec)
             if is_str and _rhs[0]!="'" and _rhs[0]!='"':
                 _expr_to_exec = _lhs+'="'+_rhs+'"'
             else: _expr_to_exec = _expr
             if verbose>3: print('actual statement: %s') % _expr_to_exec
             exec(_expr_to_exec)
         except Exception, _info: # _info catches the exception info
-            print("##########Target variable [%s] not set or non-existent!#########") % _lhs 
-            print('< %s > raised the exception < %s >' % (_expr,_info))
+            err=str("######Target variable {lh} not set or non-existent!#####"
+                  "\n executing {ex}, original rhs was {rh}"
+                  .format(lh=_lhs, ex=_expr_to_exec, rh=_rhs))
+            err2=str('< %s > raised the exception < %s >' % (_expr,_info))
+            _sys.stderr.write(err)
+            _sys.stderr.write(err2)
             _loc_dict=locals().copy() # need to save, as the size changes
 # list_vars will also offer to enter a debugger..
             list_vars(_loc_dict, Stop=True)

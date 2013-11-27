@@ -23,6 +23,7 @@ import sys
 from time import sleep, time as seconds
 import os
 from pyfusion.data.utils import find_signal_spectral_peaks, subdivide_interval
+from pyfusion.data.pyfusion_sigproc import find_shot_times
 
 # implement some extras from gen_fs_local
 def timeinfo(message, outstream=sys.stdout):
@@ -97,6 +98,8 @@ for shot in shot_range:
                   .format(N=n_samples,  seg_dt=seg_dt))
             
         if time_range != None:
+            if type(time_range)==str: # strings are recipes for finding shot times
+                time_range = find_shot_times(dev, shot, time_range)
             d.reduce_time(time_range, copy=False)
 
         sections = d.segment(n_samples, overlap)

@@ -23,7 +23,8 @@ multi-processing.
 Heliotron:
 run pyfusion/examples/gen_fs_bands.py dev_name='HeliotronJ' diag_name='HeliotronJ_PMP_array' time_range=[100,250] shot_range=[50000] seg_dt=1 info=1 max_bands=1 df=2.
 
-
+Note: quoting!! escape with \'\"  and \"\'
+time run  pyfusion/examples/prepfs_range_mp.py . --MP=2  --exe='gen_fs_bands.py n_samples=None df=1e3  max_bands=3' --shot_range=[27233] --time_range=\'\"MP1\"\' --seg_dt=0.5e-3 --overlap=2.5
 """
 from warnings import warn
 import subprocess

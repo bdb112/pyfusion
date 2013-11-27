@@ -144,6 +144,27 @@ class TimeseriesData(BaseData):
                 raise ValueError, "signal has different number of samples to timebase"
         super(TimeseriesData, self).__init__(**kwargs)
 
+    ## Boyd tried this for fun - seems to work - should check the right way.
+    # idea is to access a channel by name from a multiple diagnostic.
+    def keys(self):
+        if len(np.shape(self.channels))==0:
+            return([self.channels.name])
+        else:
+            return([c.name for c in self.channels])
+
+    def __getitem__(self, name):
+        if name not in self.keys():
+            raise LookupError('{k} not in list of channels {n}'
+                              .format(k=name, n=self.keys()))
+        else:
+            if len(self.keys())==1:
+                return(self.signal)
+            else:
+                # I bet there is a tricky python construct to do this!
+                for i, nm in enumerate(self.keys()):
+                    if nm==name:
+                        return(self.signal[i])
+
     def __eq__(self, other):
         return all([np.array_equal(self.timebase, other.timebase),
                     np.array_equal(self.signal, other.signal)])

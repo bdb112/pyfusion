@@ -25,7 +25,7 @@ if len(np.shape(file_list)) == 0: file_list=[file_list]
 
 (ds_list, comment_list) = read_text_pyfusion(file_list, debug=debug, exception=exception, target=target)
 
-if len(ds_list) == 0: raise LookupError('no files found for {f}'.format(f=file_list))
+if len(ds_list) == 0: raise LookupError('no valid files found for {f}'.format(f=file_list))
 
 if append_old_method:
     ds_list.append(dd)

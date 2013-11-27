@@ -5,6 +5,7 @@ import numpy as np
 from pyfusion.acquisition.base import BaseDataFetcher
 from pyfusion.data.timeseries import TimeseriesData, Signal, Timebase
 from pyfusion.data.base import Coords, ChannelList, Channel
+from pyfusion.debug_ import debug_
 
 try:
     import gethjdata
@@ -47,6 +48,10 @@ class HeliotronJDataFetcher(BaseDataFetcher):
          ch = Channel(self.path,
                       Coords('dummy', (0,0,0)))
 
+         # looks like the time,data is interleaved float64
+         # that seems to be at odds with the apparent real32 declaration in fortran
+         # the intent statement causes the out var to be returned
+         debug_(pyfusion.DEBUG, 4, 'Heliotron', msg='after call to getdata')
          output_data = TimeseriesData(timebase=Timebase(getrets[1::2]),
                                  signal=Signal(getrets[2::2]), channels=ch)
          output_data.meta.update({'shot':self.shot})

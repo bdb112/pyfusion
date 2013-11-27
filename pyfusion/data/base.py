@@ -149,6 +149,7 @@ class Channel(object):
         self.coords = coords
 
     def save(self):
+        """ applicable only to ORM db"""
         if pyfusion.orm_manager.IS_ACTIVE:
             # this may be inefficient: get it working, then get it fast
             self.coords.save()

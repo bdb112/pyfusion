@@ -63,7 +63,7 @@ def debug_(debug,level=1,key=None,msg=''):
                              .format(deb=deb, key=key))
     
         elif deb>=level: 
-            reason = str('debug_ paramater {deb} >= {level}'
+            reason = str('debug_ parameter {deb} >= {level}'
                          .format(deb=deb, level=level))
 
     if reason is None: return

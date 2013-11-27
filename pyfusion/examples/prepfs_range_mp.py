@@ -28,32 +28,39 @@ time run  pyfusion/examples/prepfs_range_mp.py . --MP=2  --exe='gen_fs_bands.py 
 """
 from warnings import warn
 import subprocess
-
+import os
 
 def worker(arglist): 
     from time import localtime
+    os.nice(3)   # seems to have a bigger effect on nice index?
     shot,ARGS = arglist
     print('worker on ', shot, ARGS, arglist)
     tm = localtime()
 
     sr=shot   # in this mp version, sr will always be a list of single shot 
+                      
     filename = ARGS.filename_format\
         .format(sr=sr, nor=ARGS.normalize, sep=ARGS.separate, 
                 dn = ARGS.diag_name, ns=ARGS.n_samples,
                 yy=tm.tm_year-2000,mm=tm.tm_mon,
                 dd=tm.tm_mday,hh=tm.tm_hour
                 )
+    if ARGS.output_path[0] in [None, "None", ""]:
+        redir = ""
+    else:
+        redir = str(' > {path}/{fn}'
+                    .format(path=ARGS.output_path[0],fn=filename))
 
     cmd = str('python pyfusion/examples/{exe} shot_range=[{sr}] diag_name={dn} '
               'overlap={ov} exception={ex} debug={db} '
               '  n_samples={ns} seg_dt={seg_dt:.4g} time_range={tr} '
-              'separate={sep} info={info} method="{nor}" > {path}/{fn}'
+              'separate={sep} info={info} method="{nor}" {redir}'
               .format(exe=ARGS.exe,sr=shot, 
                       nor=ARGS.normalize, sep=ARGS.separate, 
                       dn = ARGS.diag_name, tr=ARGS.time_range, db=ARGS.debug,
                       ex=ARGS.exception, ov=ARGS.overlap, ns=ARGS.n_samples,
                       seg_dt=ARGS.seg_dt,
-                      path=ARGS.output_path[0],fn=filename, info=ARGS.info
+                      redir=redir, info=ARGS.info
                       )
               )
 
@@ -125,6 +132,7 @@ if __name__ == '__main__':
     ARGS = PARSER.parse_args()
     shot_range = eval(ARGS.shot_range)
 
+    os.nice(1)   # helps identify the leader
     if ARGS.MP>0:
         import multiprocessing, itertools
         pool = multiprocessing.Pool(ARGS.MP)

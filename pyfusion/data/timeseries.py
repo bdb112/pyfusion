@@ -25,6 +25,9 @@ class Timebase(np.ndarray):
     def __new__(cls, input_array):
         # should this follow the example in doc/subclassing.py?... (it doesn't)
         obj = np.asarray(input_array).view(cls).copy()
+        if obj[1]==obj[0]: 
+            print('timeseries error elts 0 and 1 are both {o}'
+                  .format(o = 1.0* obj[0]))  # format bug
         obj.sample_freq = 1.0/(obj[1]-obj[0])
         obj.meta = PfMetaData()
         return obj
@@ -148,9 +151,9 @@ class TimeseriesData(BaseData):
     # idea is to access a channel by name from a multiple diagnostic.
     def keys(self):
         if len(np.shape(self.channels))==0:
-            return([self.channels.name])
+            return([self.channels.config_name])
         else:
-            return([c.name for c in self.channels])
+            return([c.config_name for c in self.channels])
 
     def __getitem__(self, name):
         if name not in self.keys():

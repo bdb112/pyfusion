@@ -61,7 +61,8 @@ c  100 continue
 c
 c *** check error ***
       if(ierror.ne.0)
-     $     print *, '**Heliotron data NOT found, ierror=',ierror
+     $     print *, '**Heliotron data NOT found, chname=', chname,
+     $     ', ierror=',ierror, 'opt = ', opt
       if(ierror.eq.0 .and. verbose .gt. 0)
      $     write(6,*) 'Heliotron data found'
 c

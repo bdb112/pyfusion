@@ -177,6 +177,9 @@ class BaseDataFetcher(object):
         # Coords shouldn't be fetched for BaseData (they are required
         # for TimeSeries)
         #data.coords.load_from_config(**self.__dict__)
+        if pyfusion.VERBOSE>0: 
+            print("base.py: data.config_name", data.config_name)
+        data.channels.config_name=data.config_name
         self.pulldown()
         return data
 
@@ -248,6 +251,8 @@ class MultiChannelFetcher(BaseDataFetcher):
             # We need to move it to the particular channel 
             # Was  channels[-1].config_name = chan
             # 2013 - default to something if config_name not defined
+            if pyfusion.VERBOSE>0:
+                print("base:multi tmp_data.config_name", tmp_data.config_name)
             if hasattr(tmp_data,'config_name'):
                 channels[-1].config_name = tmp_data.config_name                
             else:

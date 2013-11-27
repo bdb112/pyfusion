@@ -44,8 +44,8 @@ def find_shot_times(dev, shot, activity_indicator=None, debug=0):
 
         if dev.name == 'HeliotronJ': 
             diff_method = True;
-            cha = "MP3"
-            chb = "MP1"
+            cha = "HeliotronJ_MP3"
+            chb = "HeliotronJ_MP1"
 
         elif dev.name == 'LHD': 
             diff_method = True;

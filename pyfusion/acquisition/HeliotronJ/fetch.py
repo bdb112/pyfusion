@@ -33,7 +33,7 @@ except:
 #    # TODO: this should go into logfile
 #    print ImportError, "Can't import Heliotron J data aquisition library"
 
-VERBOSE = 0
+VERBOSE = pyfusion.VERBOSE
 OPT = 0
 
 class HeliotronJDataFetcher(BaseDataFetcher):

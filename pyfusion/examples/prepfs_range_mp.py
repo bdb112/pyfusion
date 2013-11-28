@@ -132,7 +132,7 @@ if __name__ == '__main__':
     ARGS = PARSER.parse_args()
     shot_range = eval(ARGS.shot_range)
 
-    os.nice(1)   # helps identify the leader
+    os.nice(1)   # helps identify the leader - but decrs every time you run
     if ARGS.MP>0:
         import multiprocessing, itertools
         pool = multiprocessing.Pool(ARGS.MP)

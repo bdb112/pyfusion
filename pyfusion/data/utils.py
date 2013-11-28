@@ -257,16 +257,23 @@ def make_title(formatstr, input_data, channum=None, dict = {}, min_length=3, raw
 # replace internal strings of non-numbers with a single .  a14_input03 -> 14.03
         short_name=''
         last_was_number = False
-        for c in name:
+        discarded=''
+        for c in name:  # start from the first char
             if c>='0' and c<='9': 
                 short_name += c
                 last_was_number=True
             else:  
                 if last_was_number: short_name += '.'
+                else: discarded += c
                 last_was_number=False
 
                 
-        if len(short_name) <= min_length: short_name=name
+        if len(short_name) <= min_length: 
+            # if it fits, have the lot
+            if len(name)<8: short_name=name
+            # else allow 4 more chars - makes about 6-8 chars
+            else: short_name = discarded[-4:] + short_name
+
         dict.update({'short_name': short_name})
 
         return(formatstr % dict)

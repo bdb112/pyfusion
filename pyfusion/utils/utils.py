@@ -87,7 +87,8 @@ def get_local_shot_numbers(partial_name=None, verbose=0, local_path=None,
     try:
         return(np.array(shotlist,dtype=int))
     except:
-        raise ValueError('shotlist contains non integers')
+        raise ValueError('shotlist contains non integers e.g.{s}'
+                         .format(s=shotlist[0]))
 
 # suppress this change altogether with colors=None in globals
 # can't be changed at runtime.

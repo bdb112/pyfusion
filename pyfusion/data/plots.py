@@ -153,6 +153,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
         pl.savefig(filename)
     else:
         pl.show()
+    debug_(pyfusion.DEBUG, 4, key='plot_signals')
 
 @register("TimeseriesData")
 def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, filename=None, coloraxis=None, noverlap=0,NFFT=None, **kwargs):

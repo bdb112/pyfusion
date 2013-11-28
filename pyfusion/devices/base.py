@@ -3,6 +3,7 @@
 from pyfusion.conf.utils import kwarg_config_handler, import_from_str, get_config_as_dict
 from pyfusion.orm.utils import orm_register
 import pyfusion
+from pyfusion.debug_ import debug_
 
 class Device(object):
     """Represent a laboratory device.  
@@ -51,6 +52,8 @@ class Device(object):
             dataset = pyfusion.data.base.DataSet()
             for shot in shots:
                 dataset.add(self.acq.getdata(shot, diag))
+            dataset.parent=self.name
+            debug_(pyfusion.DEBUG,5, key='Device:getdata')
             return dataset
 
 

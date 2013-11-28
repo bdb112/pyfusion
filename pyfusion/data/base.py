@@ -10,6 +10,7 @@ from pyfusion.data.plots import plot_reg
 from pyfusion.data.utils import unique_id
 import pyfusion
 import pyfusion.utils
+from pyfusion.debug_ import debug_
 from pyfusion.orm.utils import orm_register
 
 
@@ -144,9 +145,13 @@ def get_coords_for_channel(channel_name=None, **kwargs):
     return coords_instance
 
 class Channel(object):
-    def __init__(self, name, coords):
+    # bdb starts to put the new names in, gently
+    def __init__(self, name, coords, source="", parent_device="not specified"):
         self.name = name
         self.coords = coords
+        self.parent_device = parent_device  # refers to LHD or H1 etc.
+        self.source = source
+        debug_(pyfusion.DEBUG,5, key='class Channel')        
 
     def save(self):
         """ applicable only to ORM db"""

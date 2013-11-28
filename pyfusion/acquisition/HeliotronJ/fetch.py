@@ -56,7 +56,7 @@ class HeliotronJDataFetcher(BaseDataFetcher):
          output_data = TimeseriesData(timebase=Timebase(getrets[1::2]),
                                  signal=Signal(getrets[2::2]), channels=ch)
          output_data.meta.update({'shot':self.shot})
-         IF PYFUSION.verbose>0: print('HJ config name',self.config_name)
+         if pyfusion.VERBOSE>0: print('HJ config name',self.config_name)
          output_data.config_name = self.config_name         
          return output_data
 

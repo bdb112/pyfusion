@@ -49,7 +49,7 @@ except:
 import string
 from pylab import is_string_like
 
-def list_vars(locdict, Stop):
+def list_vars(locdict, Stop, tail_msg=''):
     if locdict.has_key('_var_defaults'):
         print('\n=========== Variables, and default values =========')
         print(locdict['_var_defaults'])
@@ -85,6 +85,7 @@ def list_vars(locdict, Stop):
         # Note: pydb is nicer but slower....                     
     if Stop: 
         print('======== make sure there are no spaces - e.g.  x=123  not x = 123 ======')
+        if tail_msg !='': print(tail_msg)
         ans=raw_input(' ^C to stop')
         return()  # don't know how to just "stop"
     try:
@@ -123,21 +124,33 @@ for _expr in _sys.argv[1:]:
         try:
             _expr_to_exec = _lhs
             exec(_expr_to_exec)  # this tests for existence of the LHS (target)
+            # if the present _lhs contains a string, try adding quotes to RHS
+            # in case they were stripped by the shell.  But won't work for 
+            # _lhs that are None.
             _expr_to_exec = 'is_str = is_string_like('+_lhs+')'
             exec(_expr_to_exec)
             if is_str and _rhs[0]!="'" and _rhs[0]!='"':
                 _expr_to_exec = _lhs+'="'+_rhs+'"'
-            else: _expr_to_exec = _expr
+            else: _expr_to_exec = _expr  # the original expr
             if verbose>3: print('actual statement: %s') % _expr_to_exec
             exec(_expr_to_exec)
         except Exception, _info: # _info catches the exception info
             err=str("######Target variable {lh} not set or non-existent!#####"
-                  "\n executing {ex}, original rhs was {rh}"
+                  "\n executing {ex}, original rhs was {rh} (quotes gobbled?)\n"
                   .format(lh=_lhs, ex=_expr_to_exec, rh=_rhs))
             err2=str('< %s > raised the exception < %s >' % (_expr,_info))
             _sys.stderr.write(err)
             _sys.stderr.write(err2)
             _loc_dict=locals().copy() # need to save, as the size changes
 # list_vars will also offer to enter a debugger..
-            list_vars(_loc_dict, Stop=True)
+            list_vars(_loc_dict, Stop=True, tail_msg=err2)
+
+
+
+
+
+
+
+
+
 

@@ -88,13 +88,13 @@ for filename in np.sort(glob.glob(fileglob)):
 
     if 'frlow' in header_toks:  # add the two extra fields
         fs_dtype= [ ('shot','i8'), ('t_mid','f8'), 
-                    ('_binary_svs','i8'), 
+                    ('_binary_svs','f8'), #'i8'), OverflowError: long too big to convert
                     ('freq','f8'), ('amp', 'f8'), ('a12','f8'),
                     ('p', 'f8'), ('H','f8'), 
                     ('frlow','f8'), ('frhigh', 'f8'),('phases',ph_dtype)]
     else:
         fs_dtype= [ ('shot','i8'), ('t_mid','f8'), 
-                    ('_binary_svs','i8'), 
+                    ('_binary_svs','f8'),  # 'i8'), 
                     ('freq','f8'), ('amp', 'f8'), ('a12','f8'),
                     ('p', 'f8'), ('H','f8'), ('phases',ph_dtype)]
     errors = []

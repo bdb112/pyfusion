@@ -1,9 +1,10 @@
+import numpy as np  # mainly for np.char
 def debug_(debug,level=1,key=None,msg=''):
     """ Nice debug function, a line 
            debug_(deb, level, key="foo", msg="hello") 
      breaks to the debugger 
         if deb >=level, or 
-        if <key> is a substring ("foo") of the string value in the debug_ line
+        if any element of <key> is a substring ("foo") of the string value in the debug_ line
 
     e.g. debug_(debug_num, 3)   breaks if debug_num > 3
          debug_(debug_var, 2, key='svd')   breaks if debug var contains 
@@ -58,7 +59,7 @@ def debug_(debug,level=1,key=None,msg=''):
     reason = None   # continue only if there is no reason to stop
     for deb in debug:
         if type(deb) == type('abc'):
-            if key.find(deb) >= 0: 
+            if np.max(np.char.find(key, deb)) >= 0: 
                 reason = str('debug_ string "{deb}" found in "{key}"'
                              .format(deb=deb, key=key))
     
@@ -95,7 +96,9 @@ def debug_(debug,level=1,key=None,msg=''):
         print(frame.f_lineno,frame.f_code)
         from ipdb import set_trace
 
-        if msg =='' and key !=None: msg = key # use key if no msg
+        if msg =='' and key !=None: 
+            if np.isscalar(key): msg = ' found DEBUG key = ' + key # use key if no msg
+            else: msg = 'found DEBUG key in [' + ','.join(key) + ']'
         print('debugging, '+ msg)
         set_trace(_getframe().f_back)
         ' use up to get to frame, or c to continue '

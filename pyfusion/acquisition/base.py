@@ -106,6 +106,9 @@ class BaseDataFetcher(object):
     def __init__(self, acq, shot, config_name=None, **kwargs):
         self.shot = shot
         self.acq = acq
+        #bdb?? add device name here, so can prepend to Diagnostic
+        # e.g. LHD_Diagnostic - avoids ambiguity
+        debug_(pyfusion.DEBUG,5,key='device_name')
         if config_name != None:
             self.__dict__.update(get_config_as_dict('Diagnostic', config_name))
             if pyfusion.VERBOSE>3: print(get_config_as_dict('Diagnostic', config_name))

@@ -196,7 +196,7 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encod
             'intmax':max(iarr)})
 
 def discretise_signal(timebase=None, signal=None, parent_element=array(0),
-                      eps=0, verbose=0, 
+                      eps=0, verbose=0, params={},
                       delta_encode_time=True, 
                       delta_encode_signal=False,
                       filename=None):
@@ -251,7 +251,8 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
         if verbose>0: print('========> Saving as %s <=======' % filename)
         tus=[.001,1][max(abs(array(timebase)))<100]
 
-        savez_compressed(filename, timebaseexpr=timebaseexpr, signalexpr=signalexpr,
+        savez_compressed(filename, timebaseexpr=timebaseexpr, 
+                         signalexpr=signalexpr, params=params,
               parent_element=parent_element, time_unit_in_seconds=tus,
               rawsignal=rawsignal, rawtimebase=rawtimebase, version=101)    
 

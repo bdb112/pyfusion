@@ -151,7 +151,7 @@ class Channel(object):
         self.coords = coords
         self.parent_device = parent_device  # refers to LHD or H1 etc.
         self.source = source
-        debug_(pyfusion.DEBUG,5, key='class Channel')        
+        debug_(pyfusion.DEBUG,5, key=['class Channel','device_name'])        
 
     def save(self):
         """ applicable only to ORM db"""

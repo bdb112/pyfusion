@@ -52,7 +52,7 @@ class HeliotronJDataFetcher(BaseDataFetcher):
          # the intent statement causes the out var to be returned
          # looks like the time,data is interleaved in a 1x256 array
          # it is fed in as real*64, but returns as real*32! (as per fortran decl)
-         debug_(pyfusion.DEBUG, 4, 'Heliotron', msg='after call to getdata')
+         debug_(pyfusion.DEBUG, 4, key='Heliotron_fetch', msg='after call to getdata')
          output_data = TimeseriesData(timebase=Timebase(getrets[1::2]),
                                  signal=Signal(getrets[2::2]), channels=ch)
          output_data.meta.update({'shot':self.shot})

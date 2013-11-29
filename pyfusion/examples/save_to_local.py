@@ -66,7 +66,11 @@ for shot_number in shot_list:
 	    from matplotlib.cbook import is_string_like
 
 	    tb = data.timebase
-	    for (c,chan) in enumerate(data.channels):
+	    singleton =  len(np.shape(data.channels))==0
+	    if singleton:  chan_list = [data.channels]
+	    else: chan_list = data.channels
+
+	    for (c,chan) in enumerate(chan_list):
 		if is_string_like(compress_local):
 			#probably should be chan.config_name here (not chan.name)
 		    localfilename = getlocalfilename(
@@ -74,6 +78,24 @@ for shot_number in shot_list:
 		else:
 		    localfilename = getlocalfilename(shot_number, chan.config_name)
 
-		signal = data.signal[c]
-		savez_new(signal=signal, timebase=tb, filename=localfilename,
+		params = dict(name = diag_name, device = dev_name)
+		if hasattr(data, 'params'):  # add the other params
+			params = data.params.update(params)
+			
+		if singleton:
+			signal = data.signal
+		else: 
+			signal = data.signal[c]
+
+		savez_new(signal=signal, timebase=tb, filename=localfilename, 
+			  params = np.array(params),
 			  verbose=pyfusion.VERBOSE, **save_kwargs)
+
+
+
+
+
+
+
+
+

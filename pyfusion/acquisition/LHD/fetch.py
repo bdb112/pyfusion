@@ -204,6 +204,7 @@ def fetch_data_from_file(fetcher):
     #print(output_data.signal[0:5],offset,(array(dat_arr)-offset)[0:5])
     output_data.meta.update({'shot':fetcher.shot})
     output_data.config_name = fetcher.config_name
+    output_data.params = prm_dict
     return output_data
 
 

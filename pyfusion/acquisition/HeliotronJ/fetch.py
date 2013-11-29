@@ -6,6 +6,7 @@ import pyfusion
 from pyfusion.acquisition.base import BaseDataFetcher
 from pyfusion.data.timeseries import TimeseriesData, Signal, Timebase
 from pyfusion.data.base import Coords, ChannelList, Channel
+from pyfusion.acquisition.HeliotronJ.make_static_param_db import get_static_params
 from pyfusion.debug_ import debug_
 
 try:
@@ -16,10 +17,14 @@ except:
     print 'Compiling Heliotron J data aquisition library, please wait...'
     cdir = os.path.dirname(os.path.abspath(__file__))
 ## Note: g77 will do, (remove --fcompiler-g95)  but can't use TRIM function etc 
-    if pyfusion.VERBOSE > 4: tmp = os.system(
-        'cd %s; f2py --fcompiler=gnu95 -c -m gethjdata -lm -lfdata hj_get_data.f' %cdir)
-    else: tmp = commands.getstatusoutput(
-        'cd %s; f2py --fcompiler=gnu95 -c -m gethjdata -lm -lfdata hj_get_data.f' %cdir)
+    for cmd in (
+        'f2py --fcompiler=gnu95 -c -m gethjdata -lm -lfdata hj_get_data.f',
+        'g77 -Lcdata save_h_j_data.f -lfdata -o save_h_j_data'):
+        if pyfusion.VERBOSE > 4: 
+            tmp = os.system('cd {cdir}; '.format(cdir=cdir) + cmd)
+        else: 
+            tmp = commands.getstatusoutput(
+                'cd {cdir}; '.format(cdir=cdir) + cmd)
     try:
         print('try after compiling...'),
         import gethjdata
@@ -58,5 +63,6 @@ class HeliotronJDataFetcher(BaseDataFetcher):
          output_data.meta.update({'shot':self.shot})
          if pyfusion.VERBOSE>0: print('HJ config name',self.config_name)
          output_data.config_name = self.config_name         
+         output_data.params=get_static_params(shot=self.shot,signal=self.path)[0]
          return output_data
 

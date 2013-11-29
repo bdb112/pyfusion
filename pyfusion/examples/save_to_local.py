@@ -80,7 +80,7 @@ for shot_number in shot_list:
 
 		params = dict(name = diag_name, device = dev_name)
 		if hasattr(data, 'params'):  # add the other params
-			params = data.params.update(params)
+			params.update(data.params)
 			
 		if singleton:
 			signal = data.signal

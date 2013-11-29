@@ -42,8 +42,22 @@ def test(datafile='pyfusion/acquisition/HeliotronJ/params.out'):
 
 import subprocess, os
 
-def get_static_parms(shot, signal='DIA135',exe='save_h_j_data', press_on=True):
+def find_helio_exe(exe):
+    this_file = os.path.abspath( __file__ )
+    this_dir = os.path.split(this_file)[0]
 
+    if not os.sep in exe :  # default to same path as this file
+        exe = this_dir + os.sep + exe
+
+    if not os.path.exists(exe):
+        print('Can''t find exe \n{exe}\ndummy data using dummy exe "dummy_exe"'.
+              format(exe=exe))
+        exe = this_dir + os.sep + "dummy_exe"
+    return(exe)
+
+def get_static_params(shot, signal='DIA135',exe='save_h_j_data', press_on=True):
+
+    exe = find_helio_exe(exe)
     cmd = str('echo {signal} {shot} nofile | {exe}'
               .format(signal=signal, shot=shot, exe=exe))
     
@@ -73,6 +87,7 @@ def make_param_db(max_shot=70000, file_name='HJparams.npz', shot_range=range(500
         db.update(dict(PANELDT = np.array((max_shot+1)*[100*' '])))
         db.update(dict(STIME = np.array((max_shot+1)*[5*' '])))
         db.update(dict(SDATE = np.array((max_shot+1)*[8*' '])))
+        db.update(dict(SIGNALNM = np.array((max_shot+1)*[20*' '])))
     else:
         if len(db['ISHOTNO'])<max_shot:
             raise LookupError('database given is shorter ({dbl})'
@@ -80,25 +95,24 @@ def make_param_db(max_shot=70000, file_name='HJparams.npz', shot_range=range(500
                               .format(m=max_shot,dbl=len(db['ISHOTNO'])))
 
 
-    this_file = os.path.abspath( __file__ )
-    this_dir = os.path.split(this_file)[0]
-
-    if not os.sep in exe :  # default to same path as this file
-        exe = this_dir + os.sep + exe
-
-    if not os.path.exists(exe):
-        print('Can''t find exe \n{exe}\ndummy data using dummy exe "dummy_exe"'.
-              format(exe=exe))
-        exe = this_dir + os.sep + "dummy_exe"
-        
+    exe = find_helio_exe(exe)
     errors = []
     for shot in shot_range:
+        #print(shot)
+        # try thr given signal first, silently, if fails, try with MP1
+        # reporting any error
         try:
-            params = get_static_parms(shot, signal=signal, exe=exe, press_on=False)
+            for sig in (signal, 'MP1'):
+                params = get_static_params(shot, signal=signal, 
+                                          exe=exe, press_on=(sig==signal))
+                if len(params[0].keys())>0:
+                    break
+                                              
             for key in db.keys():
                 db[key][shot] = params[0][key]
-        except exception, reason:
+        except Exception, reason:
             errors.append([shot, reason])
+            print(shot, reason)
 
     args=','.join(["{k}=db['{k}']"
                    .format(k=k) for k in db.keys()])

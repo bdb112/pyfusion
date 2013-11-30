@@ -30,6 +30,7 @@ readback=False
 shot_list=33343  # number or a list
 compress_local=None
 save_kwargs = {} 
+prefix=''  #'HeliotronJ_'
 """
 exec(_var_default)
 exec(pyfusion.utils.process_cmd_line_args())
@@ -39,63 +40,61 @@ exec(pyfusion.utils.process_cmd_line_args())
 #s.load_diag(diag_name, savelocal=True, ignorelocal=(compress_local==None), downsample=True)
 
 def getlocalfilename(shot_number, channel_name, local_dir=None):
-	"""
-	At present, we assume the numpy savez method is used - other save options may be added later
-	"""
-	if local_dir == None: # default to first path in localdatapath
-		local_dir =  pyfusion.config.get('global', 'localdatapath').split(':')[0]
-	return local_dir+'/%d_%s.npz' %(shot_number, channel_name)
+    """
+    At present, we assume the numpy savez method is used - other save options may be added later
+    """
+    if local_dir == None: # default to first path in localdatapath
+        local_dir =  pyfusion.config.get('global', 'localdatapath').split(':')[0]
+    return local_dir+'/%d_%s.npz' %(shot_number, channel_name)
 
 # main
 if len(np.shape(shot_list))==0:
-	shot_list = [shot_list]
+    shot_list = [shot_list]
 
-for shot_number in shot_list:
-	h1=pyfusion.getDevice(dev_name)
-	data=h1.acq.getdata(shot_number,diag_name)
+if len(np.shape(diag_name)) == 0:
+    diag_list = [diag_name]
+else:
+    diag_list = diag_name
+    
+for diag in diag_list:
+    diag = prefix+diag
+    for shot_number in shot_list:
+        h1=pyfusion.getDevice(dev_name)
+        data=h1.acq.getdata(shot_number,diag)
 
-	# I don't believe this test - always true!
+        # I don't believe this test - always true!
 
-	if readback:
-	    srb = pyfusion.get_shot(shot_number)
-	    srb.load_diag(diag_name, savelocal=False, ignorelocal=False)
-	    srb==s
+        if readback:
+            srb = pyfusion.get_shot(shot_number)
+            srb.load_diag(diag, savelocal=False, ignorelocal=False)
+            srb==s
 
-	if (compress_local is not None):
-	    from pyfusion.data.save_compress import discretise_signal as savez_new
-	    from matplotlib.cbook import is_string_like
+        if (compress_local is not None):
+            from pyfusion.data.save_compress import discretise_signal as savez_new
+            from matplotlib.cbook import is_string_like
 
-	    tb = data.timebase
-	    singleton =  len(np.shape(data.channels))==0
-	    if singleton:  chan_list = [data.channels]
-	    else: chan_list = data.channels
+            tb = data.timebase
+            singleton =  len(np.shape(data.channels))==0
+            if singleton:  chan_list = [data.channels]
+            else: chan_list = data.channels
 
-	    for (c,chan) in enumerate(chan_list):
-		if is_string_like(compress_local):
-			#probably should be chan.config_name here (not chan.name)
-		    localfilename = getlocalfilename(
-			shot_number, chan.config_name, local_dir = compress_local)
-		else:
-		    localfilename = getlocalfilename(shot_number, chan.config_name)
+            for (c,chan) in enumerate(chan_list):
+                if is_string_like(compress_local):
+                    #probably should be chan.config_name here (not chan.name)
+                    localfilename = getlocalfilename(
+                        shot_number, chan.config_name, local_dir = compress_local)
+                else:
+                    localfilename = getlocalfilename(shot_number, chan.config_name)
 
-		params = dict(name = diag_name, device = dev_name)
-		if hasattr(data, 'params'):  # add the other params
-			params.update(data.params)
-			
-		if singleton:
-			signal = data.signal
-		else: 
-			signal = data.signal[c]
+                params = dict(name = diag, device = dev_name)
+                if hasattr(data, 'params'):  # add the other params
+                    params.update(data.params)
 
-		savez_new(signal=signal, timebase=tb, filename=localfilename, 
-			  params = np.array(params),
-			  verbose=pyfusion.VERBOSE, **save_kwargs)
+                if singleton:
+                    signal = data.signal
+                else: 
+                    signal = data.signal[c]
 
-
-
-
-
-
-
-
-
+                savez_new(signal=signal, timebase=tb, filename=localfilename, 
+                          params = np.array(params),
+                          verbose=pyfusion.VERBOSE, **save_kwargs)

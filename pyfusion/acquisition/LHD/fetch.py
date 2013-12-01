@@ -250,9 +250,9 @@ def retrieve_to_file(diagg_name=None, shot=None, subshot=None,
 
     freebytes=get_free_bytes(outdir)
     if freebytes < pyfusion.TMP_FREE_BYTES:
-    #if freebytes < 25e9:
-         purge_old(outdir, '*')  #dat')  # ONLY DO .DAT have to manually purge prm
-         if (get_free_bytes(outdir) < freebytes*1.1):
+         try_for = 100  # go for 100 files, assum 500k on average
+         purge_old(outdir, '*',try_for)  #dat')  # ONLY DO .DAT have to manually purge prm
+         if (get_free_bytes(outdir) < freebytes*(try_for * 500e3)):
               pyfusion.logger.warning("Warning - unable to clear much space! {fGb:.1f}Gb free".format(fGb=freebytes/1e9))
 
 #

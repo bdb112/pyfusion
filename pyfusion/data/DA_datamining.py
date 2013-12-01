@@ -1,6 +1,7 @@
 import numpy as np
 import pylab as pl
 from time import time as seconds
+import os
 from warnings import warn
 
 """ Note: in programming, be careful not to refer to .da[k] unnecessarily
@@ -66,14 +67,25 @@ except None:
     def report_mem(prev_values=None, msg=None):
         return((None, None))
     
-def append_to_DA(filename, dic, force=False):
+def append_to_DA_file(filename, dic, force=False):
     """ open filename with mode=a, after checking if the indx variables align
     force=1 ignores checks for consistent length c.f. the var shot
+
+    e.g.
+    append_to_DA_file('DAX.npz',dict(N=dd['N'])
+    append_to_DA_file('foo.npz',dict((k, mydict[k]) for k in ['N','M']))
+
     Not a member of the class DA, because the class has memory copies of the
     file, so it would be confusing.
     """
     import zipfile, os
     import pyfusion
+
+    # the file is loaded into dd, and the new dictionary is dic
+    # add .npz if the name given does not exist, and it is not already
+    if not os.path.exists(filename):
+        if '.npz' not in filename:
+            filename += '.npz'
     dd = np.load(filename)
     error = None
     if 'indx' in dd.keys() and 'indx' in dic.keys():
@@ -93,10 +105,13 @@ def append_to_DA(filename, dic, force=False):
 
     zf = zipfile.ZipFile(filename,mode='a')
     tmp =  pyfusion.config.get('global', 'my_tmp')
-    for key in dd.keys():
+    for key in dic.keys():
+        if key in zf.namelist():
+            print('member {k} already exists - will supersede but not remove it'
+                  .format(k=key))
         tfile = tmp+'/'+ key+'.npy'
-        np.save(tfile, dd[key])
-        zf.write(tfile,arcname=key)
+        np.save(tfile, dic[key])
+        zf.write(tfile,arcname=key,compress_type=zipfile.ZIP_DEFLATED)
         os.remove(tfile)
     zf.close()
 
@@ -125,6 +140,11 @@ class DA():
             self.loaded = True
             self.name = 'dict'
         else:
+            # add .npz if the name given does not exist, and it is not already
+            if not os.path.exists(fileordict):
+                if '.npz' not in fileordict:
+                    fileordict += '.npz'
+                
             self.da = np.load(fileordict)
             self.name = fileordict
             self.loaded = 0
@@ -187,8 +207,9 @@ class DA():
     #shallow_copy = try:if da.copy
 
     def append(self, dd):
-        """ append the data in dd to the data in self
-
+        """ append the data arrays in dd to the data arrays in self - i.e.
+        extend the existing arrays.  See also append_to_DA_file to add
+        an extra variable
         """
         for k in self.da.keys():
             if k not in dd.keys():
@@ -455,7 +476,6 @@ class DA():
         st = seconds()
 
         if tempdir is not None:
-            import os
             os.environ.__setitem__('TMPDIR', tempdir)
             import tempfile
             reload(tempfile) # in case it was already imported
@@ -592,3 +612,9 @@ if __name__ == "__main__":
     da = DA(d)
     da.extract(locals(),'shot,val')
     print(shot, val)
+
+    tfile = '/tmp/junk'
+    da.save(tfile)
+    append_to_DA_file(tfile, dict(A=[3,4,5]))
+    da_bigger = DA(tfile)
+    da_bigger.info(2)

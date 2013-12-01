@@ -174,7 +174,7 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
         if not(file_info.has_key(diag)):
             warn('diagnostic {0} not found in shot {1}'.format(diag, shot),stacklevel=2)
             vals.update({diag: np.nan + times})
-            1/0
+            debug_(pyfusion.DEBUG,2,key='get_basic')
         else:
             info = file_info[diag]
             varname = info['name']

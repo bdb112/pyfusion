@@ -64,6 +64,7 @@ diags="b_0,w_p,dw_pdt,dw_pdt2,beta,NBI".split(',')
 # diag _extra are the ones more likely to fail
 diag_basic="IBTA,IBTB,IBHV,IBAV,IBIV,b_0".split(',')
 diag_extra="n_e19b0,n_e19dL5,ech,NBI".split(',')
+diag_extra="DIA135,MICRO01,NBIS3I,NBIS4I".split(',')
 minshot=0
 maxshot=999999 # higher than even LHD
 shot_list = []

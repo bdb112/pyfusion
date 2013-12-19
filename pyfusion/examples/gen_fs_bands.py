@@ -8,7 +8,11 @@ python dm/gen_fs.py shot_range=[27233] exception=None
 34 secs with db, but no fs_set.save()
 17 secs to text 86kB - but only 1k fs
 
-# HeliotronJ: Using the "long form" of the probes - needed if in the same file
+Modify to output to a file or stdout - not perfect yet
+Advantage of stdout is that everything is recorded and each new run gets a new process - less chanceof memory exhaustion etc
+Advantage of file output is that it is easier to run simple cases and test cases.
+
+# HeliotronJ example: Using the "long form" of the probes - needed if in the same file
 # as LHD with the same name.
 run pyfusion/examples/gen_fs_bands.py dev_name='HeliotronJ' diag_name='HeliotronJ_MP_array' time_range=[100,250] shot_range=[50000] seg_dt=1 info=1
 
@@ -68,7 +72,7 @@ df = 2e3  #Hz
 fmax = None
 max_bands = 4
 toff=0                 # offset time needed for VSL retrieve - try retrieve16?
-
+outfile="None"
 # ids are usually handled by sqlalchemy, without SQL we need to look after them ourselves
 fs_id = 0
 """
@@ -78,6 +82,16 @@ exec(_var_default)
 import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
 from pyfusion.data.filters import next_nice_number
+
+# Simple redirect of output:  this is not the perfect way - maybe
+#    should consider context manager and thread safety
+if outfile is None or outfile == 'None':  # stdout
+    write = sys.stdout.write
+    close = sys.stdout.flush
+else:
+    fd = open(outfile, 'w+')
+    write = fd.write
+    close = fd.close
 
 count = 0  #  we print the header right before the first data
 dev = pyfusion.getDevice(dev_name)
@@ -94,7 +108,7 @@ for shot in shot_range:
         dt = np.average(np.diff(d.timebase))
         if n_samples is None:
             n_samples = next_nice_number(seg_dt/dt)
-            print('Choosing {N} samples to cover {seg_dt}'
+            write('Choosing {N} samples to cover {seg_dt}\n'
                   .format(N=n_samples,  seg_dt=seg_dt))
             
         if time_range != None:
@@ -103,10 +117,13 @@ for shot in shot_range:
             d.reduce_time(time_range, copy=False)
 
         sections = d.segment(n_samples, overlap)
-        print(d.history, len(sections), pyfusion.version.get_version('verbose'))
+        write('<<{h}, {l} sections, version = {vsn}\n'
+              .format(h=d.history, l=len(sections), 
+                      vsn=pyfusion.version.get_version('verbose')))
         try:
             for k in pyfusion.conf.history.keys():
-                print(pyfusion.conf.history[k][0].split('"')[1])
+                # the || prevent lines starting with a number
+                write('||'+pyfusion.conf.history[k][0].split('"')[1])
                 if info>1: sys.stdout.writelines(pyfusion.conf.utils.dump())
         except: pass    
 
@@ -142,11 +159,11 @@ for shot in shot_range:
                 for fs in fs_set:
                     if count==0: 
                         # show history if info says to, and avoid starting line with a digit
-                        if info > 0: print('< '+fs.history.
+                        if info > 0: write('< '+fs.history.
                                            replace('\n201','\n< 201'))
                         # Version number should end in digit!
                         SVtitle_spc = (n_channels - 2)*' '
-                        print('Shot    time   {spc}SVS    freq  Amp    a12   p    H     frlow frhigh  cpkf  fpkf  {np:2d} Phases       Version 0.7'
+                        write('\nShot    time   {spc}SVS    freq  Amp    a12   p    H     frlow frhigh  cpkf  fpkf  {np:2d} Phases       Version 0.7 \n'
                               .format(np=len(fs.dphase),spc=SVtitle_spc))
                     count += 1
                     if fs.H < max_H and fs.p>0.01 and len(fs.svs())>=min_svs:
@@ -164,7 +181,7 @@ for shot in shot_range:
                             # caused apparent duplicate times
                             # Aug 12 2013 - changed amp to sqrt(f)*RMS scale - like plot_svd.
                             SV_fmt = "{{0:{w}b}}".format(w=2+n_channels)
-                            print ("%d %8.5g %s %6.3g %6.5f %.2f %.3f %.3f %5.1f %5.1f %5.1f %5.1f %s" % (
+                            write ("%d %8.5g %s %6.3g %6.5f %.2f %.3f %.3f %5.1f %5.1f %5.1f %5.1f %s\n" % (
                                     #shot, fs.t0, "{0:11b}".format(fs._binary_svs), 
                                     shot, fs.t0-toff, SV_fmt.format(fs._binary_svs), 
                                     fs.freq/1000., sqrt(fs.p)*RMS_scale, # was sqrt(fs.E*fs.p)*RMS_scale see above
@@ -189,3 +206,4 @@ if pyfusion.orm_manager.IS_ACTIVE:
 
 timeinfo('\n######## {c} fs finished'.format(c=count), sys.stderr) # stderr so that read_text is not fooled.
 # should really put a sentinel here.
+close()

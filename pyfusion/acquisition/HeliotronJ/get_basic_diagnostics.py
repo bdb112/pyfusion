@@ -1,4 +1,6 @@
 """ 
+This is the first debugged version (for HJ) still needs cleaning up!
+
 Originally a script in example (called get_basic_params - still there
 get the basic plasma params for a given shot and range of times
 interpolation overhead only begins at 10k points, doubles time at 1Million!!
@@ -15,6 +17,10 @@ from pyfusion.debug_ import debug_
 from matplotlib.mlab import stineman_interp
 from pyfusion.utils.read_csv_data import read_csv_data
 from pyfusion.utils.utils import warn
+from pyfusion.data.timeseries import TimeseriesData, Signal, Timebase
+from pyfusion.data.base import Coords, ChannelList, Channel
+
+import tempfile
 import re
 
 import gethjdata
@@ -72,6 +78,11 @@ file_info.update({'IBTB': {'format': 'HJparams.npz','name':'IBTB'}})
 file_info.update({'IBAV': {'format': 'HJparams.npz','name':'IBAV'}})
 file_info.update({'IBIV': {'format': 'HJparams.npz','name':'IBIV'}})
 file_info.update({'b_0': {'format': 'HJparams.npz','name':'IBHV'}})
+
+file_info.update({'DIA135': {'format': 'HeliotronJ','name':'DIA135'}})
+file_info.update({'MICRO01': {'format': 'HeliotronJ','name':'MICRO01'}})
+file_info.update({'NBIS3I': {'format': 'HeliotronJ','name':'NBIS3I'}})
+file_info.update({'NBIS4I': {'format': 'HeliotronJ','name':'NBIS4I'}})
 
 
 global HJ_summary
@@ -159,7 +170,7 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
 
     if diags == None: diags = "<n_e19>,b_0,i_p,w_p,dw_pdt,dw_pdt2".split(',')
     if len(np.shape(diags)) == 0: diags = [diags]
-    if delay == None: delay = get_delay(shot)
+    # LHD only    if delay == None: delay = get_delay(shot)
 
     if times == None: 
         times = np.linspace(0,4,4000)
@@ -205,30 +216,27 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                 try:
                     #get HJparams
                     outdata=np.zeros(1024*2*256+1)
+                    channel_length =(len(outdata)-1)/2
                     with tempfile.NamedTemporaryFile(prefix="pyfusion_") as outfile:
-                        getrets=gethjdata.gethjdata(self.shot,channel_length,
-                                                    self.path,
+                        getrets=gethjdata.gethjdata(shot,channel_length,
+                                                    info['name'],
                                                     VERBOSE, OPT,
                                                     outfile.name, outdata)
 
-
-                except:
+                        ch = Channel(info['name'], Coords('dummy', (0,0,0)))
+                        dg = TimeseriesData(timebase=Timebase(getrets[1::2]),
+                                            signal=Signal(getrets[2::2]), channels=ch)
+                except exception, reason:
+                    if debug>0:
+                        print('exception running gethjdata', reason)
                     dg=None
                             #break  # give up and try next diagnostic
-                if dg==None:  # messy - break doesn't do what I want?
+                if dg is None:  # messy - break doesn't do what I want?
                     valarr=None
                 else:
-                    nd=dg.vardict['DimNo']
-                    if nd != 1:
-                        raise ValueError(
-                            'Expecting a 1 D array in {0}, got {1}!'
-                            .format(dg.filename, nd))
-
-                    # pre re. w = np.where(np.array(dg.vardict['ValName'])==varname)[0]
-                    matches = [re.match(varname,nam) 
-                               != None for nam in dg.vardict['ValName']]
-                    w = np.where(np.array(matches) != False)[0]
+                    nd = 1
                     # get the column(s) of the array corresponding to the name
+                    w = [0]
                     if (oper in 'sum,average,rms,max,min'.split(',')):
                         if oper=='sum': op = np.sum
                         elif oper=='average': op = np.average
@@ -236,20 +244,28 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                         elif oper=='std': op = np.std
                         else: raise ValueError('operator {o} in {n} not known to get_basic_diagnostics'
                                                .format(o=oper, n=info['name']))
+                        # valarr = op(dg.data[:,nd+w],1)
                         valarr = op(dg.data[:,nd+w],1)
                     else:
                         if len(w) != 1:
                             raise LookupError(
                                 'Need just one instance of variable {0} in {1}'
                                 .format(varname, dg.filename))
-                        if len(np.shape(dg.data))!=2:
+                        dg.data = dg.signal # fudge compatibility
+                        if len(np.shape(dg.data))!=1:  # 2 for igetfile
                            raise LookupError(
                                 'insufficient data for {0} in {1}'
                                 .format(varname, dg.filename))
                              
-                        valarr = dg.data[:,nd+w[0]]
+                        #valarr = dg.data[:,nd+w[0]]
 
-                    tim =  dg.data[:,0] - delay
+                    #tim =  dg.data[:,0] - delay
+                    valarr = dg.signal
+                    tim = dg.timebase
+
+                    # fudge until we can gete the number of points
+                    valarr = valarr[:np.argmax(tim)]
+                    tim = tim[:np.argmax(tim)]
 
                     if oper == 'ddt':  # derivative operator
                         valarr = np.diff(valarr)/(np.average(np.diff(tim)))
@@ -317,6 +333,15 @@ verbose = 0
 
 
 """
+# test code 12/2013
+run  pyfusion/examples/gen_fs_bands.py n_samples=None df=2. exception=None max_bands=1 dev_name="HeliotronJ" 'time_range="default"' seg_dt=1. overlap=2.5  diag_name='HeliotronJ_MP_array' shot_range=[40486] info=0 outfile='PF2_40486_11'
+run -i pyfusion/examples/merge_text_pyfusion.py  file_list=[outfile]
+cc=dd
+run -i pyfusion/examples/merge_basic_HJ_diagnostics.py 'diags="DIA135"' dd=cc exception=None pyfusion.DEBUG=0
+
+
+
+
 # I guess I copied this from LHD/read_igetfile to help with debugging this file.
 #print(os.path.split(???__str__.split("'")[3])[0]+'/TS099000.dat')
 filename='/home/bdb112/pyfusion/pyfusion/acquisition/LHD/TS090000.dat.bz2'

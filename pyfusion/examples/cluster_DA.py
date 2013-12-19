@@ -1,14 +1,14 @@
 """
 run pyfusion/examples/medium_300.py
-DA_file=DA300.name
+DAfilename=DA300.name
 """
 from pyfusion.data.DA_datamining import DA, report_mem
-DA_file = '/data/datamining/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz'
-DA_file='../../../datamining/dd/300_384_RMSv2_neNBecVA.npz'
-#DA_file='DAnov1516diag.npz'
+DAfilename = '/data/datamining/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz'
+DAfilename='../../../datamining/dd/300_384_RMSv2_neNBecVA.npz'
+#DAfilename='DAnov1516diag.npz'
 
-#DA_file='/data/datamining/PF2_130813_6X_1.5_5b_rms_1_diags.npz'
-# too big - 8GB for phase - DA_file='/data/datamining/PF2_130813_8X_1.5_5b_rms_1._diags.npz'
+#DAfilename='/data/datamining/PF2_130813_6X_1.5_5b_rms_1_diags.npz'
+# too big - 8GB for phase - DAfilename='/data/datamining/PF2_130813_8X_1.5_5b_rms_1._diags.npz'
 import pyfusion.clustering as clust
 
 _var_default="""
@@ -26,7 +26,7 @@ exec(process_cmd_line_args())
 
 if phase_sign != 1: print('**** Warning! - you are fiddling with the phase ****')
 
-(phases, misc) = clust.convert_DA_file(DA_file,sel=sel,limit=max_instances)
+(phases, misc) = clust.convert_DA_file(DAfilename,sel=sel,limit=max_instances)
 phases = phase_sign*phases  # -1 to compare boyd's code sep 2013 on H-1
 fo = clust.feature_object(phases, misc)
 # 10 iterations is not enough (50 is better), but this is just a demo.

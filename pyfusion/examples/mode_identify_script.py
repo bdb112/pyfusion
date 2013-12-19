@@ -3,14 +3,14 @@ This version is the first to allow omitting one or more probes.  Use
 a matrix or vector for mask, which does the job of the old sel.
 
 Tests:
-run -i pyfusion/examples/mode_identify_script.py doN=True DA_file='DA65MP2010HMPno612b5_M_N_fmax.npz' sel=np.arange(11,16)   #  Total set = 8450, reset = 2055
+run -i pyfusion/examples/mode_identify_script.py doN=True DAfilename='DA65MP2010HMPno612b5_M_N_fmax.npz' sel=np.arange(11,16)   #  Total set = 8450, reset = 2055
 run -i pyfusion/examples/mode_identify_script.py doN=True csel=[1,2] sel=[11,12]  #  Total set = 22550, reset = 2748
 
 # "straigthforward" usage - add last two together, (eliminate 2nd last (MP5)) cluster on that.
 run -i pyfusion/examples/mode_identify_script.py doN=True mask=array([[1,0,0,0,0],[0,1,0,0,0],[0,0,1,0,0],[0,0,0,1,1]]).T
 
 # again (MP5) on 86200...
-run -i pyfusion/examples/mode_identify_script.py DA_file='/data/datamining/DA86200_86600_sml.npz' doN=True  mask=array([[1,0,0,0,0],[0,1,0,0,0],[0,0,1,0,0],[0,0,0,1,1]]).T
+run -i pyfusion/examples/mode_identify_script.py DAfilename='/data/datamining/DA86200_86600_sml.npz' doN=True  mask=array([[1,0,0,0,0],[0,1,0,0,0],[0,0,1,0,0],[0,0,0,1,1]]).T
 
 # this one tries to close around MP1-MP6
 run -i pyfusion/examples/mode_identify_script.py sel=arange(10,16) doN=True mask=array([[1,0,0,0,0],[0,1,0,0,0],[0,0,1,0,0],[0,0,0,1,0],[0,0,0,0,1],[-1,-1,-1,-1,-1]]).T csel=[0,1,2,3,4] sel=range(11,16)
@@ -32,11 +32,11 @@ mode.plot()
 
 dd['N']=-1+0*dd["shot"].copy()
 
-run -i pyfusion/examples/cluster_DA.py DA_file='PF2_120229_MP_27233_27233_1_256.npz'
+run -i pyfusion/examples/cluster_DA.py DAfilename='PF2_120229_MP_27233_27233_1_256.npz'
 ml = co.make_mode_list(min_kappa=3.5)
 
 from pyfusion.data.DA_datamining import DA, report_mem
-DA233=DA(DA_file,load=1)
+DA233=DA(DAfilename,load=1)
 dd=DA233.da.copy()  # use copy here to allow re-runs 
 run -i pyfusion/examples/mode_identify_script.py doN=1 mask=arange(0,6) threshold=1 mode_list=ml
 from pyfusion.data.convenience import between, bw, btw, decimate, his, broaden
@@ -216,8 +216,8 @@ clear_modes=True    # silently remove all mode keys if any
 sel = np.arange(11,16)
 mask = None # mask is relative to the selected ones defaults to  np.identity(len(sel))
 csel=np.arange(len(sel))
-DA_file='DA65MP2010HMPno612b5_M_N_fmax.npz'
-#DA_file=None
+DAfilename='DA65MP2010HMPno612b5_M_N_fmax.npz'
+#DAfilename=None
 ideal_sd = 0.5
 """
 
@@ -234,10 +234,10 @@ exec(pyfusion.utils.process_cmd_line_args())
 
 if mask is None: mask = np.identity(len(sel))
 
-if DA_file is not None and DA_file != 'None':
-    print("reading in {d}".format(d=DA_file))
+if DAfilename is not None and DAfilename != 'None':
+    print("reading in {d}".format(d=DAfilename))
     from pyfusion.data.DA_datamining import DA, report_mem
-    thisDA=DA(DA_file, load=1)
+    thisDA=DA(DAfilename, load=1)
     # wasteful for large files: dd=thisDA.copyda()
     dd = thisDA.da
 

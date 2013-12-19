@@ -83,8 +83,8 @@ import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
 from pyfusion.data.filters import next_nice_number
 
-# Simple redirect of output:  this is not the perfect way - maybe
-#    should consider context manager and thread safety
+# Simple redirect of output:  this is not the perfect way - maybe look closer
+#  web says we should consider context manager and thread safety
 if outfile is None or outfile == 'None':  # stdout
     write = sys.stdout.write
     close = sys.stdout.flush

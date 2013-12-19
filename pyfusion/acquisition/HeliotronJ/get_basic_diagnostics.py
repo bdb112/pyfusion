@@ -234,7 +234,7 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                 if dg is None:  # messy - break doesn't do what I want?
                     valarr=None
                 else:
-                    nd = 1
+                    nd = 1   # initially only deal with single channels (HJ)
                     # get the column(s) of the array corresponding to the name
                     w = [0]
                     if (oper in 'sum,average,rms,max,min'.split(',')):
@@ -338,6 +338,8 @@ run  pyfusion/examples/gen_fs_bands.py n_samples=None df=2. exception=None max_b
 run -i pyfusion/examples/merge_text_pyfusion.py  file_list=[outfile]
 cc=dd
 run -i pyfusion/examples/merge_basic_HJ_diagnostics.py 'diags="DIA135"' dd=cc exception=None pyfusion.DEBUG=0
+
+reload(pyfusion.acquisition.HeliotronJ.get_basic_diagnostics)
 
 
 

@@ -59,7 +59,12 @@ class ThreadWorker():
 from time import sleep, time as seconds
 
 
-from dist_nogil import dist
+try:
+    from dist_nogil import dist
+except ImportError, reason:
+    if raw_input('auto compile cython code? [Y/n]').lower() != 'n':
+        import pyximport; pyximport.install()
+        from dist_nogil import dist
 
 def dist_mp(cl_instance, instances, squared = None, averaged = None, threads=None, debug=0):
     """ multithreaded distance calculation using dist.pyx and nogil version

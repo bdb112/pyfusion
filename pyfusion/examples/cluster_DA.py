@@ -18,6 +18,7 @@ max_instances=50000
 n_clusters=6
 n_iterations=10
 n_cpus=2
+keysel=None
 sel=None
 """
 exec(_var_default)
@@ -26,8 +27,11 @@ exec(process_cmd_line_args())
 
 if phase_sign != 1: print('**** Warning! - you are fiddling with the phase ****')
 
-(phases, misc) = clust.convert_DA_file(DAfilename,sel=sel,limit=max_instances)
+(phases, misc) = clust.convert_DA_file(DAfilename,keysel=keysel,limit=max_instances)
 phases = phase_sign*phases  # -1 to compare boyd's code sep 2013 on H-1
+if sel is not None:
+    phases=phases[:,sel]
+
 fo = clust.feature_object(phases, misc)
 # 10 iterations is not enough (50 is better), but this is just a demo.
 co = fo.cluster(method='EM_VMM',n_clusters = n_clusters, n_iterations = n_iterations,start = 'k_means',n_cpus=n_cpus,number_of_starts = number_of_starts)

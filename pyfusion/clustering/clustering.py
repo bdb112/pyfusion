@@ -271,7 +271,7 @@ def compare_two_cluster_results(cluster1, cluster2):
 
 # this 'constant' is defined for convenience when using convert_DA_file
 default_correspondence = 'indx,serial t_mid,time amp,RMS freq,freq p,p a12,a12, shot,shot k_h,kh, ne_1,ne1, ne_2,ne2 ne_3,ne3 ne_4,ne4 ne_5,ne5 ne_6,ne6 ne_7,ne7 b_0,b_0 p_rf,p_rf'
-def convert_DA_file(filename, correspondence=default_correspondence, debug=1, limit=None, Kilohertz=1, load_all=False, sel=None):
+def convert_DA_file(filename, correspondence=default_correspondence, debug=1, limit=None, Kilohertz=1, load_all=False, keysel=None):
     """ Converts a DA_datamining file to a form compatible with this package.
     returns(instance_array, misc_data) with names converted according to 
     correspondence, input as pairs separated by spaces.
@@ -287,11 +287,11 @@ def convert_DA_file(filename, correspondence=default_correspondence, debug=1, li
         corr_dict.update({pair.split(',')[0]: pair.split(',')[1]})
 
     # don't save DA if we are taking all - wasteful of space
-    if sel is None: ddin = DA(filename, load=1, limit=limit).da
+    if keysel is None: ddin = DA(filename, load=1, limit=limit).da
     else:  # this should be rationalised
-        print('selecting {n} instances'. format(n=len(sel)))
+        print('selecting {n} instances'. format(n=len(keysel)))
         DAsel = DA(filename)
-        DAsel.load(sel=sel)
+        DAsel.load(sel=keysel)
         ddin = DAsel.copyda()
 
     inst_arr = ddin.pop('phases')

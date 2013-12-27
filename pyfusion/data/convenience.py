@@ -13,7 +13,9 @@ def between(var, lower, upper=None, closed=True):
     includes end points if closed=True
     alternative call is between(var, range)   e.g. between(x, [1, 2])
     """
-    if len(np.shape(lower))>0:
+    # want to catch arg3 given when arg2 is a range
+    if (len(np.shape(lower))==1 and np.shape(lower) == (2) and 
+        np.shape(lower) != np.shape(var)):
         if upper is None:
             upper = lower[1]
             lower = lower[0]

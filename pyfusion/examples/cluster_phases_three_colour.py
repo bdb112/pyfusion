@@ -209,7 +209,7 @@ for cl in cls:
     pl.figure(num='cl[{cl}] freq-time'.format(cl=cl))
     if clearfigs: pl.clf()
     if alpha < 0:
-        alpha_ = (1./len(w5))**(alpha)  # -0.25 10,000pts -> alpha_=.1
+        alpha_ = (1.*len(w5))**(alpha)  # -0.25 10,000pts -> alpha_=.1
     else:
         alpha_ = alpha
     pl.plot(t_mid[w5],freq[w5],'.b', alpha=alpha_)

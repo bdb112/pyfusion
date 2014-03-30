@@ -22,6 +22,28 @@ from pyfusion.debug_ import debug_
 #can't from pyfusion.config import get
 import pyfusion
 
+def overlap(interval1, interval2):
+    """ return true if there is any overlap between the two intervals 
+    probably belongs in convenience or utils
+    """
+    return not (min(interval1)>max(interval2) 
+                or (max(interval1)<min(interval2)))
+
+def set_axis_if_OK(ax, xlims, ylims):
+    """
+    set axes if they containg at least a bit of the plot
+    originally meant to be used when forcing specific axes, to allow
+    for attempt to force axes suitable for LHD on HJ data for example
+    """
+    from pyfusion.utils.utils import warn
+    if overlap(ax.get_xlim(), xlims) and overlap(ax.get_ylim(), ylims):
+        ax.axis(xlims[0], xlims[1], ylims[0], ylims[1])
+    else:
+        warn('suppressed attempt to set axis outside ranges\n{att:s} cf {act:s}'
+             .format(att=(xlims,ylims), act=(ax.get_xlim(),ax.get_ylim())))
+
+
+
 plot_reg = {}
 
 # the registration function is similar but separate for plots and filters
@@ -191,12 +213,13 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
 
     # look in the config file section Plots for a string like 
     # FT_Axis = [0,0.08,0,500e3]   don't quote
+    exceptions_to_hide = Exception if pyfusion.DEBUG<3 else None
     try:
         #pl.axis(eval(pyfusion.config.get('Plots','FT_Axis')))
         # this is clumsier now we need to consider freq units.
         axt = eval(pyfusion.config.get('Plots','FT_Axis'))
-        pl.axis([axt[0], axt[1], axt[2]/ffact, axt[3]/ffact])
-    except:
+        set_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact)
+    except exceptions_to_hide:
         pass
     # but override X if we have zoomed in bdb
     if 'reduce_time' in input_data.history:

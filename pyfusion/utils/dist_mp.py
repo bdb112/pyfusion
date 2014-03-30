@@ -167,5 +167,9 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 """
-time dist(arange(10,dtype=float32),zeros((int(1e7),10),dtype=float32),threads=2, debug=2,squared=0,averaged=1)
+from pyfusion.utils.dist_mp import dist_mp
+timeit vplus14 = dist_mp(20*np.pi+np.arange(14,dtype=np.float32)/5.,np.ones((10000000,14),dtype=np.float32),squared=1, averaged=0,threads=1)
+# above on i5/4750 133MHz 1.61s single, 815 3, 762ms for 4   no change 106MHz
+  
+dist_mp(arange(10,dtype=float32),zeros((int(1e7),10),dtype=float32),threads=2, debug=2,squared=0,averaged=1)
 """

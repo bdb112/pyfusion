@@ -230,7 +230,8 @@ if mode_list is None:
     mode_list = ideal_modes
 
 # repeat so we can tune ideal modes, or use a different set of modes
-exec(pyfusion.utils.process_cmd_line_args())
+# more trouble than its worth?  for example, mode_list=None overides its effect
+#exec(pyfusion.utils.process_cmd_line_args())
 
 if mask is None: mask = np.identity(len(sel))
 

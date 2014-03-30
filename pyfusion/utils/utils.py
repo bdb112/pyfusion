@@ -100,13 +100,15 @@ if pyfusion.COLORS != None:
         red = tc.LightRed
         normal = tc.Normal
     except None:
-        (red, normal) = ('','')
+        (red, normal) = ('***','***')  # make error prominent if no clours
 
     def my_show(message, category, filename, lineno, file=None, line=None):
-        orig_show(red + '**' + message.message + normal, 
+        orig_show(red + message.message + normal, 
                   category, filename, lineno, file, line)
 
     warnings.showwarning = my_show    
+    if pyfusion.VERBOSE>0:
+        print('warning will be shown' + red + ' like this' + normal)
 # end of color warnings block
 
 def warn(warning, category=UserWarning ,stacklevel=2, exception=None):
@@ -126,8 +128,9 @@ def warn(warning, category=UserWarning ,stacklevel=2, exception=None):
     """
     if exception==None: exmsg=''
     else: exmsg = 'Exception "%s, %s": ' %  (type(exception),exception)
-# need the +1 so that the caller's line is printed, not this line.
-    warnings.warn(exmsg+warning, category, stacklevel=stacklevel+1)
+    # need the +1 so that the caller's line is printed, not this line.
+    # also break the line where the 'red' colour starts
+    warnings.warn('\n'+exmsg+warning, category, stacklevel=stacklevel+1)
 
 
 def modtwopi(x, offset=np.pi):

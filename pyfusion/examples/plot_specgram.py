@@ -10,6 +10,7 @@
 
 import pyfusion as pf
 import pylab as pl
+import matplotlib.cm as cm  # import for convenience of user input.
 
 _var_default="""
 dev_name='H1Local'   # 'LHD'
@@ -23,6 +24,7 @@ noverlap=None
 time_range = None
 channel_number=0
 hold=0
+cmap=cm.jet   # see also cm.gray_r etc
 """
 
 exec(_var_default)
@@ -51,4 +53,4 @@ if time_range != None:
     dr = d.reduce_time(time_range)
 else:
     dr = d
-dr.subtract_mean().plot_spectrogram(noverlap=noverlap, NFFT=NFFT, channel_number=channel_number, hold=hold)
+dr.subtract_mean().plot_spectrogram(noverlap=noverlap, NFFT=NFFT, channel_number=channel_number, hold=hold, cmap=cmap)

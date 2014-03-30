@@ -94,7 +94,9 @@ def dist(np.ndarray[FTYPE_t, ndim=1] x, np.ndarray[FTYPE_t, ndim=2] y, squared=N
 
 """
 #test code
-import dist
+#import dist
+import pyximport; pyximport.install()
+from pyfusion.utils.dist_nogil import dist
 v14 = dist.dist(np.arange(14,dtype=np.float32)/5.,
                 np.ones((10,14),dtype=np.float32),squared=1, averaged=0)
 vplus14 = dist.dist(20*np.pi+np.arange(14,dtype=np.float32)/5.,

@@ -12,6 +12,7 @@ _var_defaults="""
 res = 50 # number of points along each dimension
 N = 3
 M = 1
+ms=6
 hold=0
 """
 exec(_var_defaults)
@@ -42,8 +43,9 @@ HMPTheta = np.array([-1.31580372, -0.94928458, -0.76235982, -0.3832743 , -0.1918
         0.        ,  0.19181168,  0.3832743 ,  0.76235982,  0.94928458,\
         1.31580372,  1.49469997,  1.67080369])
 
-pl.plot(HMPTheta/(2*pi), HMPPhi/(2*pi),'o-r')
-pl.plot(MPTheta/(2*pi), MPPhi/(2*pi),'o-b')
+# plot HMP last to be on top
+pl.plot(MPTheta/(2*pi), MPPhi/(2*pi),'o-b',ms=ms)
+pl.plot(HMPTheta/(2*pi), HMPPhi/(2*pi),'o-r',ms=ms)
 
 phH = -1.386
 th = np.arctan(float(N)/M)

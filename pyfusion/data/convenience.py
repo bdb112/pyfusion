@@ -52,9 +52,10 @@ def decimate(data, limit=None, fraction=None):
         step = np.max([int(len(data)/limit),1])
     return(np.array(data)[np.arange(0,len(data), step)])        
 
-def his(xa, tabs=False, sort=-1, dfmt=None,total=True):
+def his(xa, tabs=False, sort=-1, dfmt=None,total=True, maxsort=None):
     """ print the counts and fraction of xa binned as integers
     sort=1,-1 sorts by most frequent (first, last), 
+    maxsort sets the maximum number kept after the sort
     """
     if dfmt is None:
         dfmt = 'd' if type(xa[0])== int else 'f'
@@ -68,7 +69,11 @@ def his(xa, tabs=False, sort=-1, dfmt=None,total=True):
 
     if sort!=0: 
         ii = np.argsort(nxarr)
+        if maxsort is not None:
+            _maxsort = min(maxsort,len(ii))
+            ii = ii[-maxsort:]
         if sort > 0 : ii=ii[::-1]  # reverse so that greatest is first
+
     else: ii = range(len(nxarr))
     for i in ii:
         # fails to generate tabs (\t)- is it the terminal software that detabifies?

@@ -103,7 +103,8 @@ def dist_mp(cl_instance, instances, squared = None, averaged = None, threads=Non
         from numpy.testing import assert_array_almost_equal
 
         # extra \n to avoid thread output overwriting (mostly)
-        if debug>1: print('\nchecking with safer, single thread version of dist_nogil')
+        if debug>1: 
+            print('\ncheck with safer, single thread version of dist_nogil - no output==OK')
         x1 = dist_gil(cl_instance, instances, 
                       averaged=averaged, squared=squared, debug=debug)
         assert_array_almost_equal(x, x1)

@@ -30,7 +30,8 @@ if phase_sign != 1: print('**** Warning! - you are fiddling with the phase ****'
 (phases, misc) = clust.convert_DA_file(DAfilename,keysel=keysel,limit=max_instances)
 phases = phase_sign*phases  # -1 to compare boyd's code sep 2013 on H-1
 if sel is not None:
-    phases=phases[:,sel]
+    phases=phases[sel,:]  # WAS phases[:,sel] - how did it ever work?
+    for k in misc.keys(): misc.update({k: misc[k][sel]}) # this was missing too
 
 fo = clust.feature_object(phases, misc)
 # 10 iterations is not enough (50 is better), but this is just a demo.

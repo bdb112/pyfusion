@@ -109,6 +109,9 @@ def primefactors(x, limit=2**63):
 def fft_time_estimate(n, fft_type='numpy'):
     """ time in sec """
     # FFT is supposed to be N.log N, (FMM) is O(n)
+    if len(np.shape(n))>0:  # n for fastest is int(fft_time_estimate(arange)[0][0])
+        ans = [(nn, fft_time_estimate(nn)) for nn in n]
+        return([ans[i] for i in np.argsort(ans,axis=0)[:,1]])
     facts = primefactors(n)
     if fft_type == 'numpy':
         time_cal = 2.6e-10 #  ohead-7, oheadlog=1 E4300, float64 complex fft numpy

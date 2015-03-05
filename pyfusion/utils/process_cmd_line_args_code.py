@@ -36,6 +36,8 @@ In b), the local dictionary is updated.  b) might be clearer to do it explicitly
 """
 # cant deepcopy locals()
 import sys as _sys
+import os
+
 ## put any functions you might use in the expressions here
 from numpy import arange, array, sort
 try:
@@ -106,7 +108,14 @@ _rhs=None
 # this would be a way to ignore spaces around equals, but need to preserve 
 # spaces between statements! leave for now
 #_expr=string.join(_sys.argv[1:])
-for _expr in _sys.argv[1:]:
+# check if the argv is what we expect - (needed to work within emacs - argv[0] is ipython
+_args = _sys.argv[:]
+if os.path.split(_args[0])[-1] in ['ipython']:
+    _args = []
+else:     # argv[0] is hopefully a python script, and we don't want to parse it
+    _args = _args[1:]
+
+for _expr in _args:
     if (array(_expr.upper().split('-')) == "HELP").any():
         if locals().has_key('__doc__'): 
             print(" ==================== printing local __doc__ (from caller's source file) ===")

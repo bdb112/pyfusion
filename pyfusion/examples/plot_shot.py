@@ -38,17 +38,30 @@ def plot_shots(DA, shots=None, nx=6, ny=4, diags=None, fontsize=None, save=''):
         if nx*ny>4:
             pl.subplots_adjust(.02,.03,.97,.97,.24,.13)
 
-def plot_shot(DA, sh, ax=None, diags = None, extra_diags=None, debug=0, fontsize=None, hold=1):
+def safe_get(DA,key,inds=None):
+    try:
+        val = DA.dd[key][inds]
+    except:
+        val = len(inds) * [None]
+    return(val)
+
+def plot_shot(DA, sh=None, ax=None, diags = None, extra_diags=None, debug=0, fontsize=None, hold=1):
     """ more flexible - no need to check for errors
+    Also initial version tailored to LHD
     """
     if fontsize is not None:     
         pl.rcParams['legend.fontsize']=fontsize
 
     if diags is None:
-        diags = 'i_p,w_p,flat_level,NBI,ech,p_frac'
+        if 'MICRO01' in DA.da.keys():
+            diags = 'MICRO01,DIA135'
+        else:
+            diags = 'i_p,w_p,flat_level,NBI,ech,p_frac'
 
     if extra_diags is not None:
         diags += "," + extra_diags
+
+    if sh is None: sh = DA.da['shot'][0]
 
     inds=np.where(sh==DA.da['shot'])[0]
     pl.rcParams['legend.fontsize']='small'
@@ -57,7 +70,7 @@ def plot_shot(DA, sh, ax=None, diags = None, extra_diags=None, debug=0, fontsize
         ax = pl.gca()
     #(t_mid,w_p,dw_pdt,dw_pdt2,b_0,ech,NBI,p_frac,flat_level)=9*[None]
     t = DA.da['t_mid'][inds]
-    b_0 = DA.da['b_0'][inds]
+    b_0 = safe_get(DA, 'b_0',inds)
 
     if (len(np.shape(diags)) == 0): diags = diags.split(',')
     for (i,diag) in enumerate(diags):

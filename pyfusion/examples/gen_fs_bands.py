@@ -58,6 +58,7 @@ show_times=1
 shot_range = [27233]
 #shot_range = range(90090, 90110)
 n_samples = None  # was 512
+n_samples_max = 64000
 overlap=1.0
 diag_name= 'MP2010'
 exception=Exception
@@ -94,6 +95,8 @@ else:
     close = fd.close
 
 count = 0  #  we print the header right before the first data
+raw_count = 0
+
 dev = pyfusion.getDevice(dev_name)
 for shot in shot_range:
     while(os.path.exists(pyfusion.root_dir+'/pause')):
@@ -111,6 +114,10 @@ for shot in shot_range:
             write('Choosing {N} samples to cover {seg_dt}\n'
                   .format(N=n_samples,  seg_dt=seg_dt))
             
+        if (n_samples>n_samples_max) or (n_samples < 16):
+            # this will catch milliseconds vs seconds errors
+            sys.stderr.writelines('################ n_samples ({ns}) > n_samples_max ({nsm}) ###'
+                                  .format(ns=n_samples, nsm=n_samples_max))
         if time_range != None:
             if type(time_range)==str: # strings are recipes for finding shot times
                 time_range = find_shot_times(dev, shot, time_range)
@@ -165,8 +172,9 @@ for shot in shot_range:
                         SVtitle_spc = (n_channels - 2)*' '
                         write('\nShot    time   {spc}SVS    freq  Amp    a12   p    H     frlow frhigh  cpkf  fpkf  {np:2d} Phases       Version 0.7 \n'
                               .format(np=len(fs.dphase),spc=SVtitle_spc))
-                    count += 1
+                    raw_count += 1
                     if fs.H < max_H and fs.p>0.01 and len(fs.svs())>=min_svs:
+                        count += 1
                         phases = ' '.join(["%5.2f" % j.delta for j in fs.dphase])
                         # was t_seg.scales, but now it is copies, t_seg is not updated 
                         RMS_scale = sqrt(mean(fs.scales**2)) 
@@ -204,6 +212,6 @@ if pyfusion.orm_manager.IS_ACTIVE:
     pyfusion.orm_manager.Session().commit()
     pyfusion.orm_manager.Session().close_all()
 
-timeinfo('\n######## {c} fs finished'.format(c=count), sys.stderr) # stderr so that read_text is not fooled.
+timeinfo('\n######## {c}/{rc} fs finished'.format(c=count,rc=raw_count), sys.stderr) # stderr so that read_text is not fooled.
 # should really put a sentinel here.
 close()

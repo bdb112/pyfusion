@@ -167,15 +167,21 @@ class BaseDataFetcher(object):
 
             # this is to provide traceback from deep in a call stack
             # the normal traceback doesn't see past the base.py into whichever do_fetch
-            # this simple method doesn't work, as it only has info after getting to the prompt
-            if  hasattr(sys, "last_type"):traceback.print_last()
-            else: print('sys has not recorded any exception - needs to be at prompt?')
+            #  Avoid printing exception stuff unless we want a little verbosity
+            if pyfusion.VERBOSE>0:
+                #  this simple method doesn't work, as it only has info after 
+                #  getting to the prompt
+                if  hasattr(sys, "last_type"):
+                    traceback.print_last()
+                else: 
+                    print('sys has not recorded any exception - needs to be at prompt?')
 
-            # this one DOES work.
-            print(sys.exc_info())
-            (extype, ex, tb) = sys.exc_info()
-            for tbk in traceback.extract_tb(tb):
-                print("Line {0}: {1}, {2}".format(tbk[1],tbk[0],tbk[2:]))
+                # this one DOES work.
+                print(sys.exc_info())
+                (extype, ex, tb) = sys.exc_info()
+                for tbk in traceback.extract_tb(tb):
+                    print("Line {0}: {1}, {2}".format(tbk[1],tbk[0],tbk[2:]))
+
             raise LookupError("%s\n%s" % (self.error_info(step='do_fetch'),details))
         data.meta.update({'shot':self.shot})
         # Coords shouldn't be fetched for BaseData (they are required

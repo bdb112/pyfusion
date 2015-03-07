@@ -4,6 +4,62 @@ import numpy as np
 import warnings
 import pyfusion
 
+
+def find_last_shot(fun, range=xrange(1, 200000), ex=True, quiet=False):
+    """ find the last shot for which fun(shot) does not return an error
+        Actually more general than this.  Only tested for low lim yes, uplim no
+    >>> def myfun(shot): return(shot <= 12345)
+    >>> find_last_shot(myfun, quiet=True)
+    12345
+    """
+
+    def mid(low, high):
+        return(int((low+high)/2))
+
+    def quiet_call(fun, arg, ex=True):
+        try:
+            res = fun(arg)
+        except Exception:
+            if (ex):  # if we are watching for exceptions, return False if we get one
+                res = False
+        if res is False and (not quiet): print('.'),
+        return(res)
+        
+
+    maxits = 1000 # safety valve
+
+    low = min(range)
+    high = max(range)
+    if not quiet_call(fun, low): 
+        raise ValueError('low limit of {l} not there'.format(l=low)) 
+
+    if quiet_call(fun, high): 
+        raise ValueError('upper limit of {u} is there'.format(u=high)) 
+
+    shot = mid(low, high)
+    while (1):
+        maxits -= 1
+        if maxits < 0: raise Exception('infinite bisection?')
+        res = quiet_call(fun, shot)
+        # if not false, try higher
+        if res is not False:
+            low = shot
+        else:
+             high = shot   
+        nextone = mid(low, high)
+        #  print(maxits, nextone,high,low)
+        if low == high-1:
+            if (shot == high):
+                if res: 
+                    return(shot)
+                else:
+                    return(low)
+            else: # shot must be low, and it fun must be true
+                return(shot)
+
+        shot = nextone
+
+
 def compact_str(shot_numbers, max_changing_digits=2, min_run=4,  debug=False):
     """ returns a compact string represetation of shots.  e.g.
     [100,101,102,103,109,110,111,120] ==> "100..103,109,110,120"

@@ -180,12 +180,12 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                     lhd_summary = read_csv_data(csvfilename, header=3)
                     # should make this more formal - last shots
                     # from an 'extra' file, and finally, from shot info
-                if shot>110000: # fudge to get latest data
+                if shot>117000: # fudge to get latest data
                     lhd_summary = np.load(acq_LHD+'/LHD_summary.npz')['LHD'].tolist()
-                    print('loading newer shots - fix-me')
-                    val = lhd_summary[varname][shot-70000]    
-                else:
-                    val = lhd_summary[varname][shot]    
+                    print('loading newer shots from a separate file - fix-me')
+                    #  val = lhd_summary[varname][shot-70000]    # not needed
+                #  else:
+                val = lhd_summary[varname][shot]    
                 valarr = np.double(val)+(times*0)
             else:    
                 debug_(max(pyfusion.DEBUG, debug), level=4, key='find_data')

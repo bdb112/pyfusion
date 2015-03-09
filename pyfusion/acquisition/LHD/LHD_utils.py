@@ -3,7 +3,7 @@ import pyfusion
 
 def purge_old(path, wild, number=20):
     import subprocess
-    print('purging from temp dir %s' % (path + os.sep + wild))
+    print('*** Warning!! purging from temp dir %s' % (path + os.sep + wild))
     old_dir = os.getcwd()
     # -f prevents questions
     cmd = str("rm -f `ls -t "+wild+" |tail -%d`" % (number))

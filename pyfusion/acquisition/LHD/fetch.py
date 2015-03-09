@@ -267,7 +267,9 @@ def retrieve_to_file(diagg_name=None, shot=None, subshot=None,
          (resp,err) = retr_pipe.communicate()
          if (err != '') or (retr_pipe.returncode != 0): 
               attempt += 1
-              print(resp,err,attempt,'.') #,
+              if pyfusion.VERBOSE > 0:
+                   print('response={resp}, errmsg={err}, after {attempt}attempts'
+                         .format(resp=resp,err=err,attempt=attempt)) #,
               if (attempt>10) or ("not exist" in err) or ( "data not found" in resp): 
                    raise LookupError(str("Error %d accessing retrieve:"
                                          "cmd=%s \nstdout=%s, stderr=%s, attempt %d" % 

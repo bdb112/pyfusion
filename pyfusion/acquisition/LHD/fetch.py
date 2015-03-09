@@ -243,7 +243,7 @@ def retrieve_to_file(diagg_name=None, shot=None, subshot=None,
 
 # The old pyfusion used None to indicate this code could choose the location
 # in the new pyfusion, it is fixed in the config file.
-#    if outdir == None: 
+#    if outdir is None: 
 #        outdir = tempfile.gettempdir() + '/'
 
     if not(path.exists(outdir)): makedirs(outdir)

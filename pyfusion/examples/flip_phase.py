@@ -46,7 +46,7 @@ if (o_copy*dd['phases'][:,0] >= 0).all():
 else: 
     print('appears to be altered in some way according to phorig')
 
-if inds == None:  inds = np.arange(len(dd['b_0']))
+if inds is None:  inds = np.arange(len(dd['b_0']))
 whneg = np.where(dd['b_0'] < 0)[0]
 
 if method == 'asB': # flip phase sign when B neg

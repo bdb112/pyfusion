@@ -89,18 +89,18 @@ def read_csv_data(file_or_list,debug=0,columns=None, header=1, dialect='excel', 
         if (r < (header-1)):
             pass # skip before header
             
-        elif (r == header-1) or (header == None):
+        elif (r == header-1) or (header is None):
             # this code deals both with header lines and data lines - messy!
             for (c,col) in enumerate(row):
-                if columns == None: 
+                if columns is None: 
                     data.append([])
-                    if header == None:
+                    if header is None:
                         names.append(str("col%2.2d" %(c)))
                         data[c].append(col)
                     else: 
                         names.append(col)
                 elif c in columns: 
-                    if header == None:
+                    if header is None:
                         names.append(str("col%2.2d" %(c)))
                         data[c].append(col)
                     else: 

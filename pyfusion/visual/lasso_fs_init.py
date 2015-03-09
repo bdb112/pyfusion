@@ -138,7 +138,7 @@ def lasso_fs_init( fs_list, ax=None, all=True, plkwargs={}, matchkwargs={}, max_
 
     """
     global lass_man
-    if ax == None: ax=pl.gca()
+    if ax is None: ax=pl.gca()
     chldrn = ax.get_children()
     xys = []
     # looks like we are checking out all the points on the current "axes"

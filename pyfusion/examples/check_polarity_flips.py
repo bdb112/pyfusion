@@ -113,7 +113,7 @@ for i in range(len(chans)):
             bounds=[0,64*1024*int(max(where(tb<5)[0])/(64*1024))]
             tb=tb[bounds[0]:bounds[1]]
     else: 
-        if ref_index == None: 
+        if ref_index is None: 
             ch1_index = i-1 
         else:
             ch1_index = ref_index

@@ -73,7 +73,7 @@ def diff(dumpa=None, dumpb=None, eol='\n'):
     key gives the read sequence of files - this would be lost in a dictionary
     key = 0 is the first read
     """
-    if dumpa == None:
+    if dumpa is None:
         pf_hist = pyfusion.conf.history
         seq = sort(pf_hist.keys())
         oldest_to_be_printed = max(1,len(seq)-2) 

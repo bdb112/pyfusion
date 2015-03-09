@@ -271,7 +271,7 @@ class MultiChannelFetcher(BaseDataFetcher):
             #print(tmp_data.signal[-1], sgn)
             tmp_data.signal = sgn * tmp_data.signal
             #print(tmp_data.signal[-1], sgn)
-            if timebase == None:
+            if timebase is None:
                 timebase = tmp_data.timebase
                 data_list.append(tmp_data.signal)
             else:

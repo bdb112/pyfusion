@@ -138,7 +138,7 @@ for shot in shot_range:
         for ii,t_seg in enumerate(sections):
             ord_segs.append(t_seg)
         ord = argsort([average(t_seg.timebase) for t_seg in ord_segs])
-        if fmax == None:
+        if fmax is None:
             fmax = 0.5/np.average(np.diff(ord_segs[0].timebase)) - df
 
         timeinfo('beginning flucstruc loop')

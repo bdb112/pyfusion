@@ -43,7 +43,7 @@ class Mode():
         if MP2010_trick:  # don't use this - now separate mode lists!
             self.cc = -twopi(self.cc + np.pi, offset=4)  # this works for MP2010 if -B is the standard
         self.csd = np.array(csd)
-        if threshold == None: threshold = 1
+        if threshold is None: threshold = 1
         self.threshold = threshold
         self.shot_list = shot_list
         leng = len(self.cc)
@@ -63,12 +63,12 @@ class Mode():
 
        mask selects the probes - if None, select all.
         """
-        if shot_list == None: shot_list = self.shot_list
-        if threshold == None: threshold = self.threshold
+        if shot_list is None: shot_list = self.shot_list
+        if threshold is None: threshold = self.threshold
         else: self.threshold=threshold  # save the last manually set.
 
-        if Nval==None: Nval = self.N
-        if NNval==None: NNval = self.NN
+        if Nval is None: Nval = self.N
+        if NNval is None: NNval = self.NN
 
         uniq_modes = np.unique(dd['mode_id'][np.where(dd['mode_id']>=0)[0]])
         if self.id is None:
@@ -134,7 +134,7 @@ class Mode():
         dd['NN'][inds[w]]=NNval
         dd['N'][inds[w]]=Nval
         dd['mode_id'][inds[w]]=self.id
-        print("N={N}: set {s:.1f}%, total N set is now {t:.1f}%".
+        print("N={N}: set {s:.2f}%, total N set is now {t:.2f}%".
               format(s=100*float(len(w))/len(dd['shot']),N=Nval,
                      t=100*float(len(np.where(dd['N']>min(dd['N']))[0]))/len(dd['shot'])
                      ))
@@ -145,12 +145,12 @@ class Mode():
         """ store coarse and fine mode (M, MM) numbers according to a threshold std and an optional shot_list.  If None the internal shot_list is used.
         which would have defaulted to [] at __init__
         """
-        if shot_list == None: shot_list = self.shot_list
-        if threshold == None: threshold=self.threshold
+        if shot_list is None: shot_list = self.shot_list
+        if threshold is None: threshold=self.threshold
         else: self.threshold=threshold  # save the last manually set.
 
-        if Mval==None: Mval = self.M
-        if MMval==None: MMval = self.MM
+        if Mval is None: Mval = self.M
+        if MMval is None: MMval = self.MM
         if MMval in np.unique(dd['MM']): 
             askif('MMval {0} already used'.format(MMval),quiet=quiet)
 
@@ -206,7 +206,7 @@ class Mode():
         """ plot a mode showing its SD as error bars
         """
         if csel is None: csel = np.arange(len(self.cc))
-        if suptitle==None:
+        if suptitle is None:
             pl.suptitle("{0}, cc={1} sd={2} ".
                         format(self.name,self.cc[csel],self.csd[csel]))               
 
@@ -214,7 +214,7 @@ class Mode():
         #pl.plot(xd, self.cc, label=self.name, **kwargs)
         if axes != None: ax = axes
         else: ax=pl.gca()
-        if label == None: label =self.name
+        if label is None: label =self.name
         ax.plot(xd, self.cc[csel],label=label, color=color, **kwargs)
         current_color = ax.get_lines()[-1].get_color()
         ax.errorbar(xd, self.cc[csel], self.csd[csel], ecolor=current_color, color=current_color,**kwargs)

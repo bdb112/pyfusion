@@ -43,7 +43,7 @@ def getlocalfilename(shot_number, channel_name, local_dir=None):
     """
     At present, we assume the numpy savez method is used - other save options may be added later
     """
-    if local_dir == None: # default to first path in localdatapath
+    if local_dir is None: # default to first path in localdatapath
         local_dir =  pyfusion.config.get('global', 'localdatapath').split(':')[0]
     return local_dir+'/%d_%s.npz' %(shot_number, channel_name)
 

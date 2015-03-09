@@ -158,10 +158,10 @@ def process_chirps(dd, shots=None, Ns=None, Ms=None, maxd = 4, dfdtunit=1000, mi
     for k in ['shot', 'M', 'N']: 
         exec("all_{0}=np.array(dd['{0}'])[wNdef]".format(k))
 
-    if Ms == None: 
+    if Ms is None: 
         Ms = np.unique(all_M) 
         warn('defaulting Ms to {0}'.format(Ms))
-    if Ns == None: 
+    if Ns is None: 
         Ns = np.unique(all_N) 
         # remove "undefined"
         w = np.where(Ns != undef_int)[0]

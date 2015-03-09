@@ -34,13 +34,13 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
         'First argument must be a dictionary of arrays or an '
             'array read from loadtxt')
 
-    if x == None: x = keys[0]        
-    if y == None: y = keys[1]        
-    if col == None: col = keys[2]        
+    if x is None: x = keys[0]        
+    if y is None: y = keys[1]        
+    if col is None: col = keys[2]        
 
 
     # deal with the indices first, so we can consider indexing x,y earlier
-    if ind == None: 
+    if ind is None: 
         if pl.is_string_like(x):
             lenx = len(ds[x])
         else: 
@@ -78,12 +78,12 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
             col=ds[col][ind]
         else: col = col  # colour is hardwired    
     else:
-        if col == None: col='b'
+        if col is None: col='b'
         else:
             col = np.array(col)[ind]
         color_string = ''
 
-    if nomode == None:
+    if nomode is None:
         if hasattr(col, 'dtype'):
             col_dtype = col.dtype
             minint = np.iinfo(col_dtype).min
@@ -108,14 +108,14 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
         x = x + xdither * (np.random.random(len(x))-0.5)
         y = y + ydither * (np.random.random(len(x))-0.5)
 
-    if sz == None: sz=20 * np.ones(len(x))
+    if sz is None: sz=20 * np.ones(len(x))
     if pl.is_string_like(sz): 
         size_string = sz # size scale is the value giving a dot size of dot_size
         sz=ds[sz]
     else: # must be a number or an array
         sz = np.array(sz)
 
-    if size_scale==None: size_scale = max(sz[ind])
+    if size_scale is None: size_scale = max(sz[ind])
 
     if size_scale<0:  # negative is a log scale
         sz=dot_size/20*(np.log(sz[ind]/-size_scale))**2
@@ -150,6 +150,6 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
     pl.xlabel(x_string)
     pl.ylabel(y_string)
     pl.title('size=%s, colour=%s' % (size_string, color_string))
-    if colorbar == None and len(col) > 1:
+    if colorbar is None and len(col) > 1:
         colorbar = True
     if colorbar: pl.colorbar()

@@ -84,7 +84,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
     import pylab as pl
     n_rows = input_data.signal.n_channels()
     n_rows = int(round(0.49+(n_rows/float(n_columns))))
-    if (n_rows > 3) and (hspace == None): 
+    if (n_rows > 3) and (hspace is None): 
         hspace = 0.001 # should be 0, but some plots omitted if 
                        #exactly zero - fixed in matplotlib 1
     if pyfusion.VERBOSE > 3: print str(n_rows) + ' ' + str(n_columns)
@@ -181,16 +181,16 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
 def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, filename=None, coloraxis=None, noverlap=0,NFFT=None, **kwargs):
     import pylab as pl
     
-    if windowfn == None: windowfn=pl.window_hanning
+    if windowfn is None: windowfn=pl.window_hanning
 
     # look in the config file section Plots for NFFT = 1234
     # Dave - how about a method to allow this in one line
     # e.g. pyfusion.config.numgetdef('Plots','NFFT', 2048)
     # usage:  
-    # if (NFFT==None): NFFT = pyfusion.config.numgetdef('Plots','NFFT', 2048)
+    # if (NFFT is None): NFFT = pyfusion.config.numgetdef('Plots','NFFT', 2048)
     # 
     # also nice to have pyfusion.config.re-read()
-    if NFFT == None:
+    if NFFT is None:
         try:
             NFFT=(int(pyfusion.config.get('Plots','NFFT')))
         except:
@@ -338,7 +338,7 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, block=False
     # bdb this line should be replaced by a call to a routine names something
     #like <plotted_width> to help in deciding if the label will fit on the 
     #current graph.
-    if ax == None:     ax=pl.gca()
+    if ax is None:     ax=pl.gca()
     # why is this repeated below
     max_chars = get_axes_pixcells(ax)[2]/8 # assuming an 10 pt font is 8 wide.
     if (2*len(input_data.dphase)
@@ -565,7 +565,7 @@ def svdplot(input_data, fmax=None, hold=0):
         freq_array = nyquist_kHz*np.arange(len(tmp_fft))/(len(tmp_fft)-1)
         plot_list_3[sv_i], = ax3.plot(freq_array, abs(tmp_fft), col,visible= button_setting_list[sv_i],alpha=0.5)
         
-    if fmax == None: 
+    if fmax is None: 
         ffact = 1e3  # seems like this routine is in kHz - where does it cvt?
         try:
             axt = eval(pyfusion.config.get('Plots','FT_Axis'))

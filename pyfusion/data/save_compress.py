@@ -90,7 +90,7 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encod
     if verbose>2: import pylab as pl
     if eps==0: eps=1e-6
     mono= (diff(arr)>0).all()  # maybe handy later? esp. debugging
-    if deltar==None: 
+    if deltar is None: 
         data_sort=unique(arr)
         diff_sort=sort(diff(data_sort))  # don't want uniques because of noise
         if size(diff_sort) == 0: diff_sort = [0]  # in case all the same
@@ -300,7 +300,7 @@ def test_compress(file=None, verbose=0, eps=0, debug=False, maxcount=0):
     """
     from numpy import load as loadz
     print("Testing %s" % file)
-    if file==None: file='18993_densitymediaIR.npz'
+    if file is None: file='18993_densitymediaIR.npz'
     test=loadz(file)
     stat=os.stat(file)
 

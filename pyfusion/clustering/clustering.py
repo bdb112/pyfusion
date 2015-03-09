@@ -168,7 +168,7 @@ def compare_several_clusters(clusters, pub_fig = 0, alpha = 0.05,decimation=10, 
         print 'hello', order
         cluster_list = list(set(test_cluster.cluster_assignments))
         n_dimensions = instance_array.shape[1]
-        if (colours == None) or (markers == None):
+        if (colours is None) or (markers is None):
             colours_base = ['r','k','b','y','m']
             marker_base = ['o','x','+','s','*']
             markers = []; colours = []
@@ -181,7 +181,7 @@ def compare_several_clusters(clusters, pub_fig = 0, alpha = 0.05,decimation=10, 
             current_items = test_cluster.cluster_assignments==cluster
             datapoints = instance_array[current_items,:]
             cur_ax.scatter(datapoints[::decimation,plot_indices[0]], datapoints[::decimation,plot_indices[1]],c=colours[ref],marker=markers[ref], alpha=alpha,rasterized=True,edgecolors=colours[ref])
-            if labels==None:
+            if labels is None:
                 cur_label = test_cluster.settings['method']
             else:
                 cur_label = labels[index]
@@ -321,7 +321,7 @@ class feature_object():
         the filename of a pickle file that was saved with 
         feature_object.dump_data()
         '''
-        if instance_array==None and filename!=None:
+        if instance_array is None and filename!=None:
             self.load_data(filename)
         else:
             self.instance_array = instance_array
@@ -577,7 +577,7 @@ class clustering_object():
             mpl.rcParams['ytick.labelsize']=8.0
             mpl.rcParams['lines.markersize']=1.0
             mpl.rcParams['savefig.dpi']=300
-        if specific_dimensions == None:
+        if specific_dimensions is None:
             specific_dimensions = range(instance_array.shape[1])
         fig, ax = make_grid_subplots(len(specific_dimensions), sharex = 'all', sharey = 'all')
         if pub_fig:
@@ -667,7 +667,7 @@ class clustering_object():
             mpl.rcParams['ytick.labelsize']=8.0
             mpl.rcParams['lines.markersize']=1.0
             mpl.rcParams['savefig.dpi']=300
-        if specific_dimensions == None:
+        if specific_dimensions is None:
             specific_dimensions = range(instance_array_amps.shape[1])
         fig, ax = make_grid_subplots(len(specific_dimensions), sharex = 'all', sharey = 'all')
         if pub_fig:
@@ -1001,7 +1001,7 @@ class clustering_object():
             for i in cluster_list: total+= np.sum(self.cluster_assignments==i)
             print('total clusters satisfying kappa bar>{}:{}'.format(kappa_cutoff,total))
 
-        elif cluster_list ==None:
+        elif cluster_list  is None:
             cluster_list = list(set(self.cluster_assignments))
         kh_plot_item = 'kh'; freq_plot_item = 'freq'
         fig, ax = pt.subplots(); ax = [ax]
@@ -1026,7 +1026,7 @@ class clustering_object():
             marker_list.extend(marker_list)
         for i,cluster in enumerate(cluster_list):
             current_items = self.cluster_assignments==cluster
-            if sqrtne==None:
+            if sqrtne is None:
                 scatter_data = misc_data_dict[freq_plot_item][current_items]/1000
             else:
                 scatter_data = misc_data_dict[freq_plot_item][current_items]*np.sqrt(misc_data_dict['ne{ne}'.format(ne=sqrtne)][current_items])
@@ -1204,7 +1204,7 @@ def show_covariances(gmm_covars_tmp, clim=None,individual=None,fig_name=None):
     for i in range(gmm_covars_tmp.shape[0]):
         im.append(ax[i].imshow(np.abs(gmm_covars_tmp[i,:,:]),aspect='auto', interpolation='nearest'))
         print im[-1].get_clim()
-        if clim==None:
+        if clim is None:
             im[-1].set_clim([0, im[-1].get_clim()[1]*0.5])
         else:
             im[-1].set_clim(clim)
@@ -1263,7 +1263,7 @@ def EM_GMM_clustering(instance_array, n_clusters=9, sin_cos = 0, number_of_start
         for i in range(gmm_covars_tmp.shape[0]):
             im.append(ax[i].imshow(np.abs(gmm_covars_tmp[i,:,:]),aspect='auto'))
             print im[-1].get_clim()
-            if clim==None:
+            if clim is None:
                 im[-1].set_clim([0, im[-1].get_clim()[1]*0.5])
             else:
                 im[-1].set_clim(clim)
@@ -1524,7 +1524,7 @@ def k_means_periodic(instance_array, n_clusters = 9, number_of_starts = 10, n_cp
     instance_array = instance_array % (2.*np.pi)
     print np.max(instance_array)>(2.*np.pi), np.min(instance_array)<0
     #prepare seeds if they weren't provided
-    if seed_list==None:
+    if seed_list is None:
         seed_list = map(int, np.round(np.random.rand(number_of_starts)*100.))
     multiple_run_results = {}; q_val_list = []
     if n_cpus>1:
@@ -1592,7 +1592,7 @@ def EM_VMM_calc_best_fit_optimise(z,lookup=None,N=None):
     functions, or a scipy optimiser if lookup=None
 
     SH: 23May2013 '''
-    if N==None:
+    if N is None:
         N = len(z)
     z_bar = np.sum(z)/float(N)
     mean_theta = np.angle(z_bar)
@@ -1602,7 +1602,7 @@ def EM_VMM_calc_best_fit_optimise(z,lookup=None,N=None):
     #This happens for very low kappa values - i.e terrible clusters...
     if tmp<0:tmp = 0.
     R_e = np.sqrt(tmp)
-    if lookup==None:
+    if lookup is None:
         tmp1 = opt.fmin(kappa_guess_func,3,args=(R_e,),disp=0)
         kappa = tmp1[0]
     else:
@@ -1616,7 +1616,7 @@ def EM_VMM_calc_best_fit(z,N=None,lookup=None):
     functions, or a scipy optimiser if lookup=None
 
     SH: 23May2013 '''
-    if N==None:
+    if N is None:
         N = len(z)
     z_bar = np.sum(z,axis=0)/float(N)
     mean_theta = np.angle(z_bar)
@@ -1661,7 +1661,7 @@ def EM_GMM_calc_best_fit(instance_array,weights):
 #We can do this step in parallel....
 #Either parallel over clusters, or parallel over dimensions....
 def _EM_VMM_maximisation_step_hard(mu_list, kappa_list, instance_array, assignments, instance_array_complex = None, bessel_lookup_table = None, n_cpus=1):
-    if instance_array_complex==None:
+    if instance_array_complex is None:
         instance_array_complex = np.exp(1j*instance_array)
     n_clusters = len(mu_list)
     n_datapoints, n_dimensions = instance_array.shape
@@ -1703,7 +1703,7 @@ def _EM_VMM_maximisation_step_soft(mu_list, kappa_list, instance_array, zij, ins
     n_clusters = len(mu_list)
     n_datapoints, n_dimensions = instance_array.shape
     pi_hat = np.sum(zij,axis=0)/float(n_datapoints)
-    if instance_array_complex==None:
+    if instance_array_complex is None:
         instance_array_complex = np.exp(1j*instance_array)
     mu_list_old = copy.deepcopy(mu_list)
     kappa_list_old = copy.deepcopy(kappa_list)
@@ -1753,7 +1753,7 @@ def _EM_VMM_expectation_step_soft(mu_list, kappa_list, instance_array, pi_hat, c
     #c_arr and s_arr are used to speed up cos(instance_array - mu) using
     #the trig identity cos(a-b) = cos(a)cos(b) + sin(a)sin(b)
     #this removes the need to constantly recalculate cos(a) and sin(a)
-    if c_arr==None or s_arr==None:
+    if c_arr is None or s_arr is None:
         c_arr = np.cos(instance_array)
         s_arr = np.sin(instance_array)
 
@@ -1966,7 +1966,7 @@ class EM_VMM_clustering_class():
         self.start = start
         self.hard_assignments = hard_assignments
         self.seed = seed
-        if self.seed == None:
+        if self.seed is None:
             self.seed = os.getpid()
         print('seed,',self.seed)
         np.random.seed(self.seed)
@@ -2144,7 +2144,7 @@ class EM_GMM_clustering_class():
         self.start = start
         self.hard_assignments = hard_assignments
         self.seed = seed
-        if self.seed == None:
+        if self.seed is None:
             self.seed = os.getpid()
         print('seed,',self.seed)
         np.random.seed(self.seed)
@@ -2330,14 +2330,14 @@ def generate_artificial_data(n_clusters, n_dimensions, n_instances, prob=None, m
     if variances!=None: n_clusters, n_dimensions = means.shape
 
     #randomly generate the means and variances using uniform distribution and the bounds given
-    if means==None:
+    if means is None:
         means = np.random.rand(n_clusters,n_dimensions)*(random_means_bounds[1]-random_means_bounds[0]) + random_means_bounds[0]
-    if variances==None:
+    if variances is None:
         variances = np.random.rand(n_clusters,n_dimensions)*(random_var_bounds[1]-random_var_bounds[0]) + random_var_bounds[0]
     print means
     print variances
     #figure out how many instances per cluster based on the probabilities
-    if prob==None:
+    if prob is None:
         prob = np.ones((n_clusters,),dtype=float)*1./(n_clusters)
     elif np.abs(np.sum(prob)-1)>0.001:
         raise ValueError('cluster probabilities dont add up to one within 0.001 tolerance....')
@@ -2490,7 +2490,7 @@ class EM_VMM_GMM_clustering_class(clustering_object):
         self.start = start
         self.hard_assignments = hard_assignments
         self.seed = seed
-        if self.seed == None:
+        if self.seed is None:
             self.seed = os.getpid()
         print('seed,',self.seed)
         np.random.seed(self.seed)

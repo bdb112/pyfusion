@@ -87,7 +87,7 @@ def smooth(data, n_smooth=3, timebase=None, causal=False, indices=False, keep=Fa
             sm_sig[0:-half_offs] = csum[half_offs:]  # get the first bit left shifted
             sm_sig[half_offs+1:] = sm_sig[half_offs+1:] - csum[0:-(half_offs+1)] 
             sm_sig=sm_sig/double(n_sm)
-    if timebase==None: 
+    if timebase is None: 
         if size(n_smooth) > 1:
             return(smooth(sm_sig, n_smooth[1:],timebase=timebase, causal=causal, indices=indices, keep=keep))
         else:

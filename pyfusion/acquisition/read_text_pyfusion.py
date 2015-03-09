@@ -48,7 +48,7 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
     file_list = files
     if len(np.shape(files)) == 0: file_list = [file_list]
     f='f8'
-    if ph_dtype == None: ph_dtype = [('p12',f),('p23',f),('p34',f),('p45',f),('p56',f)]
+    if ph_dtype is None: ph_dtype = [('p12',f),('p23',f),('p34',f),('p45',f),('p56',f)]
     #ph_dtype = [('p12',f)]
     ds_list =[]
     comment_list =[]

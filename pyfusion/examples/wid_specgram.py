@@ -138,7 +138,7 @@ if dev_name=='TestDevice':
     chan_name='testch1'
     shot_number=1000
 elif (dev_name=='H1') or(dev_name=='H1Local'):
-    if shot_number == None:
+    if shot_number is None:
         shot_number = 71059
     #shot_number=58123
     if shot_number > 70000:
@@ -170,7 +170,7 @@ if pyfusion.VERBOSE>2:
     print("Using device '%s', chan_name '%s', shot_number %d" %    
           (dev_name, chan_name, shot_number))
 
-if channel_number==None: channel_number=0
+if channel_number is None: channel_number=0
 
 # tweak above parameters according to command line args
 exec(process_cmd_line_args())
@@ -337,7 +337,7 @@ def inherited_vars(vars=None, extras=None):
     vars defaults to a safe, comprehensive set from pyfusion.settings
     extras as those particular to some routines.
     """
-    if vars == None: vars=['pyfusion.settings.SHOT_T_MIN',
+    if vars is None: vars=['pyfusion.settings.SHOT_T_MIN',
                            'pyfusion.settings.SHOT_T_MAX']
     lst = []
     if extras != None:
@@ -544,7 +544,7 @@ def mybut(text, dummy, xl, yb, xw=0, yh=0, axisbg=None, color=0.85, fun=None, bs
     xw if not given.  Has a side effect on xl. (button_layout_cursor)
     dummy is for if and when I can place these on an obect rather than using pylab
     """
-    if axisbg==None: axisbg='lightgoldenrodyellow'
+    if axisbg is None: axisbg='lightgoldenrodyellow'
 
     global button_layout_cursor
     if xw==0: xw=0.015*(len(text)+1)

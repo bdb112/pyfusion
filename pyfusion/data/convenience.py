@@ -42,7 +42,7 @@ def decimate(data, limit=None, fraction=None):
     """ reduce the number of items to a limit or by a fraction
     returns the same data every call
     """
-    if (fraction == None and limit==None):
+    if (fraction is None and limit is None):
         limit=500
     if fraction != None: 
         if fraction>1: raise ValueError('fraction ({f}) must be < 1'

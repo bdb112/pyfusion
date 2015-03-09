@@ -252,10 +252,10 @@ if clear_modes:
 if not hasattr(dd,'has_key'):
     raise LookupError("dd not loaded into memory - can't store")
 
-if mode==None: mode = mode_list[0]
+if mode is None: mode = mode_list[0]
 if not(doM) and not(doN): raise ValueError('Need to choose doN=True and/or doM=True')
 
-if inds == None: inds = np.arange(len(dd['shot']))
+if inds is None: inds = np.arange(len(dd['shot']))
 # the form phases = dd['phases'][inds,11:16] consumes less memory
 if (sel is not None) and  (np.average(np.diff(sel))==1):   # smarter version
     phases = dd['phases'][inds,sel[0]:sel[-1]+1]
@@ -330,7 +330,7 @@ exec(pyfusion.utils.process_cmd_line_args())
 
 #execfile("./examples/plot_text_pyfusion.py") 
 
-if inds == None: inds = arange(len(dd['shot']))
+if inds is None: inds = arange(len(dd['shot']))
 phases = dd["phases"][inds]
 
 for i in inds:

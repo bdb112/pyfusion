@@ -21,7 +21,7 @@ def mylen(ob):
     """ return the length of an array or dictionary for diagnostic info """
     if type(ob) == type({}):
         return(len(ob.keys()))
-    elif ob == None:
+    elif ob is None:
         return(0)
     else:
         try:
@@ -53,7 +53,7 @@ try:
             vm =psutil.virtmem_usage().free # avail_virtmem()
 
         tim = seconds()
-        print('{msg}{pm:.2g} GB phys mem, {vm:.2g} GB virt mem avail'
+        print('{msg}{pm:.3g} GB phys mem, {vm:.3g} GB virt mem avail'
               .format(msg=msg, pm=pm/1e9, vm=vm/1e9)),
 
         if prev_values is None:
@@ -333,7 +333,7 @@ class DA():
         return(cpy)
 
     def info(self, verbose=None):
-        if verbose == None: verbose = self.verbose
+        if verbose is None: verbose = self.verbose
         shots = np.unique(self.da[self.mainkey])
         print('{nm} contains {ins}({mins:.1f}M) instances from {s} {mainkey}s'\
                   ', {ks} data arrays'
@@ -472,7 +472,7 @@ class DA():
         also ('ZIPOPT','"-1"')  (Now incorporated into args, not tested)
         ** superseded by zlib.Z_DEFAULT_COMPRESSION 0--9  (or -1 for default)
         """
-        if verbose == None: verbose = self.verbose
+        if verbose is None: verbose = self.verbose
         st = seconds()
 
         if tempdir is not None:
@@ -547,14 +547,14 @@ class DA():
         """
         start_mem = report_mem(msg='extract')
         if debug == 0: debug = self.debug
-        if varnames == None: varnames = self.da.keys()  # all variables
+        if varnames is None: varnames = self.da.keys()  # all variables
 
         if pl.is_string_like(varnames):
             varlist = varnames.split(',')
         else: varlist = varnames
         val_tuple = ()
 
-        if inds == None:
+        if inds is None:
             inds = np.arange(self.len)
         if (len(np.shape(inds))==2): 
             inds = inds[0]   # trick to catch when you forget [0] on where

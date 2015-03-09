@@ -199,7 +199,7 @@ def normalise(input_data, method=None, separate=False):
     # elsewhere
     if pyfusion.DEBUG>3: print('separate = %d' % (separate))
     if (method == 0) or (method == '0'): return(input_data)
-    if (method == None) or (method.lower() == "none"): method='rms'
+    if (method is None) or (method.lower() == "none"): method='rms'
     if isinstance(input_data, DataSet):
         output_dataset = DataSet(input_data.label+"_normalise")
         for d in input_data:
@@ -410,7 +410,7 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     >>> fop = filter_fourier_bandpass(dat,[0.9,1.1],[0.8,1.2],debug=1).signal[0]
 
     """
-    if debug == None: debug = pyfusion.DEBUG
+    if debug is None: debug = pyfusion.DEBUG
 # normalising makes it easier to think about - also for But'w'h 
     norm_passband = input_data.timebase.normalise_freq(np.array(passband))
     norm_stopband = input_data.timebase.normalise_freq(np.array(stopband))
@@ -437,11 +437,11 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         if taper == 2: 
             raise ValueError(
             'taper 2 requres a bigger margin between stop and pass') 
-        elif taper == None:
+        elif taper is None:
             warn('defaulting taper to 1 as band edges are sharp')
             taper = 1
     else: 
-        if taper == None:
+        if taper is None:
             taper = 2
 
     if taper==1:

@@ -20,9 +20,9 @@ def single_shot_fluc_strucs(shot=None, array=None, other_arrays=None, other_arra
     data = data.subtract_mean(copy=False).normalise(method='v',separate=True,copy=False)
     data_segmented = data.segment(samples,overlap=overlap, datalist = 1)
     print other_arrays, other_array_labels
-    if other_arrays == None: other_array_labels = []
-    if other_arrays == None: other_arrays = []; 
-    if meta_data == None : meta_data = []
+    if other_arrays is None: other_array_labels = []
+    if other_arrays is None: other_arrays = []; 
+    if meta_data is None : meta_data = []
 
     #Get the naked coil and interferometer array if required
     #Need to include the standard interferometer channels somehow.
@@ -96,9 +96,9 @@ def multi_svd(shot_selection,array_name, other_arrays = None, other_array_labels
     #Get the scan details 
     shot_list, start_times, end_times = H1_scan_list.return_scan_details(shot_selection) 
     rep = itertools.repeat
-    if other_arrays == None: other_arrays = ['ElectronDensity','H1ToroidalNakedCoil']
-    if other_array_labels == None: other_array_labels = [['ne_static','ne_mode'],[None,'naked_coil']]
-    if meta_data == None : meta_data = ['kh','heating_freq','main_current','sec_current', 'shot']
+    if other_arrays is None: other_arrays = ['ElectronDensity','H1ToroidalNakedCoil']
+    if other_array_labels is None: other_array_labels = [['ne_static','ne_mode'],[None,'naked_coil']]
+    if meta_data is None : meta_data = ['kh','heating_freq','main_current','sec_current', 'shot']
 
     input_data_iter = itertools.izip(shot_list, rep(array_name),
                                      rep(other_arrays),
@@ -220,9 +220,9 @@ def extract_data_by_picking_peaks(current_shot, array_names,NFFT=1024, hop=256,n
     timebase = data.timebase
     data_fft = data.generate_frequency_series(NFFT,hop)
 
-    #if other_arrays == None: other_arrays = []
-    #if meta_data == None : meta_data = []
-    #if other_arrays == None: other_array_labels = []
+    #if other_arrays is None: other_arrays = []
+    #if meta_data is None : meta_data = []
+    #if other_arrays is None: other_array_labels = []
     #other_arrays_segmented = []
     #for i in other_arrays:
     #    tmp = pf.getDevice('H1').acq.getdata(shot, i).change_time_base(data.timebase)
@@ -353,7 +353,7 @@ def filter_by_kappa_cutoff(z, ave_kappa_cutoff=25, ax = None, prob_cutoff = None
                 for i in z.feature_obj.misc_data_dict.keys():
                     misc_data_dict2[i] = np.append(misc_data_dict2[i], z.feature_obj.misc_data_dict[i][current_new],axis=0)
     #Catch incase no good clusters were found....
-    if start==1: instance_array2 = None; misc_data_dict2 = None
+    if start == 1: instance_array2 = None; misc_data_dict2 = None
     return instance_array2, misc_data_dict2
 
 def single_shot(current_shot, array_names, NFFT, hop, n_pts, lower_freq, ax, start_time, end_time, perform_datamining, ave_kappa_cutoff, cutoff_by):

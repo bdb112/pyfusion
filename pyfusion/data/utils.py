@@ -51,7 +51,7 @@ def subdivide_interval(pts, overlap= None, debug=0):
     to that x then zero.
     overlap is a tuple (minoverlap, max), and describes the total overlap 
     """
-    if overlap == None: overlap = [np.max(pts)/50, np.max(pts)/20]
+    if overlap is None: overlap = [np.max(pts)/50, np.max(pts)/20]
     if len(overlap) == 1:
         warn('overlap should have a min and a max')
         overlap = [overlap/3.0, overlap]
@@ -243,7 +243,7 @@ def make_title(formatstr, input_data, channum=None, dict = {}, min_length=3, raw
         dict.update(input_data.meta)  # this gets all of it!
 
 
-        if channum == None:
+        if channum is None:
             name = ''
         else:
             if raw_names:

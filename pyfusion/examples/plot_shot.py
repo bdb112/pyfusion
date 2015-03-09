@@ -16,7 +16,7 @@ def plot_shots(DA, shots=None, nx=6, ny=4, diags=None, fontsize=None, save=''):
     if fontsize != None:     
         pl.rcParams['legend.fontsize']=fontsize
 
-    if shots == None: shots = np.unique(DA.da['shot'])
+    if shots is None: shots = np.unique(DA.da['shot'])
 
     #for (s,sh) in enumerate(shots[0:nx*ny]): 
     for (s,sh) in enumerate(shots): 
@@ -65,7 +65,7 @@ def plot_shot(DA, sh=None, ax=None, diags = None, extra_diags=None, debug=0, fon
 
     inds=np.where(sh==DA.da['shot'])[0]
     pl.rcParams['legend.fontsize']='small'
-    if ax == None: 
+    if ax is None: 
         if hold==0: pl.plot(hold=0)
         ax = pl.gca()
     #(t_mid,w_p,dw_pdt,dw_pdt2,b_0,ech,NBI,p_frac,flat_level)=9*[None]
@@ -96,7 +96,7 @@ def plot_shot(DA, sh=None, ax=None, diags = None, extra_diags=None, debug=0, fon
 
 def plot_shotold(DA, sh, ax=None):
     pl.rcParams['legend.fontsize']='small'
-    if ax == None: ax = pl.gca()
+    if ax is None: ax = pl.gca()
     #(t_mid,w_p,dw_pdt,dw_pdt2,b_0,ech,NBI,p_frac,flat_level)=9*[None]
     print('locals before has {n} keys'.format(n=(locals().keys())))
     (t_mid,w_p,dw_pdt,dw_pdt2,b_0,ech,NBI,p_frac,flat_level)=\

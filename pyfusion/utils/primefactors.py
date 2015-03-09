@@ -137,7 +137,7 @@ def nice_FFT_size_above(n,max_iterations=None):
 
     See also next_nice_number in filters.py - more general and simpler
     """
-    if max_iterations == None:
+    if max_iterations is None:
         max_iterations = 10*int(np.log(n))
     lowest_cost = 9e99 ; best_n = 0
     for nn in range(n, n+max_iterations):

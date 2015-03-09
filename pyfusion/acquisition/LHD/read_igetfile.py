@@ -66,7 +66,7 @@ class igetfile():
         let get_basic_params deal with .bz2 files etc for now.
         """
         self.debug = debug
-        if filename == None or "{" in filename:
+        if filename is None or "{" in filename:
             self.shot = int(shot)
             if "{" in filename: self.filename = filename.format(self.shot)
             else: self.filename = fileformat.format(self.shot)
@@ -96,7 +96,7 @@ class igetfile():
         dim=self.vardict['DimSize']
         nv=self.vardict['ValNo']
         nd=self.vardict['DimNo']
-        if ch == None: 
+        if ch is None: 
             if name =='lhd_mse1':
                 ch = 19
             elif name.lower() =='thomson':
@@ -122,11 +122,11 @@ class igetfile():
         else:  # 2 dim plots
             # reshape into radial profiles
             data3D=self.data.reshape(dim[0],dim[1],nd+nv)
-            if tstart == None: tstart=0
-            if tend == None: tend=dim[0]/2
-            if tstep == None: tstep=max([tend/50,1])  # reduce to 50 steps
+            if tstart is None: tstart=0
+            if tend is None: tend=dim[0]/2
+            if tstep is None: tstep=max([tend/50,1])  # reduce to 50 steps
             # check maximum to determine scaling
-            if scl == None: scl = max(abs((data3D[:,:,ch+nd-1])/50))  # was /10
+            if scl is None: scl = max(abs((data3D[:,:,ch+nd-1])/50))  # was /10
             if debug>0: 
                 print("tstart=%.4g, tstep=%.4g, tend=%.4g, scl=%.4g))" % 
                       (tstart, tstep, tend, scl))
@@ -185,7 +185,7 @@ def read_igetfile(filename=None, verbose=0, plot=True, hold=True, debug=0, quiet
     import time
     from StringIO import StringIO
 
-    if filename == None: filename = '/home/bdb112/python/mmw@50623.dat'
+    if filename is None: filename = '/home/bdb112/python/mmw@50623.dat'
     strt = time.time()
 #    print(filename.readlines())
 #    print('asd************8')

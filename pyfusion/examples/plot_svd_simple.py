@@ -32,11 +32,11 @@ if help==1:
 #dev_name='LHD'
 if dev_name == 'LHD': 
     if diag_name == '': diag_name= 'MP2010'
-    if shot_number == None: shot_number = 27233
+    if shot_number is None: shot_number = 27233
     #shot_range = range(90090, 90110)
 elif dev_name.find('H1')>=0: 
     if diag_name == '': diag_name = "H1DTacqAxial"
-    if shot_number == None: shot_number = 69270
+    if shot_number is None: shot_number = 69270
 
 
 device = pf.getDevice(dev_name)
@@ -58,7 +58,7 @@ if old_shot == 0:
 if time_range != None:
     d.reduce_time(time_range)
 
-if start_time == None:
+if start_time is None:
     sv = d.svd()
     sv.svdplot(hold=hold)
 

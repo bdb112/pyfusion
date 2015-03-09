@@ -86,7 +86,7 @@ if old_shot == 0:
 if time_range != None:
     d.reduce_time(time_range)
 
-if start_time == None:
+if start_time is None:
     sv = d.svd()
     sv.svdplot(hold=hold)
 

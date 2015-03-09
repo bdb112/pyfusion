@@ -96,7 +96,7 @@ def debug_(debug,level=1,key=None,msg=''):
         print(frame.f_lineno,frame.f_code)
         from ipdb import set_trace
 
-        if msg =='' and key !=None: 
+        if msg =='' and key is not None: 
             if np.isscalar(key): msg = ' found DEBUG key = ' + key # use key if no msg
             else: msg = 'found DEBUG key in [' + ','.join(key) + ']'
         print('debugging, '+ msg)

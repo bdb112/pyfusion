@@ -12,7 +12,7 @@ def plotdw(dd, w, hold=1, pad=5000, ax=None, debug=0):
     Can't see how to implement hold
     """
     if hold==0: print('hold not implemented yet')
-    if ax == None: 
+    if ax is None: 
         ax=pl.gca()
 
     incs = np.diff(w)
@@ -54,9 +54,9 @@ def find_pulses(x, minlength=5, threshold=None, hysteresis=None, verbose=0):
     ax = fig.add_subplot(111)
     x = np.array(x)
     (xmin, xmax)=(np.nanmin(x), np.nanmax(x))
-    if threshold == None:
+    if threshold is None:
         threshhold = (xmin + xmax)/2
-    if hysteresis == None:
+    if hysteresis is None:
         hysteresis = (xmax - xmin)/4
 
     onoffupper = (x > (threshhold + hysteresis/2)).astype(int)

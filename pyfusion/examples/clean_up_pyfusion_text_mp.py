@@ -40,7 +40,7 @@ def clean_up_file(filename, debug = 1):
 
     ph_dtype = None
     f='f8'
-    if ph_dtype == None:
+    if ph_dtype is None:
         ph_dtype = [('p12',f),('p23',f),('p34',f),('p45',f),('p56',f)]
         #ph_dtype = [('p12',f)]
 

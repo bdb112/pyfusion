@@ -127,9 +127,9 @@ def get_local_shot_numbers(partial_name=None, verbose=0, local_path=None,
     partial name defaults to _MP1
     """ 
     from os import walk
-    if local_path==None: 
+    if local_path is None: 
         local_path = pyfusion.config.get('global','localdatapath')
-    if partial_name==None: partial_name="_MP1"
+    if partial_name is None: partial_name="_MP1"
     shotlist=[]
     for root, dirs, files in walk(local_path):
         for f in files:
@@ -182,7 +182,7 @@ def warn(warning, category=UserWarning ,stacklevel=2, exception=None):
     multiple messages will be printed if the warning string changes 
     from one error to the next (unless warnings are disabled.)
     """
-    if exception==None: exmsg=''
+    if exception is None: exmsg=''
     else: exmsg = 'Exception "%s, %s": ' %  (type(exception),exception)
     # need the +1 so that the caller's line is printed, not this line.
     # also break the line where the 'red' colour starts
@@ -280,7 +280,7 @@ from numpy import array, arange, min, max
 def decimate(data, fraction=None, limit=None):
     """ reduce the number of items to a limit or by a fraction
     """
-    if (fraction == None and limit==None):
+    if (fraction is None and limit is None):
         limit=2000
     if fraction != None:
         step = max([int(1/fraction),1])

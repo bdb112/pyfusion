@@ -254,7 +254,7 @@ for shot in shot_list:
     except exception, reason:
         print('failed', doing, reason)
 
-if base_dir == None:
+if base_dir is None:
     # need to fix to allow not quitting.
     key = 'y'
     try:

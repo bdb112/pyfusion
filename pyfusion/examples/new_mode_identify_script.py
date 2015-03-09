@@ -44,7 +44,7 @@ class Mode():
         if MP2010_trick:  # don't use this - now separate mode lists!
             self.cc = -twopi(self.cc + np.pi, offset=4)  # this works for MP2010 if -B is the standard
         self.csd = np.array(csd)
-        if threshold == None: threshold = 1
+        if threshold is None: threshold = 1
         self.threshold = threshold
         self.shot_list = shot_list
         leng = len(self.cc)
@@ -60,12 +60,12 @@ class Mode():
         """ store coarse and fine mode (N, NN) numbers according to a threshold std and an optional shot_list.  If None the internal shot_list is used.
         which would have defaulted to [] at __init__
         """
-        if shot_list == None: shot_list = self.shot_list
-        if threshold == None: threshold=self.threshold
+        if shot_list is None: shot_list = self.shot_list
+        if threshold is None: threshold=self.threshold
         else: self.threshold=threshold  # save the last manually set.
 
-        if Nval==None: Nval = self.N
-        if NNval==None: NNval = self.NN
+        if Nval is None: Nval = self.N
+        if NNval is None: NNval = self.NN
         if NNval in np.unique(dd['NN']): 
             askif('NNval {0} already used'.format(NNval),quiet=quiet)
 
@@ -125,12 +125,12 @@ class Mode():
         """ store coarse and fine mode (M, MM) numbers according to a threshold std and an optional shot_list.  If None the internal shot_list is used.
         which would have defaulted to [] at __init__
         """
-        if shot_list == None: shot_list = self.shot_list
-        if threshold == None: threshold=self.threshold
+        if shot_list is None: shot_list = self.shot_list
+        if threshold is None: threshold=self.threshold
         else: self.threshold=threshold  # save the last manually set.
 
-        if Mval==None: Mval = self.M
-        if MMval==None: MMval = self.MM
+        if Mval is None: Mval = self.M
+        if MMval is None: MMval = self.MM
         if MMval in np.unique(dd['MM']): 
             askif('MMval {0} already used'.format(MMval),quiet=quiet)
 
@@ -183,7 +183,7 @@ class Mode():
                      ))
            
     def plot(self, axes=None, label=None, suptitle=None, **kwargs):
-        if suptitle==None:
+        if suptitle is None:
             pl.suptitle("{0}, cc={1} sd={2} ".
                         format(self.name,self.cc,self.csd))               
 
@@ -191,7 +191,7 @@ class Mode():
         #pl.plot(xd, self.cc, label=self.name, **kwargs)
         if axes != None: ax = axes
         else: ax=pl.gca()
-        if label == None: label =self.name
+        if label is None: label =self.name
         ax.plot(xd, self.cc,label=label, **kwargs)
         current_color = ax.get_lines()[-1].get_color()
         ax.errorbar(xd, self.cc, self.csd, ecolor=current_color, color=current_color)
@@ -366,10 +366,10 @@ sel = arange(11,16)
 import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
 
-if mode==None: mode = mode_list[0]
+if mode is None: mode = mode_list[0]
 if not(doM) and not(doN): raise ValueError('Need to choose doN=True and/or doM=True')
 
-if ind == None: ind = arange(len(dd['shot']))
+if ind is None: ind = arange(len(dd['shot']))
 # the form phases = dd['phases'][ind,11:16] consumes less memory
 if (sel is not None) and  (np.average(np.diff(sel))==1):   # smarter version
     phases = dd['phases'][ind,sel[0]:sel[-1]+1]
@@ -432,7 +432,7 @@ exec(pyfusion.utils.process_cmd_line_args())
 
 #execfile("./examples/plot_text_pyfusion.py") 
 
-if ind == None: ind = arange(len(dd['shot']))
+if ind is None: ind = arange(len(dd['shot']))
 phases = dd["phases"][ind]
 
 for i in ind:

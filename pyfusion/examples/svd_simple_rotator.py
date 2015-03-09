@@ -29,7 +29,7 @@ exec(process_cmd_line_args())
 
 
 dat2d = []  # prepare to accummulate channels
-if xr==None:
+if xr is None:
     xr = arange(0,2*pi,2*pi/npol)
     xr[0]=shift*xr[1] + (1-shift)*xr[0]
 for x in xr: 

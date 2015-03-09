@@ -90,7 +90,7 @@ global HJ_summary
 def get_flat_top(shot=54196, times=None, smooth_dt = None, maxddw = None, hold=0, debug=0):
     """ debug=1 gives a plot
     """
-    if times==None: times=np.linspace(0.02,8,8020) ;  
+    if times is None: times=np.linspace(0.02,8,8020) ;  
     from pyfusion.data.signal_processing import smooth
 
     bp=get_basic_diagnostics(shot=shot,diags=['w_p','dw_pdt','b_0'],times=times)
@@ -105,8 +105,8 @@ def get_flat_top(shot=54196, times=None, smooth_dt = None, maxddw = None, hold=0
     cent = np.sum(w_p[w]*times[w])/np.sum(w_p[w])
     icent = np.where(times > cent)[0][0]
     print("centroid = {0:.1f}".format(cent))
-    if maxddw == None: maxddw = 100
-    if smooth_dt==None: smooth_dt = 0.1 # smooth for 0.05 sec
+    if maxddw is None: maxddw = 100
+    if smooth_dt is None: smooth_dt = 0.1 # smooth for 0.05 sec
     dt = (times[1]-times[0])
     ns = int(smooth_dt/dt)
     smootharr = [ns,ns,ns]
@@ -168,11 +168,11 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
     # so the "default" we use is False
     if exception==False and debug==0: exception=Exception
 
-    if diags == None: diags = "<n_e19>,b_0,i_p,w_p,dw_pdt,dw_pdt2".split(',')
+    if diags is None: diags = "<n_e19>,b_0,i_p,w_p,dw_pdt,dw_pdt2".split(',')
     if len(np.shape(diags)) == 0: diags = [diags]
-    # LHD only    if delay == None: delay = get_delay(shot)
+    # LHD only    if delay is None: delay = get_delay(shot)
 
-    if times == None: 
+    if times is None: 
         times = np.linspace(0,4,4000)
 
     times = np.array(times)

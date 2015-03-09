@@ -13,8 +13,6 @@ import pylab as pl
 from pyfusion.debug_ import debug_
 from pyfusion.acquisition.LHD.read_igetfile import igetfile
 
-#from read_igetfile import igetfile
-from  pyfusion.acquisition.LHD.read_igetfile import igetfile
 from matplotlib.mlab import stineman_interp
 from pyfusion.utils.read_csv_data import read_csv_data
 from pyfusion.utils.utils import warn

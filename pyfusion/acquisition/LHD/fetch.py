@@ -166,8 +166,14 @@ def fetch_data_from_file(fetcher):
             pyfusion.utils.warn('Apparent duplication of clock speed information')
         clockHz =  double(prm_dict['ClockSpeed'][0])
         clockHz = LHD_A14_clk(fetcher.shot)  # see above
+
     if clockHz != None:
-        timebase = arange(len(dat_arr))/clockHz
+         if prm_dict.has_key('PreSamples/Ch'):   # needed for "WE" e.g. VSL  
+              pretrig = float(prm_dict['PreSamples/Ch'][0])/clockHz
+         else:
+              pretrig = 0.
+         timebase = arange(len(dat_arr))/clockHz  - pretrig
+
     else:  raise NotImplementedError, "timebase not recognised"
     
     debug_(pyfusion.DEBUG, level=4, key='LHD fetch debug') 

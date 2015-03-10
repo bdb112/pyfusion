@@ -75,10 +75,14 @@ def list_vars(locdict, Stop, tail_msg=''):
                 print("  %s = %s" %  (k, locdict[k]))
                 _n +=1
                 if (_n==20):
-                    ans=raw_input('do you want to see the rest of the local vars? (y/N) ')
-                    if ans.upper()!='Y': 
+                    ans=raw_input('do you want to see the rest of the local vars? (y/N/Q) ')
+                    if  ans.upper()=='Q': 
+                        _sys.exit()
+
+                    elif ans.upper()!='Y': 
                         print(ans)
                         break
+
         if _rhs != None:
             if not(locdict.has_key(_rhs)): 
                 print(('RHS < %s > is not in local dictionary - if you wish to refer to '

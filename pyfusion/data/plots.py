@@ -58,7 +58,7 @@ def register(*class_names):
     return reg_item
 
 @register("TimeseriesData")
-def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="%(short_name)s", filldown=True, suptitle='shot {shot}',raw_names=False):
+def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="%(short_name)s", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False'):
     """ 
     Plot a figure full of signals using n_columns[1], 
         sharey [=1]  "gangs" y axes  - sim for sharex - sharex=None stops this
@@ -69,6 +69,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
             If the short form is very short, it becomes a y label.
             A full version is "%(name)s" and if > 8 chars, will become the x label.
             Even longer is "Shot=%(shot), k_h=%(kh)s, %(name)s"
+        labeleg: If 'True' put label in legend - else use this str as a legend lab
         linestyle: default of True means use '-' if no marker, and nothing if a 
             marker is given      
             e.g. marker of '.' and markersize<1 will produce "shaded" waveforms, 
@@ -121,15 +122,31 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
                 if sharex == True: sharex = ax1
                 if sharey: axn = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = sharex, sharey=ax1)
                 else: axn = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = sharex)
+            #  Clumsy addition to put labels in the legend
+            #  To do better, should be one or the other, but the
+            #  original code is after the plot - need to move it
+            # back to here, before the plot
+                
+            if labeleg == 'False':
+                lab = ''
+            elif labeleg == 'True':
+                sht = str(input_data.meta['shot'])
+                lab = make_title(sht + ' ' + labelfmt, input_data, chan_num)
+            else:
+                lab = labeleg
 
+            kwargs = dict(marker=marker, markersize=markersize, 
+                          linestyle=linestyle, label = lab)
             if downsamplefactor==1:
-                pl.plot(input_data.timebase, input_data.signal.get_channel(chan_num),
-                        marker=marker, markersize=markersize, linestyle=linestyle)
+                pl.plot(input_data.timebase, 
+                        input_data.signal.get_channel(chan_num),
+                        **kwargs)
             else:
                 plotdata=input_data.signal.get_channel(chan_num)
                 timedata=input_data.timebase
-                pl.plot(timedata[0:len(timedata):downsamplefactor], plotdata[0:len(timedata):downsamplefactor], 
-                        marker=marker, markersize=markersize, linestyle=linestyle)
+                pl.plot(timedata[0:len(timedata):downsamplefactor], 
+                        plotdata[0:len(timedata):downsamplefactor], 
+                        **kwargs)
 #                pl.axis([-0.01,0.1,-5,5])
 
             pl.xticks(**fontkwargs)
@@ -139,7 +156,8 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
                 if mylabel == pl.ylabel and np.mod(row,2): displace='\n'
                 else: displace = ''  # use \n to make two line label to displace every second one
 
-                mylabel(make_title(labelfmt+displace, input_data, chan_num),**fontkwargs)
+                lab = make_title(labelfmt+displace, input_data, chan_num)
+                mylabel(lab,**fontkwargs)
 
             if n_rows>3: 
                 #print('locator_params',int(25/np.sqrt(n_rows)))

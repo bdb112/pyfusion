@@ -110,7 +110,7 @@ class igetfile():
         ax.plot(hold=hold)
         
         linest = ['-',':','--','-.']
-        print(shape(dim))
+        if pyfusion.DEBUG>0: print('shape is {s}'.format(s=shape(dim)))
         if len(shape(dim))==0:
             for (p,name) in enumerate(self.vardict['ValName']):
                 if ch==-1 or ch==(p+1):

@@ -1,0 +1,11 @@
+# this is ideally run within the one session - can only 'paste it' at the moment
+# need to start "paste" below this line
+
+run pyfusion/examples/prepfs_range_mp.py /tmp/  --exe='gen_fs_bands.py toff=4 seg_dt=15e-3 df=2e3 max_bands=1 min_svs=1 fmax=2e3 max_H=1' --seg_dt=15e-3 --shot_range=[105396,105402] --MP=3 --overlap=2.5 --diag_name=VSL_6 --time_range=[7,10]
+run pyfusion/examples/merge_text_pyfusion.py file_list="np.sort(glob('/tmp/*VSL_6_105*1'))"
+run -i pyfusion/examples/merge_basic_diagnostics.py
+from pyfusion.data.DA_datamining import DA, report_mem
+DA_test = DA(dd)
+DA_test.save('/tmp/DA_test')
+DA_read = DA('/tmp/DA_test',load=1)
+DA_read.info(2)

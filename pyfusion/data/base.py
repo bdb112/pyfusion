@@ -21,6 +21,9 @@ try:
     from sqlalchemy.orm.collections import column_mapped_collection
 except ImportError:
     # TODO: use logger!
+    def reconstructor(*args):
+        print('need sqlalchemy for some operations - if no messages, you are OK')
+
     print "could not import sqlalchemy"
 
     

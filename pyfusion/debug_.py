@@ -1,4 +1,5 @@
 import numpy as np  # mainly for np.char
+import os
 def debug_(debug,level=1,key=None,msg=''):
     """ Nice debug function, a line 
            debug_(deb, level, key="foo", msg="hello") 
@@ -64,8 +65,8 @@ def debug_(debug,level=1,key=None,msg=''):
                              .format(deb=deb, key=key))
     
         elif deb>=level: 
-            reason = str('debug_ parameter {deb} >= {level}'
-                         .format(deb=deb, level=level))
+            reason = str('debug_ parameter {deb} >= {level}, key = {k}'
+                         .format(deb=deb, level=level, k=key))
 
     if reason is None: return
     # the rest of this is essentially the 'else' clause of the test above.
@@ -89,6 +90,12 @@ def debug_(debug,level=1,key=None,msg=''):
         'debugging, '+ msg + ' in correct frame,  c to continue '        
     except ImportError:
     """
+        #  under anaconda at LHD, debugging fetch is nicer with pydb
+        #  this trick avoids an if statement getting entangled with a try
+        if os.getenv('DEBUG_') == 'pydb':
+            override_msg = 'Environment DEBUG_ says to use pydb'
+            print(override_msg)
+            raise ImportError(override_msg) 
         from sys import _getframe
         frame = _getframe()
         print(frame.f_lineno,frame.f_code)

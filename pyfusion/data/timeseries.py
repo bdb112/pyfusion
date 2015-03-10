@@ -144,7 +144,10 @@ class TimeseriesData(BaseData):
             if signal.n_samples() == len(timebase):
                 self.signal = signal
             else:
-                raise ValueError, "signal has different number of samples to timebase"
+                raise ValueError, str("signal has different number "
+                                      "of samples [{s}] to timebase [{t}]"
+                                      .format(s=signal.n_samples(),
+                                              t=len(timebase)))
         super(TimeseriesData, self).__init__(**kwargs)
 
     ## Boyd tried this for fun - seems to work - should check the right way.

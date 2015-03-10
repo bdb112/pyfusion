@@ -1,6 +1,14 @@
 import numpy as np
 import os
 
+def whr(*args):
+    """ short for where, doesn't need np. or [0] at end, and echoes number
+    """
+    w = np.where(*args)[0]
+    # print('{n} results for {s}'.format(n=len(w), s = args))
+    print('{n} results')  # the above just gives Falses and Trues!
+    return(w)
+
 def broaden(inds, data=None, dw=1):
     """ broaden a set of indices or data in width by dw each side """
     # 

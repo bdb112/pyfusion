@@ -7,6 +7,11 @@ need:
 export Retrieve=~/retrieve/bin/  # (maybe not) 
 export INDEXSERVERNAME=DasIndex.LHD.nifs.ac.jp/LHD
 
+Using retrieve_t
+Don't know when it is needed - maybe always try it?
+timeit fmd=retriever.retrieve('Magnetics3lab1',105396,1,[33],False)
+142ms without retrieve_t, 224 with, including failure (set True in above)
+
 """
 import subprocess
 import sys
@@ -15,6 +20,7 @@ from os import path, makedirs
 import array as Array
 from numpy import mean, array, double, arange, dtype, load
 import numpy as np
+from time import sleep
 
 from pyfusion.acquisition.base import BaseDataFetcher
 from pyfusion.data.timeseries import TimeseriesData, Signal, Timebase
@@ -82,12 +88,13 @@ class LHDTimeseriesDataFetcher(LHDBaseDataFetcher):
             if pyfusion.VERBOSE>3: print('RETR: retrieving %d chn %d to %s' % 
                               (self.shot, int(chnl),
                                self.filepath))
-            tmp = retrieve_to_file(diagg_name=dggn, shot=self.shot, subshot=1, 
-                                   channel=int(chnl), outdir = self.filepath)
-            if not path.exists(self.basename + ".dat") and path.exists(self.basename + ".prm"):
-                raise Exception, "something is buggered."
-
-        return fetch_data_from_file(self)
+        res = retrieve_to_file(diagg_name=dggn, shot=self.shot, subshot=1, 
+                               channel=int(chnl), outdir = self.filepath)
+        if not (path.exists(self.basename + ".dat") and 
+                path.exists(self.basename + ".prm")):
+             raise Exception, "something is buggered."
+        self.timeOK = res[3]
+        return read_data_from_file(self)
 
 
 
@@ -117,7 +124,7 @@ def LHD_A14_clk(shot):
     # print(rateHz)
     return(rateHz)
 
-def fetch_data_from_file(fetcher):
+def read_data_from_file(fetcher):
     prm_dict = read_prm_file(fetcher.basename+".prm")
     bytes = int(prm_dict['DataLength(byte)'][0])
     bits = int(prm_dict['Resolution(bit)'][0])
@@ -153,31 +160,48 @@ def fetch_data_from_file(fetcher):
     #print(dat_arr[0:10])
     #print(fetcher.config_name)
 
-    clockHz = None
 
-    if prm_dict.has_key('SamplingClock'): 
-        clockHz =  double(prm_dict['SamplingClock'][0])
-    if prm_dict.has_key('SamplingInterval'): 
-        clockHz =  clockHz/double(prm_dict['SamplingInterval'][0])
-    if prm_dict.has_key('ClockInterval(uSec)'):  # VSL dig
-         clockHz =  1e6/double(prm_dict['ClockInterval(uSec)'][0])
-    if prm_dict.has_key('ClockSpeed'): 
-        if clockHz != None:
-            pyfusion.utils.warn('Apparent duplication of clock speed information')
-        clockHz =  double(prm_dict['ClockSpeed'][0])
-        clockHz = LHD_A14_clk(fetcher.shot)  # see above
+    if fetcher.timeOK:  # we have retrieve_t data!
+         #  check for ArrayDataType: float is float32  
+         # skip is 0 as there is no initial digitiser type token
+         tprm_dict = read_prm_file(fetcher.basename+".tprm",skip=0)
+         if pyfusion.VERBOSE>1: print(tprm_dict)
+         ftype = tprm_dict['ArrayDataType'][0]
+         floats = dict(float = 'float32', double='float64')
+         timebase = np.fromfile(fetcher.basename + '.time', 
+                                np.dtype(floats[ftype]))
 
-    if clockHz != None:
-         if prm_dict.has_key('PreSamples/Ch'):   # needed for "WE" e.g. VSL  
-              pretrig = float(prm_dict['PreSamples/Ch'][0])/clockHz
-         else:
-              pretrig = 0.
-         timebase = arange(len(dat_arr))/clockHz  - pretrig
+    else:  #  use the info from the .prm file
+         clockHz = None
 
-    else:  raise NotImplementedError, "timebase not recognised"
+         if prm_dict.has_key('SamplingClock'): 
+             clockHz =  double(prm_dict['SamplingClock'][0])
+         if prm_dict.has_key('SamplingInterval'): 
+             clockHz =  clockHz/double(prm_dict['SamplingInterval'][0])
+         if prm_dict.has_key('ClockInterval(uSec)'):  # VSL dig
+              clockHz =  1e6/double(prm_dict['ClockInterval(uSec)'][0])
+         if prm_dict.has_key('ClockSpeed'): 
+             if clockHz != None:
+                 pyfusion.utils.warn('Apparent duplication of clock speed information')
+             clockHz =  double(prm_dict['ClockSpeed'][0])
+             clockHz = LHD_A14_clk(fetcher.shot)  # see above
+
+         if clockHz != None:
+              if prm_dict.has_key('PreSamples/Ch'):   # needed for "WE" e.g. VSL  
+                   pretrig = float(prm_dict['PreSamples/Ch'][0])/clockHz
+              else:
+                   pretrig = 0.
+              timebase = arange(len(dat_arr))/clockHz  - pretrig
+
+         else:  
+              debug_(pyfusion.DEBUG, level=4, key='LHD read debug') 
+              raise NotImplementedError, "timebase not recognised"
     
-    debug_(pyfusion.DEBUG, level=4, key='LHD fetch debug') 
-    ch = Channel("%s-%s" %(fetcher.diag_name, fetcher.channel_number), Coords('dummy', (0,0,0)))
+    debug_(pyfusion.DEBUG, level=4, key='LHD read debug') 
+    ch = Channel("{dn}-{dc}" 
+                 .format(dn=fetcher.diag_name, 
+                         dc=fetcher.channel_number), 
+                 Coords('dummy', (0,0,0)))
 #    if fetcher.gain != None:   # this may have worked once...not now!
 #        gain = fetcher.gain
 #    else: 
@@ -214,12 +238,13 @@ def fetch_data_from_file(fetcher):
     return output_data
 
 
-def read_prm_file(filename):
+def read_prm_file(filename,skip=1):
     """ Read a prm file into a dictionary.  Main entry point is via filename,
     possibly reserve the option to access via shot and subshot
     >>> pd = read_prm_file(filename=filename)
     >>> pd['Resolution(bit)']
     ['12', '4']
+    skip=0 for .tprm files, which omit the 'digitiser' token
 
     This comes from the line
     Aurora14,Resolution(bit),12,4
@@ -231,10 +256,39 @@ def read_prm_file(filename):
         s = s.strip("\n")
         toks = s.split(',')  
         if len(toks)<2: print('bad line %s in %f' % (s, filename))
-        key = toks[1]
-        prm_dict.update({key: toks[2:]})
+        key = toks[skip]
+        prm_dict.update({key: toks[skip+1:]})
     f.close()
     return prm_dict
+
+def persevere_with(cmd, attempts=2, quiet=False):
+    attempt = 1
+    while(1):
+         if attempt>1: print('attempt {a}, {c}'.format(a=attempt, c=cmd))
+         retr_pipe = subprocess.Popen(cmd,  shell=True, stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE)
+         (resp,err) = retr_pipe.communicate()
+         if (err != '') or (retr_pipe.returncode != 0): 
+              attempt += 1
+              if pyfusion.VERBOSE > 0:
+                   print('response={resp}, errmsg={err}, after {attempt}attempts'
+                         .format(resp=resp,err=err,attempt=attempt)) #,
+              if ((attempt>attempts) or ("not exist" in err) 
+                  or ( "data not found" in resp)
+                  or ('retrieveGetDTSdatax2' in resp)): 
+                   if not quiet:
+                        raise LookupError(str("Error {p} accessing retrieve:"
+                                              "cmd={c} \nstdout={r}," 
+                                              "stderr={e}, attempt {a}"
+                                              .format(p =retr_pipe.poll(), 
+                                                      c= cmd, r=resp, e=err, 
+                                                      a=attempt)))
+                   return(False, resp, err)  # False = failure
+              sleep(2)
+         else:
+              return(True, resp, err)
+
+
 
 def retrieve_to_file(diagg_name=None, shot=None, subshot=None, 
                      channel=None, outdir = None, get_data=True):
@@ -245,7 +299,6 @@ def retrieve_to_file(diagg_name=None, shot=None, subshot=None,
     Retrieve DiagName ShotNo SubShotNo ChNo [FileName] [-f FrameNo] [-h TransdServer] [-p root] [-n port] [-w|--wait [-t timeout] ] [-R|--real ]
    """
     from pyfusion.acquisition.LHD.LHD_utils import get_free_bytes, purge_old
-    from time import sleep
 
 # The old pyfusion used None to indicate this code could choose the location
 # in the new pyfusion, it is fixed in the config file.
@@ -265,24 +318,10 @@ def retrieve_to_file(diagg_name=None, shot=None, subshot=None,
     cmd = str("retrieve %s %d %d %d %s" % (diagg_name, shot, subshot, channel, path.join(outdir, diagg_name)))
 
     if (pyfusion.VERBOSE > 1): print('RETR: %s' % (cmd))
-    attempt = 1
-    while(1):
-         if attempt>1: print('attempt {a}, {c}'.format(a=attempt, c=cmd))
-         retr_pipe = subprocess.Popen(cmd,  shell=True, stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE)
-         (resp,err) = retr_pipe.communicate()
-         if (err != '') or (retr_pipe.returncode != 0): 
-              attempt += 1
-              if pyfusion.VERBOSE > 0:
-                   print('response={resp}, errmsg={err}, after {attempt}attempts'
-                         .format(resp=resp,err=err,attempt=attempt)) #,
-              if (attempt>10) or ("not exist" in err) or ( "data not found" in resp): 
-                   raise LookupError(str("Error %d accessing retrieve:"
-                                         "cmd=%s \nstdout=%s, stderr=%s, attempt %d" % 
-                                         (retr_pipe.poll(), cmd, resp, err, attempt)))
-              sleep(2)
-         else:
-              break
+
+    (dataOK, resp, err) = persevere_with(cmd, 10, quiet=False)  # these errors are bad
+    cmd_t = cmd.replace('retrieve', 'retrieve_t')      
+    (timeOK, trep, terr) = persevere_with(cmd_t, 10, quiet=True)  # error => retrieve_t N/A
 
     fileroot = ''
     for lin in resp.split('\n'):
@@ -292,4 +331,4 @@ def retrieve_to_file(diagg_name=None, shot=None, subshot=None,
     if fileroot == '':
          raise LookupError('parameter file not found in <<{r}>>'.format(r=resp))
 
-    return(resp, err, fileroot)
+    return(resp, err, fileroot, timeOK)

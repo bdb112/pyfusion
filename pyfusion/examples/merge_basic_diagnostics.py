@@ -46,6 +46,8 @@ import os.path
 import numpy as np
 from pyfusion.acquisition.LHD.get_basic_diagnostics import get_basic_diagnostics, get_flat_top
 
+from pyfusion.data.DA_datamining import DA, report_mem
+
 debug=0
 exception = IOError
 exception = (IOError, LookupError, ValueError)
@@ -62,12 +64,21 @@ maxshot=999999 # higher than even LHD
 shot_list = []
 diags=diag_basic
 diags_scalar="b_0,R_ax,Quad,Gamma".split(',')
+filename='DA_file.npz'
 
 import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
 # now to merge the two.
 if len(np.shape(diags)) == 0: diags = [diags]
 
+try:
+    dd
+except:
+    print('trying file ' + filename)
+    thisDA = DA(filename,load=1)
+    thisDA.info()
+    dd = thisDA.da
+    
 sz = len(dd['shot'])
 missing_shots = []
 good_shots =[]
@@ -76,7 +87,7 @@ ctr=0
  
 if len(shot_list)==0:
     shots = np.unique(dd['shot'])
-    wgt = where((shots >= minshot) & (shots <= maxshot))
+    wgt = np.where((shots >= minshot) & (shots <= maxshot))
     shot_list = shots[wgt]
 
 for shot in shot_list:
@@ -111,7 +122,7 @@ for shot in shot_list:
                if debug>0: print(key)
                if dd.has_key(key): 
                    ctr += 1
-                   if mod(ctr,10) == 0: 
+                   if np.mod(ctr,10) == 0: 
                        print('\nMerging in key {0} {1}'.format(key, shot)),
                    else:
                        print(key),
@@ -138,7 +149,8 @@ except:
 
 save_name = 'saved_'+os.path.splitext(os.path.split(filename)[1])[0]
 print('Saving as {0}'.format(save_name))
-#np.save(save_name,dd)
+newDA=DA(dd)
+newDA.save(save_name)
 
 print("{0} missing shots out of {1}".format(len(missing_shots),(len(missing_shots)+len(good_shots))))
 
@@ -146,3 +158,11 @@ if verbose>0: print('missing shots are {0}'.format(missing_shots))
 
 for key in diags:
         print('{0:10s}: {1:.1f}%'.format(key, 100.0*np.sum(dd[key]*0==0)/sz))
+
+"""
+source /home/LHD/blackwell/pyfusion/pyfusion_mar_2015/pyfusion/run_pyfusion NV13 $x
+exit
+set_window_title $x
+python pyfusion/examples/merge_basic_diagnostics.py diags=diags+diag_extra "filename='/home/LHD/blackwell/datamining/DA/PF2_150311_VSL6_$x'"
+
+"""

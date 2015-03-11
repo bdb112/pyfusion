@@ -58,7 +58,7 @@ def register(*class_names):
     return reg_item
 
 @register("TimeseriesData")
-def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="%(short_name)s", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False'):
+def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="%(short_name)s", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b'):
     """ 
     Plot a figure full of signals using n_columns[1], 
         sharey [=1]  "gangs" y axes  - sim for sharex - sharex=None stops this
@@ -136,7 +136,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
                 lab = labeleg
 
             kwargs = dict(marker=marker, markersize=markersize, 
-                          linestyle=linestyle, label = lab)
+                          linestyle=linestyle, label = lab, color=color)
             if downsamplefactor==1:
                 pl.plot(input_data.timebase, 
                         input_data.signal.get_channel(chan_num),

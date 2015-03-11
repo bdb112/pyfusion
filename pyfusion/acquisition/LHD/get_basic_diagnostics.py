@@ -119,7 +119,11 @@ def get_flat_top(shot=54196, times=None, smooth_dt = None, maxddw = None, hold=0
 
 
 def get_delay(shot):
-    if shot>=46455: delay = 0.2
+    if shot>=85000: 
+        delay = 0.0
+        print('get_basic_diagnostics - should fix with fetch')
+
+    elif shot>=46455: delay = 0.2
     elif shot>=46357: delay = 0.4
     elif shot>=38067: delay = 0.1
     elif shot>=36185: delay = 0.3

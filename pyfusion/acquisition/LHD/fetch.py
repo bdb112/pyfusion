@@ -7,8 +7,16 @@ need:
 export Retrieve=~/retrieve/bin/  # (maybe not) 
 export INDEXSERVERNAME=DasIndex.LHD.nifs.ac.jp/LHD
 
+== test lines ==
+retrieve SX8O 74181 1 33
+retrieve Magnetics3lab1 74181 1 33
+2015: retrieve_t seems to only work on FMD
+retrieve_t FMD 117242 1 33 
+different error messages on Magnetics3lab1
+
 Using retrieve_t
-Don't know when it is needed - maybe always try it?
+Don't know when it is needed -  always trying it first?
+                                if it gives an error, calculate accoring to .prm
 timeit fmd=retriever.retrieve('Magnetics3lab1',105396,1,[33],False)
 142ms without retrieve_t, 224 with, including failure (set True in above)
 

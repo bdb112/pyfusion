@@ -1,5 +1,11 @@
+""" Plot data from a dd or DA.da dictionary - useful as a rough idea of the shot.
+This version allows arbitrary python expressions of one variable.
+"""
+
 import pylab as pl
 import numpy as np
+from numpy import *    # this allows expressions like sin in the diags 
+
 
 # first, arrange a debug one way or another
 try: 
@@ -10,11 +16,11 @@ except:
               " need boyd's debug_.py to debug properly")
 
 
-def plot_shots(DA, shots=None, nx=6, ny=4, diags=None, fontsize=None, save=''):
+def plot_shots(DA, shots=None, nx=6, ny=4, diags=None, fontsize=None, save='', **kwargs):
     """ four shots/sec saving to 18x12 png 
     """ 
     if fontsize != None:     
-        pl.rcParams['legend.fontsize']=fontsize
+        pl.rcParams['legend.fontsize'] = fontsize
 
     if shots is None: shots = np.unique(DA.da['shot'])
 
@@ -40,15 +46,16 @@ def plot_shots(DA, shots=None, nx=6, ny=4, diags=None, fontsize=None, save=''):
 
 def safe_get(DA,key,inds=None):
     try:
-        val = DA.dd[key][inds]
+        val = DA.da[key][inds]
     except:
         val = len(inds) * [None]
     return(val)
 
-def plot_shot(DA, sh=None, ax=None, diags = None, extra_diags=None, debug=0, fontsize=None, hold=1):
+def plot_shot(DA, sh=None, ax=None, diags = None, extra_diags=None, debug=0, fontsize=None, hold=1, **kwargs):
     """ more flexible - no need to check for errors
     Also initial version tailored to LHD
     """
+
     if fontsize is not None:     
         pl.rcParams['legend.fontsize']=fontsize
 
@@ -74,8 +81,29 @@ def plot_shot(DA, sh=None, ax=None, diags = None, extra_diags=None, debug=0, fon
 
     if (len(np.shape(diags)) == 0): diags = diags.split(',')
     for (i,diag) in enumerate(diags):
-        if diag in DA.keys:
-            dat = DA.da[diag][inds] ; lab = diag; linestyle='-'
+        # if diag in DA.keys:
+        longest_first_order = np.argsort([-len(k) for k in DA.keys])
+        keys_longest_first = [DA.keys[k] for k in longest_first_order]
+ 
+        for k in keys_longest_first:
+            if k in diag:
+                keys_longest_first.remove(k)
+                actual_diag = k
+            else:
+                continue
+
+            if debug>1: 
+                print('input {d}, -> actual {a}, key {k}, list{l}'
+                      .format(d=diag, a=actual_diag, k=k, l=keys_longest_first))
+
+            if actual_diag not in DA.keys:
+                continue
+            dat = DA.da[actual_diag][inds] ; lab = diag; linestyle='-'
+            try:
+                exec('dat='+diag.replace(actual_diag,'dat'))
+            except:
+                continue
+
             if diag in 'p_frac': 
                 dat=dat*100
                 lab+="*100"
@@ -86,13 +114,15 @@ def plot_shot(DA, sh=None, ax=None, diags = None, extra_diags=None, debug=0, fon
                 dat = 30+200*dat
                 linestyle='--'
                 
-            if diag == 'p_frac': linestyle = ':'    
-            ax.plot(t,dat, linestyle=linestyle, label=lab)
+            if diag == 'p_frac': 
+                linestyle = ':'    
+
+            ax.plot(t,dat, linestyle=linestyle, label=lab, **kwargs)
             ## no hold keyword in ax.plot #, hold=(hold & (i==0)))
     pl.legend()
     debug_(debug,1,key='plot_shot')
 
-    pl.title("{s} {b}T".format(s=sh,b=b_0[0]))
+    pl.title("{s} {b:.3f}T".format(s=sh,b=b_0[0]))
 
 def plot_shotold(DA, sh, ax=None):
     pl.rcParams['legend.fontsize']='small'

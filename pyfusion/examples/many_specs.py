@@ -1,6 +1,8 @@
 import MDSplus as MDS
 #import pyfusion as pf
+### Note; this does not use pyfusion!!  H1 only
 import numpy as np
+from signal_processing import smooth_n
 import matplotlib.pyplot as pt
 import matplotlib.mlab as mlab
 from matplotlib.font_manager import FontProperties
@@ -45,7 +47,7 @@ desc=dict(shot_list = range(76739,76870), comment='16 Nov 5MHz', brief='16Nov5',
 desc=dict(shot_list = range(76870,76893), comment='16 Nov 7MHz', brief='16Nov7', tree='mirnov')
 desc=dict(shot_list = range(78474,78540), comment='Aug15 5MHz sweeping', brief='Aug15_5_sweep', tree='mirnov')
 #! desc=dict(shot_list = range(76274,76345), comment='Sep27_7MHz', brief='Sep27_7MHz', tree='mirnov')
-
+desc=dict(shot_list = range(86508,86518), comment='1 Jul 2015 5MHz power_scans', brief='Powscan_2015_07_01', tree='mirnov')
 
 
 from bdb_utils import process_cmd_line_args
@@ -55,7 +57,7 @@ NFFT_ne =  256*8
 #channel = 'mirnov.ACQ132_8:input_02'
 channel = 'ACQ132_8:input_03'
 tree = 'h1data'
-fig = pt.figure(); ax = []
+fig = pt.figure(figsize=[10,8]); ax = []
 base_dir = 'tmp_pics/'
 #base_dir = None
 #shot_list = range(75050, 75074)
@@ -120,8 +122,14 @@ for shot in shot_list:
         else:
             khstr = '$\kappa_H$ {kh:.2f}'.format(kh=kh)
 
-        rf_drive=h1tree.getNode('.RF:rf_drive').data()
+        try:
+            rf_drive=h1tree.getNode('.RF:rf_drive').data()
+        except:
+            PFTop = h1tree.getNode('.RF:P_FWD_TOP').data()
+            rf_drive = 1.3*5*np.sqrt(np.max(smooth_n(PFTop,500)/200.))
+
         if include_amplifier_sig:
+
             current_node = tree_name.getNode(mirnov)
             current_raw = current_node.record.data()
 
@@ -203,7 +211,7 @@ for shot in shot_list:
             leg = nep.legend( prop=FontProperties(size='small'))
             leg.get_frame().set_alpha(0.5)
 
-            nep.set_ylim([0, 1.5])
+            nep.set_ylim([0, 2.5])
             nep.set_ylabel(r'$n_e$')
 
 
@@ -218,7 +226,6 @@ for shot in shot_list:
             if include_sqrt_ne:
                 doing='sqrt_ne'
                 # why just 290 - maybe the others are not reliable
-                from signal_processing import smooth_n
                 from node_explorer import Node
                 #ne_root = Node(treename='electr_dens',shot=76290)
                 ne_root = Node(treename='electr_dens',shot=shot)
@@ -227,17 +234,21 @@ for shot in shot_list:
                                timebase=ne.node.dim_of().data())
                 t_0,x_0 = smooth_n(ne_root.NE_HET.NE_1.node.data(),901,
                                timebase=ne.node.dim_of().data())
-                nesp.plot(t,4.5/np.sqrt(x),'w',linestyle='--',linewidth=1.5)
+                nesp.plot(t,9.5/np.sqrt(x),'w',linestyle='--',linewidth=1.5)
                 nesp.set_ylim(0,50)
 
-                msp.plot(t,4.5/np.sqrt(x),'gray',linestyle='--',linewidth=1.5)
-                msp.plot(t_0,4.5/np.sqrt(x_0),'w',linestyle='--',linewidth=1.5)
-                msp.plot(t_0,23/np.sqrt(x_0),'b',linestyle='--',linewidth=1.5)
+                msp.plot(t,9.5/np.sqrt(x),'g',linestyle='--',
+                         linewidth=1.5,label=r'$\sqrt{ne(0.6)}$')
+                msp.plot(t_0,9.5/np.sqrt(x_0),'b',linestyle='--',
+                         linewidth=1.5,label=r'$\sqrt{ne(0)}$')
+                # prob. for a different iota
+                #msp.plot(t_0,23/np.sqrt(x_0),'m',linestyle='--',linewidth=1.5,label='??')
+                #leg = msp.legend( prop=FontProperties(size='small'))
 
         if base_dir != None:
             file_name = '/%d.png'%(shot)
             print ' ', base_dir+file_name, 
-            fig.savefig(base_dir+file_name)
+            fig.savefig(base_dir+file_name,dpi=200)
             kh_name = "{kh:.3f}_{shot}_{im:.0f}.png".format(kh=kh, shot=shot, im=float(main_current))
             kh_name = linkdir+'/'+kh_name
             os.symlink(".."+file_name, kh_name)

@@ -16,13 +16,19 @@ except:
               " need boyd's debug_.py to debug properly")
 
 
-def plot_shots(DA, shots=None, nx=6, ny=4, diags=None, fontsize=None, save='', **kwargs):
-    """ four shots/sec saving to 18x12 png 
+def plot_shots(da, shots=None, nx=6, ny=4, diags=None, fontsize=None, marker=None, extra_diags=None,  save='', quiet=True, **kwargs):
+    """ Call plot_shot to produce a matrix of plots, from data in a dictionary of
+    arrays, optionally saving them in png files.  The arrays in the dictionary 
+    should be the same size.  Originally intended for the DA.da dictionary,
+    but works for any such dictionary.
     """ 
+    # four shots/sec saving to 18x12 png 
+    plot_shots.__doc__ += plot_shot.__doc__ 
+
     if fontsize != None:     
         pl.rcParams['legend.fontsize'] = fontsize
 
-    if shots is None: shots = np.unique(DA.da['shot'])
+    if shots is None: shots = np.unique(da['shot'])
 
     #for (s,sh) in enumerate(shots[0:nx*ny]): 
     for (s,sh) in enumerate(shots): 
@@ -39,28 +45,62 @@ def plot_shots(DA, shots=None, nx=6, ny=4, diags=None, fontsize=None, save='', *
                     pl.clf()
 
         pl.subplot(nx,ny,np.mod(s,nx*ny)+1)
-        plot_shot(DA, sh, diags=diags)
+        plot_shot(da, sh, marker=marker, extra_diags=extra_diags, fontsize=fontsize, diags=diags, quiet=quiet, **kwargs)
 
         if nx*ny>4:
             pl.subplots_adjust(.02,.03,.97,.97,.24,.13)
 
-def safe_get(DA,key,inds=None):
+def safe_get(da,key,inds=None):
     try:
-        val = DA.da[key][inds]
+        val = da[key][inds]
     except:
         val = len(inds) * [None]
     return(val)
 
-def plot_shot(DA, sh=None, ax=None, diags = None, extra_diags=None, debug=0, fontsize=None, hold=1, **kwargs):
+def eval_diag(da, inds, diag, debug=0):
+    # put keys into order of decreasing length to avoid false hits (e.g. p instead of w_p)
+    longest_first_order = np.argsort([-len(k) for k in da.keys()])
+    keys_longest_first = [da.keys()[k] for k in longest_first_order]
+    separators = [chr(i) for i in range(40,128)]
+    # remove all but alphanum and _  - for now, do it the easy way
+    separators='{}[]!@#$%^&*()_+-=<>:?/\|~`'
+    diag_stripped = diag
+    for sep in separators: 
+        diag_stripped = diag_stripped.replace(sep,' ')
+ 
+    # for each key found, create a local of that name populated by [inds]
+    for k in keys_longest_first:
+        if debug>1: print(k),
+        if k in diag_stripped:
+            exec("{k} = da['{k}'][inds]".format(k=k))
+            # remove it form the stripped expression
+            diag_stripped = diag_stripped.replace('k','')
+            if debug>0: print(k, k in locals())
+
+        if debug>1: 
+            print('input {d}, -> actual {a}, key {k}, list{l}'
+                  .format(d=diag, a=actual_diag, k=k, l=keys_longest_first))
+
+    try:
+        exec('dat='+diag)
+        return(None, dat)  # None is good
+        
+    except Exception, reason:  # NameError 
+        if debug>0: raise ValueError(diag + ' could not be evaluated', reason)
+        else: return(reason, (diag, diag_stripped))
+
+def plot_shot(da, sh=None, ax=None, diags = None, marker=None, extra_diags=None, debug=0, quiet=True, fontsize=None, hold=1, **kwargs):
     """ more flexible - no need to check for errors
-    Also initial version tailored to LHD
+    Also initial version tailored to LHD, but a fudge used to detect HJ
+    extra_diags are simply added to the default list.  This way a default list
+    can be used simultaneously with a one or more extra diags.
     """
 
     if fontsize is not None:     
         pl.rcParams['legend.fontsize']=fontsize
 
     if diags is None:
-        if 'MICRO01' in DA.da.keys():
+        if 'MICRO01' in da.keys():
             diags = 'MICRO01,DIA135'
         else:
             diags = 'i_p,w_p,flat_level,NBI,ech,p_frac'
@@ -68,57 +108,41 @@ def plot_shot(DA, sh=None, ax=None, diags = None, extra_diags=None, debug=0, fon
     if extra_diags is not None:
         diags += "," + extra_diags
 
-    if sh is None: sh = DA.da['shot'][0]
+    if sh is None: sh = da['shot'][0]
 
-    inds=np.where(sh==DA.da['shot'])[0]
+    inds=np.where(sh==da['shot'])[0]
     pl.rcParams['legend.fontsize']='small'
     if ax is None: 
         if hold==0: pl.plot(hold=0)
         ax = pl.gca()
     #(t_mid,w_p,dw_pdt,dw_pdt2,b_0,ech,NBI,p_frac,flat_level)=9*[None]
-    t = DA.da['t_mid'][inds]
-    b_0 = safe_get(DA, 'b_0',inds)
+    t = da['t_mid'][inds]
+    b_0 = safe_get(da, 'b_0',inds)
 
     if (len(np.shape(diags)) == 0): diags = diags.split(',')
     for (i,diag) in enumerate(diags):
-        # if diag in DA.keys:
-        longest_first_order = np.argsort([-len(k) for k in DA.keys])
-        keys_longest_first = [DA.keys[k] for k in longest_first_order]
- 
-        for k in keys_longest_first:
-            if k in diag:
-                keys_longest_first.remove(k)
-                actual_diag = k
-            else:
-                continue
+        lab = diag   # set default label, marker
+        if marker is None: marker = '-' 
 
-            if debug>1: 
-                print('input {d}, -> actual {a}, key {k}, list{l}'
-                      .format(d=diag, a=actual_diag, k=k, l=keys_longest_first))
+        (err, dat) = eval_diag(da=da, inds=inds, diag=diag, debug=debug)
+        if quiet and err is not None:
+            continue
 
-            if actual_diag not in DA.keys:
-                continue
-            dat = DA.da[actual_diag][inds] ; lab = diag; linestyle='-'
-            try:
-                exec('dat='+diag.replace(actual_diag,'dat'))
-            except:
-                continue
+        if diag in 'p_frac': 
+            dat=dat*100
+            lab+="*100"
+        elif diag in 'ech': 
+            dat=dat*10
+            lab+="*10"
+        elif 'flat_level' in diag: 
+            dat = 30+200*dat
+            marker='--'
 
-            if diag in 'p_frac': 
-                dat=dat*100
-                lab+="*100"
-            elif diag in 'ech': 
-                dat=dat*10
-                lab+="*10"
-            elif 'flat_level' in diag: 
-                dat = 30+200*dat
-                linestyle='--'
-                
-            if diag == 'p_frac': 
-                linestyle = ':'    
+        if diag == 'p_frac': 
+            marker = ':'    
 
-            ax.plot(t,dat, linestyle=linestyle, label=lab, **kwargs)
-            ## no hold keyword in ax.plot #, hold=(hold & (i==0)))
+        ax.plot(t,dat, marker, label=lab, **kwargs)
+        ## no hold keyword in ax.plot #, hold=(hold & (i==0)))
     pl.legend()
     debug_(debug,1,key='plot_shot')
 

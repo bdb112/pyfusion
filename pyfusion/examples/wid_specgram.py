@@ -248,7 +248,7 @@ axcolor = 'lightgoldenrodyellow'
 
 #define the box where the buttons live
 rax = pl.axes([bxl, 0.87, bxl+bw, 0.11], axisbg=axcolor)
-radio = RadioButtons(rax, ('no marker',  '40', '80', '120'),active=0)
+mark_buts = RadioButtons(rax, ('no marker',  '40', '80', '120'),active=0)
 def msfunc(label):
     global y,NFFT,Fsamp,Fcentre,foverlap,detrend,_window, _type, fmod, marker_size
     msdict = {'no marker':0, '40':40, '80':80, '120':120}
@@ -256,11 +256,11 @@ def msfunc(label):
     print("marker_size", marker_size)
     callback.redraw()   # really should add markers here! (this is a call without getting new data)
 
-radio.on_clicked(msfunc)
+mark_buts.on_clicked(msfunc)
 
 
 rax = pl.axes([bxl, 0.68, bxl+bw, 0.18], axisbg=axcolor)
-radio = RadioButtons(rax, ('win 128', '256', '512', '1024','2048','4096'),active=2)
+win_buts = RadioButtons(rax, ('win 128', '256', '512', '1024','2048','4096'),active=2)
 def hzfunc(label):
     global y,NFFT,Fsamp,Fcentre,foverlap,detrend,_window, _type, fmod
     hzdict = {'win 128':128, '256':256, '512':512, '1024':1024,
@@ -268,11 +268,11 @@ def hzfunc(label):
     NFFT = hzdict[label]
     call_spec()
 
-radio.on_clicked(hzfunc)
+win_buts.on_clicked(hzfunc)
 
 
 rax = pl.axes([bxl, 0.48, bxl+bw, 0.19], axisbg=axcolor)
-radio = RadioButtons(rax, ('overlap 0', '1/4', '1/2', '3/4','7/8','15/16'),active=3)
+ovl_buts = RadioButtons(rax, ('overlap 0', '1/4', '1/2', '3/4','7/8','15/16'),active=3)
 
 def ovlfunc(label):
     global y,NFFT,Fsamp,Fcentre,foverlap,detrend,_window, _type, fmod
@@ -281,10 +281,10 @@ def ovlfunc(label):
     foverlap = ovldict[label]
     call_spec()
 
-radio.on_clicked(ovlfunc)
+ovl_buts.on_clicked(ovlfunc)
 
 rax = pl.axes([bxl, 0.23, bxl+bw, 0.24], axisbg=axcolor)
-radio = RadioButtons(rax, ('no window',  'Wider', 'Bartlett','Hamming', 'Hanning',
+typ_buts = RadioButtons(rax, ('no window',  'Wider', 'Bartlett','Hamming', 'Hanning',
                            'Blackman', 'Kaiser3','Flat-top-F'), active=1)
 def winfunc(label):
     global y,NFFT,Fsamp,Fcentre,foverlap,detrend,_window, _type, fmod
@@ -296,17 +296,18 @@ def winfunc(label):
     _window = windict[label]
     call_spec()
 
-radio.on_clicked(winfunc)
+typ_buts.on_clicked(winfunc)
 
 rax = pl.axes([bxl, 0.08, bxl+bw, 0.14], axisbg=axcolor)
-radio = RadioButtons(rax, ('f-t plot', 'test data', 'log-spect', 'window', 'clear'))
+test_buts = RadioButtons(rax, ('f-t plot', 'test data', 'log-spect', 'window', 'clear'))
+
 def typfunc(label):
     global y,NFFT,Fsamp,Fcentre,foverlap,detrend,_window, _type, fmod
     typdict = {'f-t plot':'F', 'test data':'T', 'log-spect':'L', 'window':'W', 'clear':'C'}
     _type = typdict[label]
     call_spec()
 
-radio.on_clicked(typfunc)
+test_buts.on_clicked(typfunc)
 ##############################################################
 # This line is where I joined the radio button code to the shot number code
 # Would be nice to pull this apart into two modules and a short script.

@@ -18,6 +18,7 @@ run pyfusion/examples/gen_fs_bands.py dev_name='HeliotronJ' diag_name='Heliotron
 
 """
 import subprocess, sys, warnings
+import pyfusion
 from pyfusion.utils.utils import warn
 from numpy import sqrt, mean, argsort, average, random
 import numpy as np
@@ -107,7 +108,12 @@ for shot in shot_range:
     try:
         d = dev.acq.getdata(shot, diag_name)
         timeinfo('data read')
-        n_channels = len(d.channels)
+        try:
+            n_channels = len(d.channels)
+        except:
+            raise LookupError('{dn} is not a multi_channel diagnostic'
+                              .format(dn=diag_name))
+
         dt = np.average(np.diff(d.timebase))
         if n_samples is None:
             n_samples = next_nice_number(seg_dt/dt)

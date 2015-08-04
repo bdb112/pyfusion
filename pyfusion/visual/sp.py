@@ -8,8 +8,14 @@ from pyfusion.debug_ import debug_
 
 debug=0
 
+def size_val(marker_size, size_scale, dot_size):
+    if size_scale<0: 
+        return(-size_scale*np.exp(np.sqrt(marker_size/(dot_size/20))))
+    else:
+        return(size_scale*(np.sqrt(marker_size/dot_size)))
+ 
 
-def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=None,
+def sp(ds, x=None, y=None, sz=None, col=None, c=None, decimate=0, ind = None, nomode=None,
        size_scale=None, dot_size=30, hold=0, seed=None, colorbar=None, 
        dither=0, legend=True, marker='o',**kwargs):
     """ Scatter plot front end, size_scale 
@@ -21,25 +27,29 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
     3: Treat mode numbers specially to suppress "undefined" mode numbers
     dither 0: no effect
     -ve random seed,  +ve repeated seed
+    c is the same as col for compatibility with satter
+    returns a collection so that they can be selectively turned on an off
     """
-    def size_val(marker_size):
-        if size_scale<0: 
-            return(-size_scale*np.exp(np.sqrt(marker_size/(dot_size/20))))
-        else:
-            return(size_scale*(np.sqrt(marker_size/dot_size)))
- 
+    if col is not None and c is not None: 
+        print('***conflicting values for c and col')
+    elif col is None and c is not None:
+        col = c
     if type(ds) == type({}): keys = np.sort(ds.keys())
     elif type(ds) == np.ndarray: keys = np.sort(ds.dtype.names)
     else: raise ValueError(
         'First argument must be a dictionary of arrays or an '
-            'array read from loadtxt')
+            'array read from loadtxt.  For DA() objects, remember to load!')
 
     if x is None: x = keys[0]        
     if y is None: y = keys[1]        
-    if col is None: col = keys[2]        
+    if col is None: 
+        if keys is None:
+            col = None
+        else:
+            col = keys[2]        
 
 
-    # deal with the indices first, so we can consider indexing x,y earlier
+    # deal with the indices (length) first, so we can consider indexing x,y earlier
     if ind is None: 
         if pl.is_string_like(x):
             lenx = len(ds[x])
@@ -56,7 +66,10 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
             print('Decimating automatically as data length too long [{0}]'
                   .format(len(ind)))
             ind = ind[np.where(np.random.rand(len(ind))<(2e4/len(ind)))[0]]
-            
+    if len(ind) == 0:
+        print('nothing to plot')
+        return()
+
     if pl.is_string_like(x):
         x_string = x
         x = ds[x]
@@ -73,32 +86,36 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
     color_string = '<color>'
 
     if pl.is_string_like(col): 
-        if np.any(np.array(keys)== col):
+        if np.any(np.array(keys)== col):  # AN ITEM?
             color_string = col
-            col=ds[col][ind]
-        else: col = col  # colour is hardwired    
+            col=ds[col]
+        else: col = col  #  or a specific colour
     else:
-        if col is None: col='b'
-        else:
-            col = np.array(col)[ind]
         color_string = ''
+        if col is None: 
+            col='b'
+    if len(np.shape(col))>0:   # an array or list
+        col = np.array(col)[ind]
+        if np.issubdtype(col[0], int):
+            # if they are ints, assume mode numbers, and find nomode of required
+            if nomode is None:
+                if hasattr(col, 'dtype'):
+                    col_dtype = col.dtype
+                    minint = np.iinfo(col_dtype).min
+                    nomode = minint
+                else:
+                    if len(col) != 0:
+                        nomode = np.iinfo(col[0]).min
+                    else:
+                        nomode = np.iinfo(col).min
 
-    if nomode is None:
-        if hasattr(col, 'dtype'):
-            col_dtype = col.dtype
-            minint = np.iinfo(col_dtype).min
-            nomode = minint
-        else:
-            if len(col) != 0:
-                nomode = np.iinfo(col[0]).min
-            else:
-                nomode = np.iinfo(col).min
-
-    w_not_nomode = np.where(nomode != col)[0]
+            w_not_nomode = np.where(nomode != col)[0]
             # shrink ind further to avoid displaying unidentified modes
-    ind = ind[w_not_nomode]
-    col = col[w_not_nomode]
-
+            ind = ind[w_not_nomode]
+            col = col[w_not_nomode]
+        else:  # if real, scale to 0..256
+                pass
+            
     if dither != 0:  # 
         if dither>0:
             np.random.seed(0)
@@ -134,7 +151,7 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
     debug_(debug,3)
 
     if hold==0: pl.clf()    
-    coll = pl.scatter(x[ind],y[ind],sz,col, hold=hold,marker=marker,label='',**kwargs)
+    coll = pl.scatter(x[ind],y[ind],sz,col, hold=hold,marker=marker,**kwargs)
 #    pl.legend(coll   # can't select an element out of a CircleCollection
     sizes = coll.get_sizes()
     max_size=max(sizes)
@@ -143,9 +160,9 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
     sml=matplotlib.collections.CircleCollection([max_size/100])
     if legend == True:
         pl.legend([big,med,sml],
-                  [("%s=%.3g" % (size_string,size_val(max_size))),
-                   ("%.3g" % (size_val(max_size/10))),
-                   ("%.3g" % (size_val(max_size/100)))])
+                  [("%s=%.3g" % (size_string,size_val(max_size, size_scale, dot_size))),
+                   ("%.3g" % (size_val(max_size/10,size_scale, dot_size))),
+                   ("%.3g" % (size_val(max_size/100, size_scale, dot_size)))])
 
     pl.xlabel(x_string)
     pl.ylabel(y_string)
@@ -153,3 +170,4 @@ def sp(ds, x=None, y=None, sz=None, col=None, decimate=0, ind = None, nomode=Non
     if colorbar is None and len(col) > 1:
         colorbar = True
     if colorbar: pl.colorbar()
+    return(coll)  # 

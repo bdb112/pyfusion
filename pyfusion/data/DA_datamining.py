@@ -136,6 +136,18 @@ class DA():
         
         start_mem = report_mem(msg='init')
         if (type(fileordict) == dict) or hasattr(fileordict,'zip'): 
+            # look for illegal chars in keys (ideally should be legal names)
+            baddies = '*-()[]'
+            bads = [ch in '_'.join(fileordict.keys())for ch in baddies]
+            if True in bads:
+                fileordict = fileordict.copy()
+                for k in fileordict.keys():
+                    newk = k.translate(None,baddies) # with a table of none, just delete baddies
+                    if newk != k:
+                        print('*** renaming {k} to {newk}'.format(k=k, newk=newk))
+                        fileordict.update({newk:fileordict.pop(k)})
+                        debug_(debug, 1, key='rename')
+
             self.da = fileordict
             self.loaded = True
             self.name = 'dict'
@@ -167,7 +179,7 @@ class DA():
             self.infodict = {}
 
         self.mainkey = mainkey  # may be None!
-        debug_(self.debug, 2)
+        debug_(self.debug, 3)
         if self.mainkey is None:
             if 'mainkey' in self.infodict.keys():
                 self.mainkey = self.infodict['mainkey']
@@ -289,7 +301,7 @@ class DA():
                     dbkeys.append(k)
                     dbtypes.append(typ)
                     self.metadata.tables['fs_table'].append_column(SA.Column(k, typ))
-                    debug_(self.debug, 1)
+                    debug_(self.debug, 2)
 
             if self.debug>0: print(self.metadata.tables)
 
@@ -429,7 +441,7 @@ class DA():
                         print('{k} loaded in full: {reason}'
                               .format(k=k,reason=reason))
                 # dictionaries get stored as an object, need "to list"
-                debug_(self.debug, 1, key='limit')
+                debug_(self.debug, 2, key='limit')
                 if hasattr(dd[k],'dtype'):
                     if dd[k].dtype == np.dtype('object'):
                         dd[k] = dd[k].tolist()
@@ -514,6 +526,9 @@ class DA():
         if verbose:
             print('lengths: {0} -999 indicates dodgy variable'
                    .format([mylen(save_dict[k]) for k in use_keys]))
+
+        if self.debug:
+            print('saving '+filename, args)
 
         exec("np.savez_compressed(filename,"+args+")")
         self.name = filename

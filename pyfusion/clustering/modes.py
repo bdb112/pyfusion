@@ -2,11 +2,12 @@ import numpy as np
 import pylab as pl
 
 """ 
-17 Nov
+17 Nov 2013  (this one comes after new_mode_identify_script
+
 This version allows omitting channels by adding two differences.  
 This is accomplished by using a matrix for mask instead of a vector, allowing much more than just omission.
 
-Big change - the phases are passed directly - the calling routine does the masking both in mask and shot. Goes with mode_identify_script.py
+** Big change - the phases are passed directly - the calling routine does the masking both in mask and shot. Goes with mode_identify_script.py
 
 Example - adding two deltas (last two), and ignoring one(the first
 dot(array([200,1,20,20]), array([[0,1, 0, 0],[0,0, 1, 1]]).T)
@@ -205,6 +206,9 @@ class Mode():
     def plot(self, axes=None, label=None, csel=None, color=None, suptitle=None, **kwargs):
         """ plot a mode showing its SD as error bars
         """
+        if color is None: 
+            print('defaulting mode color')
+            color = 'r'
         if csel is None: csel = np.arange(len(self.cc))
         if suptitle is None:
             pl.suptitle("{0}, cc={1} sd={2} ".
@@ -217,7 +221,8 @@ class Mode():
         if label is None: label =self.name
         ax.plot(xd, self.cc[csel],label=label, color=color, **kwargs)
         current_color = ax.get_lines()[-1].get_color()
-        ax.errorbar(xd, self.cc[csel], self.csd[csel], ecolor=current_color, color=current_color,**kwargs)
+        ax.errorbar(xd, self.cc[csel], self.csd[csel], 
+                    ecolor=current_color, color=current_color,**kwargs)
         ax.set_xlim(xd[0]-0.1,xd[-1]+.1)
 
     def hist(self, phases, first_std, NDim=None, n_bins=20, n_iters=10, histtype='bar',linewidth=None, equal_bins=False):
@@ -265,7 +270,9 @@ class Mode():
         """ Return the standard deviation normalised to the cluster sds
             a point right on the edge of each sd would return 1
         """
-        return(np.sqrt(np.average((twopi(self.cc-phases)/self.csd)**2)))
+        axis = len(np.shape(phases)) - 1 
+        return(np.sqrt(np.average((twopi(self.cc-phases)/self.csd)**2,axis)))
+
 
     def old_std(self, phase_array, mask=None):
         """ Return the standard deviation normalised to the cluster sds

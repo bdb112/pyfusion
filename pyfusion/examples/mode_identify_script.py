@@ -46,7 +46,7 @@ his NN
 import pylab as pl
 import sys
 
-from numpy import intersect1d, pi
+from numpy import intersect1d, pi, shape
 from numpy import loadtxt
 import numpy as np
 from pyfusion.clustering.modes import Mode

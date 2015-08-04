@@ -411,7 +411,16 @@ class clustering_object():
 
     SH : 6May2013 '''
 
-    def make_mode_list(self, min_kappa = 4):
+    def members(self, cl_num=None):
+        """ return the indices in the instance array corresponding to cluster i
+        """
+        num = len(self.cluster_details['EM_VMM_kappas'])
+        if not cl_num in range(num):
+            raise LookupError('cluster number {c} not between 0 and {n} inclusive'
+                              .format(c=cl_num, n=num))
+        return(np.where(self.cluster_assignments == cl_num)[0])
+
+    def make_mode_list(self, min_kappa = 4, plot=False):
         """ Return a mode_list (such as used in new_mode_identify_script from 
         a cluster_object,
         ps: this is another reason for make new_modeidentifier _script a class.
@@ -426,7 +435,13 @@ class clustering_object():
                 mode_list.append(Mode('cl{n}'.format(n=i), -99, -00, 
                                       means[i], np.sqrt(1/k),id=i))
 
+        if plot: 
+            for (i,mode) in enumerate(mode_list):
+                ncols = 1+np.sqrt(len(mode_list))
+                pt.subplot(ncols, ncols, i+1)
+                mode.plot()
         return(mode_list)
+
     def plot_kh_freq_all_clusters(self,color_by_cumul_phase = 1):
         '''plot kh vs frequency for each cluster - i.e looking for
         whale tails The colouring of the points is based on the total
@@ -821,8 +836,11 @@ class clustering_object():
         '''
         # autodecimation has problems with fewer than 5000 points
         npts = len(self.cluster_assignments)
-        if decimation>2000 and npts > 3*decimation:
-            decimation = npts/decimation
+        n1 = npts/max(npts/decimation,1) # assume decimation is desired no
+        n2 = npts/decimation             # assume it is the reduction factor
+        #print(n1,n2)
+
+        decimation = max(1,npts/max(n1, n2))
 
         if npts/decimation < 500:
             print('decimation of {d} is probably too high for {n} points'.

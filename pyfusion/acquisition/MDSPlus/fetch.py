@@ -35,6 +35,7 @@ def get_tsd_from_node(fetcher, node):
           dim = dim[0]
      timebase = Timebase(dim)
      output_data = TimeseriesData(timebase=timebase, signal=signal, channels=ch)
+     output_data.config_name = fetcher.config_name   #bdb config_name fix
      output_data.meta.update({'shot':fetcher.shot})
      return output_data
 

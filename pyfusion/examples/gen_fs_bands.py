@@ -218,6 +218,7 @@ if pyfusion.orm_manager.IS_ACTIVE:
     pyfusion.orm_manager.Session().commit()
     pyfusion.orm_manager.Session().close_all()
 
-timeinfo('\n######## {c}/{rc} fs finished'.format(c=count,rc=raw_count), sys.stderr) # stderr so that read_text is not fooled.
+timeinfo('\n########shot {s}: {c}/{rc} fs finished'
+         .format(c=count,rc=raw_count,s=shot), sys.stderr) # stderr so that read_text is not fooled.
 # should really put a sentinel here.
 close()

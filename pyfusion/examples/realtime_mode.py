@@ -5,6 +5,7 @@ import numpy as np
 from numpy import where
 import pyfusion as pf
 from glob import glob
+import MDSplus as MDS  # TEMPORARY - SHOULD REALLY USE PYFUSION.
 
 from pyfusion.data.DA_datamining import DA, report_mem, append_to_DA_file
 from bdb_utils import process_cmd_line_args
@@ -26,7 +27,7 @@ def tog(colls):
 
 
 _var_defaults = """
-DA_file='DA_87206.npz'
+#DA_file='DA_87206.npz'
 sht = 86625
 tf,tt=(.03, .04)
 tf,tt=(.0, .06)
@@ -68,7 +69,8 @@ except:
 
 if not sht in da.da['shot']:
     reread=1
-    print('rereading different shot')
+    print('shot {sht} not found, highest in {n} is {h}, rereading different shot'
+          .format(sht=sht,n=da.name,h=np.max(da.da['shot'])))
 pl.figure()
 d = device.acq.getdata(shot_number, diag_name)
 if time_range != None:
@@ -83,6 +85,13 @@ if ylim is not None:
 if xlim is not None:
   pl.xlim(xlim)
 
+  # SHOULD REALLY GET THIS USING PYFUSION....
+  h1tree = MDS.Tree('h1data', sht)
+  main_current=h1tree.getNode('.operations.magnetsupply.lcu.setup_main:I2').data()
+  sec_current=h1tree.getNode('.operations.magnetsupply.lcu.setup_sec:I2').data()
+  kh=float(sec_current)/float(main_current)
+  pl.title(pl.gca().get_title() + str(', k_h={kh:.2f}'.format(kh=kh)))
+pl.show()
 
 if reread:
     cmd = 'python pyfusion/examples/gen_fs_bands.py n_samples=None df=1e3  max_bands=3 dev_name=H1Local shot_range=[{sht}] diag_name=H1ToroidalAxial overlap=2.5 exception=Exception debug=0   n_samples=None seg_dt=0.0005 time_range=[{tf},{tt}] separate=1 info=2 method="rms"'.format(sht=sht,tf=tf,tt=tt)
@@ -91,7 +100,7 @@ if reread:
     print('waiting for prep_fs') 
     (resp,err) = sub_pipe.communicate()
 
-    fname = 'PF2_150730{sht}s'.format(sht=sht)
+    fname = 'PF2_150804{sht}s'.format(sht=sht)
     print(err)
     with open(fname,'w') as txtfile:
         txtfile.write(resp)

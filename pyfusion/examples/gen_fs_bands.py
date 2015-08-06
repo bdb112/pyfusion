@@ -170,7 +170,7 @@ for shot in shot_range:
                     [lfs[i],hfs[i]], [lfs[i]-df,hfs[i]+df]) 
                 fs_set = f_seg.flucstruc(method=method, separate=separate)
                 for fs in fs_set:
-                    if count==0: 
+                    if raw_count==0: 
                         # show history if info says to, and avoid starting line with a digit
                         if info > 0: write('< '+fs.history.
                                            replace('\n201','\n< 201'))

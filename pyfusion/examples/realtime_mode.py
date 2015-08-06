@@ -38,7 +38,7 @@ clim=None
 boydsdata=1
 ylim=(0,100)
 xlim=(0,0.06)
-
+remerge_only=1
 time_range=None
 channel_number=0
 
@@ -93,7 +93,7 @@ if xlim is not None:
   pl.title(pl.gca().get_title() + str(', k_h={kh:.2f}'.format(kh=kh)))
 pl.show()
 
-if reread:
+if (not remerge_only) and reread:
     cmd = 'python pyfusion/examples/gen_fs_bands.py n_samples=None df=1e3  max_bands=3 dev_name=H1Local shot_range=[{sht}] diag_name=H1ToroidalAxial overlap=2.5 exception=Exception debug=0   n_samples=None seg_dt=0.0005 time_range=[{tf},{tt}] separate=1 info=2 method="rms"'.format(sht=sht,tf=tf,tt=tt)
     sub_pipe = subprocess.Popen(cmd,  shell=True, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
@@ -101,13 +101,16 @@ if reread:
     (resp,err) = sub_pipe.communicate()
 
     fname = 'PF2_150804{sht}s'.format(sht=sht)
+    fname = '/h1svr2/PF2_150805{sht}s'.format(sht=sht)
     print(err)
     with open(fname,'w') as txtfile:
         txtfile.write(resp)
     this_shot = sht
 
+if reread:
     DA_file = 'DA_{sht}.npz'.format(sht=sht)
-    mcmd = '''python pyfusion/examples/merge_text_pyfusion.py 'file_list=np.sort(glob("{fname}"))' exception=Exception save_filename={DA_file}'''.format(sht=sht,fname=fname[0:8]+'*s',DA_file=DA_file)
+    tfile = fname=fname[0:8]+'*1'
+    mcmd = '''python pyfusion/examples/merge_text_pyfusion.py 'file_list=np.sort(glob("{tfile}"))' exception=Exception save_filename={DA_file}'''.format(sht=sht,tfile=tfile,DA_file=DA_file)
     sub_pipe = subprocess.Popen(mcmd,  shell=True, stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
     print('merging') 

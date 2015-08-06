@@ -21,10 +21,11 @@ do_range script, so that a nice argument form can be used, and eventually
 multi-processing.
 
 Heliotron:
-run pyfusion/examples/gen_fs_bands.py dev_name='HeliotronJ' diag_name='HeliotronJ_PMP_array' time_range=[100,250] shot_range=[50000] seg_dt=1 info=1 max_bands=1 df=2.
 
 Note: quoting!! escape with \'\"  and \"\'
-time run  pyfusion/examples/prepfs_range_mp.py . --MP=2  --exe='gen_fs_bands.py n_samples=None df=1e3  max_bands=3' --shot_range=[27233] --time_range=\'\"MP1\"\' --seg_dt=0.5e-3 --overlap=2.5
+python pyfusion/examples/prepfs_time_mp.py . --time_range='[0,.1]' --MP=4 --shot=87200 --dev_name='H1Local' --diag_name="H1ToroidalAxial"
+#complicated
+wait_for_MDS_data tree=mirnov shot=${sht} path='.ACQ132_8:INPUT_01' && python pyfusion/examples/prepfs_time_mp.py . --exe='gen_fs_bands.py n_samples=None df=1e3  max_bands=3 dev_name=H1Local' --shot=[${sht}] --diag_name="H1ToroidalAxial" --overlap=2.5 --exception=Exception --debug=0 --seg_dt=0.0005 --time_range=[0,0.06]
 """
 from warnings import warn
 import numpy as np
@@ -49,9 +50,11 @@ def worker(arglist):
                 )
     if ARGS.output_path[0] in [None, "None", ""]:
         redir = ""
+        outd = ""
     else:
         redir = str(' > {path}/{fn}'
                     .format(path=ARGS.output_path[0],fn=filename))
+        outd = ARGS.output_path[0]
 
     cmd = str('python pyfusion/examples/{exe} shot_range=[{sh}] diag_name={dn} '
               'overlap={ov} exception={ex} debug={db} dev_name={dev_name} '
@@ -108,7 +111,7 @@ if __name__ == '__main__':
                              'the exe line here too' )
     PARSER.add_argument( '--debug', type=int, default=0, 
                          help='debug level, > 1 will prevent exceptions being hidden - useful only an manual runs, not with prepfs_range')
-    PARSER.add_argument( '--info', type=int, default=2, 
+    PARSER.add_argument( '--info', type=int, default=1, 
                          help='controls how much history and config info is printed')
     PARSER.add_argument( '--quiet', type=int, default=0, 
                          help=' >0 suppresses printout of extra information' )
@@ -160,7 +163,7 @@ if __name__ == '__main__':
     import pickle
     import time as tm
 
-    p=open(tm.strftime('%Y%m%d%H%M%S_prepfs_data.pickle'),'w')
+    p=open(tm.strftime(ARGS.output_path[0]+'/%Y%m%d%H%M%S_prepfs_data.pickle'),'w')
     pickle.dump(results,p)
     p.close()
 

@@ -196,7 +196,10 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
     debug_(pyfusion.DEBUG, 4, key='plot_signals')
 
 @register("TimeseriesData")
-def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, filename=None, coloraxis=None, noverlap=0,NFFT=None, **kwargs):
+def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, filename=None, coloraxis=None, noverlap=0,NFFT=None, title=None, **kwargs):
+    """ title will be auto generated, if supplied, include '+' to include
+    the auto-generated part
+    """
     import pylab as pl
     
     if windowfn is None: windowfn=pl.window_hanning
@@ -243,11 +246,17 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
     if 'reduce_time' in input_data.history:
         pl.xlim(np.min(input_data.timebase),max(input_data.timebase))
         
+
     try:
-        pl.title("%d, %s"%(input_data.meta['shot'], input_data.channels[channel_number].name))
+        tit = str("%d, %s"%(input_data.meta['shot'], input_data.channels[channel_number].name))
     except:
-        pl.title("%d, %s"%(input_data.meta['shot'], input_data.channels.name))
-        
+        tit = str("%d, %s"%(input_data.meta['shot'], input_data.channels.name))
+    if title is None or title == '':  # get the default title
+        pass # tit is the default
+    else:
+        tit = tit.replace('+',tit)
+    pl.title(tit)
+
     if filename != None:
         pl.savefig(filename)
     else:
@@ -587,6 +596,7 @@ def svdplot(input_data, fmax=None, hold=0):
         ffact = 1e3  # seems like this routine is in kHz - where does it cvt?
         try:
             axt = eval(pyfusion.config.get('Plots','FT_Axis'))
+            if axt[3]<2e3: ffact=1
             fmax = axt[3]/ffact
         except:
             fmax = nyquist_kHz

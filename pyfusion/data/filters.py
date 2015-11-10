@@ -117,6 +117,11 @@ def reduce_time(input_data, new_time_range, fftopt=False):
         print('Entering reduce_time, fftopt={0}, isinst={1}'
               .format(fftopt,isinstance(input_data, DataSet) ))
         pyfusion.logger.warning("Testing: can I see this?")
+    if (min(input_data.timebase)>=new_time_range[0] and 
+        max(input_data.timebase)<=new_time_range[1]):
+        print('time range is already reduced')
+        return(input_data)
+        
     if isinstance(input_data, DataSet):
         if fftopt: new_time_range = get_optimum_time_range(input_data, new_time_range)
 
@@ -130,7 +135,7 @@ def reduce_time(input_data, new_time_range, fftopt=False):
             except AttributeError:
                 pyfusion.logger.warning("Data filter 'reduce_time' not applied to item in dataset")
         return output_dataset
-
+    # else: this is effectively a matching 'else' - omit to save indentation
     #??? this should not need to be here - should only be called from
     # above when passed as a dataset (more efficient)
     if fftopt: new_time_range = get_optimum_time_range(input_data, new_time_range)
@@ -585,6 +590,10 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
 #########################################
 ## wrappers to numpy signal processing ##
 #########################################
+@register("TimeseriesData")
+def integrate(input_data, index_1, index_2, **kwargs):
+    pass
+
 @register("TimeseriesData")
 def correlate(input_data, index_1, index_2, **kwargs):
     return numpy_correlate(input_data.signal[index_1],

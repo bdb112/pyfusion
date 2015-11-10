@@ -1,6 +1,12 @@
 """ see plot_signal_trivial for bare bones 
-plots a single or multi-channel signal"""
+plots a single or multi-channel signal
+This example shows bad motorboating
+run pyfusion/examples/plot_signals dev_name='H1Local' diag_name='H1Poloidal1' shot_number=76887
+# multichannel example
+run pyfusion/examples/plot_signals dev_name='H1Local' diag_name='ElectronDensity' shot_number=76887
+"""
 import pyfusion
+
 _var_defaults = """
 dev_name = "LHD"
 diag_name = "MP1"
@@ -13,4 +19,8 @@ exec(process_cmd_line_args())
 
 dev = pyfusion.getDevice(dev_name)
 data = dev.acq.getdata(shot_number,diag_name)
-data.plot_signals()
+
+# maybe should be in data/plots.py, but config_name not fully implemented
+data.plot_signals(suptitle='shot {shot}: '+diag_name)
+
+# for shot in range(76620,76870,10): dev.acq.getdata(shot,diag_name).plot_signals()

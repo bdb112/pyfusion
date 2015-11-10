@@ -6,7 +6,7 @@ def whr(*args):
     """
     w = np.where(*args)[0]
     # print('{n} results for {s}'.format(n=len(w), s = args))
-    print('{n} results')  # the above just gives Falses and Trues!
+    print('{n} results'.format(n=len(w)))  # the above just gives Falses and Trues!
     return(w)
 
 def broaden(inds, data=None, dw=1):

@@ -87,7 +87,7 @@ class BaseAcquisition(object):
         ## Problem:  no check to see if it is a diag of the right device!??
         d = fetcher_class(self, shot,
                              config_name=config_name, **kwargs).fetch()
-        d.history += "\n:: shot: %d\n:: config: %s" %(shot, config_name)
+        d.history += "\n:: shot: %d :: config: %s" %(shot, config_name)
 
         return d
         

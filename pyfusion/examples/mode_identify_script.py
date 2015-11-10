@@ -1,6 +1,9 @@
 """
+
 This version is the first to allow omitting one or more probes.  Use
 a matrix or vector for mask, which does the job of the old sel.
+
+
 
 Tests:
 run -i pyfusion/examples/mode_identify_script.py doN=True DAfilename='DA65MP2010HMPno612b5_M_N_fmax.npz' sel=np.arange(11,16)   #  Total set = 8450, reset = 2055
@@ -177,7 +180,8 @@ MP2010.append(Mode('N~0',N=0, NN=0, cc=[-0.829, -0.068, -0.120, 0.140, -0.032],c
 MP2010.append(Mode('N=-1',N=-1, NN=-101, cc=[-0.454, -0.775, -1.348, -1.172, -1.221],  csd=[ 3, 0.071, 0.048, 0.133, 0.113]))
 
 def make_ideal_modes(filename='ideal_toroidal_modes.npz', ideal_sd=0.5, sel = None):
-    """ 
+    """   I think these ideal modes are only applicable to LHD toroidal array - should add a comment field, allowance for M
+    ideal_toroidal_modes.npz was made by channel_angle_games.py
     sel    default to selecting MP2-MP1 ... MP6-MP5
     """
     if sel is None: sel = np.arange(5)
@@ -235,10 +239,18 @@ if mode_list is None:
 
 if mask is None: mask = np.identity(len(sel))
 
-if DAfilename is not None and DAfilename != 'None':
+if DAfilename is None:
+    raise ValueError('New version - no need for DAfilename==None')
+
+try:
+        type(thisDA)
+except:
+        thisDA=None
+if (thisDA is None) or thisDA.name != DAfilename:
     print("reading in {d}".format(d=DAfilename))
     from pyfusion.data.DA_datamining import DA, report_mem
-    thisDA=DA(DAfilename, load=1)
+    thisDA = DA(DAfilename,load=1)
+
     # wasteful for large files: dd=thisDA.copyda()
     dd = thisDA.da
 

@@ -1,5 +1,5 @@
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from time import time as seconds
 import os
 from warnings import warn
@@ -14,8 +14,9 @@ try:
     from pyfusion.debug_ import debug_
 except:
     def debug_(debug, msg='', *args, **kwargs):
-        print('attempt to debug ' + msg + 
-              " need boyd's debug_.py to debug properly")
+        if debug>0:
+            print('attempt to debug {msg}'.format(msg=msg)+ 
+                  " need boyd's debug_.py to debug properly")
 
 def mylen(ob):
     """ return the length of an array or dictionary for diagnostic info """
@@ -67,7 +68,7 @@ except None:
     def report_mem(prev_values=None, msg=None):
         return((None, None))
     
-def append_to_DA_file(filename, dic, force=False):
+def append_to_DA_file(filename, new_dict, force=False):
     """ open filename with mode=a, after checking if the indx variables align
     force=1 ignores checks for consistent length c.f. the var shot
 
@@ -79,24 +80,23 @@ def append_to_DA_file(filename, dic, force=False):
     file, so it would be confusing.
     """
     import zipfile, os
-    import pyfusion
 
-    # the file is loaded into dd, and the new dictionary is dic
+    # the file is loaded into dd, and the new dictionary is new_dict
     # add .npz if the name given does not exist, and it is not already
     if not os.path.exists(filename):
         if '.npz' not in filename:
             filename += '.npz'
     dd = np.load(filename)
     error = None
-    if 'indx' in dd.keys() and 'indx' in dic.keys():
+    if 'indx' in dd.keys() and 'indx' in new_dict.keys():
         check = dd['indx']
-        if (dic['indx']!=check).all():
+        if (new_dict['indx']!=check).all():
             error=('mismatched indx vars in ' + filename)
 
     else:
         print('indx missing from one or both dictionaries - just checking size')
         check=dd['shot']
-        if (len(check) != len(dic[dic.keys()[0]])):
+        if (len(check) != len(new_dict[new_dict.keys()[0]])):
             error=('mismatched var lengths in ' + filename)
 
     if error is not None:
@@ -104,13 +104,18 @@ def append_to_DA_file(filename, dic, force=False):
         else:      raise ValueError(error)
 
     zf = zipfile.ZipFile(filename,mode='a')
-    tmp =  pyfusion.config.get('global', 'my_tmp')
-    for key in dic.keys():
+    try:
+        import pyfusion
+        tmp =  pyfusion.config.get('global', 'my_tmp')
+    except ImportError:
+        print('outside pufusion, so assume /tmp')
+        tmp = '/tmp'
+    for key in new_dict.keys():
         if key in zf.namelist():
             print('member {k} already exists - will supersede but not remove it'
                   .format(k=key))
         tfile = tmp+'/'+ key+'.npy'
-        np.save(tfile, dic[key])
+        np.save(tfile, new_dict[key])
         zf.write(tfile,arcname=key,compress_type=zipfile.ZIP_DEFLATED)
         os.remove(tfile)
     zf.close()
@@ -137,7 +142,7 @@ class DA():
         start_mem = report_mem(msg='init')
         if (type(fileordict) == dict) or hasattr(fileordict,'zip'): 
             # look for illegal chars in keys (ideally should be legal names)
-            baddies = '*-()[]'
+            baddies = '*-()[]'   # e.g. shaun uses sqrt(ne)
             bads = [ch in '_'.join(fileordict.keys())for ch in baddies]
             if True in bads:
                 fileordict = fileordict.copy()
@@ -159,7 +164,7 @@ class DA():
                 
             self.da = np.load(fileordict)
             self.name = fileordict
-            self.loaded = 0
+            self.loaded = False
 
         self.keys = self.da.keys()
         if 'dd' in self.keys:  # old style, all in one
@@ -189,10 +194,6 @@ class DA():
                 else:
                     self.mainkey = self.da.keys()[0]
 
-        self.infodict.update({'mainkey':self.mainkey}) # update in case it has changed
-        if type(self.da) == dict:
-            self.da.update({'info': self.infodict})
-        
         self.len = len(self.da[self.mainkey])
 
         if (limit is None) or (self.len < abs(limit)):
@@ -211,12 +212,54 @@ class DA():
                                 < float(abs(limit))/self.len)[0]
 
         if load == 0:
-            self.loaded = 0
+            self.loaded = False
         else:
             self.loaded = self.load()
 
+        # add an index if there is not one already.  If there is one, 
+        # warn if it is not sequential from 0 to len of mainkey entry
+        # useful for doing multiple search criteria - 
+        # extract data accoring to criterion 1, then select according to crit 1
+        # and reextract
+
+        if not 'indx' in self.keys:
+            if not self.loaded:
+                self.load()
+            self.da.update(dict(indx=np.arange(len(self.da[self.mainkey]))))
+            self.keys.append('indx')
+        else:
+            indtmp = self.da['indx']
+            if (len(indtmp) != len(self.da[self.mainkey]) or
+                (min(indtmp) != 0) or np.unique(np.diff(indtmp)) !=[1]):
+                print "**** warning - index is not montonic from 0 "
+
+        self.infodict.update({'mainkey':self.mainkey}) # update in case it has changed
+        if type(self.da) == dict:
+            self.update({'info': self.infodict}, check=False)
+
+
+
         start_mem = report_mem(start_mem)
     #shallow_copy = try:if da.copy
+
+    def update(self, new_dict, check=True):
+        """ Add a new variable to the dictionary.  Better than simply updating
+        dd, as it allows length check and updates the list of keys.
+        """
+        dlen = len(self.mainkey)
+        new_keys = []
+        for nkey in new_dict.keys():
+            if nkey in self.da.keys():
+                print('replacing {k}'.format(k=nkey))
+            else:
+                new_keys.append(nkey)
+
+            if check and len(new_dict[nkey]) <> dlen:
+                raise LookupError('key {k} length {lk} does not match {l}'
+                                  .format(k=nkey, lk = len(new_dict[nkey]), 
+                                          l=dlen))
+        self.da.update(new_dict)    
+
 
     def append(self, dd):
         """ append the data arrays in dd to the data arrays in self - i.e.
@@ -232,7 +275,9 @@ class DA():
                 raise LookupError('key {k} not in DA keys: {keys}'
                                   .format(k=k, keys=self.da.keys()))
         for k in self.da.keys():
-            if hasattr(dd[k],'keys'):
+            if hasattr(dd[k],'keys'):  # check if the dd entry [k] is itself a dict
+                print('dd entry {k} is a dictionary with keys {ks}'
+                      .format(k=k, ks=dd[k].keys()))
                 for kk in self.da[k]:
                     if kk in dd.keys():  # if it is there, append
                         self.da[k][kk] = np.append(self.da[k][kk], dd[k][kk])
@@ -332,7 +377,7 @@ class DA():
         if (not force) and (self.len > 1e7): 
             quest = str('{n:,} elements - do you really want to copy? Y/^C to stop'
                         .format(n=self.len))
-            if pl.isinteractive():
+            if plt.isinteractive():
                 if 'Y' not in raw_input(quest).upper():
                     1/0
             else: 
@@ -346,22 +391,31 @@ class DA():
 
     def info(self, verbose=None):
         if verbose is None: verbose = self.verbose
-        shots = np.unique(self.da[self.mainkey])
-        print('{nm} contains {ins}({mins:.1f}M) instances from {s} {mainkey}s'\
+        ushots = np.unique(self.da[self.mainkey])
+        print('{nm} contains {ins:,}({mins:.1f}M) instances from {s} {mainkey}s'\
                   ', {ks} data arrays'
               .format(nm = self.name,
                       ins=len(self.da[self.mainkey]),
                       mins=len(self.da[self.mainkey])/1e6,
-                      s=len(shots), mainkey=self.mainkey,
+                      s=len(ushots), mainkey=self.mainkey,
                       ks = len(self.da.keys())))
+        if len(ushots) < 10:
+            shotstr=str('{s}'.format(Shots=self.mainkey,s=ushots))
+        else: 
+            shotstr = str('{s}...'.format(
+                s=','.join([str(sh) for sh in ushots[0:3]])))
+            shotstr += str('{s}'.format(
+                s=','.join([str(sh) for sh in ushots[-4:]])))
+
         if verbose==0:
             # Shots is usually the main key, but allow for others
-            print('{Shots} {s}, vars are {ks}'.format(Shots=self.mainkey, s=shots, ks=self.da.keys()))
+            print('{Shots} {s}, vars are {ks}'.format(Shots=self.mainkey, s=shotstr, ks=self.da.keys()))
         else:
             if (not self.loaded) and (self.len > 1e6): 
                 print('may be faster to load first')
 
-            print('{Shots} {s}\n Vars: '.format(Shots=self.mainkey,s=shots))
+            print('{Shots} {s}\n Vars: '.format(Shots=self.mainkey,s=shotstr))
+
             lenshots = self.len
             for k in np.sort(self.da.keys()):
                 varname = k
@@ -454,10 +508,11 @@ class DA():
                         print('*** Second object conversion for {k}!!!'
                               .format(k=k))
         # key 'info' should be replaced by the more up-to-date self. copy
-        dd.update({'info': self.infodict})
-        if self.verbose: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
         self.da = dd
+        self.update({'info': self.infodict}, check=False)
+        if self.verbose: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
         report_mem(start_mem)
+        return(True)
 
     def save(self, filename, verbose=None, sel=None, use_dictionary=False,tempdir=None, zipopt=-1):
         """ Save as an npz file, using an incremental method, which
@@ -564,7 +619,7 @@ class DA():
         if debug == 0: debug = self.debug
         if varnames is None: varnames = self.da.keys()  # all variables
 
-        if pl.is_string_like(varnames):
+        if plt.is_string_like(varnames):
             varlist = varnames.split(',')
         else: varlist = varnames
         val_tuple = ()
@@ -593,7 +648,8 @@ class DA():
             print('extracting a sample of {n} '.format(n=len(inds)))
 
         for k in varlist:
-            if k in self.keys:
+            if k in self.keys:  # be careful that self keys is up to date!
+                                # this is normally OK if you use self.update
                 debug_(debug,key='extract')
                 # used to refer to da[k] twice - two reads if npz
                 dak = self.da[k]  # we know we want it - let's 

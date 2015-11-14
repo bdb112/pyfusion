@@ -1,6 +1,10 @@
 """ get the basic plasma params for a given shot and range of times
 interpolation overhead only begins at 10k points, doubles time at 1Million!!
 
+Replaced by device specific - e.g. acquisition/LHD/get_basic_diagnostics.py
+At present, there is no example test routine for the above function - just run 
+merge_basic_diagnostics.
+
 """
 
 import pyfusion as pf
@@ -219,7 +223,11 @@ for shot in shots:
     except exception:		
         missing_shots.append(shot)
 
+if len(missing_shots)>0:
+    print("******************"),
 print("{0} missing shots out of {1}".format(len(missing_shots),(len(missing_shots)+len(good_shots))))
+if len(missing_shots) == len(shots):
+    raise ValueError('no good shots')
 
 if verbose>0: print('missing shots are {0}'.format(missing_shots))
 pl.plot(basic_data['check_tm'],basic_data['w_p'],hold=0)

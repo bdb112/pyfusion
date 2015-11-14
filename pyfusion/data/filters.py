@@ -5,7 +5,7 @@ function). Need to figure out a better way to do this.
 from datetime import datetime
 from pyfusion.debug_ import debug_
 from pyfusion.utils.utils import warn
-import copy
+from copy import deepcopy
 from numpy import searchsorted, arange, mean, resize, repeat, fft, conjugate, linalg, array, zeros_like, take, argmin, pi, cumsum
 from numpy import correlate as numpy_correlate
 import numpy as np
@@ -393,7 +393,7 @@ def sp_filter_butterworth_bandpass(input_data, passband, stopband, max_passband_
     ord,wn = sp_signal.filter_design.buttord(norm_passband, norm_stopband, max_passband_loss, min_stopband_attenuation)
     b, a = sp_signal.filter_design.butter(ord, wn, btype = btype)
     
-    output_data = copy.deepcopy(input_data)  # was output_data = input_data
+    output_data = deepcopy(input_data)  # was output_data = input_data
 
     for i,s in enumerate(output_data.signal):
         if len(output_data.signal) == 1: print('bug for a single signal')
@@ -504,7 +504,7 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     # this even and odd is not totally thought through...but it seems OK
     if np.mod(NA,2)==0: mask[:NA/2:-1] = mask[1:(NA/2)]   # even
     else:            mask[:1+NA/2:-1] = mask[1:(NA/2)] # odd 
-    output_data = copy.deepcopy(input_data)  # was output_data = input_data
+    output_data = deepcopy(input_data)  # was output_data = input_data
 
     if (pyfusion.fft_type == 'fftw3'):
         # should migrate elsewhere, but the import is only 6us
@@ -591,8 +591,80 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
 ## wrappers to numpy signal processing ##
 #########################################
 @register("TimeseriesData")
-def integrate(input_data, index_1, index_2, **kwargs):
-    pass
+def integrate(input_data, baseline=[], chan=None, copy=False):
+    """ Return the time integral of a signal, 
+    Perhaps the first sample will be a Nan - no,the samples are all displaced by one
+    If we used the trapeziodal method, the first and last samples are 'incorrect' 
+    and Nans may be appropriate
+    """
+    # for now, always copy, too many problems otherwise.
+    input_data = deepcopy(input_data)
+    if copy: 
+        input_data = input_data.copy()
+    if (len(np.shape(input_data.signal)) == 2) and chan is None:
+        for (s,sig) in enumerate(input_data.signal):
+            input_data.signal[s][:] = integrate(input_data, chan=s, baseline=baseline).signal
+
+    else:
+        if chan is None:
+            signal = input_data.signal
+        else:
+            signal = input_data.signal[chan]
+
+        signal[:] = np.cumsum(signal)
+        #signal[0] = np.nan   cumsum defines the first point
+
+        input_data.signal = signal*np.average(np.diff(input_data.timebase))
+
+    if baseline is not None:
+        return remove_baseline(input_data, baseline, copy=False)
+    else:
+        return(input_data)
+
+@register("TimeseriesData")
+def remove_baseline(input_data, baseline=None, chan=None, copy=False):
+    """ Remove a tilted baseline from a signal
+    if the baseline is 4 elements, correct at two points (mid point of those intervals)
+    baseline in the same units as the timebase
+    """
+    from pyfusion.data.convenience import whr, btw
+    # for now, always copy, too many problems otherwise.
+    input_data = deepcopy(input_data)
+
+    if (len(np.shape(input_data.signal)) == 2) and chan is None:
+        for (s,sig) in enumerate(input_data.signal):
+            input_data.signal[s][:] = remove_baseline(input_data, chan=s, baseline=baseline).signal
+
+    else:
+        if chan is None:
+            signal = input_data.signal
+        else:
+            signal = input_data.signal[chan]
+
+        tb = input_data.timebase
+
+        bl = np.array(baseline).flatten()
+        if len(baseline) == 0:
+            delta = .01
+            bl = [np.min(tb), np.min(tb) + delta,
+                        np.max(tb) - delta, np.max(tb)]
+
+        wst = np.where(btw(tb, bl[0:2]))[0]
+        wend = np.where(btw(tb, bl[2:4]))[0]
+
+        bl_st = np.average(signal[wst])
+        bl_end = np.average(signal[wend])
+
+        time_st = np.average(tb[wst])
+        time_end = np.average(tb[wend])
+        print(bl_st, bl_end, time_st, time_end)
+
+        input_data.signal = signal - (bl_st  * (time_end - tb)/(time_end - time_st)
+                                      - bl_end * (time_st - tb)/(time_end - time_st))
+        
+
+    return(input_data)
+
 
 @register("TimeseriesData")
 def correlate(input_data, index_1, index_2, **kwargs):

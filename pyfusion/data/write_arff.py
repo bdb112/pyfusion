@@ -41,34 +41,78 @@ def tomagphase(dd, key):
     dd.update({'phase_'+key: np.angle(dd[key])})
     dd.pop(key)
 
-def split_vectors(dd, keep_scalars=False):
+def split_vectors(dd):   #  , keep_scalars=False):
+    """ pop any vectors and replace them with scalars consecutively numbered
+    """
+    sub_list = []
     for k in dd.keys():
         order = len(np.shape(dd[k]))
         if order==0:
             dd.pop(k)
         elif order>1:
             cols = np.array(dd.pop(k)).T
+            newks = []  # a list of vector keys and the corresponding split ones
             for i in range(len(cols)):
-                dd.update({'{k}_{i}'.format(k=k, i=i): cols[i]})
+                newk = '{k}_{i}'.format(k=k, i=i)
+                dd.update({newk: cols[i]})
+                newks.append(newk)
+            sub_list.append([k, newks])
+
         else:
             pass # keep  column vectors
+    return(sub_list)
 
             
-FILE_NAME = 'tmp.arff'
-if os.path.exists(FILE_NAME):os.unlink(FILE_NAME)
+def write_arff(da, filename='tmp.arff', use_keys=[]):
+    """ use_keys - keys to save, empty list means all
+    """
+    if os.path.exists(filename):os.unlink(filename)
 
-f = open(FILE_NAME,'w')
-ks = np.sort(dd.keys())
-f.write("@relation {0}\n".format(relation))
-for k in ks:
-    f.write("@attribute {0} numeric\n".format(k))
+    f = open(filename,'w')
+    dd = da.copyda()  # need to copy before vectors are split
 
-f.write('@data'+"\n")
-inds = range(len(dd[ks[0]]))
-for ind in inds:
-    f.write(','.join([str(dd[k][ind]) for k in ks]) + "\n")
+    # now replace any keys in the key list with their split names
+    if len(use_keys) == 0:   # if empty list, use all
+        ks = np.sort(dd.keys()).tolist()
+    else:
+        ks = use_keys
 
-f.close()
+    if 'info' in ks: ks.remove('info') # arff can do info struct.
+
+    sub_list = split_vectors(dd)
+    for key,newks in sub_list: 
+        ks.remove(key)
+        ks.extend(newks)
+
+    f.write("@relation {0}\n".format(relation))
+    for k in ks:
+        f.write("@attribute {0} numeric\n".format(k))
+
+    f.write('@data'+"\n")
+    inds = range(len(dd[ks[0]]))
+    for ind in inds:
+        f.write(','.join([str(dd[k][ind]) for k in ks]) + "\n")
+
+    f.close()
+
+if __name__ == '__main__':
+
+    # original primitive code - save the dict in dd
+    FILE_NAME = 'tmp.arff'
+    if os.path.exists(FILE_NAME):os.unlink(FILE_NAME)
+
+    f = open(FILE_NAME,'w')
+    ks = np.sort(dd.keys())
+    f.write("@relation {0}\n".format(relation))
+    for k in ks:
+        f.write("@attribute {0} numeric\n".format(k))
+
+    f.write('@data'+"\n")
+    inds = range(len(dd[ks[0]]))
+    for ind in inds:
+        f.write(','.join([str(dd[k][ind]) for k in ks]) + "\n")
+
+    f.close()
 
 """
 sep14 = nc_storage('sep14.nc')

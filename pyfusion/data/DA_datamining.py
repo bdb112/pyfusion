@@ -292,6 +292,14 @@ class DA():
             print('added {dl} instances to make a total of {tl}'
                   .format(dl=len(dd[self.mainkey]), tl = self.len))
 
+
+    def write_arff(self, filename, keys=[]):
+        """ keys is a list of keys to include, and empty list includes all
+        """
+        from write_arff import write_arff
+        write_arff(self, filename, keys)
+
+
     def to_sqlalchemy(self,db = 'sqlite:///:memory:',n_recs=1000, chunk=1000):
         """ Write to an sqlachemy database 
             chunk = 500: 2000 34 element recs/sec to (big) sqllite file, 

@@ -1,8 +1,9 @@
 """
 Plot coherence and cross phase for a multi signal diagnostic
 Can pass a pyfusion data item or get data from a source
+H-1 88673 is a nice example
 
-mlab.cohere_pairs is > 10x faster on 15 signals than separate coheres 
+mlab.cohere_pairs is > 10x faster on 15 signals than separate cohere calls
 See also csd in  /usr/lib/pymodules/python2.7/matplotlib/pyplot.py
 
 fdata=data.filter_fourier_bandpass([20e3,36e3],[24e3,32e3])
@@ -18,9 +19,9 @@ from numpy import mod, pi
 _var_defaults = """
 dev_name = "H1Local"           # "LHD"
 diag_name = "H1ToroidalAxial"  # "MP1"
-shot_number = 88675            # 27233
+shot_number = 88673            # 27233
 lwtot=1.5
-NFFT=256
+NFFT=1024
 noverlap=1.0
 unit_freq = 1000
 dat=None
@@ -79,7 +80,5 @@ sz = 'small' if len(hist.split('\n'))>3 else 'medium'
 pl.title(hist + str(': NFFT={NFFT}, noverlap={noverlap}'
                             .format(NFFT=NFFT, noverlap=noverlap)),size=sz)
 pl.xlabel(xlab)
+pl.xlim(1,100)   # lower limit of 1 is better for log x scale
 pl.show()
-
-
-

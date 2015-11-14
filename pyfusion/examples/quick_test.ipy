@@ -1,8 +1,15 @@
 # this is ideally run within the one session - can only 'paste it' at the moment
-# need to start "paste" below this line
+# need to start "paste" below this line (and need to use mouse, rather than %paste
 
-run pyfusion/examples/prepfs_range_mp.py /tmp/  --exe='gen_fs_bands.py toff=4 seg_dt=15e-3 df=2e3 max_bands=1 min_svs=1 fmax=2e3 max_H=1' --seg_dt=15e-3 --shot_range=[105396,105402] --MP=3 --overlap=2.5 --diag_name=VSL_6 --time_range=[7,10]
-run pyfusion/examples/merge_text_pyfusion.py file_list="np.sort(glob('/tmp/*VSL_6_105*1'))"
+run pyfusion/examples/medium_300.py
+run pyfusion/examples/plot_signals dev_name='H1Local' diag_name='ElectronDensity' shot_number=76887
+
+
+# better example is 105396,105402 if we have the files.
+
+run pyfusion/examples/prepfs_range_mp.py /tmp/  --exe='gen_fs_bands.py toff=4 seg_dt=15e-3 df=2e3 max_bands=1 min_svs=1 fmax=2e3 max_H=1' --seg_dt=15e-3 --shot_range=[65140,] --MP=3 --overlap=2.5 --diag_name=VSL_6 --time_range=[7,10]
+run pyfusion/examples/merge_text_pyfusion.py file_list="np.sort(glob('/tmp/*VSL_6_65*1'))"
+# next line needs the LHD csv database and some signals
 run -i pyfusion/examples/merge_basic_diagnostics.py
 from pyfusion.data.DA_datamining import DA, report_mem
 DA_test = DA(dd)

@@ -78,9 +78,8 @@ class LHDIgetfileReader(LHDBaseDataFetcher):
      in the .cfg file soon.
      """
      def do_fetch(self):
-          print('in fetch',self.diag_name)
+          if pyfusion.DEBUG>2: print('in fetch',self.diag_name, self)
           debug_(pyfusion.DEBUG, level=3, key='igetfile_fetch')
-          print(self)
           diag = self.config_name
           infodict = eval(eval(self.info))
           vardict = get_basic_diagnostics(diags=[diag], times=None, shot=self.shot,

@@ -49,6 +49,7 @@ btw = between
 def decimate(data, limit=None, fraction=None):
     """ reduce the number of items to a limit or by a fraction
     returns the same data every call
+    decimation is regular, not random
     """
     if (fraction is None and limit is None):
         limit=500

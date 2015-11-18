@@ -246,7 +246,7 @@ class DA():
         """ Add a new variable to the dictionary.  Better than simply updating
         dd, as it allows length check and updates the list of keys.
         """
-        dlen = len(self.mainkey)
+        dlen = len(self.da[self.mainkey])
         new_keys = []
         for nkey in new_dict.keys():
             if nkey in self.da.keys():
@@ -428,11 +428,13 @@ class DA():
             for k in np.sort(self.da.keys()):
                 varname = k
                 var = self.da[k]
+                if hasattr(var, 'dtype') and var.dtype=='O':
+                    var = var.tolist()
                 shp = np.shape(var)
                 varname += str('[{s}]'
                                .format(s=','.join([str(i) for i in shp])))
                 if len(shp)>1: 
-                    varlen = len(var[:,1])
+                    varlen = len(var)
                     fac = np.product(shp[1:])
                 else:
                     if hasattr(var, 'keys'):

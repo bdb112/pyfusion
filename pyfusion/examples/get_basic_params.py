@@ -107,7 +107,7 @@ def get_delay(shot):
     elif shot>=36142: delay = 0.1
     elif shot>=31169: delay = 0.3
     else: delay = 0.1
-    print('delay',delay)
+    if pyfusion.DEBUG>0: print('delay',delay),
     return(delay)
 
 

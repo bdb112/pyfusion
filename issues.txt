@@ -1,0 +1,7 @@
+2015-11-16:
+error  when load() given after run pyfusion/examples/medium_300.py - new since de2f98 at least
+--> 521         self.da = dd
+    522         self.update({'info': self.infodict}, check=False)
+    523         if self.verbose: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
+
+UnboundLocalError: local variable 'dd' referenced before assignment

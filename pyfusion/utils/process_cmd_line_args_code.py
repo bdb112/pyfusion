@@ -55,7 +55,7 @@ def list_vars(locdict, Stop, tail_msg=''):
     if locdict.has_key('_var_defaults'):
         print('\n=========== Variables, and default values =========')
         print(locdict['_var_defaults'])
-    # check the global namespace too - can't see _var_default when
+    # check the global namespace too - can't see _var_defaults when
     # running with "run -i" (but it hasn't helped).    
     if globals().has_key('_var_defaults'):
         print('\n=========== Variables, and default values =========')
@@ -90,10 +90,12 @@ def list_vars(locdict, Stop, tail_msg=''):
                        'use the -i option (under ipython only)') % _rhs)
         # Note: pydb is nicer but slower....                     
     if Stop: 
-        print('======== make sure there are no spaces - e.g.  x=123  not x = 123 ======')
+        print('======== make sure there are *NO SPACES* - e.g.  x=123  not x = 123 ======')
         if tail_msg !='': print(tail_msg)
-        ans=raw_input(' ^C to stop')
-        return()  # don't know how to just "stop"
+        ans=raw_input(' q or ^C (<CR) to stop')  # raw_input still needs a CR 
+        if ans.upper() == 'Q': 
+            sys.exit()
+        return()  # I thought I didn't know how to just "stop" - maybe the above works
     try:
         import pydb; pydb.set_trace('s','print "set vars, c to continue"')
     except:

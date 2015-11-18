@@ -6,7 +6,7 @@ def whr(*args):
     """
     w = np.where(*args)[0]
     # print('{n} results for {s}'.format(n=len(w), s = args))
-    print('{n} results')  # the above just gives Falses and Trues!
+    print('{n} results'.format(n=len(w)))  # the above just gives Falses and Trues!
     return(w)
 
 def broaden(inds, data=None, dw=1):
@@ -49,6 +49,7 @@ btw = between
 def decimate(data, limit=None, fraction=None):
     """ reduce the number of items to a limit or by a fraction
     returns the same data every call
+    decimation is regular, not random
     """
     if (fraction is None and limit is None):
         limit=500

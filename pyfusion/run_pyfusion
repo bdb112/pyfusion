@@ -93,6 +93,8 @@ if [[ $PYTHONPATH != *${pyfparent}${pathsep}* ]]; then
 else 
     echo no need to add path -  PYTHONPATH already includes $pyfparent
 fi
+# add prl_local to the path
+export PYTHONPATH=$PYTHONPATH:/home/bdb112/python/prl_python_h1
 
 cd $pyfparent
 if [ -d $pyfparent/pyfusion/visual ]
@@ -146,4 +148,4 @@ history -s source $source_file $*
 echo Here are some relevant env vars
 env |grep PY
 # this avoids the wx graphics bar in anaconda
-ipython --pylab='tk' --profile pyfusion
+ipython --pylab='tk' --profile pyfusion_E4300

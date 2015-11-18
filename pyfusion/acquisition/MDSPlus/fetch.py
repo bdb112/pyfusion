@@ -100,7 +100,7 @@ class MDSPlusDataFetcher(BaseDataFetcher):
                     raise Exception('Unsupported MDSplus node type')
 
      def error_info(self, step=None):
-          debug_(DEBUG, level=3, key='error_info',msg='enter error_info')
+          debug_(DEBUG, level=3, key='error_info',msg='entering error_info')
           try:
                tree = self.tree
           except:

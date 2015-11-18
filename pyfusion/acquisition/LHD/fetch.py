@@ -30,12 +30,14 @@ from numpy import mean, array, double, arange, dtype, load
 import numpy as np
 from time import sleep
 
+import pyfusion
 from pyfusion.acquisition.base import BaseDataFetcher
 from pyfusion.data.timeseries import TimeseriesData, Signal, Timebase
 from pyfusion.data.base import Coords, Channel, ChannelList
+from pyfusion.acquisition.LHD.get_basic_diagnostics import get_basic_diagnostics
+
 from pyfusion.debug_ import debug_
 #from pyfusion import VERBOSE, DEBUG  really want to import just pyfusion.DEBUG,VERBOSE
-import pyfusion
 
 this_dir = path.dirname(path.abspath(__file__)) 
 
@@ -46,7 +48,7 @@ class LHDBaseDataFetcher(BaseDataFetcher):
      def error_info(self, step=None):
           """ can only access items that are part of self - others may be volatile
           """
-          debug_(pyfusion.DEBUG, level=3, key='error_info',msg='enter error_info')
+          debug_(pyfusion.DEBUG, level=3, key='error_info',msg='entering error_info')
           """try:
                tree = self.tree
           except:
@@ -57,7 +59,7 @@ class LHDBaseDataFetcher(BaseDataFetcher):
                     debug_(DEBUG, level=1, key='error_info_cant_determine')
 
           """
-          msg = str("MDS: Could not open %s, shot %d, channel = %s, step=%s"      
+          msg = str("LHDbasedata: Could not open %s, shot %d, channel = %s, step=%s"      
                     %(self.diag_name, self.shot, self.channel_number, step))
           if step == 'do_fetch':
               pass
@@ -67,6 +69,30 @@ class LHDBaseDataFetcher(BaseDataFetcher):
 
      pass
 
+class LHDIgetfileReader(LHDBaseDataFetcher):
+     """ This uses the igetfile function to return one diagnostic at a time,
+     on its own timebase.  The original use of get_basic_diagnostics was to
+     get a bunch of diags, on a given timebase.  Might be better to separate the 
+     functions in the future.
+     Will probably drop the dictionary approach and make each item a separte enetity
+     in the .cfg file soon.
+     """
+     def do_fetch(self):
+          if pyfusion.DEBUG>2: print('in fetch',self.diag_name, self)
+          debug_(pyfusion.DEBUG, level=3, key='igetfile_fetch')
+          diag = self.config_name
+          infodict = eval(eval(self.info))
+          vardict = get_basic_diagnostics(diags=[diag], times=None, shot=self.shot,
+                                          file_info={diag:infodict}, debug=1, 
+                                          exception=None)
+          debug_(pyfusion.DEBUG, level=2, key='after get_basic')
+          
+          output_data = TimeseriesData(timebase=Timebase(vardict['check_tm']),
+                                       signal=Signal(vardict[self.config_name]),
+                                       channels=Channel(self.config_name,Coords('dummy',(0,0,0))))
+          output_data.config_name = self.config_name  # ??? bdb - my fault?
+          return output_data
+     
 class LHDTimeseriesDataFetcher(LHDBaseDataFetcher):
 
     def do_fetch(self):
@@ -75,7 +101,8 @@ class LHDTimeseriesDataFetcher(LHDBaseDataFetcher):
         chnl = int(self.channel_number)
         dggn = self.diag_name
         # the clever "-" thing should only be used in members of multi signal diagnostics.
-        # so I moved it to base.py
+        # so I moved it to base.py.  This means it won't cause sign errors 
+        # by doubling up when retrieving from local storage.
         # dggn = (self.diag_name.split('-'))[-1]  # remove -
         debug_(pyfusion.DEBUG, level=5, key='LHD fetch debug') 
 

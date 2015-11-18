@@ -45,7 +45,7 @@ def history_reg_method(method):
             input_data = copy.copy(input_data)
             #pyfusion.utils.warn('using deepcopy - bdb')
             #input_data = copy.deepcopy(input_data)
-            copy_history_string = "\n%s > (copy)" %(datetime.now())
+            copy_history_string = " > (copy)" # %(datetime.now()) no need for time on copy
             input_data.history = original_hist + copy_history_string
         
         [args_string, kwargs_string] = get_history_args_string(*args, **kwargs)

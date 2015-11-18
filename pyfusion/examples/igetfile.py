@@ -1,4 +1,4 @@
-# simple example to illustrate the igetfile class
+# trivial example to illustrate the igetfile class
 
 import pylab as pl
 import os

@@ -11,20 +11,17 @@ import numpy as np
 import os
 import pylab as pl
 from pyfusion.debug_ import debug_
-from pyfusion.acquisition.LHD.read_igetfile import igetfile
+
 
 from matplotlib.mlab import stineman_interp
 from pyfusion.utils.read_csv_data import read_csv_data
 from pyfusion.utils.utils import warn
 import re
 
-this_file = os.path.abspath( __file__ )
-this_dir = os.path.split(this_file)[0]
-acq_LHD = this_dir   #  from when it was in examples      + '/../acquisition/LHD/'
 localigetfilepath=pyfusion.config.get('Acquisition:LHD','localigetfilepath')+'/'
 
 """ Make a list of diagnostics, and how to obtain them, as a dictionary of dictionaries:
-Top level keys are the short names for the dignostics
+Top level keys are the short names for the diagnostics
 Next level keys are 
    format:    format string to generate file name from shot.
    name: wild card name to find in the file header
@@ -34,7 +31,6 @@ file_info={}
 #file_info.update({'n_e': {'format': 'fircall@{0}.dat','name':'ne_bar(3939)'}})
 # this form should be phase out, as it is an unsuitable variable name 
 file_info.update({'<n_e19>': {'format': 'fircall@{0}.dat','name':'ne_bar\(3[0-9]+\)'}})
-# fircall starts around 36142 and goes to at least 54198 - although 90000 has firc.
 file_info.update({'n_e19b0': 
                   {'format': 'fircall@{0}.dat','name':'ne_bar\(3[0-9]+\)',
                    'comment': 'central line avg density'}})
@@ -131,22 +127,14 @@ def get_delay(shot):
     elif shot>=36142: delay = 0.1
     elif shot>=31169: delay = 0.3
     else: delay = 0.1
-    if pyfusion.DEBUG>0: print('delay',delay)
+    print('delay',delay)
     return(delay)
 
 
-def get_basic_diagnostics(diags=None, file_info=file_info, shot=54196, times=None, delay=None, exception=False, debug=0):
+def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, exception=False, debug=0):
     """ return a list of np.arrays of normally numeric values for the 
     times given, for the given shot.
     Will access server if env('IGETFILE') points to an exe, else accesses cache
-    This is the first version to specifically allow for access through pyfusion.cfg
-    There are two types of access:
-       I/  single diag on its own timebase
-       II/ the original multi diag on a given timebase (i.e. that from flucstrcs)
-    Stage 1 puts the file_info into .cfg file just for I/ single diag access.
-    Ideally the file_info for II/ sho;d be in .cfg also.
-    For stage I/, we call it with a  file_info dict constructed on the spot
-    as a dictionary with one just entry (for diags[0]).
     """
 
     global lhd_summary
@@ -160,24 +148,20 @@ def get_basic_diagnostics(diags=None, file_info=file_info, shot=54196, times=Non
     if delay is None: delay = get_delay(shot)
 
     if times is None: 
-        if len(diags)>1:
-            times = np.linspace(0,4,4000)  # this is a crude guess.
-        # else leave it None
-    else:    
-        # make sure it is an array
-        times = np.array(times)
+        times = np.linspace(0,4,4000)
 
-    
-
+    times = np.array(times)
     vals = {}
-
+    # create an extra time array to allow a cross check
+    vals.update({'check_tm':times})
+    vals.update({'check_shot':np.zeros(len(times),dtype=np.int)+shot})
     for diag in diags:
         if not(file_info.has_key(diag)):
             warn('diagnostic {0} not found in shot {1}'.format(diag, shot),stacklevel=2)
             vals.update({diag: np.nan + times})
         else:
             info = file_info[diag]
-            varname = info['name']  # refers to name for igetfile - can contain ':' 
+            varname = info['name']
             subfolder = info['format'].split('@')[0]
             filepath = os.path.sep.join([localigetfilepath,subfolder,info['format']])
             if ':' in varname: (oper,varname) = varname.split(':')
@@ -203,9 +187,9 @@ def get_basic_diagnostics(diags=None, file_info=file_info, shot=54196, times=Non
                 val = lhd_summary[varname][shot]    
                 valarr = np.double(val)+(times*0)
             else:    
-                # look for igetfile data in a few places
                 debug_(max(pyfusion.DEBUG, debug), level=4, key='find_data')
                 try:
+
                     dg = igetfile(filepath, shot=shot, debug=debug-1)
                 except IOError:
                     try:
@@ -270,18 +254,12 @@ def get_basic_diagnostics(diags=None, file_info=file_info, shot=54196, times=Non
                                          'timebase data in {0}, {1}'
                                          .format(varname, dg.filename))
 
-                    if times is not None:
-                        debug_(max(pyfusion.DEBUG, debug), level=5, key='interp')
-                        valarr = (stineman_interp(times, tim, valarr))
-                        w = np.where(times > max(tim))
-                        valarr[w] = np.nan
-                    else:
-                        times = tim
-            if valarr != None: vals.update({diag: valarr})
-    # create an extra time array to allow a cross check
-    vals.update({'check_tm':times})
-    vals.update({'check_shot':np.zeros(len(times),dtype=np.int)+shot})
+                    valarr = (stineman_interp(times, tim, valarr))
+                    w = np.where(times > max(tim))
+                    valarr[w] = np.nan
 
+            if valarr != None: vals.update({diag: valarr})
+    debug_(max(pyfusion.DEBUG, debug), level=5, key='interp')
     return(vals)                
 
 if not(os.path.exists(localigetfilepath)):

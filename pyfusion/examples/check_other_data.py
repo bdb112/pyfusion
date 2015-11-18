@@ -1,14 +1,19 @@
-"""  run pyfusion/examples/check_other_data.py shots="np.loadtxt('lhd_clk1.txt',dtype=type(1))"
+"""  This is an old and very crude test - it has many paths etc hard wired.
+run pyfusion/examples/check_other_data.py shots="np.loadtxt('lhd_clk1.txt',dtype=type(1))"
 """
 
 import pyfusion as pf
 import pylab as pl
 import numpy as np
-from read_igetfile import igetfile
+from pyfusion.acquisition.LHD.read_igetfile import igetfile
 
 verbose = 0
-shots=np.loadtxt('lhd_clk4.txt',dtype=type(1))
-fileformat = 'cache/fircall@{0}.dat.bz2'
+# these were the original lines
+shots=np.loadtxt('pyfusion/acquisition/LHD/lhd_clk4.txt',dtype=type(1))
+fileformat = '/data/datamining/cache/fircall@{0}.dat.bz2'
+# 2015 update -
+shots=[105396]
+fileformat = '/data/datamining/cache/wp/wp@{0}.dat.bz2'
 separate=0
 
 import pyfusion.utils

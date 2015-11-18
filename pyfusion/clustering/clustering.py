@@ -279,6 +279,13 @@ def convert_DA_file(filename, correspondence=default_correspondence, debug=1, li
     limit = 10000  selects ~10000 samples randowmly ( -10000 for repeatable sec)
     load_all = True   will load all misc data, even those not in the 
     correspondence list.
+    Reverse conversion (Shauns to DA) features are built into DA-datamining
+    e.g. 
+    fo = co23.feature_obj
+    dd = dict(phases=fo.instance_array)
+    dd.update(fo.misc_data_dict) # should check that the dimensions agree
+    DA23 = DA(dd) 
+    
     """
     from pyfusion.data.DA_datamining import DA
     pairs = correspondence.split(' ')

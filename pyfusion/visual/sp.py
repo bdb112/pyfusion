@@ -8,6 +8,31 @@ from pyfusion.debug_ import debug_
 
 debug=0
 
+def on(colls):
+    """ control the overlay of points - on or off
+    This is somewhat specialised to scatterplots as refers to a collection
+    """ 
+    for coll in colls:
+        coll.set_visible(1)
+    pl.show()
+
+def off(colls):
+    for coll in colls:
+        coll.set_visible(0)
+    pl.show()
+
+def tog(colls=None):
+    if colls is None:
+        colls = []
+        for c in pl.gca().get_children():
+            if type(c) == matplotlib.collections.PathCollection:
+                colls.append(c)
+
+    for coll in colls:
+        coll.set_visible(not coll.get_visible())
+
+    pl.show()
+
 def size_val(marker_size, size_scale, dot_size):
     if size_scale<0: 
         return(-size_scale*np.exp(np.sqrt(marker_size/(dot_size/20))))
@@ -29,6 +54,7 @@ def sp(ds, x=None, y=None, sz=None, col=None, c=None, decimate=0, ind = None, no
     -ve random seed,  +ve repeated seed
     c is the same as col for compatibility with satter
     returns a collection so that they can be selectively turned on an off
+    hold==2 returns without labelling or colorbar - suitable for a basic overlay.
     """
     if col is not None and c is not None: 
         print('***conflicting values for c and col')
@@ -151,8 +177,10 @@ def sp(ds, x=None, y=None, sz=None, col=None, c=None, decimate=0, ind = None, no
     debug_(debug,3)
 
     if hold==0: pl.clf()    
-    coll = pl.scatter(x[ind],y[ind],sz,col, hold=hold,marker=marker,**kwargs)
+    coll = pl.scatter(x[ind],y[ind],sz,col, hold=hold>0,marker=marker,**kwargs)
 #    pl.legend(coll   # can't select an element out of a CircleCollection
+    if hold==2:
+        return(coll)
     sizes = coll.get_sizes()
     max_size=max(sizes)
     big=matplotlib.collections.CircleCollection([max_size])

@@ -44,7 +44,7 @@ try:
     verbose=pyfusion.settings.VERBOSE
     from pyfusion.utils import get_local_shot_numbers
 except:
-    if not(locals().has_key('verbose')):
+    if not 'verbose' in locals():
         verbose=2
         print(' process_cmd_line_args detected we are running outside of'
               ' pyfusion, verbose=%d' % verbose)
@@ -52,12 +52,12 @@ import string
 from pylab import is_string_like
 
 def list_vars(locdict, Stop, tail_msg=''):
-    if locdict.has_key('_var_defaults'):
+    if '_var_defaults' in locdict:
         print('\n=========== Variables, and default values =========')
         print(locdict['_var_defaults'])
     # check the global namespace too - can't see _var_defaults when
     # running with "run -i" (but it hasn't helped).    
-    if globals().has_key('_var_defaults'):
+    if _var_defaults in globals():
         print('\n=========== Variables, and default values =========')
         print(globals()['_var_defaults'])
     else:
@@ -68,8 +68,8 @@ def list_vars(locdict, Stop, tail_msg=''):
                  and str(locdict[v]).find('function')<0
                  and str(locdict[v]).find('module')<0): 
                 _user_locals.append(v)
-        print '\n========= Accessible variables and current values are: ====='  #, _user_locals
-        if verbose>0:
+        print('\n========= Accessible variables and current values are: =====')  #, _user_locals)
+        if verbose > 0:
             _n=0
             for k in _user_locals:
                 print("  %s = %s" %  (k, locdict[k]))
@@ -84,10 +84,10 @@ def list_vars(locdict, Stop, tail_msg=''):
                         break
 
         if _rhs != None:
-            if not(locdict.has_key(_rhs)): 
-                print(('RHS < %s > is not in local dictionary - if you wish to refer to '
+            if not _rhs in locdict:
+                print('RHS < {rhs} > is not in local dictionary - if you wish to refer to '
                        'a variable from the working interactive namespace, then '
-                       'use the -i option (under ipython only)') % _rhs)
+                       'use the -i option (under ipython only)'.format(rhs=_rhs))
         # Note: pydb is nicer but slower....                     
     if Stop: 
         print('======== make sure there are *NO SPACES* - e.g.  x=123  not x = 123 ======')
@@ -108,7 +108,7 @@ def list_vars(locdict, Stop, tail_msg=''):
 # override the defaults that have been set before execfile'ing' this code
 # exec is "built-in" apparently
    
-if verbose>1: print ('%d args found') % (len(_sys.argv))
+if verbose>1: print ('{n} args found'.format(n=len(_sys.argv)))
 if verbose>1: print(' '.join([_arg for _arg in _sys.argv]))
 _rhs=None
 # this would be a way to ignore spaces around equals, but need to preserve 
@@ -123,9 +123,9 @@ else:     # argv[0] is hopefully a python script, and we don't want to parse it
 
 for _expr in _args:
     if (array(_expr.upper().split('-')) == "HELP").any():
-        if locals().has_key('__doc__'): 
+        if '__doc__' in locals():
             print(" ==================== printing local __doc__ (from caller's source file) ===")
-            print locals()['__doc__']
+            print(locals()['__doc__'])
         else: print('No local help')
         list_vars(locals(), Stop=True)
     else:
@@ -147,9 +147,10 @@ for _expr in _args:
             if is_str and _rhs[0]!="'" and _rhs[0]!='"':
                 _expr_to_exec = _lhs+'="'+_rhs+'"'
             else: _expr_to_exec = _expr  # the original expr
-            if verbose>3: print('actual statement: %s') % _expr_to_exec
+            if verbose>3: print('actual statement: {ee}'
+                                .format(ee=_expr_to_exec))
             exec(_expr_to_exec)
-        except Exception, _info: # _info catches the exception info
+        except Exception as _info: # _info catches the exception info
             err=str("######Target variable {lh} not set or non-existent!#####"
                   "\n executing {ex}, original rhs was {rh} (quotes gobbled?)\n"
                   .format(lh=_lhs, ex=_expr_to_exec, rh=_rhs))

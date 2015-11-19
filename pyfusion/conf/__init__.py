@@ -1,6 +1,9 @@
 """Tools for processing configuration files."""
 
-from ConfigParser import ConfigParser
+try:
+    from ConfigParser import ConfigParser
+except:
+    from configparser import ConfigParser
 
 from pyfusion.conf.exceptions import DisallowedSectionType, \
      ConfigSectionSyntaxError, UnknownVariableTypeError
@@ -70,9 +73,9 @@ class PyfusionConfigParser(ConfigParser):
             if not section in special_section_names:
                 split_name = section.split(':')
                 if not len(split_name)==2:
-                    raise ConfigSectionSyntaxError, section
+                    raise ConfigSectionSyntaxError(section)
                 if not (len(split_name[0])>0 and len(split_name[1])>0):
-                    raise ConfigSectionSyntaxError, section
+                    raise ConfigSectionSyntaxError(section)
 
     def check_section_types(self, type_list):
         """Make sure section types listed in config file are allowed."""
@@ -81,7 +84,7 @@ class PyfusionConfigParser(ConfigParser):
             if not section in special_section_names:
                 section_name = section.split(':')[0]
                 if not section_name in type_list:
-                    raise DisallowedSectionType, section_name
+                    raise DisallowedSectionType(section_name)
 
 #config = PyfusionConfigParser()
 

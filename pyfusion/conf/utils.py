@@ -1,7 +1,13 @@
 """ Useful functions for manipulating config files."""
 
-from ConfigParser import NoSectionError
+
+try:
+    from ConfigParser import NoSectionError
+except ImportError:
+    from configparser import NoSectionError
+    
 import pyfusion
+    
 from numpy import sort, shape
 
 def CannotImportFromConfigError(Exception):
@@ -56,6 +62,9 @@ def dump(eol = '\n'):
     # append all config filenames in order loaded        
     hist = pyfusion.conf.history        
     ordered_keys = sort(hist.keys())
+    # bdb python3  - is this also an error in python 2 that I missed??
+    if len(shape(ordered_keys))==0:
+        return(buff)
     oldest_printed_name = max(1,len(ordered_keys)-2) 
     for key in ordered_keys[oldest_printed_name:]: 
         buff.append(hist[key][0])
@@ -110,7 +119,7 @@ def read_config(config_files):
         # note - history not kept for file objects yet - should be easy to add.
         files_read = pyfusion.config.readfp(config_files)
         if pyfusion.VERBOSE>0: 
-            for f in config_files: print f.name
+            for f in config_files: print(f.name)
     except:
         files_read = []
         if len(shape(config_files))==0: config_files = [config_files]
@@ -129,8 +138,8 @@ def read_config(config_files):
 
     if files_read != None: # readfp returns None
         if len(files_read) == 0: 
-            raise LookupError, str('failed to read config files from [%s]' %
-                                   (config_files))
+            raise LookupError(str('failed to read config files from [%s]' %
+                                   (config_files)))
         
     config_database  = pyfusion.config.get('global', 'database')
 

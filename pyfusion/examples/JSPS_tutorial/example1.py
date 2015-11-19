@@ -3,6 +3,7 @@
 import pyfusion as pf    # (we will assume these three import lines in all future examples)
 import numpy as np       
 import matplotlib.pyplot as plt
+plt.figure('Example 1')
 
 dev = pf.getDevice('H1Local')  # open the device (choose the experiment – e.g H-1, LHD, Heliotron-J)
 ne_profile, t_mid, shot = [ ], [ ], [ ]  # prepare empty lists for ne_profile, shot and time of measurement

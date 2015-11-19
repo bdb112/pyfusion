@@ -58,7 +58,7 @@ try:
               .format(msg=msg, pm=pm/1e9, vm=vm/1e9)),
 
         if prev_values is None:
-            print
+            print()
         else:
             print('- dt={dt:.2g}s, used {pm:.2g} GB phys, {vm:.2g} GB virt'
                   .format(pm=(prev_values[0] - pm)/1e9,
@@ -96,7 +96,7 @@ def append_to_DA_file(filename, new_dict, force=False):
     else:
         print('indx missing from one or both dictionaries - just checking size')
         check=dd['shot']
-        if (len(check) != len(new_dict[new_dict.keys()[0]])):
+        if (len(check) != len(new_dict[list(new_dict)[0]])):
             error=('mismatched var lengths in ' + filename)
 
     if error is not None:
@@ -167,7 +167,7 @@ class DA():
             self.loaded = False
 
         self.keys = self.da.keys()
-        if 'dd' in self.keys:  # old style, all in one
+        if 'dd' in self.da:  # old style, all in one
             print('old "dd" object style file')
             self.da = self.da['dd'].tolist()
             self.keys = self.da.keys()
@@ -175,7 +175,7 @@ class DA():
         # make the info available to self.
         # needs different actions if npzfile and not yet loaded
         # we don't load yet, as we may want to decimate
-        if 'info' in self.keys:
+        if 'info' in self.da:
             if (hasattr(self.da['info'],'dtype') and                 self.da['info'].dtype == np.dtype('object')):
                 self.infodict = self.da['info'].tolist()
             else:
@@ -189,7 +189,7 @@ class DA():
             if 'mainkey' in self.infodict.keys():
                 self.mainkey = self.infodict['mainkey']
             else:
-                if 'shot' in self.keys:
+                if 'shot' in self.da:
                     self.mainkey = 'shot'
                 else:
                     self.mainkey = self.da.keys()[0]
@@ -222,16 +222,16 @@ class DA():
         # extract data accoring to criterion 1, then select according to crit 1
         # and reextract
 
-        if not 'indx' in self.keys:
+        if not 'indx' in self.da:
             if not self.loaded:
                 self.load()
             self.da.update(dict(indx=np.arange(len(self.da[self.mainkey]))))
-            self.keys.append('indx')
+
         else:
             indtmp = self.da['indx']
             if (len(indtmp) != len(self.da[self.mainkey]) or
                 (min(indtmp) != 0) or np.unique(np.diff(indtmp)) !=[1]):
-                print "**** warning - index is not montonic from 0 "
+                print("**** warning - index is not montonic from 0 ")
 
         self.infodict.update({'mainkey':self.mainkey}) # update in case it has changed
         if type(self.da) == dict:
@@ -254,7 +254,7 @@ class DA():
             else:
                 new_keys.append(nkey)
 
-            if check and len(new_dict[nkey]) <> dlen:
+            if check and len(new_dict[nkey]) != dlen:
                 raise LookupError('key {k} length {lk} does not match {l}'
                                   .format(k=nkey, lk = len(new_dict[nkey]), 
                                           l=dlen))
@@ -318,9 +318,10 @@ class DA():
             This is a proof of principle - won't work with other than 
             numeric scalars at the moment - DA.pop('phases'); DA.pop('info')
         """        
-        """ FOrmat for mysql load data infile
-\N	27153	0.1	-1	0.285	11.7753	1	10010	-0.000908817	2.75	0.074	18.3	0.0156897	-0.118291	1.25	27153	\N	-1	-1	-1	\N	0.373338	\N	-0.00219764	0.001536	\N  etc
+        """ Format for mysql load data infile
+'\n	27153	0.1	-1	0.285	11.7753	1	10010	-0.000908817	2.75	0.074	18.3	0.0156897	-0.118291	1.25	27153	\n	-1	-1	-1	\n	0.373338	\n	-0.00219764	0.001536	\n  etc'
         """
+
         import sqlalchemy as SA
         def cvt(val):
             if np.isnan(val): return(None)
@@ -500,7 +501,7 @@ class DA():
                 else: # selective (decimated to limit)
                     try:
                         dd.update({k: self.da[k][sel]})
-                    except Exception, reason:
+                    except Exception as reason:
                         dd.update({k: self.da[k]})
                         print('{k} loaded in full: {reason}'
                               .format(k=k,reason=reason))
@@ -658,7 +659,7 @@ class DA():
             print('extracting a sample of {n} '.format(n=len(inds)))
 
         for k in varlist:
-            if k in self.keys:  # be careful that self keys is up to date!
+            if k in self.da:  # be careful that self keys is up to date!
                                 # this is normally OK if you use self.update
                 debug_(debug,key='extract')
                 # used to refer to da[k] twice - two reads if npz

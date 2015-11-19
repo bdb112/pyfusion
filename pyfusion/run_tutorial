@@ -1,0 +1,133 @@
+###                          -*- mode: Shell-script; -*-
+# This is script to set up and check environment vars, and optionally run under ipython
+# The design of this pyfusion  requires that the root directory be called
+# pyfusion and PYTHONPATH should include the parent directory of pyfusion.
+# So a program to set up env vars only needs to know the parent directory.
+# ipython includes the current directory in its python path, so it is more
+# tolerant of incorrect PYTHONPATH (and may hide bugs), so test this file
+# by running python, not just ipython.
+# This sourced file expects the parent directory of the pyfusion version
+# being run, and defaults to the parent of the current dir if it contains 
+# a directory pyfusion, otherwise it tries $HOME/python if it contains a pyfusion.
+# MUST be sourced in bash shell.
+# . setup_pyfusion
+# . run_pyfusion pyfusion_parent
+
+# save first arg so that help message and exit can be used elsewhere
+arg1=$1
+
+# check if the user has sourced me
+if [[ $0 =~ .*bash ]]
+then
+    echo using $0
+else
+    echo "Must be sourced - otherwise environment changes will be lost!"
+    echo and you must be using the bash shell in the first place
+    echo You seem to be using $0
+    arg1="--help"
+fi
+
+if [ "xx"$arg1 == "xx--help" ] || [ "xx"$arg1 == "xx-h" ]
+then
+    echo  ". run_pyfusion"
+    echo  ". run_pyfusion pyfusion_parent_dir"
+    if [ $0 != 'bash' ] ;
+    then 
+	exit 1    # this one is for silly users who didn't source me!
+    else 
+	return 1  # this effects an exit without exiting the shell
+    fi
+fi   
+
+
+## need to extract the path name from $BASH_SOURCE, for checking for pyfusion
+## in case we are a long way away
+## then  pushd there and evaluate pwd to put the full path into the history list
+## probably a regexp like $".*\"
+if [[ $BASH_SOURCE =~ .*/ ]] ; then  
+    source_path=$BASH_REMATCH
+    echo "detected that the source file name has a path element: " $source_path
+    pushd $source_path
+    full_path=`pwd`
+    popd
+else
+    full_path=`pwd`
+fi 
+    source_file=${full_path}/run_tutorial  # lazy - should extract file name
+#    source_file=$BASH_SOURCE
+
+# if $1 has a pyfusion installation use it, 
+# else if there is a pyfusion installation here, use it
+# similarly for parent, ~/python
+if [ -d $1/pyfusion ]; then 
+    pyfparent=$1
+elif [ -d $full_path/../pyfusion ]; then   # look where the setup is
+    pushd $full_path
+    cd ..
+    pyfparent=$PWD;
+    popd
+elif [ -d pyfusion ]; then 
+    pyfparent=$PWD;
+elif [ -d ../pyfusion ]; then 
+    cd ..
+    pyfparent=$PWD		
+fi
+
+# if we are running a w32 python from cygwin, need to prefix
+pathsep=":"
+if [ `uname -o` == "Cygwin" ]; then 
+    pathsep=";"
+    if [[ $pyfparent != *ygwin* ]]; then
+	pyfparent=c:/cygwin/$pyfparent
+    fi
+fi
+
+# check if already there, include the : (pathsep) to distinguish 
+#  .../pyfusion from .../pyfusion23/pyfusion
+## below expands to       if [[ $PYTHONPATH != *${pyfparent}:* ]]; then 
+if [[ $PYTHONPATH != *${pyfparent}${pathsep}* ]]; then 
+    export PYTHONPATH=$pyfparent${pathsep}$PYTHONPATH
+else 
+    echo no need to add path -  PYTHONPATH already includes $pyfparent
+fi
+
+cd $pyfparent
+if [ -d $pyfparent/pyfusion/visual ]
+then echo looks OK
+else 
+    echo $pyfparent/pyfusion "*** not a pyfusion installation? "
+    echo "e.g. no visual etc******"
+    return 1	
+fi
+
+# use $pyfparent/pyfusion rather than PYFUSIONPATH, as it may include c:/cygwin
+cd $pyfparent/pyfusion/examples/JSPS_tutorial
+#now we are good, push some lines if they are not there already
+
+set_window_title PYFUSION_$2
+
+# if there are not a lot like this there already, add some useful lines
+# you can ^R or up arrow back to
+let numhist=`history 50|grep -c "export PYFUSION"`
+if [[ $numhist -gt 3 ]]; then
+    echo looks like you already have $numhist hints in your history list - skip
+else	
+    echo adding useful lines to history list, starting with least common
+    history -s export PYFUSION_SEGMENT_OVERLAP=1
+    history -s export PYFUSION_N_SAMPLES_TIME_SEGMENT=256
+    history -s export PYFUSION_VERBOSE=1
+    history -s export PYFUSION_DEBUG=1
+fi
+
+# for some reason, this source line will not be include in the history list
+# so let's put a copy there
+history -s source $source_file $*
+
+echo Here are some relevant env vars
+env |grep PY
+# this avoids the wx graphics bar in anaconda
+echo ========   Try:   run example4.py   ========   |grep "==.*$"
+echo " "
+ipython --pylab='tk'
+
+

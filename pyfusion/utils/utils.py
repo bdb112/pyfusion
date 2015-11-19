@@ -4,8 +4,8 @@ import numpy as np
 import warnings
 import pyfusion
 
-
-def find_last_shot(fun, range=xrange(1, 200000), ex=True, quiet=False):
+# this could run slower in python2 (used to be xrange)
+def find_last_shot(fun, range=range(1, 200000), ex=True, quiet=False):
     """ find the last shot for which fun(shot) does not return an error
         Actually more general than this.  Only tested for low lim yes, uplim no
     >>> def myfun(shot): return(shot <= 12345)
@@ -73,13 +73,13 @@ def compact_str(shot_numbers, max_changing_digits=2, min_run=4,  debug=False):
         diffs=np.diff(iarr)
         other_size_steps = (diffs!=1).nonzero()[0]
         if len(other_size_steps) == 0: 
-            if debug: print other_size_steps
+            if debug: print('other size steps', other_size_steps)
             return(len(iarr))
         else: 
             return other_size_steps[0]+1
 
     def leading_digits_in_common(s1,s2):
-        if debug: print s1, s2
+        if debug: print ('leading digits in common', s1, s2)
         if len(s1) != len(s2): return(0)
         for (i,c) in enumerate(s1):
             if s1[i] != s2[i]:
@@ -98,11 +98,11 @@ def compact_str(shot_numbers, max_changing_digits=2, min_run=4,  debug=False):
             sstr +=(',%d-%d') % (shots[0],shots[ls-1])
             last_full_shot_str = str(shots[ls-2])
             shots=shots[ls:]
-            if debug: print '6','lfs',last_full_shot_str, shots
+            if debug: print('6','lfs',last_full_shot_str, shots)
         else: #elif ls==1:
             # somewhere here, could look for the case where putting in a new full shot
             # would help - i.e. if the digits are changing more slowly
-            if debug: print 'else','lds',last_full_shot_str, shots
+            if debug: print ('else','lds',last_full_shot_str, shots)
             shstr=str(shots[0])
             ldic = leading_digits_in_common(shstr, last_full_shot_str)
             if ldic>=(len(shstr)-max_changing_digits) and len(shstr) == len(last_full_shot_str):
@@ -134,7 +134,7 @@ def get_local_shot_numbers(partial_name=None, verbose=0, local_path=None,
     for root, dirs, files in walk(local_path):
         for f in files:
             if f.find(partial_name)>=0: 
-                if verbose>0: print root,dirs,f
+                if verbose>0: print (root,dirs,f)
                 if root==local_path: shotlist.append(
                     f[number_posn[0]:number_posn[1]])
 # the old way assumed a fixed position for the shot number

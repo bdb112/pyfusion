@@ -5,7 +5,7 @@ Should be able to paste in the next two parts from example2.py after extracting 
 import pyfusion as pf    # (we will assume these three import lines in all future examples)
 import numpy as np       
 import matplotlib.pyplot as plt
-
+plt.figure('Example 1 - LHD')
 
 from pyfusion.utils import get_local_shot_numbers
 shots = np.sort(get_local_shot_numbers('fircall', local_path='/data/datamining/cache/fircall/',number_posn=[-13,-8]))

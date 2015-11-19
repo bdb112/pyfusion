@@ -4,6 +4,7 @@ Takes about a minute to run in full on a 2015 model machine
 import pyfusion as pf   # (we will assume these three import lines in all future examples)
 import numpy as np
 import matplotlib.pyplot as plt
+plt.figure('Example 2')
 
 dev = pf.getDevice('H1Local')  # open the device (choose the experiment: e.g H-1, LHD, Heliotron-J)
 # prepare empty lists for ne_profile, shot and time of measurement

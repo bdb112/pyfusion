@@ -1,2 +1,2 @@
-import DA_datamining
+from . import DA_datamining
 

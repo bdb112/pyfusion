@@ -148,7 +148,7 @@ def find_shot_times(dev, shot, activity_indicator=None, debug=0):
         pl.plot([mean(xr),xr[1]], array([1,1])*end_bl)
 
     if len(first_inds) ==0 or  len(last_inds) ==0: 
-        raise ValueError, str(
+        raise ValueError(
             'could not threshold the activity channel %s, %d start, %d end inds ' %
             (activity_indicator, len(first_inds), len(last_inds)))
 

@@ -261,7 +261,7 @@ def read_igetfile(filename=None, verbose=0, plot=True, hold=True, debug=0, quiet
             found = True
             
     if not(found): 
-        raise LookupError, str(' data not in %s ' % (filename))
+        raise LookupError(' data not in %s ' % (filename))
 
 
 # StringIO allows a string to be treated like a file.

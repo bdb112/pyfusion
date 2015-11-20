@@ -179,7 +179,7 @@ MP2010.append(Mode('N~0',N=0, NN=0, cc=[-0.829, -0.068, -0.120, 0.140, -0.032],c
 # and this from the other ones (N ~ -1)
 MP2010.append(Mode('N=-1',N=-1, NN=-101, cc=[-0.454, -0.775, -1.348, -1.172, -1.221],  csd=[ 3, 0.071, 0.048, 0.133, 0.113]))
 
-def make_ideal_modes(filename='ideal_toroidal_modes.npz', ideal_sd=0.5, sel = None):
+def make_ideal_modes(filename='pyfusion/ideal_toroidal_modes.npz', ideal_sd=0.5, sel = None):
     """   I think these ideal modes are only applicable to LHD toroidal array - should add a comment field, allowance for M
     ideal_toroidal_modes.npz was made by channel_angle_games.py
     sel    default to selecting MP2-MP1 ... MP6-MP5

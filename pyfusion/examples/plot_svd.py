@@ -21,7 +21,7 @@ def order_fs(fs_set, by='p'):
     fsarr_unsort=[]
     for fs in fs_set: fsarr_unsort.append(fs)
     if by == 'p': revord = argsort([fs.p for fs in fsarr_unsort ])
-    else: raise ValueError, str(" sort order %s not supported " % by)
+    else: raise ValueError(" sort order %s not supported " % by)
     fs_arr = []
     for ind in revord: fs_arr.append(fsarr_unsort[ind])
     fs_arr.reverse() # in place!

@@ -64,7 +64,8 @@ try:
                   .format(pm=(prev_values[0] - pm)/1e9,
                           vm=(prev_values[1] - vm)/1e9, dt = tim-prev_values[2]))
         return((pm,vm,tim))
-except None:
+except ImportError:
+    print('need psutil to get useful info about memory usage')
     def report_mem(prev_values=None, msg=None):
         return((None, None))
     

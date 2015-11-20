@@ -35,7 +35,7 @@ for shot_number in shot_range:
             t_mid.append(np.average(t_seg.timebase))
 
             shot.append(shot_number)
-    except exception, reason:
+    except exception as reason:
         print 'Error {e} on shot {s}'.format(e=reason, s=shot)
 # make the dictionary of arrays and put it in a DA object
 myDA = DA(dict(shot=shot, ne_profile=ne_profile, t_mid=t_mid))

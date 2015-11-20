@@ -265,13 +265,13 @@ if len(sind)==0: raise LookupError,' no data for shot %d' % shot
 
 if min_e>0:
     subind=(ds['p'][sind] > min_e).nonzero()[0]
-    if len(subind)==0: raise LookupError,' no fs meeting min_e > %.3f' % min_e
+    if len(subind)==0: raise LookupError('no fs meeting min_e > {0:.3f}'.format(min_e))
     else: sind = sind[subind]
 
 if time_range != None:  # doesn't work!
     subind=((ds['t_mid'][sind] > time_range[0])
           & (ds['t_mid'][sind] < time_range[1])).nonzero()[0]
-    if len(subind)==0: raise LookupError,' no fs meeting time_range = %.4g:.%4g' % tuple(time_range)
+    if len(subind)==0: raise LookupError(' no fs meeting time_range = %.4g:.%4g' % tuple(time_range))
     else: sind = sind[subind]
 
 if hold==0:  pl.clf()  # gets rid of extra colorbar

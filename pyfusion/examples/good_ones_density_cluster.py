@@ -26,13 +26,13 @@ subset=subset[:,sel]
 frlow=0
 frhigh=1e10
 
-run -i  pyfusion/examples/cluster_phases_three_colour.py DAfilename='/2TBRAID/datamining/54_117_MP2012_384_rms_1_f32_part_params_114.npz' clusterfile='ideal_toroidal_modes.npz' cl=9
+run -i  pyfusion/examples/cluster_phases_three_colour.py DAfilename='/2TBRAID/datamining/54_117_MP2012_384_rms_1_f32_part_params_114.npz' clusterfile='pyfusion/ideal_toroidal_modes.npz' cl=9
 
 run -i x=np.load(clusterfile)
 sel=arange(5)
 subset=subset[:,sel]
 
-pyfusion/examples/cluster_phases_three_colour.py DAfilename='/2TBRAID/datamining/all54_116_diags613bsign.npz' clusterfile='ideal_toroidal_modes.npz' cl=8 d_big=0.8
+pyfusion/examples/cluster_phases_three_colour.py DAfilename='/2TBRAID/datamining/all54_116_diags613bsign.npz' clusterfile='pyfusion/ideal_toroidal_modes.npz' cl=8 d_big=0.8
 
 
 

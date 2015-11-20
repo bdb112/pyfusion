@@ -29,7 +29,7 @@ except:
         print('try after compiling...'),
         import gethjdata
     except:
-        raise ImportError, "Can't import Heliotron J data acquisition library"
+        raise ImportError("Can't import Heliotron J data acquisition library")
 
 # Dave had some reason for not including the auto compile - Boyd added 2013
 # probably should suppress the auto compile during tests - this was his code.

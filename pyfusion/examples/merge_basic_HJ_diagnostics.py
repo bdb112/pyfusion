@@ -45,8 +45,8 @@ import pyfusion
 pyfusion.DEBUG=0
 
 from pyfusion.data.DA_datamining import DA
-DAJ = DA('DA131128_HJ_ALL_50_52.npz',load=1)
-dd=DAJ.da
+#DAJ = DA('DA131128_HJ_ALL_50_52.npz',load=1)
+#dd=DAJ.da
 
 
 import os.path

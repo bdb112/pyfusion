@@ -75,7 +75,7 @@ def smooth(data, n_smooth=3, timebase=None, causal=False, indices=False, keep=Fa
         sm_sig[1:] = sm_sig[1:] - csum[0:-n_sm]
         sm_sig=sm_sig/double(n_sm)
     else:   # try to retain full length for quick tests - only allow causal=False
-        if causal: raise ValueError, "can't be causal and keep ends"
+        if causal: raise ValueError("can't be causal and keep ends")
         else:
             sm_sig=array(data)*0  # get a vector of the right length
             half_offs = n_sm/2   # use integer round down, only perfect for odd n

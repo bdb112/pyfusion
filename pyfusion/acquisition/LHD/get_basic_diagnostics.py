@@ -277,7 +277,7 @@ def get_basic_diagnostics(diags=None, file_info=file_info, shot=54196, times=Non
                         valarr[w] = np.nan
                     else:
                         times = tim
-            if valarr != None: vals.update({diag: valarr})
+            if valarr is not None: vals.update({diag: valarr})
     # create an extra time array to allow a cross check
     vals.update({'check_tm':times})
     vals.update({'check_shot':np.zeros(len(times),dtype=np.int)+shot})

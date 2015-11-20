@@ -33,7 +33,7 @@ for key in dd.keys():
     dds.update({key:dd[key][ind]})
 if fs_lst is None:
 #    fsqry = pyfusion.session.query(FluctuationStructure).limit(maxpts)
-#    if fsqry.count() == 0: raise LookupError, 'No fs found in current database'
+#    if fsqry.count() == 0: raise LookupError('No fs found in current database')
     
     fs_lst = dds
 

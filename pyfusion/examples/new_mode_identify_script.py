@@ -349,7 +349,7 @@ if __name__ == '__main__':
     MP2010.append(Mode('N=-1',N=-1, NN=-101, cc=[-0.454, -0.775, -1.348, -1.172, -1.221],  csd=[ 3, 0.071, 0.048, 0.133, 0.113]))
 
     ideal_modes=[]
-    ideal = np.load('ideal_toroidal_modes.npz')['subset']
+    ideal = np.load('pyfusion/ideal_toroidal_modes.npz')['subset']
     ideal = ideal[:,np.arange(5)]  # need to adjust
     for i in range(10):
         N=i-5

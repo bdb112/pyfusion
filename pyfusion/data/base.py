@@ -24,7 +24,7 @@ except ImportError:
     def reconstructor(*args):
         print('need sqlalchemy for some operations - if no messages, you are OK')
 
-    print "could not import sqlalchemy"
+    print("could not import sqlalchemy")
 
     
 def get_history_args_string(*args, **kwargs):

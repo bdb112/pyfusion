@@ -290,7 +290,7 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                     w = np.where(times > max(tim))
                     valarr[w] = np.nan
 
-            if valarr != None: vals.update({diag: valarr})
+            if valarr is not None: vals.update({diag: valarr})
     debug_(max(pyfusion.DEBUG, debug), level=5, key='interp')
     return(vals)                
 

@@ -1,7 +1,7 @@
 # pyfusion
 ## python code for data mining plasma fluctuations
 This is my fork of David Pretty's original pyfusion code, with much input 
-recently from Shaun Haskey 
+recently from Shaun Haskey.  Most of the code is compatible with python 2.6+ or 3.3+
 (https://github.com/bdb112/pyfusion).   
 
 For python 2, release >205b21 is recommended use with the tutorial article in JSPS 2015, although newer releases should also work.
@@ -22,11 +22,11 @@ High temperature plasma has many sources of magnetic and kinetic energy, which c
 Datamining helps with all these aims, especially in automating the process.  This enables the use of large datasets from the entire operational life of many plasma confinement devices, well beyond the capability of analysis by hand.  Ultimately this will enable near real-time identification of modes for control and feedback.
 ### What are the modes of interest?
 By plasma modes we mean plasma oscillations which will usually be incoherent to some extent , because plasma parameters such as density vary in time and in space.  If we can measure the frequency, and its dependence on plasma parameters, we can have some idea of the plasma wave associated with it.  It is better still if we can learn something about the wavelength, or more generally the k vector, so we can in essence measure a point on the dispersion relation of the underlying wave.  Typical modes are drift wave oscillations and Alfvén instabilities. Modes may be driven for example by ideal or resistive MHD instabilities, or by transfer of energy from fast particles, especially if the particle velocity is related to the wave velocity such that a resonant interaction occurs.  The extraction of wavelength information implies the existence of more than one channel of data, so this paper is focussed on analysis of multi-channel time-series data.  
-<a href="" target="_blank"><img src="6_good_clusters_CPC.png"/></a>
+<a href="" target="_blank"><img src="pyfusion/6_good_clusters_CPC.png"/></a>
 
 Example clustering showing Alfvenic scaling in the H-1 heliac.
 
-<a href="" target="_blank"><img src="65139_N_mode_id_new.png"/></a>
+<a href="" target="_blank"><img src="pyfusion/65139_N_mode_id_new.png"/></a>
 
 Example of mode identification in the LHD Heliotron at the National Institute of Fusion Science, Toki.
 ### Relevant publications include:

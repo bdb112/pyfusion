@@ -127,7 +127,7 @@ class LHDTimeseriesDataFetcher(LHDBaseDataFetcher):
                                channel=int(chnl), outdir = self.filepath)
         if not (path.exists(self.basename + ".dat") and 
                 path.exists(self.basename + ".prm")):
-             raise Exception, "something is buggered."
+             raise Exception("something is buggered.")
         self.timeOK = res[3]
         return read_data_from_file(self)
 
@@ -147,7 +147,7 @@ def LHD_A14_clk(shot):
     shots = array([26220, 30240, 30754, 31094, 31315, 49960,  51004, 51330, 51475, 51785, 52010, 52025, 52680, 52690, 52810, 999999])
     where_ge = (shot >= shots).nonzero()[0]
     if len(where_ge) < 1: 
-        raise LookupError, 'a14_clock lookup: shot out of range'
+        raise LookupError('a14_clock lookup: shot out of range')
 
     last_index = max(where_ge)
     rateHz = 1000.*rate[last_index]
@@ -230,7 +230,7 @@ def read_data_from_file(fetcher):
 
          else:  
               debug_(pyfusion.DEBUG, level=4, key='LHD read debug') 
-              raise NotImplementedError, "timebase not recognised"
+              raise NotImplementedError("timebase not recognised")
     
     debug_(pyfusion.DEBUG, level=4, key='LHD read debug') 
     ch = Channel("{dn}-{dc}" 

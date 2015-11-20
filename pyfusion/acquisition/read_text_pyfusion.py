@@ -117,13 +117,13 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
             )
             count += 1
             comment_list.append(filename)
-        except ValueError, info:
+        except ValueError as info:
             print('Conversion error while reading {f} with loadtxt - {info}'.format(f=filename, info=info))
 
-        except LookupError, info:
+        except LookupError as info:
             print('Lookup error while reading {f} with loadtxt - {info}'.format(f=filename, info=info))
         
-        except exception, info:
+        except exception as info:
             print('Other exception while reading {f} with loadtxt - {info}'.format(f=filename, info=info))
 
     print("{c} out of {t} files".format(c=count, t=len(file_list)))

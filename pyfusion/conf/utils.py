@@ -61,7 +61,7 @@ def dump(eol = '\n'):
 
     # append all config filenames in order loaded        
     hist = pyfusion.conf.history        
-    ordered_keys = sort(hist.keys())
+    ordered_keys = sort(list(hist))
     # bdb python3  - is this also an error in python 2 that I missed??
     if len(shape(ordered_keys))==0:
         return(buff)

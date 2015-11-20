@@ -61,7 +61,7 @@ from time import sleep, time as seconds
 
 try:
     from dist_nogil import dist
-except ImportError, reason:
+except ImportError as reason:
     if raw_input('auto compile cython code? [Y/n]').lower() != 'n':
         import pyximport; pyximport.install()
         from dist_nogil import dist

@@ -23,7 +23,7 @@ class TJIIDataFetcher(BaseDataFetcher):
          if data_dim[0] < MAX_SIGNAL_LENGTH:
              data_dict = tjiidata.lectur(self.shot, self.senal, data_dim[0],data_dim[0],data_dim[1])
          else:
-             raise ValueError, 'Not loading data to avoid segmentation fault in tjiidata.lectur'
+             raise ValueError('Not loading data to avoid segmentation fault in tjiidata.lectur')
          ch = Channel(self.senal,
                       Coords('dummy', (0,0,0)))
          

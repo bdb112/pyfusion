@@ -275,7 +275,7 @@ if __name__ == '__main__':
         flat_counts = hdd[0].flatten()
         print('histogramdd gives {b:.2g} bins, {s} set, total of {t}'
               .format(b=len(flat_counts), s=len(np.where(flat_counts!=0)[0]),t=np.sum(flat_counts)))
-    except (ValueError,MemoryError):
+    except (ValueError, MemoryError):
         print('Too big for histogramdd')
         
     # the high dimensional way

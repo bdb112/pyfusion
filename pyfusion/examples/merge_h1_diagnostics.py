@@ -70,9 +70,9 @@ for sh in np.unique(shot):
         flow_3 = h1tree.getNode('.operations.magnetsupply.lcu.log:gas3_set').data()
         good.append(sh)
 
-    except exception, reason:
+    except exception as reason:
         bad.append(sh)
-        print('failed to open shot {sh}: {r}'.format(sh=sh, r=reason))
+        print('failed to open shot {sh}: {r} {a}'.format(sh=sh, r=reason, a=reason.args))
         continue
 
     w = np.where(sh == shot)[0]

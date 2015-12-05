@@ -50,9 +50,9 @@ def extract_vars(datadict, varlist, indices=None, debug=debug):
 
     varlist = dict
     if indices != None:
-	ind = '[indices]'
+        ind = '[indices]'
     else: 
-	ind = ''
+        ind = ''
 
     for var in varlist.keys():
         cmd = "vardict.update({varlist[var]:datadict[var]" + ind + "})"
@@ -275,8 +275,8 @@ if time_range != None:  # doesn't work!
     else: sind = sind[subind]
 
 if hold==0:  pl.clf()  # gets rid of extra colorbar
-if plot==1: pl.scatter(ds['t_mid'][sind], fsc*freq_scale*ds['freq'][sind],\
-               dot_size*np.log(ds['amp'][sind]/amp_scale),ds['a12'][sind],sym,hold=hold)
+if plot==1: pl.scatter(ds['t_mid'][sind], fsc*freq_scale*ds['freq'][sind],
+                       dot_size*np.log(ds['amp'][sind]/amp_scale),ds['a12'][sind],sym,hold=hold)
 if plot and colorbar: pl.colorbar()
 conditions = ", min E = {0:.3f}, amp_scale={1:.3g}".format(min_e, amp_scale)
 pl.xlabel('t_mid, size is amplitude, colour is a12'+conditions)

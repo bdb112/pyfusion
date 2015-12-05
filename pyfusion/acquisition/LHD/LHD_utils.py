@@ -16,7 +16,8 @@ def purge_old(path, wild, number=20):
         if (err != '') or (del_pipe.returncode != 0):
             print("Error %d freeing space: cmd=%s\nstdout=%s, stderr=%s" % 
                   (del_pipe.poll(), cmd, resp, err))
-    except Exception, delerr: raise Exception('unexpected error in purge_old: {err}'.format(err=delerr))
+    except Exception as details: raise Exception('unexpected error in purge_old: {err}'
+                                                .format(err=details, a=details.args))
     finally: os.chdir(old_dir)
 
 def get_free_bytes(path):

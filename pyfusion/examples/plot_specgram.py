@@ -8,6 +8,7 @@
     diag_name
 """
 
+from __future__ import division
 import pyfusion as pf
 import pylab as pl
 import matplotlib.cm as cm  # import for convenience of user input.
@@ -46,7 +47,7 @@ elif dev_name == "HeliotronJ":
 
 exec(pf.utils.process_cmd_line_args())
 
-if noverlap is None: noverlap = NFFT/2
+if noverlap is None: noverlap = NFFT//2
 
 d = device.acq.getdata(shot_number, diag_name)
 if time_range != None:

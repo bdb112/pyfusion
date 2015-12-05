@@ -1,2 +1,2 @@
-from clustering import *
-import extract_features_scans
+from .clustering import *
+from . import extract_features_scans

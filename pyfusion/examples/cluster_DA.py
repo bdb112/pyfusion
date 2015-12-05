@@ -1,6 +1,7 @@
 """
 run pyfusion/examples/medium_300.py
 DAfilename=DA300.name
+_PYFUSION_TEST_@@DAfilename='$DA/300_384_RMSv2_neNBecVA.npz'
 """
 from pyfusion.data.DA_datamining import DA, report_mem
 DAfilename = '/data/datamining/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz'
@@ -11,7 +12,7 @@ DAfilename='../../../datamining/dd/300_384_RMSv2_neNBecVA.npz'
 # too big - 8GB for phase - DAfilename='/data/datamining/PF2_130813_8X_1.5_5b_rms_1._diags.npz'
 import pyfusion.clustering as clust
 
-_var_default="""
+_var_defaults="""
 phase_sign = 1              # NEVER leave this at -1 - too dangerous
 number_of_starts = 2
 max_instances=50000
@@ -21,7 +22,7 @@ n_cpus=2
 keysel=None
 sel=None
 """
-exec(_var_default)
+exec(_var_defaults)
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 

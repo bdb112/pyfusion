@@ -1,6 +1,11 @@
 import numpy as np
+import os
 from matplotlib.cbook import flatten
-def get_scan_keys(filename='/home/bdb112/pyfusion/Shaunlatest/pyfusion/pyfusion/H1_scan_list.py'):
+THIS_FILE = os.path.abspath( __file__ )
+
+def get_scan_keys(filename=THIS_FILE):
+    """ 
+    """
     with file(filename,'r') as sfile:
         slines = sfile.readlines()
 
@@ -313,7 +318,7 @@ def database_of_scans(keyname):
         start_time = 0.00
         end_time = 0.060
 
-    elif keyname=='7MHz_H/He_Hill_54_43_10kw_8_Sep_2015':
+    elif keyname=='7MHz_H_He_Hill_54_43_10kw_8_Sep_2015':
         shot_list = range(88680,88702+1)
         remove_list = [88694] #88694?
         remove_list.extend([])
@@ -405,7 +410,7 @@ def get_all_shots():
             all_shots.extend(shot_list)
             aft = len(np.unique(all_shots))
             delt = aft-b4
-            if delt>20:
+            if delt>0:
                 print key, ' added ', delt, 'shots'
     return np.unique(all_shots)
 

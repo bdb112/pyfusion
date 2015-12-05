@@ -110,9 +110,10 @@ def make_param_db(max_shot=70000, file_name='HJparams.npz', shot_range=range(500
                                               
             for key in db.keys():
                 db[key][shot] = params[0][key]
-        except Exception, reason:
-            errors.append([shot, reason])
-            print(shot, reason)
+        except Exception as reason:
+            args = str('{args}'.format(args=reason.args))
+            errors.append([shot, reason, args])
+            print(shot, reason, args)
 
     args=','.join(["{k}=db['{k}']"
                    .format(k=k) for k in db.keys()])

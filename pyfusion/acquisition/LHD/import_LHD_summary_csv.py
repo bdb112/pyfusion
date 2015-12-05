@@ -100,10 +100,10 @@ if __name__ == "__main__":
         try:  # the conversion may go wrong - protect
             arr[shots_tmp[ws[wcolnotnull]]] = \
                 as_str_in_order[wcolnotnull].astype(np.dtype(dt))
-        except Exception, details:
+        except Exception as details:
             err += 1
-            print('Failed on {k} (type was based on "{v}" for shot {sh}, {d}'
-                  .format(k=k, d=details, v = values, sh=sh))
+            print('Failed on {k} (type was based on "{v}" for shot {sh}, {d} {a}'
+                  .format(k=k, d=details, a=details.args, v = values, sh=sh))
 
             arr = np.array(arrlen*[''],dtype='|S256')
             #arr = np.empty(arrlen,dtype='|S256')

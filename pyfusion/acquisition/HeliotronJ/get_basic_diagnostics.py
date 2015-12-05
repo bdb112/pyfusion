@@ -230,9 +230,9 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                         ch = Channel(info['name'], Coords('dummy', (0,0,0)))
                         dg = TimeseriesData(timebase=Timebase(getrets[1::2]),
                                             signal=Signal(getrets[2::2]), channels=ch)
-                except exception, reason:
+                except exception as reason:
                     if debug>0:
-                        print('exception running gethjdata', reason)
+                        print('exception running gethjdata {r} {a}', format(r=reason, a=reason.args))
                     dg=None
                             #break  # give up and try next diagnostic
                 if dg is None:  # messy - break doesn't do what I want?

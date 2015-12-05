@@ -1,13 +1,17 @@
 _thisdoc=\
 """
-* Note: this is probably the last version of the execfile version: see below.
-
+Uses exec now - python 3 compatible (not execfile)
 version 2013 - includes _var_defaults (which has comments as well as defaults)
+
 This is code to be "inlined" to allow python statments to be passed
  from the command line.  New version ~327 checks for the existence 
 of the LHS of an assignmment, and adds quotes if that target is a string.  
-Note that quotes may still be needed if string or RHS contains strange chars,
-or if the current value of the target is NOT a string (e.g. None)
+Using None - 
+Note that nested quotes may still be needed if string or RHS contains strange chars,
+or if the current value of the target is NOT a string (e.g. None)  
+  run pyfusion/examples/clean_up_pyfusion_text.py "fileglob='PF2_130812_MP201*2'" 
+None will also allow evaluation of functions (whereas a string initial value won't)
+  run pyfusion/examples/clean_up_pyfusion_text.py fileglob=glob.glob('PF2_130812_MP201*2')[0] 
 
 This version will work inside, or independent of, pyfusion, and will follow 
 a local variable <verbose>, or generate its own.
@@ -15,6 +19,9 @@ Usage:
  execfile("process_cmd_line_args.py")
 Note that by putting thisdoc= at the top, this doens't overwrite the 
 caller's __doc__ string, and muck up help etc
+
+Note: if your mistype _var_defaults, it will work until there is an error reading the args
+for example, many rotines use _ver_default mistakenly
 
 Note that the ipython run command simulates a "fresh " run, unless -i 
 is used,  so the locals and globals in ipython will not available for use. 
@@ -37,6 +44,7 @@ In b), the local dictionary is updated.  b) might be clearer to do it explicitly
 # cant deepcopy locals()
 import sys as _sys
 import os
+from six.moves import input
 
 ## put any functions you might use in the expressions here
 from numpy import arange, array, sort
@@ -75,7 +83,8 @@ def list_vars(locdict, Stop, tail_msg=''):
                 print("  %s = %s" %  (k, locdict[k]))
                 _n +=1
                 if (_n==20):
-                    ans=raw_input('do you want to see the rest of the local vars? (y/N/Q) ')
+                    # was raw_input for python2 - hopefully siz.moves works for python2/3
+                    ans=input('do you want to see the rest of the local vars? (y/N/Q) ')
                     if  ans.upper()=='Q': 
                         _sys.exit()
 
@@ -92,7 +101,7 @@ def list_vars(locdict, Stop, tail_msg=''):
     if Stop: 
         print('======== make sure there are *NO SPACES* - e.g.  x=123  not x = 123 ======')
         if tail_msg !='': print(tail_msg)
-        ans=raw_input(' q or ^C (<CR) to stop')  # raw_input still needs a CR 
+        ans=input(' q or ^C (<CR) to stop')  # raw_input still needs a CR 
         if ans.upper() == 'Q': 
             sys.exit()
         return()  # I thought I didn't know how to just "stop" - maybe the above works

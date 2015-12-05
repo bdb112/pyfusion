@@ -15,8 +15,9 @@ def find_data(file, target, skip = 0, recursion_level=0, debug=0):
     about 0.14 secs to read 3500 lines, 0.4 if after 11000 lines of text
     """
     lines = np.loadtxt(file,dtype=str,delimiter='FOOBARWOOBAR',skiprows=skip)
+    # re.match /loadtxt are confused by a python3  "b" at the beginning
     wh_shotlines = np.where(
-        np.array([re.match(target, line)!=None for line in lines]))[0]
+        np.array([re.match(target, line) is not None for line in lines]))[0]
     if debug>0: print('main, rec, skip=', 
                       recursion_level, skip, wh_shotlines[-1],lines[wh_shotlines[-1]])
     if len(wh_shotlines) == 0: 
@@ -81,12 +82,13 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
                     raise ValueError('Error reading header in {f}'
                                      .format(f=filename))
             else: version=-1  # pre Aug 12 2013
-
+            # noticed that the offset moved in 2015 - when did it  happen?
+            phase_offs = -4 if sys.version>'3,' else -2
             # is the first character of the 2nd last a digit?
-            if header_toks[-2][0] in '0123456789': 
+            if header_toks[phase_offs][0] in '0123456789': 
                 if pyfusion.VERBOSE > 0: 
                     print('found new header including number of phases')
-                n_phases = int(header_toks[-2])
+                n_phases = int(header_toks[phase_offs])
                 ph_dtype = [('p{n}{np1}'.format(n=n,np1=n+1), f) for n in range(n_phases)]
                 
             if 'frlow' in header_toks:  # add the two extra fields
@@ -118,8 +120,7 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
             count += 1
             comment_list.append(filename)
         except ValueError as info:
-            print('Conversion error while reading {f} with loadtxt - {info}'.format(f=filename, info=info))
-
+            print('Conversion error while reading {f} with loadtxt - {info} {args}'.format(f=filename, info=info, args = info.args))
         except LookupError as info:
             print('Lookup error while reading {f} with loadtxt - {info}'.format(f=filename, info=info))
         
@@ -127,7 +128,7 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
             print('Other exception while reading {f} with loadtxt - {info}'.format(f=filename, info=info))
 
     print("{c} out of {t} files".format(c=count, t=len(file_list)))
-    if plot>0: 
+    if plot>0 and len(ds_list)>0: 
         ds = ds_list[0]
         if hold == 0: pl.clf() # for the colorbar()
         pl.scatter(ds['t_mid'],ds['freq'],ms*ds['a12'],ds['amp'])
@@ -209,7 +210,7 @@ def merge_ds(ds_list, comment_list=[], old_dd=None, debug=True, force=False):
 
         dd.update({k: arr})
 
-    if not dd.has_key('phorig'):  # preserve the original phase ch0
+    if not 'phorig' in dd:  # preserve the original phase ch0
         # as an integer8 scaled by 10 to save space
         # this way, we can play with phases (invert etc) but
         # can always check to see what has been changed

@@ -68,9 +68,9 @@ for var in dd.keys():
 
     try:
         var_atom = tb.atom.Atom.from_dtype(numpy.dtype(val.dtype))
-    except Exception, reason:
-        print('failed to copy {v}, reason: {r}'
-              .format(v=var, r=reason))
+    except Exception as reason:
+        print('failed to copy {v}, reason: {r} {a}'
+              .format(v=var, r=reason, a=reason.args))
         continue
     result = outf.createCArray(outf.root, var, atom=var_atom, shape=val.shape, filters=filters)
     result[:] = val

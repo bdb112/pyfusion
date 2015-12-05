@@ -68,7 +68,15 @@ except ImportError:
     print('need psutil to get useful info about memory usage')
     def report_mem(prev_values=None, msg=None):
         return((None, None))
-    
+
+
+def process_file_name(filename):
+    fname = os.path.expanduser(os.path.expandvars(filename))
+    if not (os.path.exists(fname)) and ('.npz' not in fname):
+            fname += '.npz'
+    return(fname)
+
+
 def append_to_DA_file(filename, new_dict, force=False):
     """ open filename with mode=a, after checking if the indx variables align
     force=1 ignores checks for consistent length c.f. the var shot
@@ -84,10 +92,7 @@ def append_to_DA_file(filename, new_dict, force=False):
 
     # the file is loaded into dd, and the new dictionary is new_dict
     # add .npz if the name given does not exist, and it is not already
-    if not os.path.exists(filename):
-        if '.npz' not in filename:
-            filename += '.npz'
-    dd = np.load(filename)
+    dd = np.load(process_file_name(filename))
     error = None
     if 'indx' in dd.keys() and 'indx' in new_dict.keys():
         check = dd['indx']
@@ -133,6 +138,7 @@ class DA():
     is the most effective space saver, but you need to reload if more data
     is needed.  The alternative is to decimate at the extract stage (but this
     applies only to the variables extracted into namespace (e.g. locals())
+    Filename is processed for env vars etc
     """
     def __init__(self, fileordict, debug=0, verbose=0, load=0, limit=None, mainkey=None):
         # may want to make into arrays here...
@@ -158,14 +164,9 @@ class DA():
             self.loaded = True
             self.name = 'dict'
         else:
-            # add .npz if the name given does not exist, and it is not already
-            if not os.path.exists(fileordict):
-                if '.npz' not in fileordict:
-                    fileordict += '.npz'
-                
-            self.da = np.load(fileordict)
-            self.name = fileordict
-            self.loaded = False
+            self.name = process_file_name(fileordict)
+            self.da = np.load(self.name)
+            self.loaded = False  # i.e. not really loaded yet - just have the zipfile table
 
         self.keys = self.da.keys()
         if 'dd' in self.da:  # old style, all in one
@@ -688,6 +689,12 @@ class DA():
         report_mem(start_mem)
         if dictionary == False: 
             return(val_tuple)
+
+def da(filename='300_small.npz'):
+    """ return a da dictionary (used to be called dd - not the DA object)
+    mainly for automated tests of example files.
+    """
+    return(DA(filename,load=1).da)
 
 if __name__ == "__main__":
 

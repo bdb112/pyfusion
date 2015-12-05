@@ -3,6 +3,7 @@ import operator
 import uuid
 from datetime import datetime
 import copy
+import six
 
 from pyfusion.conf.utils import import_from_str, get_config_as_dict
 from pyfusion.data.filters import filter_reg
@@ -58,7 +59,7 @@ def history_reg_method(method):
         # TODO output.meta.update() looks wrong - if a filter modifies a meta value, does this
         # overwrite the modified version with the original?
 
-        if output != None:
+        if output is not None:
             output.meta.update(input_data.meta)
 
         return output
@@ -69,8 +70,8 @@ class MetaMethods(type):
     def __new__(cls, name, bases, attrs):
         for reg in [filter_reg, plot_reg]:
             reg_methods = reg.get(name, [])
-            attrs.update((i.__name__,history_reg_method(i))
-                         for i in reg_methods)
+            attrs.update((rm.__name__,history_reg_method(rm))
+                         for rm in reg_methods)
         return super(MetaMethods, cls).__new__(cls, name, bases, attrs)
 
 
@@ -138,7 +139,7 @@ def get_coords_for_channel(channel_name=None, **kwargs):
             coord_name = k[7:]
             coord_values = tuple(map(float,config_dict[k].split(',')))
     coords_instance = Coords(coord_name, coord_values)
-    if config_dict.has_key('coord_transform'):
+    if 'coord_transform' in config_dict:
         transform_list = pyfusion.config.pf_options('CoordTransform', config_dict['coord_transform'])
         for transform_name in transform_list:
             transform_class_str = pyfusion.config.pf_get('CoordTransform', config_dict['coord_transform'], transform_name)
@@ -226,10 +227,18 @@ class PfMetaData(dict):
     pass
 
 
-
-
-
+"""###  metaclass issues with python2/3
+# we use @six.add_metaclass(MetaMethods)
+# the alternative is (python 3)
+class BaseData(metaclass=MetaMethods):
+# or for python 2 
 class BaseData(object):
+    __metaclass__ = MetaMethods
+"""
+ 
+@six.add_metaclass(MetaMethods)
+class BaseData(object):
+
     """Base class for handling processed data.
 
     In general, specialised subclasses of BaseData will be used
@@ -266,7 +275,7 @@ def orm_load_basedata(man):
     mapper(BaseData, man.basedata_table, polymorphic_on=man.basedata_table.c.type, polymorphic_identity='basedata')
 
 
-
+@six.add_metaclass(MetaMethods)
 class BaseDataSet(object):
     __metaclass__ = MetaMethods
 
@@ -278,7 +287,7 @@ class BaseDataSet(object):
             label = unique_id()
         self.label = label
         if not pyfusion.orm_manager.IS_ACTIVE:
-            self.data = set()
+            self.data = set()  # python3 - could try list(), need add-> append
         
     def save(self):
         ## TODO: if orm_manager IS_ACTIVE=False, send message to logger...
@@ -298,7 +307,7 @@ class BaseDataSet(object):
         return self.data.copy()
         
     def add(self, item):
-        self.data.add(item)
+        self.data.add(item)   # python3 if list, would be append(
 
     def __iter__(self):
         return self.data.__iter__()
@@ -361,6 +370,7 @@ class OrderedDataSetItem(object):
         self.item = item
         self.index = index
 
+@six.add_metaclass(MetaMethods)
 class BaseOrderedDataSet(object):
     __metaclass__ = MetaMethods
 

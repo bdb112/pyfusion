@@ -59,9 +59,9 @@ def find_close_shot(sh, diags, limit=10, summarydb = LHD, subrange=None, debug=0
         if rest != '': 
             try:
                 scl = eval(rest)
-            except Exception, details:
-                raise ValueError('value error in {r} parsing {d}'
-                                 .format(r=rest, d=d))
+            except Exception as details:
+                raise ValueError('value error in {r} parsing {d} {a}'
+                                 .format(r=rest, d=details, a=details.args))
             if scl == 0: scl=1e-9
         else: scl =  np.average(nanabs(SDB[k]))
         dist.append((SDB[k][inds] - SDB[k][sh])/scl)

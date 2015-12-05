@@ -103,7 +103,7 @@ if use_getch: print('plots most likely will be suppressed - sad!')
 else: print('single letter commands need to be followed by a CR')
 
 this_key = "{s}:{d}".format(s=shot_number, d=diag_name)
-if shot_cache.has_key(this_key): # we can expect the variables to be still around, run with -i
+if this_key in shot_cache: # we can expect the variables to be still around, run with -i
     d = deepcopy(shot_cache[this_key])
 else:
     print('get data for {k}'.format(k=this_key))
@@ -122,7 +122,7 @@ if lowpass != None:
         bs = [0.5e3*lowpass,1.5e3*highpass]
         d = d.sp_filter_butterworth_bandpass(bp, bs,2,20,btype='bandpass')
 elif filter != None:
-    if filter.has_key('btype'):
+    if 'btype' in filter:
         d = d.sp_filter_butterworth_bandpass(**filter)
     else:
         (fc,df) = (filter['centre'],filter['bw']/2.)

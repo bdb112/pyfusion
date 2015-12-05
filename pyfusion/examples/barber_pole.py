@@ -30,7 +30,7 @@ pl.imshow(wave, extent = [np.min(phi), np.max(phi), np.min(theta), np.max(theta)
 #    cm = pl.jet
 #cm()
 pl.title('N={N}, M={M}'.format(N=N, M=M))
-pl.show()
+#pl.show()
 
 MPPhi = np.array([ 0.31415927,  1.57079633,  2.19911486,  3.45575192,  4.71238898, 5.96902604])
 MPTheta = np.array([ 1.70571028,  1.70571028,  1.70571028,  1.70571028,  1.70571028, 1.70571028])

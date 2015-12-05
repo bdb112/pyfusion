@@ -203,22 +203,14 @@ def get_basic_diagnostics(diags=None, file_info=file_info, shot=54196, times=Non
                 val = lhd_summary[varname][shot]    
                 valarr = np.double(val)+(times*0)
             else:    
-                # look for igetfile data in a few places
-                debug_(max(pyfusion.DEBUG, debug), level=4, key='find_data')
-                try:
+                try: # now igetfile checks for .gz etc
                     dg = igetfile(filepath, shot=shot, debug=debug-1)
-                except IOError:
-                    try:
-                        dg = igetfile(filepath+'.bz2', shot=shot, debug=debug-1)
-                    except IOError:
-                        try:
-                            dg = igetfile(filepath + '.gz', shot=shot, debug=debug-1)
-                        except exception, details:
-                            if debug>0: print('diag at {fp} not found'
-                                              .format(fp=filepath))
-                            print(details)
-                            dg=None
-                            #break  # give up and try next diagnostic
+                except exception as details:
+                    if debug>0: print('diag at {fp} not found'
+                                      .format(fp=filepath))
+                    print(details,details.args)
+                    dg=None
+                    #break  # give up and try next diagnostic
                 if dg is None:  # messy - break doesn't do what I want?
                     valarr=None
                 else:

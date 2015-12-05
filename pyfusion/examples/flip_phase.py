@@ -18,6 +18,8 @@ method = 'asB'  # asB, invertB, orig, flip, check
 # can be performed.
 
 """
+import numpy as np
+
 exec(_var_defaults)
 
 from  pyfusion.utils import process_cmd_line_args
@@ -28,7 +30,7 @@ try:
 except:
     print('could not find original filename')
 
-wnan=np.where(isnan(dd['b_0']))[0];len(wnan)
+wnan=np.where(np.isnan(dd['b_0']))[0];len(wnan)
 wzero=np.where((dd['b_0']==0))[0];len(wzero)
 wneg=np.where((dd['b_0']<0))[0];len(wneg)
 wpos=np.where((dd['b_0']>0))[0];len(wpos)

@@ -1,0 +1,329 @@
+This file was run on Wed 2 dec, - future ones will be prepended.
+==python 2.7.6==
+examples/plot_specgram.py     : t_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
+examples/get_basic_params.py  : se ValueError('no good shots') ValueError: no good shots 
+examples/slider_f_t.py        : ror: [Errno 2] No such file or directory: 'MP512all.npz' 
+examples/check_HD_histogram.py: OK!
+examples/prepfs_range_mp_2.py : OK!
+examples/merge_h1_diagnostics.py:  t_mid = dd['t_mid'] NameError: name 'dd' is not defined 
+examples/mode_identify_script_temp.py:  mode = mode_list[0] IndexError: list index out of range 
+examples/barber_pole.py       : OK!
+examples/example_fragments.py : overlap=220                ^ SyntaxError: invalid syntax 
+examples/mode_identify_script.py:  mode = mode_list[0] IndexError: list index out of range 
+examples/DA_troubles.py       : OK!
+examples/setup_pyfusion.py    : OK!
+examples/test_lasso_fs.py     : or key in dd.keys(): NameError: name 'dd' is not defined 
+examples/medium_300.py        : OK!
+examples/mode_identify_example_from_ICPP_2010.py: ll.txt' skip=4             ^ SyntaxError: invalid syntax 
+examples/prepfs_range.py      : OK!
+examples/gen_fs_local.py      : OK!
+examples/plot_svd.py          : OK!
+examples/DP14_mode_plot.py    : OK!
+examples/mode_identify_script_old.py: ue') ValueError: Need to choose doN=True and/or doM=True 
+examples/plot_signals.py      : OK!
+examples/trace_cluster.py     : kh','freq',ind=w23) NameError: name 'w23' is not defined 
+examples/copy_DA.py           : ./datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' 
+examples/labelled_N_modes.py  : _list=None                 ^ SyntaxError: invalid syntax 
+examples/h1_mode_lists.py     : OK!
+examples/cluster_info.py      : OK!
+examples/gen_fs_bands.py      : :  ########shot 27233: 230/1435 fs finished in 5.79/7.53 
+examples/phase_histogram.py   : = len(phases[0]) NameError: name 'phases' is not defined 
+examples/find_last_data.py    : .format(l=low))  ValueError: low limit of None not there 
+examples/check_HMA_PMA_phase.py: OK!
+examples/plot_svd1.py         : OK!
+examples/find_close_shot.py   : ebug=0, verbose=1): NameError: name 'LHD' is not defined 
+examples/realtime_mode.py     : e also cm.gray_r etc NameError: name 'cm' is not defined 
+examples/process_chirps.py    :  dfdtunit=dfdtunit)  NameError: name 'dd' is not defined 
+examples/cross_phase.py       : OK!
+examples/check_DA.py          : /datamining/old/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' 
+examples/prepfs_time_mp.py    :  output_path prepfs_time_mp.py: error: too few arguments 
+examples/plot_svd_simple.py   : OK!
+examples/plot_many.py         : NOT AVAILABLE!!!!!') ValueError: SCAN NOT AVAILABLE!!!!! 
+examples/query_h1ds.py        : soup import SqlSoup ImportError: No module named sqlsoup 
+examples/plot_basic.py        : vide by zero encountered in true_divide   1/(dy1+dy2),)) 
+examples/cluster_phases_three_colour.py: to [10 11 12 13 14 15] - i.e. cldata has different sel,  
+examples/new_mode_identify_script.py: ue') ValueError: Need to choose doN=True and/or doM=True 
+examples/clean_up_pyfusion_text.py: OK!
+examples/check_other_data.py  : OK!
+examples/find_VSL_locking.py  : ist=mmm                    ^ SyntaxError: invalid syntax 
+examples/plot_text_fft.py     : r: [Errno 2] No such file or directory: 'g:fft26_50.dat' 
+examples/merge_text_pyfusion.py: OK!
+examples/multi_plot.py        : atamining/cache/ip/ip@105396.dat or .gz, .bz2 not found. 
+examples/shauns_clustering.py :         ^ SyntaxError: EOL while scanning string literal 
+examples/correct_VSL.py       : ppend_to_DA ImportError: cannot import name append_to_DA 
+examples/fft_magnitude_extraction.py:  import HMA_funcs ImportError: No module named HMA_funcs 
+examples/good_ones_density_cluster.py: _f32_diags.npz'            ^ SyntaxError: invalid syntax 
+examples/plot_shot.py         : OK!
+examples/check_dw_pdt.py      : OK!
+examples/wid_specgram.py      : h was ['/data/datamining/local_data/', '/g/lhd_shots/']) 
+examples/cluster_DA.py        : OK!
+examples/check_dw_pdt1.py     : OK!
+examples/igetfile.py          : OK!
+examples/mode_identify_example_2012.py: orbar=colorbar NameError: name 'colorbar' is not defined 
+examples/plot_signals_trivial.py: OK!
+examples/small_65.py          : OK!
+examples/ne_profile_preprocess.py: OK!
+examples/small_300.py         : OK!
+examples/fft_magnitude_extraction_LHD.py: OK!
+examples/merge_basic_diagnostics.py: rror: [Errno 2] No such file or directory: 'DA_file.npz' 
+examples/clean_up_pyfusion_text_mp.py: OK!
+examples/plot_svd_old.py      : OK!
+examples/merge_basic_HJ_diagnostics.py: data ImportError: numpy.core.multiarray failed to import 
+examples/svd_simple_rotator.py: OK!
+examples/test_check_buttons1.py: OK!
+examples/testall.py           : OK!
+examples/save_to_local.py     : OK!
+examples/density_cluster.py   : s,method=method) NameError: name 'phases' is not defined 
+examples/fonts.py             : OK!
+examples/h1_mode_identify.py  : amples/cluster_info.py     ^ SyntaxError: invalid syntax 
+examples/prepfs_range_sep.py  : utput_path prepfs_range_sep.py: error: too few arguments 
+examples/read_DF.py           : ess_cmd_line_args ImportError: No module named bdb_utils 
+examples/test_check_buttons.py: OK!
+examples/__init__.py          : OK!
+examples/new_mode_identify_script_0.py: # need to adjust NameError: name 'arange' is not defined 
+examples/channel_angle_games.py: OK!
+examples/many_specs.py        : r import Node ImportError: No module named node_explorer 
+examples/gen_fs_general.py    : OK!
+examples/get_kappa.py         : >     kh = 0.*shot NameError: name 'shot' is not defined 
+examples/flip_phase.py        : b_0']))[0];len(wnan) NameError: name 'dd' is not defined 
+examples/plot_text_pyfusion.py: /pyfusion/examples/PF2_120227_HMPno12_27233_27233_1.dat' 
+examples/check_polarity_flips.py: OK!
+examples/play_with_fft_signals.py: OK!
+examples/prepfs_range_mp.py   : OK!
+46 errors out of 90
+
+========= python 2.7.6 -3 ===========
+examples/plot_specgram.py     : psule objects instead.   self._renderer.draw_text_image( 
+examples/get_basic_params.py  : se ValueError('no good shots') ValueError: no good shots 
+examples/slider_f_t.py        : ror: [Errno 2] No such file or directory: 'MP512all.npz' 
+examples/check_HD_histogram.py:   self._renderer.draw_path(gc, path, transform, rgbFace) 
+examples/prepfs_range_mp_2.py : umpy 1.9   warnings.warn(_msg, ModuleDeprecationWarning) 
+examples/merge_h1_diagnostics.py:  t_mid = dd['t_mid'] NameError: name 'dd' is not defined 
+examples/mode_identify_script_temp.py:  mode = mode_list[0] IndexError: list index out of range 
+examples/barber_pole.py       : psule objects instead.   self._renderer.draw_text_image( 
+examples/example_fragments.py : overlap=220                ^ SyntaxError: invalid syntax 
+examples/mode_identify_script.py:  mode = mode_list[0] IndexError: list index out of range 
+examples/DA_troubles.py       : backends._backend_agg import RendererAgg as _RendererAgg 
+examples/setup_pyfusion.py    : umpy 1.9   warnings.warn(_msg, ModuleDeprecationWarning) 
+examples/test_lasso_fs.py     : or key in dd.keys(): NameError: name 'dd' is not defined 
+examples/medium_300.py        : backends._backend_agg import RendererAgg as _RendererAgg 
+examples/mode_identify_example_from_ICPP_2010.py: ll.txt' skip=4             ^ SyntaxError: invalid syntax 
+examples/prepfs_range.py      : OK!
+examples/gen_fs_local.py      : super(MetaMethods, cls).__new__(cls, name, bases, attrs) 
+examples/plot_svd.py          : enderer.draw_text_image(font_image, x, y + 1, angle, gc) 
+examples/DP14_mode_plot.py    : psule objects instead.   self._renderer.draw_text_image( 
+examples/mode_identify_script_old.py: ue') ValueError: Need to choose doN=True and/or doM=True 
+examples/plot_signals.py      : psule objects instead.   self._renderer.draw_text_image( 
+examples/trace_cluster.py     : kh','freq',ind=w23) NameError: name 'w23' is not defined 
+examples/copy_DA.py           : ./datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' 
+examples/labelled_N_modes.py  : _list=None                 ^ SyntaxError: invalid syntax 
+examples/h1_mode_lists.py     : psule objects instead.   self._renderer.draw_text_image( 
+examples/cluster_info.py      : se use capsule objects instead.   from . import dfitpack 
+examples/gen_fs_bands.py      : :  ########shot 27233: 230/1435 fs finished in 5.88/7.70 
+examples/phase_histogram.py   : = len(phases[0]) NameError: name 'phases' is not defined 
+examples/find_last_data.py    : .format(l=low))  ValueError: low limit of None not there 
+examples/check_HMA_PMA_phase.py: psule objects instead.   self._renderer.draw_text_image( 
+examples/plot_svd1.py         : enderer.draw_text_image(font_image, x, y + 1, angle, gc) 
+examples/find_close_shot.py   : ebug=0, verbose=1): NameError: name 'LHD' is not defined 
+examples/realtime_mode.py     : e also cm.gray_r etc NameError: name 'cm' is not defined 
+examples/process_chirps.py    :  dfdtunit=dfdtunit)  NameError: name 'dd' is not defined 
+examples/cross_phase.py       : psule objects instead.   self._renderer.draw_text_image( 
+examples/check_DA.py          : /datamining/old/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' 
+examples/prepfs_time_mp.py    :  output_path prepfs_time_mp.py: error: too few arguments 
+examples/plot_svd_simple.py   : enderer.draw_text_image(font_image, x, y + 1, angle, gc) 
+examples/plot_many.py         : NOT AVAILABLE!!!!!') ValueError: SCAN NOT AVAILABLE!!!!! 
+examples/query_h1ds.py        : soup import SqlSoup ImportError: No module named sqlsoup 
+examples/plot_basic.py        : psule objects instead.   self._renderer.draw_text_image( 
+examples/cluster_phases_three_colour.py: enderer.draw_text_image(font_image, x, y + 1, angle, gc) 
+examples/new_mode_identify_script.py: ue') ValueError: Need to choose doN=True and/or doM=True 
+examples/clean_up_pyfusion_text.py: backends._backend_agg import RendererAgg as _RendererAgg 
+examples/check_other_data.py  : psule objects instead.   self._renderer.draw_text_image( 
+examples/find_VSL_locking.py  : ist=mmm                    ^ SyntaxError: invalid syntax 
+examples/plot_text_fft.py     : r: [Errno 2] No such file or directory: 'g:fft26_50.dat' 
+examples/merge_text_pyfusion.py: backends._backend_agg import RendererAgg as _RendererAgg 
+examples/multi_plot.py        : atamining/cache/ip/ip@105396.dat or .gz, .bz2 not found. 
+examples/shauns_clustering.py :         ^ SyntaxError: EOL while scanning string literal 
+examples/correct_VSL.py       : ppend_to_DA ImportError: cannot import name append_to_DA 
+examples/fft_magnitude_extraction.py:  import HMA_funcs ImportError: No module named HMA_funcs 
+examples/good_ones_density_cluster.py: _f32_diags.npz'            ^ SyntaxError: invalid syntax 
+examples/plot_shot.py         : umpy 1.9   warnings.warn(_msg, ModuleDeprecationWarning) 
+examples/check_dw_pdt.py      : backends._backend_agg import RendererAgg as _RendererAgg 
+examples/wid_specgram.py      : h was ['/data/datamining/local_data/', '/g/lhd_shots/']) 
+examples/cluster_DA.py        : upported in 3.x; use except clauses   self.__exc_clear() 
+examples/check_dw_pdt1.py     : backends._backend_agg import RendererAgg as _RendererAgg 
+examples/igetfile.py          : psule objects instead.   self._renderer.draw_text_image( 
+examples/mode_identify_example_2012.py: orbar=colorbar NameError: name 'colorbar' is not defined 
+examples/plot_signals_trivial.py: psule objects instead.   self._renderer.draw_text_image( 
+examples/small_65.py          : backends._backend_agg import RendererAgg as _RendererAgg 
+examples/ne_profile_preprocess.py: .toCtype() * int(descr.arsize/descr.length))).contents)) 
+examples/small_300.py         : backends._backend_agg import RendererAgg as _RendererAgg 
+examples/fft_magnitude_extraction_LHD.py: instead.   return self._renderer.draw_markers(*kl, **kw) 
+examples/merge_basic_diagnostics.py: rror: [Errno 2] No such file or directory: 'DA_file.npz' 
+examples/clean_up_pyfusion_text_mp.py: backends._backend_agg import RendererAgg as _RendererAgg 
+examples/plot_svd_old.py      : enderer.draw_text_image(font_image, x, y + 1, angle, gc) 
+examples/merge_basic_HJ_diagnostics.py: data ImportError: numpy.core.multiarray failed to import 
+examples/svd_simple_rotator.py: psule objects instead.   self._renderer.draw_text_image( 
+examples/test_check_buttons1.py: psule objects instead.   self._renderer.draw_text_image( 
+examples/testall.py           : se use capsule objects instead.   from . import dfitpack 
+examples/save_to_local.py     : super(MetaMethods, cls).__new__(cls, name, bases, attrs) 
+examples/density_cluster.py   : s,method=method) NameError: name 'phases' is not defined 
+examples/fonts.py             : psule objects instead.   self._renderer.draw_text_image( 
+examples/h1_mode_identify.py  : amples/cluster_info.py     ^ SyntaxError: invalid syntax 
+examples/prepfs_range_sep.py  : utput_path prepfs_range_sep.py: error: too few arguments 
+examples/read_DF.py           : ess_cmd_line_args ImportError: No module named bdb_utils 
+examples/test_check_buttons.py: psule objects instead.   self._renderer.draw_text_image( 
+examples/__init__.py          : backends._backend_agg import RendererAgg as _RendererAgg 
+examples/new_mode_identify_script_0.py: # need to adjust NameError: name 'arange' is not defined 
+examples/channel_angle_games.py: psule objects instead.   self._renderer.draw_text_image( 
+examples/many_specs.py        : r import Node ImportError: No module named node_explorer 
+examples/gen_fs_general.py    : .toCtype() * int(descr.arsize/descr.length))).contents)) 
+examples/get_kappa.py         : >     kh = 0.*shot NameError: name 'shot' is not defined 
+examples/flip_phase.py        : b_0']))[0];len(wnan) NameError: name 'dd' is not defined 
+examples/plot_text_pyfusion.py: /pyfusion/examples/PF2_120227_HMPno12_27233_27233_1.dat' 
+examples/check_polarity_flips.py: psule objects instead.   self._renderer.draw_text_image( 
+examples/play_with_fft_signals.py: super(MetaMethods, cls).__new__(cls, name, bases, attrs) 
+examples/prepfs_range_mp.py   : OK!
+88 errors out of 90
+===================
+python 3 warnings coming from my files
+0 pyfusion/examples/plot_specgram.py
+16 pyfusion/examples/gen_fs_local.py
+17 pyfusion/examples/plot_svd.py
+20 pyfusion/examples/plot_signals.py
+22 pyfusion/examples/copy_DA.py
+26 pyfusion/examples/gen_fs_bands.py
+28 pyfusion/examples/find_last_data.py
+29 pyfusion/examples/check_HMA_PMA_phase.py
+30 pyfusion/examples/plot_svd1.py
+32 pyfusion/examples/realtime_mode.py
+34 pyfusion/examples/cross_phase.py
+35 pyfusion/examples/check_DA.py
+37 pyfusion/examples/plot_svd_simple.py
+38 pyfusion/examples/plot_many.py
+40 pyfusion/examples/plot_basic.py
+41 pyfusion/examples/cluster_phases_three_colour.py
+48 pyfusion/examples/multi_plot.py
+55 pyfusion/examples/wid_specgram.py
+56 pyfusion/examples/cluster_DA.py
+60 pyfusion/examples/plot_signals_trivial.py
+62 pyfusion/examples/ne_profile_preprocess.py
+64 pyfusion/examples/fft_magnitude_extraction_LHD.py
+65 pyfusion/examples/merge_basic_diagnostics.py
+67 pyfusion/examples/plot_svd_old.py
+68 pyfusion/examples/merge_basic_HJ_diagnostics.py
+72 pyfusion/examples/save_to_local.py
+81 pyfusion/examples/channel_angle_games.py
+83 pyfusion/examples/gen_fs_general.py
+86 pyfusion/examples/plot_text_pyfusion.py
+87 pyfusion/examples/check_polarity_flips.py
+88 pyfusion/examples/play_with_fft_signals.py
+
+(3, 'pyfusion/examples/check_HD_histogram.py')
+(17, 'pyfusion/examples/plot_svd.py')
+(26, 'pyfusion/examples/gen_fs_bands.py')
+(29, 'pyfusion/examples/check_HMA_PMA_phase.py')
+(30, 'pyfusion/examples/plot_svd1.py')
+(32, 'pyfusion/examples/realtime_mode.py')
+(34, 'pyfusion/examples/cross_phase.py')
+(37, 'pyfusion/examples/plot_svd_simple.py')
+(41, 'pyfusion/examples/cluster_phases_three_colour.py')
+(62, 'pyfusion/examples/ne_profile_preprocess.py')
+(64, 'pyfusion/examples/fft_magnitude_extraction_LHD.py')
+(67, 'pyfusion/examples/plot_svd_old.py')
+(69, 'pyfusion/examples/svd_simple_rotator.py')
+(82, 'pyfusion/examples/many_specs.py')
+(83, 'pyfusion/examples/gen_fs_general.py')
+
+=========== Python 3.5 anaconda ==========
+
+examples/plot_specgram.py     : b'OK!'
+examples/get_basic_params.py  : b" import StringIO ImportError: No module named 'StringIO' "
+examples/slider_f_t.py        : b"ror: [Errno 2] No such file or directory: 'MP512all.npz' "
+examples/check_HD_histogram.py: b'OK!'
+examples/prepfs_range_mp_2.py : b'OK!'
+examples/merge_h1_diagnostics.py: b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/mode_identify_script_temp.py: b'e") LookupError: dd not loaded into memory - can\'t store '
+examples/barber_pole.py       : b'OK!'
+examples/example_fragments.py : b'overlap=220                ^ SyntaxError: invalid syntax '
+examples/mode_identify_script.py: b' mode = mode_list[0] IndexError: list index out of range '
+examples/DA_troubles.py       : b'OK!'
+examples/setup_pyfusion.py    : b"mport.install() ImportError: No module named 'pyximport' "
+examples/test_lasso_fs.py     : b"or key in dd.keys(): NameError: name 'dd' is not defined "
+examples/medium_300.py        : b'OK!'
+examples/mode_identify_example_from_ICPP_2010.py: b"ll.txt' skip=4             ^ SyntaxError: invalid syntax "
+examples/prepfs_range.py      : b'OK!'
+examples/gen_fs_local.py      : b'ocessed: TypeError("unhashable type: \'TimeseriesData\'",) '
+examples/plot_svd.py          : b"   ^ SyntaxError: Missing parentheses in call to 'print' "
+examples/DP14_mode_plot.py    : b'OK!'
+examples/mode_identify_script_old.py: b'e") LookupError: dd not loaded into memory - can\'t store '
+examples/plot_signals.py      : b'OK!'
+examples/trace_cluster.py     : b"ile(filename,'r')) NameError: name 'file' is not defined "
+examples/copy_DA.py           : b"mport tables as tb ImportError: No module named 'tables' "
+examples/labelled_N_modes.py  : b'_list=None                 ^ SyntaxError: invalid syntax '
+examples/h1_mode_lists.py     : b"ile(filename,'r')) NameError: name 'file' is not defined "
+examples/cluster_info.py      : b"ile(filename,'r')) NameError: name 'file' is not defined "
+examples/gen_fs_bands.py      : b' Time:  ########shot 27233: 0/0 fs finished in 0.18/0.56 '
+examples/phase_histogram.py   : b"= len(phases[0]) NameError: name 'phases' is not defined "
+examples/find_last_data.py    : b'.format(l=low))  ValueError: low limit of None not there '
+examples/check_HMA_PMA_phase.py: b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/plot_svd1.py         : b'                           ^ SyntaxError: invalid syntax '
+examples/find_close_shot.py   : b"ebug=0, verbose=1): NameError: name 'LHD' is not defined "
+examples/realtime_mode.py     : b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/process_chirps.py    : b" dfdtunit=dfdtunit)  NameError: name 'dd' is not defined "
+examples/cross_phase.py       : b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/check_DA.py          : b"/datamining/old/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' "
+examples/prepfs_time_mp.py    : b'error: the following arguments are required: output_path '
+examples/plot_svd_simple.py   : b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/plot_many.py         : b'(),shot_list))             ^ SyntaxError: invalid syntax '
+examples/query_h1ds.py        : b"up ImportError: No module named 'sqlalchemy.ext.sqlsoup' "
+examples/plot_basic.py        : b"AttributeError: 'dict' object has no attribute 'has_key' "
+examples/cluster_phases_three_colour.py: b"wer() != 'n': NameError: name 'raw_input' is not defined "
+examples/new_mode_identify_script.py: b"esis.pickle','r')) NameError: name 'file' is not defined "
+examples/clean_up_pyfusion_text.py: b'OK!'
+examples/check_other_data.py  : b'rror: inconsistent use of tabs and spaces in indentation '
+examples/find_VSL_locking.py  : b'ist=mmm                    ^ SyntaxError: invalid syntax '
+examples/plot_text_fft.py     : b"r: [Errno 2] No such file or directory: 'g:fft26_50.dat' "
+examples/merge_text_pyfusion.py: b"yfusion/acquisition/PF2_121206_54185_384_rms_1.dat.bz2'] "
+examples/multi_plot.py        : b" import StringIO ImportError: No module named 'StringIO' "
+examples/shauns_clustering.py : b'        ^ SyntaxError: EOL while scanning string literal '
+examples/correct_VSL.py       : b"end_to_DA ImportError: cannot import name 'append_to_DA' "
+examples/fft_magnitude_extraction.py: b"   ^ SyntaxError: Missing parentheses in call to 'print' "
+examples/good_ones_density_cluster.py: b"_f32_diags.npz'            ^ SyntaxError: invalid syntax "
+examples/plot_shot.py         : b'OK!'
+examples/check_dw_pdt.py      : b'OK!'
+examples/wid_specgram.py      : b'p, _type, fmod             ^ SyntaxError: invalid syntax '
+examples/cluster_DA.py        : b'OK!'
+examples/check_dw_pdt1.py     : b'OK!'
+examples/igetfile.py          : b"ule>     dat.plot() NameError: name 'dat' is not defined "
+examples/mode_identify_example_2012.py: b"orbar=colorbar NameError: name 'colorbar' is not defined "
+examples/plot_signals_trivial.py: b'OK!'
+examples/small_65.py          : b'OK!'
+examples/ne_profile_preprocess.py: b'                           ^ SyntaxError: invalid syntax '
+examples/small_300.py         : b'OK!'
+examples/fft_magnitude_extraction_LHD.py: b"   ^ SyntaxError: Missing parentheses in call to 'print' "
+examples/merge_basic_diagnostics.py: b"rror: [Errno 2] No such file or directory: 'DA_file.npz' "
+examples/clean_up_pyfusion_text_mp.py: b'OK!'
+examples/plot_svd_old.py      : b'                           ^ SyntaxError: invalid syntax '
+examples/merge_basic_HJ_diagnostics.py: b"mport gethjdata ImportError: No module named 'gethjdata' "
+examples/svd_simple_rotator.py: b'hronof)))                  ^ SyntaxError: invalid syntax '
+examples/test_check_buttons1.py: b'OK!'
+examples/testall.py           : b"wer() != 'n': NameError: name 'raw_input' is not defined "
+examples/save_to_local.py     : b") TypeError: type Signal doesn't define __round__ method "
+examples/density_cluster.py   : b"AttributeError: 'range' object has no attribute 'extend' "
+examples/fonts.py             : b'OK!'
+examples/h1_mode_identify.py  : b'amples/cluster_info.py     ^ SyntaxError: invalid syntax '
+examples/prepfs_range_sep.py  : b'error: the following arguments are required: output_path '
+examples/read_DF.py           : b"mport tables as tb ImportError: No module named 'tables' "
+examples/test_check_buttons.py: b'OK!'
+examples/__init__.py          : b'OK!'
+examples/new_mode_identify_script_0.py: b"# need to adjust NameError: name 'arange' is not defined "
+examples/channel_angle_games.py: b'OK!'
+examples/many_specs.py        : b"   ^ SyntaxError: Missing parentheses in call to 'print' "
+examples/gen_fs_general.py    : b'd \'mdsdevice\'",)   (shot,sys.exc_info()[1].__repr__()))) '
+examples/get_kappa.py         : b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/flip_phase.py        : b"b_0']))[0];len(wnan) NameError: name 'dd' is not defined "
+examples/plot_text_pyfusion.py: b'                           ^ SyntaxError: invalid syntax '
+examples/check_polarity_flips.py: b'OK!'
+examples/play_with_fft_signals.py: b'OK!'
+examples/prepfs_range_mp.py   : b"tributeError: module 'itertools' has no attribute 'izip' "
+65 errors out of 90

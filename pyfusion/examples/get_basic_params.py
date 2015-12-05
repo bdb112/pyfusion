@@ -131,7 +131,7 @@ def get_basic_params(diags=None, shot=54196, times=None, delay=None, debug=0):
     vals.update({'check_tm':times})
     vals.update({'check_shot':np.zeros(len(times),dtype=np.int)+shot})
     for diag in diags:
-        if not(file_info.has_key(diag)):
+        if diag not in file_info:
             warn('diagnostic {0} not found in shot {1}'.format(diag, shot),stacklevel=2)
             vals.update({diag: np.nan + times})
         else:

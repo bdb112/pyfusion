@@ -1,4 +1,5 @@
-import clustering as clust
+from __future__ import print_function
+from . import clustering as clust
 from pyfusion.devices.H1 import H1_scan_list
 from multiprocessing import Process, Pool
 import pyfusion as pf
@@ -19,7 +20,7 @@ def single_shot_fluc_strucs(shot=None, array=None, other_arrays=None, other_arra
     data = pf.getDevice('H1').acq.getdata(shot, array).reduce_time([start_time, end_time])
     data = data.subtract_mean(copy=False).normalise(method='v',separate=True,copy=False)
     data_segmented = data.segment(samples,overlap=overlap, datalist = 1)
-    print other_arrays, other_array_labels
+    print(other_arrays, other_array_labels)
     if other_arrays is None: other_array_labels = []
     if other_arrays is None: other_arrays = []; 
     if meta_data is None : meta_data = []
@@ -52,7 +53,7 @@ def single_shot_fluc_strucs(shot=None, array=None, other_arrays=None, other_arra
         for i in other_arrays_segmented:
             other_arrays_data_fft.append(np.fft.rfft(i[seg_loc].signal)/samples)
             if not np.allclose(i[seg_loc].timebase,data_seg.timebase): 
-                print "WARNING possible timebase mismatch between other array data and data!!!"
+                print("WARNING possible timebase mismatch between other array data and data!!!")
         d = (data_seg.timebase[1] - data_seg.timebase[0])
         val = 1.0/(samples*d)
         N = samples//2 + 1
@@ -110,19 +111,19 @@ def multi_svd(shot_selection,array_name, other_arrays = None, other_array_labels
     if n_cpus>1:
         pool_size = n_cpus
         pool = Pool(processes=pool_size, maxtasksperchild=3)
-        print 'creating pool map'
+        print('creating pool map')
 
         results = pool.map(single_shot_svd_wrapper, input_data_iter)
-        print 'waiting for pool to close '
+        print('waiting for pool to close ')
         pool.close()
-        print 'joining pool'
+        print('joining pool')
         pool.join()
-        print 'pool finished'
+        print('pool finished')
     else:
         results = map(single_shot_svd_wrapper, input_data_iter)
     start=1
     for i,tmp in enumerate(results):
-        print i
+        print(i)
         if tmp[0]!=None:
             if start==1:
                 instance_array = copy.deepcopy(tmp[0])
@@ -133,7 +134,7 @@ def multi_svd(shot_selection,array_name, other_arrays = None, other_array_labels
                 for i in misc_data_dict.keys():
                     misc_data_dict[i] = np.append(misc_data_dict[i], tmp[1][i],axis=0)
         else:
-            print 'One shot may have failed....'
+            print('One shot may have failed....')
     return clust.feature_object(instance_array = instance_array, misc_data_dict = misc_data_dict)
     
 
@@ -141,7 +142,7 @@ def get_array_data(current_shot, array_name, time_window=None,new_timebase=None)
     array_cutoff_locs = [0]
     data = pf.getDevice('H1').acq.getdata(current_shot, array_name)
     if new_timebase!=None:
-        print 'interpolating onto a new timebase....'
+        print('interpolating onto a new timebase....')
         data = data.change_time_base(new_timebase)
     if time_window!=None:
         data = data.reduce_time(time_window)
@@ -184,7 +185,7 @@ def find_peaks(data_fft, n_pts=20, lower_freq = 1500,by_average=True, moving_ave
             if (np.abs(data_fft.frequency_base[j]-0)>lower_freq) and (how_peaked[j]>peak_cutoff):
                 good_indices_tmp.append(j)
         good_indices.append(good_indices_tmp)
-        if len(np.unique(good_indices_tmp)) != len(good_indices_tmp):print "!!!!!!!!!!!!! duplicate problem"
+        if len(np.unique(good_indices_tmp)) != len(good_indices_tmp):print("!!!!!!!!!!!!! duplicate problem")
     return good_indices
 
 def return_values(tmp_array, good_indices, force_index = None):
@@ -262,7 +263,7 @@ def extract_data_by_picking_peaks(current_shot, array_names,NFFT=1024, hop=256,n
     
     #Get other misc data
     #kh_value, ne_value, ne_time, main_current, heating_freq, ne_value_list, ne_time_list = HMA_funcs.extract_ne_kh(current_shot, ne_array = 0)
-    print 'getting misc data from meta data....'
+    print('getting misc data from meta data....')
     kh_value = data.meta['kh'], 
     if data.meta['heating_freq']!=None:
         heating_freq = data.meta['heating_freq']
@@ -270,7 +271,7 @@ def extract_data_by_picking_peaks(current_shot, array_names,NFFT=1024, hop=256,n
         heating_freq = 0
         
     #Constants... shot, heating, kh
-    print 'kh :', kh_value
+    print('kh :', kh_value)
     shot_values = time_values * 0 + current_shot
     kh_values = time_values * 0 + kh_value
     heating_values = time_values * 0 + heating_freq
@@ -278,7 +279,7 @@ def extract_data_by_picking_peaks(current_shot, array_names,NFFT=1024, hop=256,n
     #Change Mirnov data to phase differences in [-pi,pi)
     mirnov_angles = (-np.diff(mirnov_tmp_data))%(2.*np.pi)
     mirnov_angles[mirnov_angles>np.pi] -= (2.*np.pi)
-    print 'make misc dictionary'
+    print('make misc dictionary')
     #Put everything together for the datamining step
     misc_data_dict = {'shot':shot_values, 'kh':kh_values,'heating':heating_values,
                       'time':time_values, 'freq':freq_values, 'ne_static':ne_static, 
@@ -300,7 +301,7 @@ def extract_data_by_picking_peaks(current_shot, array_names,NFFT=1024, hop=256,n
         L,R = np.min(data_fft.timebase), np.max(data_fft.timebase)
         B,T = np.min(data_fft.frequency_base), np.max(data_fft.frequency_base)
         im=ax.imshow(amp.T,aspect='auto',origin='lower',extent=[L,R,B,T])
-    print 'finished....', current_shot
+    print('finished....', current_shot)
     return mirnov_angles, misc_data_dict
 
 #generate the datamining object, and perform the datamining
@@ -387,18 +388,18 @@ def multi_stft(shot_selection, array_names, n_cpus=1, NFFT=2048, perform_datamin
     if n_cpus>1:
         pool_size = n_cpus
         pool = Pool(processes=pool_size, maxtasksperchild=3)
-        print 'creating pool map'
+        print('creating pool map')
         results = pool.map(single_shot_wrapper, input_data)
-        print 'waiting for pool to close '
+        print('waiting for pool to close ')
         pool.close();pool.join()
-        print 'pool finished'
+        print('pool finished')
     else:
         results = map(single_shot_wrapper, input_data)
     start=1
     #Put everything back together
     kappa_list = []
     for i,tmp in enumerate(results):
-        print i
+        print(i)
         kappa_list.append(copy.deepcopy(tmp[2]))
         if tmp[0]!=None:
             if start==1:
@@ -410,7 +411,7 @@ def multi_stft(shot_selection, array_names, n_cpus=1, NFFT=2048, perform_datamin
                 for i in misc_data_dict.keys():
                     misc_data_dict[i] = np.append(misc_data_dict[i], tmp[1][i],axis=0)
         else:
-            print 'something has failed....'
+            print('something has failed....')
     return clust.feature_object(instance_array = instance_array, misc_data_dict = misc_data_dict), kappa_list
 
 
@@ -438,11 +439,11 @@ def combine_feature_sets(feat_obj1, feat_obj2):
             freq_difference = (np.abs(feat_obj1.misc_data_dict['freq'][i] - feat_obj2.misc_data_dict['freq'][filt_stft]))<(0.1)
             success = np.nonzero(time_difference*freq_difference)[0]
             if len(success)>1: 
-                print 'there may be a problem....', i, success, [filt_stft[j] for j in success]
+                print('there may be a problem....', i, success, [filt_stft[j] for j in success])
                 for j in success:
-                    print feat_obj1.misc_data_dict['time'][i], feat_obj2.misc_data_dict['time'][filt_stft[j]]
-                    print feat_obj1.misc_data_dict['freq'][i], feat_obj2.misc_data_dict['freq'][filt_stft[j]]
-                    print feat_obj1.misc_data_dict['shot'][i], feat_obj2.misc_data_dict['shot'][filt_stft[j]]
+                    print(feat_obj1.misc_data_dict['time'][i], feat_obj2.misc_data_dict['time'][filt_stft[j]])
+                    print(feat_obj1.misc_data_dict['freq'][i], feat_obj2.misc_data_dict['freq'][filt_stft[j]])
+                    print(feat_obj1.misc_data_dict['shot'][i], feat_obj2.misc_data_dict['shot'][filt_stft[j]])
 
             elif len(success)==1:
                 ticked_off[i]=1

@@ -15,7 +15,13 @@ Advantage of file output is that it is easier to run simple cases and test cases
 # HeliotronJ example: Using the "long form" of the probes - needed if in the same file
 # as LHD with the same name.
 run pyfusion/examples/gen_fs_bands.py dev_name='HeliotronJ' diag_name='HeliotronJ_MP_array' time_range=[100,250] shot_range=[50000] seg_dt=1 info=1
-
+_PYFUSION_TEST_@@seg_dt=0.01 time_range=[1,1.5]
+## Strange timing - is there a bug? ##
+all have  max_bands=4 diag_name= 'MP2010' unless stated
+6  run pyfusion/examples/gen_fs_bands seg_dt=0.01 time_range=[1,1.5]  Good
+26 run pyfusion/examples/gen_fs_bands seg_dt=0.1 max_bands=4 time_range=[1,1.5] too slow?
+20 run pyfusion/examples/gen_fs_bands seg_dt=.01   OK
+27 run pyfusion/examples/gen_fs_bands seg_dt=2 diag_name='MP_SMALL' (0 fs) long?
 """
 import subprocess, sys, warnings
 import pyfusion
@@ -59,7 +65,7 @@ show_times=1
 shot_range = [27233]
 #shot_range = range(90090, 90110)
 n_samples = None  # was 512
-n_samples_max = 64000
+n_samples_max = 128000
 overlap=1.0
 diag_name= 'MP2010'
 exception=Exception
@@ -69,7 +75,7 @@ max_H=0.97
 info=2
 separate=1
 method='rms'
-seg_dt=1.5e-6 # time interval - overrides n_samples if None
+seg_dt=1.5e-3 # time interval - overrides n_samples if None
 df = 2e3  #Hz
 fmax = None
 max_bands = 4
@@ -122,7 +128,7 @@ for shot in shot_range:
             
         if (n_samples>n_samples_max) or (n_samples < 16):
             # this will catch milliseconds vs seconds errors
-            sys.stderr.writelines('################ n_samples ({ns}) > n_samples_max ({nsm}) ###'
+            sys.stderr.writelines('########### Warning: n_samples ({ns}) > n_samples_max ({nsm}) ###'
                                   .format(ns=n_samples, nsm=n_samples_max))
         if time_range != None:
             if type(time_range)==str: # strings are recipes for finding shot times

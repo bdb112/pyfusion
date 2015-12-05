@@ -1,7 +1,27 @@
 """
 Some un-pythonic code here (checking instance type inside
 function). Need to figure out a better way to do this.
+
+python3 issues:
+
+/home/bdb112/pyfusion/mon121210/pyfusion/pyfusion/data/filters.py:65: DeprecationWarning: classic int division
+  nice = [2**p * n/16 for p in range(minp2,maxp2) for n in [16, 18, 20, 24, 27]]
+/home/bdb112/pyfusion/mon121210/pyfusion/pyfusion/data/utils.py:120: DeprecationWarning: classic int division
+  ipks = find_peaks(np.abs(FT)[0:ns/2], minratio = minratio, debug=1)
+/home/bdb112/pyfusion/mon121210/pyfusion/pyfusion/data/filters.py:443: DeprecationWarning: classic int division
+  twid = 2*(1+max(n_pb_low - n_sb_low,n_sb_hi - n_pb_hi)/2)
+/home/bdb112/pyfusion/mon121210/pyfusion/pyfusion/data/base.py:57: UserWarning: 
+defaulting taper to 1 as band edges are sharp
+/home/bdb112/pyfusion/mon121210/pyfusion/pyfusion/data/filters.py:508: DeprecationWarning: classic int division
+  if np.mod(NA,2)==0: mask[:NA/2:-1] = mask[1:(NA/2)]   # even
+/home/bdb112/pyfusion/mon121210/pyfusion/pyfusion/data/filters.py:490: DeprecationWarning: classic int division
+  low_mid = n_pb_low - twid/2
+/home/bdb112/pyfusion/mon121210/pyfusion/pyfusion/data/filters.py:491: DeprecationWarning: classic int division
+  high_mid = n_pb_hi + twid/2
+
 """
+
+
 from datetime import datetime
 from pyfusion.debug_ import debug_
 from pyfusion.utils.utils import warn
@@ -32,7 +52,7 @@ filter_reg = {}
 def register(*class_names):
     def reg_item(filter_method):
         for cl_name in class_names:
-            if not filter_reg.has_key(cl_name):
+            if cl_name not in filter_reg:
                 filter_reg[cl_name] = [filter_method]
             else:
                 filter_reg[cl_name].append(filter_method)
@@ -169,7 +189,9 @@ def segment(input_data, n_samples, overlap=DEFAULT_SEGMENT_OVERLAP):
                 pyfusion.logger.warning("Data filter 'segment' not applied to item in dataset")
         return output_dataset
     output_data = DataSet('segmented_%s, %d samples, %.3f overlap' %(datetime.now(), n_samples, overlap))
-    for el in arange(0,len(input_data.timebase), n_samples/overlap):
+    # python3 check this
+    for el in range(0,len(input_data.timebase), int(n_samples/overlap)):
+##  was  for el in arange(0,len(input_data.timebase), n_samples/overlap):
         if input_data.signal.ndim == 1:
             tmp_data = TimeseriesData(timebase=input_data.timebase[el:el+n_samples],
                                       signal=input_data.signal[el:el+n_samples],
@@ -437,6 +459,7 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     # twid is the transition width, and should default so that the sloped part is the same width as the flat?
     # !!!! doesn't do that yet.
     # make the transition width an even number, and the larger of the two
+    # need to pull this code out and be sure it works.
     twid = 2*(1+max(n_pb_low - n_sb_low,n_sb_hi - n_pb_hi)/2)
     if (twid < 4) or (n_sb_low < 0): 
         if taper == 2: 
@@ -644,7 +667,7 @@ def remove_baseline(input_data, baseline=None, chan=None, copy=False):
         tb = input_data.timebase
 
         bl = np.array(baseline).flatten()
-        if len(baseline) == 0:
+        if baseline is None or len(baseline) == 0:
             delta = .01
             bl = [np.min(tb), np.min(tb) + delta,
                         np.max(tb) - delta, np.max(tb)]

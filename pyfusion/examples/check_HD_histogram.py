@@ -29,11 +29,11 @@ if pow is None: pow = NDim-1
 
 from pyfusion.clustering.modes import Mode
 test_mode=Mode('allpis',0,0,np.pi*np.ones(NDim),thisSTD*np.ones(NDim))
-dist = test_mode.std(2*np.pi*random.random((NRand,NDim)))
+dist = test_mode.std(2*np.pi*np.random.random((NRand,NDim)))
 
 pl.subplot(1,2,1)
 (cnts,bins,patches)  = pl.hist(dist, bins=n_bins,log=1)
-x=linspace(0.5,20,40)
+x=np.linspace(0.5,20,40)
 
 if fact is None:
     checkbin = len(bins)/4
@@ -43,6 +43,7 @@ pl.semilogy(x, fn(fact,x,pow),linewidth=3)
 maxsd = np.sqrt(np.max(test_mode.csd**2))
 max_valid_s = 1.5/maxsd  # I would have thought Pi/maxsd
 pl.semilogy([max_valid_s, max_valid_s],pl.ylim(),'r--',linewidth=2)
+#if pl.isinteractive():
 pl.show()
 
 # Now try to adjust the bin sizes so uniform dist is constant count
@@ -58,6 +59,7 @@ while len(bins) < n_bins:
             ((bins[-1]**NDim - bins[-2]**NDim)/(bins[-1] - bins[-2])))
         # print(corrected_width)
         bins[-1]=bins[-2] + corrected_width
+
 pl.subplot(1,2,2)
 if np.min(dist)>np.max(bins):
     raise ValueError('no counts in the first {n} bins up to {lastbin},'

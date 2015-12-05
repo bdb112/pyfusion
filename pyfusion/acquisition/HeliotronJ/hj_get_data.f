@@ -6,6 +6,7 @@ c *** hacked by D. Pretty on Feb.  2008                      ***
 c * Boyd fixed it (argument list subtleties, made it pass directly
 C * but even so, it takes ~1 sec per channel, compared to a fraction
 C * when reading from npz files with the same data
+C * See test examples at the end of fetch.py
       subroutine gethjdata (ishotno,lendata,chname,verbose,
      $     opt, outname,outdata,n)
        implicit real (a-h,o-z)

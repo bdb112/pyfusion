@@ -1,49 +1,53 @@
-""" Saves a set of channels (diagnostic) diag_name in local files
-compress_local does an "in-place" compress if True, and if a string,
-puts the result in the local directory compress_local. The compress_local option
+""" Saves a channel or set of channels (diagnostic) diag_name in local files
+overwrite_local does an "in-place" compress if True
+local_dir puts the result in that local directory. The compress_local option
 doesn't check if the file is already compressed!
 
 Examples:
 
 # This compresses local data using newer compression methods
-run pyfusion/examples/save_to_local.py shot_list=27233 compress_local=1 diag_name="MP"
-# note the extra quotes on compress_local below, as its default is None
-run examples/save_to_local.py shot_list=18993 'compress_local="/tmp"' diag_name="MP2010"
+run examples/save_to_local.py shot_list=18993 local_dir/tmp diag_name="MP2010"
+At present, only saves if compress_local is true. 
 
-(or in windows  'compress_local="c:/cygwin/tmp"')
 # tuning compression parameters - (this example shows very little difference
-run examples/save_to_local.py shot_number=18993 'compress_local="c:/cygwin/tmp"' diag_name="mirnov_small" save_kwargs='{"delta_encode_signal":True}'
+run examples/save_to_local.py shot_number=18993 'local_dir="c:/cygwin/tmp"' diag_name="mirnov_small" save_kwargs='{"delta_encode_signal":True}'
 
 from the old pyfusion - may need to tidy up
-
+_PYFUSION_TEST_@@local_dir=/tmp/ overwrite_local=True
 """
 import pyfusion
 from pyfusion.data.save_compress import discretise_signal as savez_new
 import pyfusion.utils
 import numpy as np
+import os
 
-_var_default="""
+from pyfusion.utils import process_cmd_line_args
+
+_var_defaults="""
 diag_name = 'SLOW2k'
 diag_name = "MP1"
 dev_name='LHD'
 readback=False
 shot_list=33343  # number or a list
-compress_local=None
+shot_list=[27233]
+compress_local=1
+overwrite_local=False
 save_kwargs = {} 
 prefix=''  #'HeliotronJ_'
+local_dir=''
 """
-exec(_var_default)
-exec(pyfusion.utils.process_cmd_line_args())
+exec(_var_defaults)
+exec(process_cmd_line_args())
 
 
 #s = pyfusion.get_shot(shot_number)
 #s.load_diag(diag_name, savelocal=True, ignorelocal=(compress_local==None), downsample=True)
 
-def getlocalfilename(shot_number, channel_name, local_dir=None):
+def getlocalfilename(shot_number, channel_name, local_dir=''):
     """
     At present, we assume the numpy savez method is used - other save options may be added later
     """
-    if local_dir is None: # default to first path in localdatapath
+    if local_dir == '': # default to first path in localdatapath
         local_dir =  pyfusion.config.get('global', 'localdatapath').split(':')[0]
     return local_dir+'/%d_%s.npz' %(shot_number, channel_name)
 
@@ -59,9 +63,9 @@ else:
 for diag in diag_list:
     diag = prefix+diag
     for shot_number in shot_list:
-        h1=pyfusion.getDevice(dev_name)
-        data=h1.acq.getdata(shot_number,diag)
-
+        dev=pyfusion.getDevice(dev_name)
+        data=dev.acq.getdata(shot_number,diag)
+        
         # I don't believe this test - always true!
 
         if readback:
@@ -79,10 +83,10 @@ for diag in diag_list:
             else: chan_list = data.channels
 
             for (c,chan) in enumerate(chan_list):
-                if is_string_like(compress_local):
+                if local_dir !='':
                     #probably should be chan.config_name here (not chan.name)
                     localfilename = getlocalfilename(
-                        shot_number, chan.config_name, local_dir = compress_local)
+                        shot_number, chan.config_name, local_dir = local_dir)
                 else:
                     localfilename = getlocalfilename(shot_number, chan.config_name)
 
@@ -94,6 +98,9 @@ for diag in diag_list:
                     signal = data.signal
                 else: 
                     signal = data.signal[c]
+
+                if os.path.isfile(localfilename) and not overwrite_local:
+                    raise IOError('file {f} exists'.format(f=localfilename))
 
                 savez_new(signal=signal, timebase=tb, filename=localfilename, 
                           params = np.array(params),

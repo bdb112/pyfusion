@@ -2,6 +2,7 @@
 """ job controller for preprocessing pyfusion flucstruc data.  Replaces 
 do_range script, so that a nice argument form can be used, and eventually 
 multi-processing.
+_PYFUSION_TEST_@@/tmp --shot_range=[27233] --seg_dt=0.01
 """
 from warnings import warn
 import subprocess

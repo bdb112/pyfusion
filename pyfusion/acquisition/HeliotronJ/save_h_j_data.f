@@ -1,5 +1,7 @@
 C This program reads Heliotron-J data, and writes it to a file for reading mainly by IDL 
 C See read_h_j_file.pro
+C Also used for pyfusion reads of config etc.
+C See fetch.py for test example
 C Present behaviour - three args on one line, the file name quoted.
 C [Old It accepts three arguments on separate lines, 
 C the signal name, shot number, and unformatted file name.]
@@ -11,7 +13,8 @@ C the time series data unformatted for speed.
 C the orderinternal to the raw file is 
 C 1/ Rubbish  2/ shot, sig, 3/ SIGNAL::  4/ filname or f 
 C 5/ishotno, isample, tdelay, tsamp  6/ time-series array 7/ Namelist
-c$ g77 -Lcdata test_h_j_data.f -lfdata
+c$ 2015: f77 -Lcdata save_h_j_data.f intel.o libfdata.o -o save_h_j_data
+c$ 2013: g77 -Lcdata test_h_j_data.f -lfdata
 c$ 2013: add option to have no data (to get params easily from idl or python)
 c# timing 2013: pchelio12 fresh shot, nofile DIA135 25/sec MP1 6/sec
 c$ Timing 2009:  (pchelio fresh shot)
@@ -42,18 +45,20 @@ c
 	character*9 sdate
 	character*5 cshot
 c
-		logical fmtted/.false./
+c		logical fmtted/.false./
+		logical fmtted
 c
 	namelist/DATAPARM/ signalnm,modulenm,paneldt,datascl,dataunit,sdate,
      &	stime,tsamp,tdelay,ampgain,sc_max,sc_min,bitzero,
      &	iadc_bit,iampfile,ishotno,ibhv,ibta,ibtb,ibav,ibiv,
      &	ich,isample,iswch,ierror,unf_file
 c
+	fmtted=.false.
 	signalnm='DIA135'
 	write(6,*) 'signalnm,shotno free format'
 	read(5,*) signalnm,ishotno,unf_file
 	write(6,*) signalnm,ishotno,unf_file
-	fmtted = ((len_trim(unf_file) .le. 1) .and. (unf_file .eq. "f")) ! sometimes null strings are too hard
+	fmtted = ((ltrim(unf_file) .le. 1) .and. (unf_file .eq. "f")) ! sometimes null strings are too hard
 c	print *, len_trim(unf_file), fmtted
 c	ishotno=7985
 	iswch=1
@@ -136,3 +141,37 @@ c
 c
 	return
 	end
+* code grabbed from net to replace len_trim - ideally we can find len_trim again
+*- returns the length of the non-blank part of a string
+* code is mostly F77 except for longer than 6 character names 
+* Copyright 1999, Kevin G. Rhoads -- 
+* Licensed under GNU Public License, v2.0 or later  OR 
+* under GNU Library License, v2.0 or later at the 
+* discretion of the user 
+* N.B. - not optimized 
+*---------------------------------------------------------------------- 
+      integer function LTRIM(ASTRING) 
+      character*(*) ASTRING 
+      integer i,j,len 
+      character*1 char,space 
+      intrinsic len,char 
+*----- 
+      space = ' ' 
+      TRIMMED_LENGTH = len(ASTRING) 
+      j = TRIMMED_LENGTH 
+      do 1 i = TRIMMED_LENGTH,2,-1 
+* check for NUL terminator within string (useful in mixed Fortran/C coding) 
+          if (ASTRING(i:i).eq.char(0)) then 
+                  j = i - 1 
+                  goto 2 
+              endif 
+* check for non-blank  -- could be modified to test for CR, LF or CR/LF 
+          if (ASTRING(i:i).ne.space) then 
+                  j = i 
+                  goto 2 
+              endif 
+    1 CONTINUE 
+    2 continue 
+      TRIMMED_LENGTH = j 
+      return 
+      end 

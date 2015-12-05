@@ -2,6 +2,7 @@ from numpy import sin, cos, shape, average, array, max, abs, mod
 import os
 import pyfusion
 import subprocess
+from pyfusion.debug_ import debug_
 from time import sleep
 
 """ get data from the "routine diagnostics" server, using igetfile
@@ -14,6 +15,8 @@ The data comes in a text form, self describing.  The class "igetfile"
   in the class version is nicer than for the procedural version.
 
 """ 
+
+colorset = ('b,g,r,c,m,y,k,orange,purple,lightgreen,gray,brown,teal,tan'.split(','))
 def call_igetfile(path_to_igetfile, filename):
     """ run the igetfile program, returning the filename, which can be
     used for later deleting.
@@ -113,10 +116,12 @@ class igetfile():
         if pyfusion.DEBUG>0: print('shape is {s}'.format(s=shape(dim)))
         if len(shape(dim))==0:
             for (p,name) in enumerate(self.vardict['ValName']):
+                col, lin = divmod(p, len(linest))
                 if ch==-1 or ch==(p+1):
                     ax.plot(self.data[:,0], self.data[:,p+1],
                             label="{0}:{1}".format(name, self.shot),
-                            linestyle=linest[(p/8) % (len(linest))], 
+                            linestyle=linest[lin], 
+                            color = colorset[col % len(colorset)],
                             *args, **kwargs)
                 
         else:  # 2 dim plots
@@ -186,6 +191,18 @@ def read_igetfile(filename=None, verbose=0, plot=True, hold=True, debug=0, quiet
     from StringIO import StringIO
 
     if filename is None: filename = '/home/bdb112/python/mmw@50623.dat'
+    if os.path.split(filename)[0] == '':
+        pref,rest = filename.split('@')
+        filename = os.path.join(pyfusion.config.get('global','local_diag_path'), pref, filename)
+        # look for igetfile data in a few places
+        debug_(max(pyfusion.DEBUG, debug), level=4, key='find_data')
+    for ext in ['', '.gz', '.bz2']:
+        if os.path.isfile(filename+ext):
+            filename += ext
+            break
+    else:  #this goes with the for - if it completes without a break
+        raise IOError('igetfile {f} or .gz, .bz2 not found.'.format(f=filename))
+
     strt = time.time()
 #    print(filename.readlines())
 #    print('asd************8')
@@ -208,11 +225,11 @@ def read_igetfile(filename=None, verbose=0, plot=True, hold=True, debug=0, quiet
             #return([1,2,3,4])
             fbuff=fp.readlines()
             reader='readlines'
-    except Exception, info:
+    except Exception as info:
         if quiet>0: 
             pass
         else:
-            raise IOError('{f} not found: {info}'.format(f=filename,info=info))
+            raise IOError('{f} not found: {info} {a}'.format(f=filename,info=info,a=info.args))
 
     if verbose>0: print ("Used %s" % reader), 
     pinds = [st.upper().find("[PARAMETERS]") for st in fbuff ]
@@ -256,7 +273,7 @@ def read_igetfile(filename=None, verbose=0, plot=True, hold=True, debug=0, quiet
                 print('Error executing [%s]' % (parms[p]))
                
 #        if ValName != None:
-        if vardict.has_key('ValName'):
+        if 'ValName' in vardict:
             if verbose: print('Found %s ' % (ValName))
             found = True
             

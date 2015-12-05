@@ -150,6 +150,13 @@ class TimeseriesData(BaseData):
                                          t=len(timebase)))
         super(TimeseriesData, self).__init__(**kwargs)
 
+    # python3 issue: if I do this, the python 2.7 won't work
+    # if it defines __eq__() but not __hash__(), its instances will not be usable as 
+    # items in hashable collections.  To suppress warning, set __hash__ = None
+    # http://stackoverflow.com/questions/15471333/how-to-eliminate-a-python3-deprecation-warning-for-the-equality-operator
+    #__hash__ = None
+
+
     ## Boyd tried this for fun - seems to work - should check the right way.
     # idea is to access a channel by name from a multiple diagnostic.
     def keys(self):
@@ -262,7 +269,7 @@ class FlucStruc(BaseData):
         """
         phases = np.array([self._get_single_channel_phase(i) for i in range(self.signal.shape[0])])
         debug_(pyfusion.DEBUG, 2, key='_get_dphase')
-        if self.phase_pairs != None:
+        if self.phase_pairs is not None:
             tmp = []
             for a,b in self.phase_pairs:
                 ind_a = self.channels.get_channel_index(a)
@@ -275,7 +282,7 @@ class FlucStruc(BaseData):
         #d_phase_dataset = OrderedDataSet(ordered_by="channel_1.name")
         d_phase_dataset = BaseOrderedDataSet('d_phase_%s' %datetime.now())
         ## append then sort should be faster than ordereddataset.add() [ fewer sorts()]
-        if self.phase_pairs != None:
+        if self.phase_pairs is not None:
             for i,phase_pair in enumerate(self.phase_pairs):
                 ind_a = self.channels.get_channel_index(phase_pair[0])
                 ind_b = self.channels.get_channel_index(phase_pair[1])

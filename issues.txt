@@ -1,3 +1,33 @@
+python3
+Philosopy:  Only aim for 2.6,2.7 compat, make code in 3 idiom as much as poss.,
+
+for //, avoid import division - but use the // op. This will allow bugs to show up in comparing python 2 and 3 output.
+
+for print, only import print_function in cases when the end= feature is needed.
+
+initially have used a little of six, but maybe python-future is more python 3 oriented.
+
+*** // test using -3 is a runtime test, and will miss unexplored branches of if
+
+/home/bdb112/pyfusion/mon121210/pyfusion/pyfusion/data/base.py:75: DeprecationWarning: Overriding __eq__ blocks inheritance of __hash__ in 3.x
+possible solution: __hash__ = None in timebase, but this  requires changing from set to list notation in data.segment()
+
+problem since at least b3d5c
+run pyfusion/examples/gen_fs_bands seg_dt=0.001 time_range=[1,1.5]
+: ValueError('zero mask, passband = [1406.2500000005493, 6847.6562500008931], stopband=[-593.74999999945067, 8847.6562500008931], taper 2',)
+(lots of minus 2s)
+
+
+when importing HeliotronJ/fetch
+No module named 'commands'
+============
+/homea/blackwel/dave/libs/save_h_j_data: error while loading shared libraries: libg2c.so.0: cannot open shared object file: No such file or directory
+==============
+
+need to compile fdata on hj-mhd
+
+==============
+
 2015-11-16:
 error  when load() given after run pyfusion/examples/medium_300.py - new since de2f98 at least
 --> 521         self.da = dd
@@ -5,3 +35,11 @@ error  when load() given after run pyfusion/examples/medium_300.py - new since d
     523         if self.verbose: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
 
 UnboundLocalError: local variable 'dd' referenced before assignment
+
+       modified:   ../../../issues.txt
+        modified:   fetch.py
+        modified:   make_static_param_db.py
+        modified:   ../base.py
+        modified:   ../read_text_pyfusion.py
+        modified:   ../../examples/merge_basic_HJ_diagnostics.py
+

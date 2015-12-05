@@ -1,10 +1,12 @@
 """ Useful functions for manipulating config files."""
 
 
+# Note: python3 changes here were rushed.  Need to think seriously
+#  sequence of changes from each file may be affected
 try:
-    from ConfigParser import NoSectionError
+    from ConfigParser import NoSectionError, NoOptionError
 except ImportError:
-    from configparser import NoSectionError
+    from configparser import NoSectionError, NoOptionError
     
 import pyfusion
     
@@ -112,8 +114,10 @@ def read_config(config_files):
     """
     try:
         existing_database = pyfusion.config.get('global', 'database')
-    except NoSectionError:
+    except (NoOptionError, NoSectionError):
         existing_database = 'None'
+
+    pyfusion.USE_ORM = (existing_database.lower() != 'none')
 
     try:
         # note - history not kept for file objects yet - should be easy to add.
@@ -147,6 +151,7 @@ def read_config(config_files):
         pyfusion.orm_manager.shutdown_orm() 
         if config_database.lower() != 'none':
             pyfusion.orm_manager.load_orm()
+    pyfusion.USE_ORM = (existing_database.lower() != 'none')
 
 def clear_config():
     """Clear pyfusion.config."""

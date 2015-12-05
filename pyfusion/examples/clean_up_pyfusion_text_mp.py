@@ -1,21 +1,40 @@
 """
-(sort(lines[next_good:])==sort(lines[2*next_good-num-1:next_good-1])).all()
+ strip bad lines out of a bunch pyfusion text files, produced b prep_fs etc
 
- strip bad lines out of pyfusion text files.
+
+Example with quotes
+ run pyfusion/examples/clean_up_pyfusion_text_mp.py "fileglob='PF2*7665*1'" MP=3
+Test example (quotes are differernt!
+_PYFUSION_TEST_@@fileglob="glob.glob('PF2*1')[0]" MP=2
+This finds all matching fiels and sends the first one as a glob string
+Note that there is no easy way send more than one this way, apart from all.
+(sort(lines[next_good:])==sort(lines[2*next_good-num-1:next_good-1])).all()
 """
 import bz2
-import StringIO
 import os
 import numpy as np
 import sys
 import glob
+if sys.version>'3,':
+    import io 
+    print('Warning - this runs much slow with the io module - probably needs a rewrite')
+else:
+    import StringIO as io
 
 def clean_up_file(filename, debug = 1):
 
     all_errors=[]
     good_lines = 0
 
-    with bz2.BZ2File(filename) as fd:
+    ext = os.path.splitext(filename)
+    if ext == 'gz':
+        FileReader = gzip.open
+    elif ext == 'bz2':
+        FileReader = bz2.BZ2File
+    else:
+        FileReader = open
+
+    with FileReader(filename) as fd:
         lines=fd.readlines()
 
       # gets the first occurrence of 'Shot'
@@ -67,7 +86,7 @@ def clean_up_file(filename, debug = 1):
     badlines = []
 
     try:
-        dat = np.loadtxt(StringIO.StringIO(''.join(lines[shotline+1:])), 
+        dat = np.loadtxt(io.StringIO(''.join(lines[shotline+1:])), 
                          dtype=fs_dtype, ndmin=1)
         if debug: print('seems OK'),
         fast_read_error = 0
@@ -84,7 +103,7 @@ def clean_up_file(filename, debug = 1):
         last_time = None
         for l in range(shotline+1, num)[::-1]:  # read backwards so we can pop
             try:
-                dat = np.loadtxt(StringIO.StringIO(lines[l]), dtype=fs_dtype, ndmin=1)
+                dat = np.loadtxt(io.StringIO(lines[l]), dtype=fs_dtype, ndmin=1)
                 read_error = 0
                 if this_shot is None:
                     this_shot = dat['shot']
@@ -157,7 +176,7 @@ def clean_up_file(filename, debug = 1):
             filename = newname  # so that a my_move below moves the right thing
 
     # if we get here we should be clean!            
-    da = np.loadtxt(StringIO.StringIO(''.join(lines[shotline+1:])), 
+    da = np.loadtxt(io.StringIO(''.join(lines[shotline+1:])), 
                     dtype=fs_dtype, ndmin=1)                    
     # len(np.shape to guard against file with just one fs - should this be legal?
     if (len(np.shape(da['t_mid']))>0) and (len(da['t_mid'])>1):
@@ -195,18 +214,22 @@ def my_move(filename, subfolder='bad',overwrite=False):
     return(newfullname)
 
 
-_var_default="""
+_var_defaults="""
 debug=1
 baddir = 'bad'
-fileglob = '/mythextra/datamining/PF2_121208/*2'
+fileglob = None  # '/mythextra/datamining/PF2_121208/*2'
 fast = False
 MP = 0
 """
 
-exec(_var_default)
+exec(_var_defaults)
 
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
+
+if fileglob is None:
+    fileglob = '/mythextra/datamining/PF2_121208/*2' 
+    
 
 all_errors=[]
 good_lines = 0
@@ -222,19 +245,17 @@ if MP:
         input = np.sort(glob.glob(fileglob))
 
         results = pool.map(clean_up_file, input)
-        p=open(tm.strftime('%Y%m%d%H%M%S_cleanup_data.pickle'),'w')
+        p=open(tm.strftime('%Y%m%d%H%M%S_cleanup_data.pickle'),'wb')
         pickle.dump(results, p)
         p.close()
-        1/0
+    main()
 else:
 
     for filename in np.sort(glob.glob(fileglob)):
         (good_lines, errors) = clean_up_file(filename)
 
-main()
 
-
-p=open(tm.strftime('%Y%m%d%H%M%S_cleanup_data.pickle'),'w')
+p=open(tm.strftime('%Y%m%d%H%M%S_cleanup_data.pickle'),'wb')
 pickle.dump(all_errors,p)
 
 """

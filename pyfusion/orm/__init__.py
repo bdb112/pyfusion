@@ -12,7 +12,6 @@ class ORMManager(object):
             orm_func(self)
     def setup_session(self):
         db_string = pyfusion.config.get('global', 'database')
-
         if db_string.lower() != 'none':
             from sqlalchemy import create_engine, MetaData
             from sqlalchemy.orm import scoped_session, sessionmaker, clear_mappers
@@ -31,7 +30,7 @@ class ORMManager(object):
 
             # for use in tests
             self.clear_mappers = clear_mappers
-
+            pyfusion.USE_ORM = True;
 
     def load_orm(self):
         self.setup_session()

@@ -7,9 +7,11 @@ python dm/gen_fs.py shot_range=[27233] exception=None
 34 secs with db, but no fs_set.save()
 17 secs to text 86kB - but only 1k fs
 Apr 2013 - checked timing - deepcopy was slowing it down. 32/41 54185 prepfs.py
+_PYFUSION_TEST_@@n_samples=4096 shot_range=[27233]
 """
 import subprocess, sys, warnings
 from pyfusion.utils.utils import warn
+from pyfusion.data.filters import next_nice_number
 from numpy import sqrt, mean, argsort, average, random
 import numpy as np
 import pyfusion
@@ -33,7 +35,7 @@ def timeinfo(message):
     return
     
 
-_var_default="""
+_var_defaults="""
 lhd = pyfusion.getDevice('LHD')
 
 #min_shot = 84000
@@ -56,16 +58,19 @@ max_H=0.97
 info=2
 separate=1
 method='rms'
-
+seg_dt=None
 
 # ids are usually handled by sqlalchemy, without SQL we need to look after them ourselves
 fs_id = 0
 """
-exec(_var_default)
+exec(_var_defaults)
 
 # ideally should be a direct call, passing the local dictionary
 import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
+
+if seg_dt is not None and n_samples is not None:
+    raise ValueError('both n_samples and seg_dt are set!')
 
 count = 0  #  we print the header right before the first data
 
@@ -77,6 +82,10 @@ for shot in shot_range:
     timeinfo('start shot {s}'.format(s=shot))
     try:
         d = lhd.acq.getdata(shot, diag_name)
+        if n_samples is None:
+            n_samples = next_nice_number(seg_dt*d.timebase.sample_freq)
+            print('n_samples set to {n}'.format(n=n_samples))
+
         timeinfo('data read')
         n_channels = len(d.channels)
 
@@ -137,10 +146,10 @@ for shot in shot_range:
 #        subprocess.call(['/bin/rm -f /data/tmpboyd/pyfusion/FMD*%d*' %shot], shell=True)
 #        subprocess.call(['/bin/rm -f /data/tmpboyd/pyfusion/SX8*%d*' %shot], shell=True)
     except exception:
-#set Exception=None to allow traceback to show - it can never happen
+#set exception=None to allow traceback to show - it can never happen
 # otherwise, the warnigns.warn will prevent multiple identical messages
-        warning_msg = str('shot %d not processed: %s' % 
-                          (shot,sys.exc_info()[1].__repr__()))
+        warning_msg = str('shot {sh} not processed: {e}'
+                          . format(sh=shot,e=sys.exc_info()[1].__repr__()))
         warnings.warn(warning_msg,stacklevel=2)
 
 if pyfusion.orm_manager.IS_ACTIVE: 

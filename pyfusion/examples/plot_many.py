@@ -3,7 +3,7 @@
 import pyfusion
 import pylab as pl
 import numpy as np
-from pyfusion import H1_scan_list
+from pyfusion.devices.H1 import H1_scan_list
 
 all_shots = H1_scan_list.get_all_shots()
 

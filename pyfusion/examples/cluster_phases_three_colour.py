@@ -7,6 +7,8 @@ Use the cluster output from density clustering to cluster mode data
 Presently works on the cluster lead (the most common element in the cluster)
 To change cluster lead to the value calculated:
        subset[clinds[cl][0]][:]=cc5[0]
+_PYFUSION_TEST_@@DAfilename='DA81115_sml.npz' clusterfile='ideal_toroidal_modes.npz' cl=6 "sel=arange(11,16)" "csel=range(0,5)"
+'$DA/DA300_384_rms1_b5a_f16_diags.npz'
 
 """
 import pylab as pl
@@ -61,17 +63,17 @@ def overlay_uniform_curve(hst, Nd, peak=1, background=0, colors=['r','g'], debug
     xint = np.linspace(x[0],x[-1],300)  # interpolate x xaxis to 300 points
     lines = []
     if peak:
-        ipeak = argmax(cnt)
+        ipeak = np.argmax(cnt)
         ifit = int(0.5 + ipeak*0.75) # aim to fit before the peak, but high enough that the count is reasonable
         fact = cnt[ifit]/ufn(1,x[ifit],Nd)
-        plot(xint, ufn(fact,xint,Nd),color = 'w', alpha=0.5, **kwdwh)
-        lines.append(plot(xint,  ufn(fact,xint,Nd),color = colors[0], **kwdm))
+        pl.plot(xint, ufn(fact,xint,Nd),color = 'w', alpha=0.5, **kwdwh)
+        lines.append(pl.plot(xint,  ufn(fact,xint,Nd),color = colors[0], **kwdm))
 
     if background:
         #ifit = -1
         fact = np.average(cnt[-4:]/ufn(1,x[-4:],Nd))
-        plot(xint, ufn(fact,xint,Nd),color = 'w', alpha=0.5, **kwdwh)
-        lines.append(plot(xint, ufn(fact,xint,Nd),color = colors[1], **kwdm))
+        pl.plot(xint, ufn(fact,xint,Nd),color = 'w', alpha=0.5, **kwdwh)
+        lines.append(pl.plot(xint, ufn(fact,xint,Nd),color = colors[1], **kwdm))
 
     debug_((pyfusion.DEBUG,debug),1, key='overlay_uniform')    #if debug: 1/0
     background_counts = np.sum(ufn(fact, x, Nd))
@@ -136,8 +138,8 @@ except:
     oldsel = sel
     for k in cldata.keys(): exec("{v}=cldata['{k}']".format(v=k,k=k))
     if np.shape(sel) != np.shape(oldsel) or (sel != oldsel).any(): 
-        warn('sel value tried to change from {o} to {n}'.
-             format(o=oldsel, n=sel))
+        warn('sel value tried to change from {o} to {n} - i.e. cldata has different sel, '
+             .format(o=oldsel, n=sel))
         sel = oldsel
     if csel is not None:
         subset=subset[:,csel]
@@ -156,13 +158,13 @@ for cl in cls:
     start_mem = report_mem(msg='cluster_phases')
 # used to where all at once - but as the distance is most expensive, do
 # shot and freq first
-    w5_shot_freq = np.where((bw(freq,frlow,frhigh)) & (shot==shot))[0]; print(len(w5_shot_freq),len(unique(shot[w5_shot_freq])))
+    w5_shot_freq = np.where((bw(freq,frlow,frhigh)) & (shot==shot))[0]; print(len(w5_shot_freq),len(np.unique(shot[w5_shot_freq])))
     # the [:,sel] below is to avoid gather ops on two indices at once.
     w5=np.where(dists(subset[clinds[cl][0]], phases[w5_shot_freq][:,sel])<d_big)[0]; 
     w5 = w5_shot_freq[w5] # refer back to the original array
 # old "all at once" way
-#    w5=np.where((dists(subset[clinds[cl][0]], phases[:,sel])<d_big) & (bw(freq,frlow,frhigh)) & (shot==shot))[0]; print(len(w5),len(unique(shot[w5])))
-    print(len(w5),len(unique(shot[w5])))
+#    w5=np.where((dists(subset[clinds[cl][0]], phases[:,sel])<d_big) & (bw(freq,frlow,frhigh)) & (shot==shot))[0]; print(len(w5),len(np.unique(shot[w5])))
+    print(len(w5),len(np.unique(shot[w5])))
     ph5=phases[w5]
 
     wc=np.where(dists(subset[clinds[cl][0]], ph5[:,sel])<d_med)[0]
@@ -191,14 +193,14 @@ for cl in cls:
     for (i,ph) in enumerate(decimate(ph5[wc],limit=1000)): pl.plot(ph[sel],'g',linewidth=.01,hold=i>-1)
     if len(wcc)>0: 
         for (i,ph) in enumerate(decimate(ph5[wcc],limit=1000)): pl.plot(ph[sel],'r',linewidth=.01,hold=i>-1)
-    if show_cc: plot(subset[clinds[cl][0]],'y',linewidth=2,label='cluster ')
+    if show_cc: pl.plot(subset[clinds[cl][0]],'y',linewidth=2,label='cluster ')
     # averaging will mess up if two pi jumps happen - average relative 
     # to assumed cluster centre and then shift back by that amount
     data_cent = (subset[clinds[cl][0]] 
                  + np.average(modtwopi(ph5[:,sel]-
                                        subset[clinds[cl][0]], 
                                        offset=0) ,0))
-    if show_dc: plot(data_cent,'--c',linewidth=2, label='data_centroid')
+    if show_dc: pl.plot(data_cent,'--c',linewidth=2, label='data_centroid')
     cc5.append(np.average(ph5[:,sel],0))
     pl.legend()
     pl.title(titl)

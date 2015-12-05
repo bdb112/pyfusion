@@ -2,12 +2,23 @@ import MDSplus as MDS
 #import pyfusion as pf
 ### Note; this does not use pyfusion!!  H1 only
 import numpy as np
-from signal_processing import smooth_n
+try: # this code doesn't need pyfusion - try the standalone version
+    # actually, the standalone version is the only one worht running.....
+    #_PYFUSION_TEST_@Skip
+    from signal_processing import smooth_n
+    from subplots import subplots
+    from bdb_utils import process_cmd_line_args
+    special_kws=dict(apportion=[2.4,1,1])
+except ImportError:
+    from pyfusion.data.signal_processing import smooth
+    from matplotlib.pyplot import subplots
+    from pyfusion.utils import process_cmd_line_args
+    special_kws={}
 import matplotlib.pyplot as pt
 import matplotlib.mlab as mlab
 from matplotlib.font_manager import FontProperties
 import os
-from subplots import subplots
+
 
 from warnings import warn
 #import HMA_funcs
@@ -49,8 +60,6 @@ desc=dict(shot_list = range(78474,78540), comment='Aug15 5MHz sweeping', brief='
 #! desc=dict(shot_list = range(76274,76345), comment='Sep27_7MHz', brief='Sep27_7MHz', tree='mirnov')
 desc=dict(shot_list = range(86508,86518), comment='1 Jul 2015 5MHz power_scans', brief='Powscan_2015_07_01', tree='mirnov')
 
-
-from bdb_utils import process_cmd_line_args
 
 fft_length = 10242
 NFFT_ne =  256*8
@@ -135,8 +144,7 @@ for shot in shot_list:
 
         nr = 1+include_ne+include_ne_spec+include_amplifier_sig
         
-        (fig, ax) = subplots(nrows = nr, sharex='all', squeeze=False, 
-                             apportion=[2.4,1,1])#nrows = 2, sharex = 1)
+        (fig, ax) = subplots(nrows = nr, sharex='all', squeeze=False, **special_kws)
 
         rw = 0
         """
@@ -262,8 +270,8 @@ for shot in shot_list:
         #fig.canvas.draw()
         #ax[0].cla()
         print 'success'
-    except exception, reason:
-        print('failed', doing, reason)
+    except exception as reason:
+        print('failed', doing, reason, reason.args)
 
 if base_dir is None:
     # need to fix to allow not quitting.

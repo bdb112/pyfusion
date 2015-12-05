@@ -16,6 +16,9 @@ mds_path_regex = re.compile(
 def get_tree_path(path_string):
      """Use regex to extract mdsplus tree, tag and node from full path"""
      components = mds_path_regex.search(path_string)
+     if components is None:
+          raise ValueError('Unable to parse {p} for tree, node etc'.format(p=path_string))
+
      ret_dict = {'tree':components.group('tree'),
                  'tagname':components.group('tagname'),
                  'nodepath':components.group('nodepath')}

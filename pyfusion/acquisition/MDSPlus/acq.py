@@ -4,7 +4,7 @@ from pyfusion.acquisition.base import BaseAcquisition
 try:
     import MDSplus
 except:
-    print "MDSplus python package not found"
+    print("MDSplus python package not found")
 
 class MDSPlusAcquisition(BaseAcquisition):
     """Acquisition class for MDSplus data systems.

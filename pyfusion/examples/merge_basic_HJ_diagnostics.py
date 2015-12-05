@@ -106,18 +106,18 @@ for shot in shot_list:
               basic_data.update({'flat_level': flat_level})
 
           good_shots.append(shot)
-       except exception, details:		
+       except exception as details:		
           missing_shots.append(shot)
           basic_data={}
-          pyfusion.logging.warning("shot {s} not processed for diags, {info}"
-                          .format(s=shot, info=details))
+          pyfusion.logging.warning("shot {s} not processed for diags, {info} {args}"
+                                   .format(s=shot, info=details, args=details.args))
 
        if basic_data != {}:
            #bsign = np.sign(basic_data['b_0'][0])  # no need to correct so far
            # not used yet - maybe use for phases.
            for key in basic_data.keys():
                if debug>0: print(key)
-               if dd.has_key(key): 
+               if key in dd:
                    ctr += 1
                    if np.mod(ctr,10) == 0: 
                        print('\nMerging in key {0} {1}'.format(key, shot)),

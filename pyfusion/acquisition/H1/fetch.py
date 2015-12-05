@@ -1,10 +1,11 @@
 """Subclass of MDSplus data fetcher to grab additional H1-specific metadata."""
-
+import pyfusion
 from pyfusion.acquisition.MDSPlus.fetch import MDSPlusDataFetcher, get_tree_path
 import pyfusion.acquisition.MDSPlus.h1ds as mdsweb
 from pyfusion.data.timeseries import TimeseriesData, Signal, Timebase
 from pyfusion.data.base import Coords, Channel, ChannelList, \
     get_coords_for_channel
+import traceback
 
 class H1DataFetcher(MDSPlusDataFetcher):
     """Subclass of MDSplus fetcher to get additional H1-specific metadata."""
@@ -29,7 +30,7 @@ class H1DataFetcher(MDSPlusDataFetcher):
             except:
                 return None
         elif self.fetch_mode == 'http':
-            print "http fetch of k_h disabled until supported by H1DS"
+            print("http fetch of k_h disabled until supported by H1DS")
             return -1.0
             """
             imain2_path_comp = get_tree_path(imain2_path)
@@ -54,5 +55,7 @@ class H1DataFetcher(MDSPlusDataFetcher):
                 isec2 = self.tree.getNode(isec2_path)
                 return float(isec2/imain2)
             except:
+                if pyfusion.DEBUG>0: 
+                    traceback.print_exc()
                 return None
         

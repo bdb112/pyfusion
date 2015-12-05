@@ -85,9 +85,11 @@ def eval_diag(da, inds, diag, debug=0):
         exec('dat='+diag)
         return(None, dat)  # None is good
         
-    except Exception, reason:  # NameError 
-        if debug>0: raise ValueError(diag + ' could not be evaluated', reason)
-        else: return(reason, (diag, diag_stripped))
+    except Exception as reason:  # NameError 
+        str_reason = str('{d} could not be evaluated{r}, {a}'
+                         .format(r=reason, d=diag, a=reason.args))
+        if debug>0: raise ValueError(str_reason)
+        else: return(reason, (str_reason, diag_stripped))
 
 def plot_shot(da, sh=None, ax=None, diags = None, marker=None, extra_diags=None, debug=0, quiet=True, fontsize=None, hold=1, **kwargs):
     """ more flexible - no need to check for errors

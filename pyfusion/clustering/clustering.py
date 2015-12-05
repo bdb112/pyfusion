@@ -1,6 +1,11 @@
 '''
 SH : 2May2013
+bdb lots of mods 
+test: pyfusion/examples/clusterDA.py
 '''
+
+from __future__ import print_function
+
 import numpy as np
 import matplotlib.pyplot as pt
 import math, time, copy, itertools, multiprocessing, os
@@ -8,7 +13,14 @@ from sklearn import mixture
 from scipy.cluster import vq
 from scipy.stats.distributions import vonmises
 from scipy.stats.distributions import norm
-import cPickle as pickle
+import sys
+if sys.version < "3":
+    import cPickle as pickle
+    izip = itertools.izip
+else:
+    import pickle
+    izip = zip
+
 import scipy.special as spec
 import scipy.optimize as opt
 
@@ -104,14 +116,14 @@ def compare_several_clusters(clusters, pub_fig = 0, alpha = 0.05,decimation=10, 
     reference_cluster = clusters[0]
     clusters1 = list(set(reference_cluster.cluster_assignments))
     averages = np.average(reference_cluster.cluster_details["EM_VMM_kappas"],axis=1)
-    print clusters1
-    print averages
+    print(clusters1)
+    print(averages)
     clusters1 = np.array(clusters1)[averages > kappa_ref_cutoff]
-    print clusters1
+    print(clusters1)
     ordering_list = [clusters1]
     string_list = []
     for test_cluster,cur_label in zip(clusters[1:],labels[1:]):
-        print test_cluster.settings['method']
+        print(test_cluster.settings['method'])
         #clusters1 = list(set(reference_cluster.cluster_assignments))
         clusters2 = list(set(test_cluster.cluster_assignments))
         similarity = np.zeros((len(clusters1),len(clusters2)),dtype=int)
@@ -121,9 +133,9 @@ def compare_several_clusters(clusters, pub_fig = 0, alpha = 0.05,decimation=10, 
                 #similarity[i,j]=np.sum(cluster2.cluster_assignments[tmp1]==c2)
                 similarity[i,j]=np.sum((reference_cluster.cluster_assignments==c1) * (test_cluster.cluster_assignments==c2))
                 # np.sum((cluster1.cluster_assignments==c1) == (cluster2.cluster_assignments==c2))
-        print '    %7s'%('clust') + ''.join(['%7d'%j2 for j1,j2 in enumerate(clusters2)])
+        print('    %7s'%('clust') + ''.join(['%7d'%j2 for j1,j2 in enumerate(clusters2)]))
         for i,clust_num in enumerate(clusters1):
-            print 'ref %7d'%(clust_num,) + ''.join(['%7d'%j for j in similarity[i,:]])
+            print('ref %7d'%(clust_num,) + ''.join(['%7d'%j for j in similarity[i,:]]))
             #print '%5d'.join(map(int, similarity[i,:]))
         tmp1 = float(np.sum(np.max(similarity,axis=1)))
         data_points = len(reference_cluster.cluster_assignments)
@@ -139,20 +151,20 @@ def compare_several_clusters(clusters, pub_fig = 0, alpha = 0.05,decimation=10, 
         for i in range(similarity.shape[0]):
             index = np.argmax(similarity)
             row_index, col_index = np.unravel_index(similarity.argmax(), similarity.shape)
-            print col_index, row_index
+            print(col_index, row_index)
             #col_index = index %similarity.shape[0]
             #row_index = index/similarity.shape[0]
             order[row_index] = col_index
             similarity[row_index,:]=0
             similarity[:,col_index]=0
-            print order
+            print(order)
         ordering_list.append(order)
     n_plots = len(clusters)
     ncols = 2
     nrows = n_plots/2
     if (n_plots - (nrows * ncols))>0.01: nrows+=1
-    print n_plots, ncols, nrows
-    print clusters
+    print(n_plots, ncols, nrows)
+    print(clusters)
     fig, ax = pt.subplots(ncols=ncols,nrows=nrows, sharex = 'all', sharey = 'all')
     ax = ax.flatten()
     if pub_fig:
@@ -162,10 +174,10 @@ def compare_several_clusters(clusters, pub_fig = 0, alpha = 0.05,decimation=10, 
     instance_array = reference_cluster.feature_obj.instance_array % (2.*np.pi)
     instance_array[instance_array>np.pi]-=(2.*np.pi)
     print('####################')
-    for i in string_list: print i
+    for i in string_list: print(i)
     print('####################')
     for test_cluster, cur_ax, order, index in zip(clusters,ax, ordering_list, range(len(ordering_list))):
-        print 'hello', order
+        print('hello', order)
         cluster_list = list(set(test_cluster.cluster_assignments))
         n_dimensions = instance_array.shape[1]
         if (colours is None) or (markers is None):
@@ -219,9 +231,9 @@ def compare_two_cluster_results(cluster1, cluster2):
             #similarity[i,j]=np.sum(cluster2.cluster_assignments[tmp1]==c2)
             similarity[i,j]=np.sum((cluster1.cluster_assignments==c1) * (cluster2.cluster_assignments==c2))
             # np.sum((cluster1.cluster_assignments==c1) == (cluster2.cluster_assignments==c2))
-    print '%7s'%('clust') + ''.join(['%7d'%j2 for j1,j2 in enumerate(clusters2)])
+    print('%7s'%('clust') + ''.join(['%7d'%j2 for j1,j2 in enumerate(clusters2)]))
     for i,clust_num in enumerate(clusters1):
-        print '%7d'%(clust_num,) + ''.join(['%7d'%j for j in similarity[i,:]])
+        print('%7d'%(clust_num,) + ''.join(['%7d'%j for j in similarity[i,:]]))
         #print '%5d'.join(map(int, similarity[i,:]))
     best_match_for_c1 = np.argmax(similarity,axis=1)
     best_match_for_c2 = np.argmax(similarity,axis=0)
@@ -307,11 +319,11 @@ def convert_DA_file(filename, correspondence=default_correspondence, debug=1, li
     else:
         dd = {}
     print('corr_dict={}'.format(corr_dict))    
-    for k in ddin.keys():
-        if corr_dict.has_key(k):
+    for k in list(ddin.keys()):
+        if k in list(corr_dict):
             dd.update({corr_dict[k]:ddin.pop(k)})
 
-    if dd.has_key('freq'): dd['freq'] = 1000*np.array(dd['freq'])
+    if 'freq' in dd: dd['freq'] = 1000*np.array(dd['freq'])
     misc_data = dd
     return(inst_arr, misc_data)
 
@@ -408,7 +420,7 @@ class feature_object():
 
     def print_cluster_details(self,):
         for i,clust in enumerate(self.clustered_objects):
-            print i, clust.settings
+            print(i, clust.settings)
             
 
         
@@ -468,7 +480,7 @@ class clustering_object():
             instance_array2 = modtwopi(self.feature_obj.instance_array, offset=0)
             max_lim = -1*2.*np.pi; min_lim = (-3.*2.*np.pi)
             total_phase = np.sum(instance_array2,axis=1)
-            print np.max(total_phase), np.min(total_phase)
+            print(np.max(total_phase), np.min(total_phase))
             total_phase = np.clip(total_phase,min_lim, max_lim)
         for cluster in cluster_list:
             current_items = self.cluster_assignments==cluster
@@ -505,7 +517,7 @@ class clustering_object():
             instance_array2 = modtwopi(self.feature_obj.instance_array, offset=0)
             max_lim = -1*2.*np.pi; min_lim = (-3.*2.*np.pi)
             total_phase = np.sum(instance_array2,axis=1)
-            print np.max(total_phase), np.min(total_phase)
+            print(np.max(total_phase), np.min(total_phase))
             total_phase = np.clip(total_phase,min_lim, max_lim)
         for cluster in cluster_list:
             current_items = self.cluster_assignments==cluster
@@ -546,7 +558,7 @@ class clustering_object():
             cluster_mu = self.cluster_details['EM_VMM_means']
             cluster_kappa = self.cluster_details['EM_VMM_kappas']
         except KeyError:
-            print 'EM_VMM cluster details not available - calculating them'
+            print('EM_VMM cluster details not available - calculating them')
             self.fit_vonMises()
         cluster_mu = self.cluster_details['EM_VMM_means']
         cluster_kappa = self.cluster_details['EM_VMM_kappas']
@@ -623,7 +635,7 @@ class clustering_object():
             cluster_mu = self.cluster_details['EM_VMM_means']
             cluster_kappa = self.cluster_details['EM_VMM_kappas']
         except KeyError:
-            print 'EM_VMM cluster details not available - calculating them'
+            print('EM_VMM cluster details not available - calculating them')
             self.fit_vonMises()
         cluster_mu = self.cluster_details['EM_VMM_means']
         cluster_kappa = self.cluster_details['EM_VMM_kappas']
@@ -645,10 +657,10 @@ class clustering_object():
                 tmp = ax[i].plot(x,cluster_sum,'-',linewidth=2)
             else:
                 tmp = ax[i].plot(x,cluster_sum,'-',linewidth=4)
-            print '{area},'.format(area = np.sum(cluster_sum*(x[1]-x[0]))),
+            print('{area},'.format(area = np.sum(cluster_sum*(x[1]-x[0]))), end=' ')
             ax[i].text(label_loc[0], label_loc[1],r'$\Delta \psi_%d$ '%(dimension+1,) + extra_txt_labels, fontsize = 8)#,bbox=dict(facecolor='white', alpha=0.5))
             ax[i].locator_params(nbins=7)
-        print ''
+        print('')
         if pub_fig:
             ax[0].set_xlim([-np.pi, np.pi])
             if ylim!=None:
@@ -727,8 +739,8 @@ class clustering_object():
                 tmp = ax[i].plot(x,cluster_sum,'-',linewidth=2)
             else:
                 tmp = ax[i].plot(x,cluster_sum,'-',linewidth=4)
-            print '{area},'.format(area = np.sum(cluster_sum*(x[1]-x[0]))),
-        print ''
+            print('{area},'.format(area = np.sum(cluster_sum*(x[1]-x[0]))), end=' ')
+        print('')
         if pub_fig:
             ax[0].set_xlim([-np.pi, np.pi])
             fig.text(0.5, 0.01, 'Amp', ha='center', va='center', fontsize = 10)
@@ -808,7 +820,7 @@ class clustering_object():
             fig_kh.set_figwidth(8.48*cm_to_inch)
             fig_kh.set_figheight(8.48*0.8*cm_to_inch)
         for ax_loc,(dim1,dim2) in enumerate(dims):
-            print dim1, dim2
+            print(dim1, dim2)
             counter = 0
             for i,cluster in enumerate(cluster_list):
                 if np.average(self.cluster_details["EM_VMM_kappas"][i,:])>kappa_ave_cutoff:
@@ -843,13 +855,13 @@ class clustering_object():
         '''
         # autodecimation has problems with fewer than 5000 points
         npts = len(self.cluster_assignments)
-        n1 = npts/max(npts/decimation,1) # assume decimation is desired no
-        n2 = npts/decimation             # assume it is the reduction factor
+        n1 = npts//max(npts//decimation,1) # assume decimation is desired no
+        n2 = npts//decimation             # assume it is the reduction factor
         #print(n1,n2)
 
-        decimation = max(1,npts/max(n1, n2))
+        decimation = max(1,npts//max(n1, n2))
 
-        if npts/decimation < 500:
+        if npts//decimation < 500:
             print('decimation of {d} is probably too high for {n} points'.
                   format(d=decimation, n=npts))
 
@@ -927,7 +939,7 @@ class clustering_object():
             if np.sum(current_items)>10:
                 #tmp = (np.abs(self.feature_obj.misc_data_dict['mirnov_data'][current_items,:]).T / np.abs(self.feature_obj.misc_data_dict['mirnov_data'][current_items,0])).T
                 tmp = np.fft.fft(self.feature_obj.misc_data_dict['mirnov_data'][current_items,:])
-                print np.max(np.abs(tmp),axis=1).shape
+                print(np.max(np.abs(tmp),axis=1).shape)
                 tmp = ((np.abs(tmp).T)/np.max(np.abs(tmp),axis=1)).T
                 ax[cluster].plot(np.abs(tmp[::decimation,:]).T,'k-',linewidth=0.05)
         fig.subplots_adjust(hspace=0, wspace=0,left=0.05, bottom=0.05,top=0.95, right=0.95)
@@ -1044,9 +1056,9 @@ class clustering_object():
         marker_list = ['o' for i in colour_list]
         marker_list.extend(['d' for i in colour_list])
         colour_list.extend(colour_list)
-        print 'hello'
+        print('hello')
         while len(colour_list)< len(cluster_list):
-            print 'hello'
+            print('hello')
             colour_list.extend(colour_list)
             marker_list.extend(marker_list)
         for i,cluster in enumerate(cluster_list):
@@ -1055,17 +1067,17 @@ class clustering_object():
                 scatter_data = misc_data_dict[freq_plot_item][current_items]/1000
             else:
                 scatter_data = misc_data_dict[freq_plot_item][current_items]*np.sqrt(misc_data_dict['ne{ne}'.format(ne=sqrtne)][current_items])
-                print 'scaling by ne'
+                print('scaling by ne')
             if np.sum(current_items)>10:
                 if color_by_cumul_phase == 1:
-                    print 'hello instance', cluster
+                    print('hello instance', cluster)
                     ax[0].scatter((misc_data_dict[kh_plot_item][current_items]), scatter_data, s=marker_size, c=total_phase[current_items], vmin = min_lim, vmax = max_lim, marker='o', cmap='jet', norm=None, alpha=0.05)
                 elif color_by_cumul_phase ==0:
                     ax[0].scatter((misc_data_dict[kh_plot_item][current_items]), scatter_data,s=marker_size, c=colour_list[i], marker=marker_list[i], cmap=None, norm=None, alpha=0.05,zorder=0,rasterized=True)
-                    print 'hello, no instance', cluster
+                    print('hello, no instance', cluster)
                 elif color_by_cumul_phase == 2:
                     ax[0].scatter((misc_data_dict[kh_plot_item][current_items]), scatter_data,s=marker_size, c='k', marker='o', cmap=None, norm=None, alpha=0.05,zorder=0,rasterized=True)
-                    print 'hello, no instance', cluster
+                    print('hello, no instance', cluster)
         if plot_alfven_lines:
             plot_alfven_lines_func(ax[0])
         ax[-1].set_xlim([0.201,0.99])
@@ -1147,12 +1159,12 @@ class clustering_object():
     def cluster_probabilities(self,):
         tmp = np.max(self.cluster_details['zij'],axis=1)
         tmp1 = np.sum(self.cluster_details['zij'],axis=1)
-        print 'best prob: {best_prob:.3f}, worst_prob: {worst_prob:.3f}, max row sum: {max_row:.2f}, min row sum: {min_row:.2f}'.format(best_prob = np.max(tmp), worst_prob=np.min(tmp), max_row=np.max(tmp1), min_row=np.min(tmp1))
+        print('best prob: {best_prob:.3f}, worst_prob: {worst_prob:.3f}, max row sum: {max_row:.2f}, min row sum: {min_row:.2f}'.format(best_prob = np.max(tmp), worst_prob=np.min(tmp), max_row=np.max(tmp1), min_row=np.min(tmp1)))
         n_clusters = len(list(set(self.cluster_assignments)))
         fig, ax = make_grid_subplots(n_clusters, sharex = 'all', sharey = 'all')
         for i in list(set(self.cluster_assignments)):
             curr_probs = tmp[self.cluster_assignments==i]
-            print 'cluster {clust}, min prob {min:.2f}, max prob {max:.2f}, mean prob {mean:.2f}, std dev {std:.2f}'.format(clust = i, min = np.min(curr_probs), max = np.max(curr_probs), mean = np.mean(curr_probs), std= np.std(curr_probs))
+            print('cluster {clust}, min prob {min:.2f}, max prob {max:.2f}, mean prob {mean:.2f}, std dev {std:.2f}'.format(clust = i, min = np.min(curr_probs), max = np.max(curr_probs), mean = np.mean(curr_probs), std= np.std(curr_probs)))
             ax[i].hist(curr_probs, bins=300)
         fig.canvas.draw(); fig.show()
 
@@ -1177,7 +1189,7 @@ class clusterer_wrapper(clustering_object):
     '''
     def __init__(self, feature_obj, method='k-means', **kwargs):
         self.feature_obj = feature_obj
-        print 'kwargs', kwargs
+        print('kwargs', kwargs)
 
         #Default settings are declared first, which are overwritten by kwargs
         #if appropriate- this is for record keeping of all settings that are used
@@ -1208,15 +1220,15 @@ class clusterer_wrapper(clustering_object):
         self.settings = default_settings[method]
         self.settings.update(kwargs)
         cluster_func = cluster_funcs[method]
-        print method, self.settings
+        print(method, self.settings)
         if cluster_func_class[method]=='func':
-            print 'func based...'
+            print('func based...')
             if method!='EM_VMM_GMM':
                 self.cluster_assignments, self.cluster_details = cluster_func(self.feature_obj.instance_array, **self.settings)
             else:
                 self.cluster_assignments, self.cluster_details = cluster_func(self.feature_obj.instance_array, self.feature_obj.misc_data_dict['mirnov_data'], **self.settings)
         else:
-            print 'class based...'
+            print('class based...')
             tmp = cluster_func(self.feature_obj.instance_array, **self.settings)
             self.cluster_assignments, self.cluster_details = tmp.cluster_assignments, tmp.cluster_details
         self.settings['method']=method
@@ -1228,7 +1240,7 @@ def show_covariances(gmm_covars_tmp, clim=None,individual=None,fig_name=None):
     im = []
     for i in range(gmm_covars_tmp.shape[0]):
         im.append(ax[i].imshow(np.abs(gmm_covars_tmp[i,:,:]),aspect='auto', interpolation='nearest'))
-        print im[-1].get_clim()
+        print(im[-1].get_clim())
         if clim is None:
             im[-1].set_clim([0, im[-1].get_clim()[1]*0.5])
         else:
@@ -1266,15 +1278,15 @@ def show_covariances(gmm_covars_tmp, clim=None,individual=None,fig_name=None):
 
 ##################Clustering wrappers#########################
 def EM_GMM_clustering(instance_array, n_clusters=9, sin_cos = 0, number_of_starts = 10, show_covariances = 0, clim=None, covariance_type='diag'):
-    print 'starting EM-GMM algorithm from sckit-learn, k=%d, retries : %d, sin_cos = %d'%(n_clusters,number_of_starts,sin_cos)
+    print('starting EM-GMM algorithm from sckit-learn, k=%d, retries : %d, sin_cos = %d'%(n_clusters,number_of_starts,sin_cos))
     if sin_cos==1:
-        print '  using sine and cosine of the phases'
+        print('  using sine and cosine of the phases')
         sin_cos_instances = np.zeros((instance_array.shape[0],instance_array.shape[1]*2),dtype=float)
         sin_cos_instances[:,::2]=np.cos(instance_array)
         sin_cos_instances[:,1::2]=np.sin(instance_array)
         input_data = sin_cos_instances
     else:
-        print '  using raw phases'
+        print('  using raw phases')
         input_data = instance_array
     gmm = mixture.GMM(n_components=n_clusters,covariance_type=covariance_type,n_init=number_of_starts)
     gmm.fit(input_data)
@@ -1287,7 +1299,7 @@ def EM_GMM_clustering(instance_array, n_clusters=9, sin_cos = 0, number_of_start
         im = []
         for i in range(gmm_covars_tmp.shape[0]):
             im.append(ax[i].imshow(np.abs(gmm_covars_tmp[i,:,:]),aspect='auto'))
-            print im[-1].get_clim()
+            print(im[-1].get_clim())
             if clim is None:
                 im[-1].set_clim([0, im[-1].get_clim()[1]*0.5])
             else:
@@ -1312,9 +1324,9 @@ def k_means_clustering(instance_array, n_clusters=9, sin_cos = 1, number_of_star
     SH: 7May2013
     '''
     from sklearn.cluster import KMeans
-    print 'starting kmeans algorithm, k=%d, retries : %d, sin_cos = %d'%(n_clusters,number_of_starts,sin_cos)
+    print('starting kmeans algorithm, k=%d, retries : %d, sin_cos = %d'%(n_clusters,number_of_starts,sin_cos))
     if sin_cos==1:
-        print '  using sine and cosine of the phases'
+        print('  using sine and cosine of the phases')
         sin_cos_instances = np.zeros((instance_array.shape[0],instance_array.shape[1]*2),dtype=float)
         sin_cos_instances[:,::2]=np.cos(instance_array)
         sin_cos_instances[:,1::2]=np.sin(instance_array)
@@ -1322,18 +1334,18 @@ def k_means_clustering(instance_array, n_clusters=9, sin_cos = 1, number_of_star
         #code_book,distortion = vq.kmeans(sin_cos_instances, n_clusters,iter=number_of_starts)
         #cluster_assignments, point_distances = vq.vq(sin_cos_instances, code_book)
     else:
-        print '  using raw phases'
+        print('  using raw phases')
         input_array = instance_array
         #code_book,distortion = vq.kmeans(instance_array, n_clusters,iter=number_of_starts)
         #cluster_assignments, point_distances = vq.vq(instance_array, code_book)
     #pickle.dump(multiple_run_results,file(k_means_output_filename,'w'))
     if use_scikit:
-        print 'using scikit learn'
+        print('using scikit learn')
         tmp = KMeans(init='k-means++', n_clusters=n_clusters, n_init = number_of_starts, n_jobs=1, random_state = seed)
         cluster_assignments = tmp.fit_predict(input_array)
         code_book = tmp.cluster_centers_
     else:
-        print 'using vq from scipy'
+        print('using vq from scipy')
         code_book,distortion = vq.kmeans(input_array, n_clusters,iter=number_of_starts)
         cluster_assignments, point_distances = vq.vq(input_array, code_book)
     if sin_cos:
@@ -1524,7 +1536,7 @@ def _k_means_p_single_seed(k, seed, instance_array, distance_calc, convergence_d
         centroids = copy.copy(new_centroids)
         if current_iteration >= 2:
             curr_diff = np.abs(q_list[-1] - q_list[-2])
-        print 'pid : %d, iteration : %3d, convergence : %10.3f, q_diff : %10.4f, q_tot : %10.2f, times : %5.3fs %.3fs %.3fs'%(os.getpid(), current_iteration, convergence[-1], curr_diff, q_list[-1], distance_time-start_time, centroid_time-distance_time, time.time() - start_time)
+        print('pid : %d, iteration : %3d, convergence : %10.3f, q_diff : %10.4f, q_tot : %10.2f, times : %5.3fs %.3fs %.3fs'%(os.getpid(), current_iteration, convergence[-1], curr_diff, q_list[-1], distance_time-start_time, centroid_time-distance_time, time.time() - start_time))
     return centroids, cluster_assignments, q_list[-1]
 
 def _k_means_p_multiproc_wrapper(arguments):
@@ -1533,7 +1545,7 @@ def _k_means_p_multiproc_wrapper(arguments):
 
     SH: 8May2013
     '''
-    print 'started wrapper'
+    print('started wrapper')
     return _k_means_p_single_seed(*arguments)
 
 def k_means_periodic(instance_array, n_clusters = 9, number_of_starts = 10, n_cpus=1, distance_calc = 'euclidean',convergence_diff_cutoff = 0.2, n_iterations = 40, decimal_roundoff=2,seed_list=None, **kwargs):
@@ -1547,22 +1559,22 @@ def k_means_periodic(instance_array, n_clusters = 9, number_of_starts = 10, n_cp
     instance_array = np.round(np.array(instance_array),decimals = decimal_roundoff)
     #ensure that the instances are are still [0,2pi)
     instance_array = instance_array % (2.*np.pi)
-    print np.max(instance_array)>(2.*np.pi), np.min(instance_array)<0
+    print(np.max(instance_array)>(2.*np.pi), np.min(instance_array)<0)
     #prepare seeds if they weren't provided
     if seed_list is None:
         seed_list = map(int, np.round(np.random.rand(number_of_starts)*100.))
     multiple_run_results = {}; q_val_list = []
     if n_cpus>1:
         pool_size = n_cpus
-        print '  pool size :', pool_size
+        print('  pool size :', pool_size)
         pool = multiprocessing.Pool(processes=pool_size)
         results = pool.map(_k_means_p_multiproc_wrapper, 
-                           itertools.izip(itertools.repeat(k), seed_list, itertools.repeat(instance_array),
+                           izip(itertools.repeat(k), seed_list, itertools.repeat(instance_array),
                                           itertools.repeat(distance_calc), itertools.repeat(convergence_diff_cutoff),
                                           itertools.repeat(n_iterations)))
-        print '  closing pool and waiting for pool to finish'
+        print('  closing pool and waiting for pool to finish')
         pool.close(); pool.join() # no more tasks
-        print '  pool finished'
+        print('  pool finished')
     else:
         results = []
         for seed in seed_list:
@@ -1576,9 +1588,9 @@ def k_means_periodic(instance_array, n_clusters = 9, number_of_starts = 10, n_cp
         multiple_run_results[seed_list[i]]['q_val'] = results[i][2]
         q_val_list.append(results[i][2])
     #pick out the best answer from the runs
-    print q_val_list, np.argmin(q_val_list)
+    print(q_val_list, np.argmin(q_val_list))
     seed_best = seed_list[np.argmin(q_val_list)]
-    print 'Best seed {seed}'.format(seed=seed_best)
+    print('Best seed {seed}'.format(seed=seed_best))
     cluster_details = {'k_means_periodic_means':multiple_run_results[seed_best]['centroids'], 'k_means_periodic_q_val':multiple_run_results[seed_best]['q_val']}
     return multiple_run_results[seed_best]['cluster_assignments'], cluster_details
 
@@ -1590,7 +1602,7 @@ def _EM_VMM_check_convergence(mu_list_old, mu_list_new, kappa_list_old, kappa_li
 def _EM_VMM_maximise_single_cluster(input_arguments):
     cluster_ident, instance_array, assignments = input_arguments
     current_datapoints = (assignments==cluster_ident)
-    print os.getpid(), 'Maximisation step, cluster:%d, dimension:'%(cluster_ident,),
+    print(os.getpid(), 'Maximisation step, cluster:%d, dimension:'%(cluster_ident,), end=' ')
     mu_list_cluster = []
     kappa_list_cluster = []
     n_dimensions = instance_array.shape[1]
@@ -1605,7 +1617,7 @@ def _EM_VMM_maximise_single_cluster(input_arguments):
         success = 1
     else:
         success = 0;mu_list_cluster = []; kappa_list_cluster = []
-    print ''
+    print('')
     return np.array(mu_list_cluster), np.array(kappa_list_cluster),cluster_ident,success
 
 def kappa_guess_func(kappa,R_e):
@@ -1694,10 +1706,10 @@ def _EM_VMM_maximisation_step_hard(mu_list, kappa_list, instance_array, assignme
     kappa_list_old = copy.deepcopy(kappa_list)
     start_time = time.time()
     if n_cpus>1:
-        print 'creating pool map ', n_cpus
+        print('creating pool map ', n_cpus)
         pool = multiprocessing.Pool(processes = n_cpus, maxtasksperchild=2)
-        #output_data = pool.map(_EM_VMM_maximise_single_cluster, itertools.izip(range(n_clusters), itertools.repeat(instance_array),itertools.repeat(assignments)))
-        output_data = pool.map(_EM_VMM_maximise_single_cluster, itertools.izip(range(n_clusters), itertools.repeat(instance_array),itertools.repeat(assignments)))
+        #output_data = pool.map(_EM_VMM_maximise_single_cluster, izip(range(n_clusters), itertools.repeat(instance_array),itertools.repeat(assignments)))
+        output_data = pool.map(_EM_VMM_maximise_single_cluster, izip(range(n_clusters), itertools.repeat(instance_array),itertools.repeat(assignments)))
         pool.close(); pool.join()
         for mu_list_cluster, kappa_list_cluster, cluster_ident, success in output_data:
             if success==1:
@@ -1720,7 +1732,7 @@ def _EM_VMM_maximisation_step_hard(mu_list, kappa_list, instance_array, assignme
                     mu_list[cluster_ident][dim_loc]=loc_tmp
                     kappa_list[cluster_ident][dim_loc]=kappa_tmp
     convergence_mu, convergence_kappa = _EM_VMM_check_convergence(mu_list_old, mu_list, kappa_list_old, kappa_list)
-    print 'maximisation time: %.2f'%(time.time()-start_time)
+    print('maximisation time: %.2f'%(time.time()-start_time))
     return mu_list, kappa_list, convergence_mu, convergence_kappa
 
 
@@ -1821,7 +1833,7 @@ def EM_VMM_clustering(instance_array, n_clusters = 9, n_iterations = 20, n_cpus=
 
     kappa_lookup = np.linspace(0,100,10000)
     bessel_lookup_table = [spec.iv(1,kappa_lookup)/spec.iv(0,kappa_lookup), kappa_lookup]
-    print '...'
+    print('...')
 
     n_dimensions = instance_array.shape[1]
     iteration = 1    
@@ -1830,24 +1842,24 @@ def EM_VMM_clustering(instance_array, n_clusters = 9, n_iterations = 20, n_cpus=
     kappa_list = np.ones((n_clusters,n_dimensions),dtype=float)
     LL_list = []
     if start=='k_means':
-        print 'Initialising clusters using a fast k_means run'
+        print('Initialising clusters using a fast k_means run')
         cluster_assignments, cluster_details = k_means_clustering(instance_array, n_clusters=n_clusters, sin_cos = 1, number_of_starts = 1)
         mu_list, kappa_list, convergence_mu, convergence_kappa = _EM_VMM_maximisation_step_hard(mu_list, kappa_list, instance_array, cluster_assignments, instance_array_complex = instance_array_complex, bessel_lookup_table= bessel_lookup_table, n_cpus=n_cpus)
     elif start=='EM_GMM':
-        print 'Initialising clusters using a EM_GMM run'
+        print('Initialising clusters using a EM_GMM run')
         cluster_assignments, cluster_details = EM_GMM_clustering(instance_array, n_clusters=n_clusters, sin_cos = 0, number_of_starts = 1)
         mu_list, kappa_list, convergence_mu, convergence_kappa = _EM_VMM_maximisation_step_hard(mu_list, kappa_list, instance_array, cluster_assignments, instance_array_complex = instance_array_complex, bessel_lookup_table = bessel_lookup_table, n_cpus=n_cpus)
     else:
-        print 'Initialising clusters using random start points'
+        print('Initialising clusters using random start points')
         mu_list = np.random.rand(n_clusters,n_dimensions)*2.*np.pi - np.pi
         kappa_list = np.random.rand(n_clusters,n_dimensions)*20
         cluster_assignments, L = _EM_VMM_expectation_step_hard(mu_list, kappa_list,instance_array)
         while np.min([np.sum(cluster_assignments==i) for i in range(len(mu_list))])<20:#(instance_array.shape[0]/n_clusters/4):
-            print 'recalculating initial points'
+            print('recalculating initial points')
             mu_list = np.random.rand(n_clusters,n_dimensions)*2.*np.pi - np.pi
             kappa_list = np.random.rand(n_clusters,n_dimensions)*20
             cluster_assignments = _EM_VMM_expectation_step_hard(mu_list, kappa_list,instance_array)
-            print cluster_assignments
+            print(cluster_assignments)
     convergence_record = []
     converged = 0; 
     while (iteration<=n_iterations) and converged!=1:
@@ -1855,13 +1867,13 @@ def EM_VMM_clustering(instance_array, n_clusters = 9, n_iterations = 20, n_cpus=
         cluster_assignments, L = _EM_VMM_expectation_step_hard(mu_list, kappa_list,instance_array)
         LL_list.append(L)
         mu_list, kappa_list, convergence_mu, convergence_kappa = _EM_VMM_maximisation_step_hard(mu_list, kappa_list, instance_array, cluster_assignments,  instance_array_complex = instance_array_complex, bessel_lookup_table = bessel_lookup_table, n_cpus=n_cpus)
-        print 'Time for iteration %d :%.2f, mu_convergence:%.3f, kappa_convergence:%.3f, LL: %.8e'%(iteration,time.time() - start_time,convergence_mu, convergence_kappa,L)
+        print('Time for iteration %d :%.2f, mu_convergence:%.3f, kappa_convergence:%.3f, LL: %.8e'%(iteration,time.time() - start_time,convergence_mu, convergence_kappa,L))
         convergence_record.append([iteration, convergence_mu, convergence_kappa])
         if convergence_mu<0.01 and convergence_kappa<0.01:
             converged = 1
-            print 'Convergence criteria met!!'
+            print('Convergence criteria met!!')
         iteration+=1
-    print 'AIC : %.2f'%(2*(mu_list.shape[0]*mu_list.shape[1])-2.*LL_list[-1])
+    print('AIC : %.2f'%(2*(mu_list.shape[0]*mu_list.shape[1])-2.*LL_list[-1]))
     cluster_details = {'EM_VMM_means':mu_list, 'EM_VMM_kappas':kappa_list, 'EM_VMM_LL':LL_list}
     return cluster_assignments, cluster_details
 
@@ -1895,18 +1907,18 @@ def EM_VMM_clustering_soft(instance_array, n_clusters = 9, n_iterations = 20, n_
     LL_list = []
     zij = np.zeros((instance_array.shape[0],n_clusters),dtype=float)
     if start=='k_means':
-        print 'Initialising clusters using a fast k_means run'
+        print('Initialising clusters using a fast k_means run')
         cluster_assignments, cluster_details = k_means_clustering(instance_array, n_clusters=n_clusters, sin_cos = 1, number_of_starts = 3)
         for i in list(set(cluster_assignments)):
             zij[cluster_assignments==i,i] = 1
         #print zij
-        print 'finished initialising'
+        print('finished initialising')
     elif start=='EM_GMM':
         cluster_assignments, cluster_details = EM_GMM_clustering(instance_array, n_clusters=n_clusters, sin_cos = 1, number_of_starts = 1)
         for i in list(set(cluster_assignments)):
             zij[cluster_assignments==i,i] = 1
     else:
-        print 'going with random option'
+        print('going with random option')
         zij = np.random.random(zij.shape)
     mu_list, kappa_list, pi_hat, convergence_mu, convergence_kappa = _EM_VMM_maximisation_step_soft(mu_list, kappa_list, instance_array, zij, instance_array_complex = instance_array_complex, bessel_lookup_table= bessel_lookup_table, n_cpus=n_cpus)
         
@@ -1924,9 +1936,9 @@ def EM_VMM_clustering_soft(instance_array, n_clusters = 9, n_iterations = 20, n_
         convergence_record.append([iteration, convergence_mu, convergence_kappa])
         if iteration>200 and LL_diff <0.0001:
            converged = 1
-           print 'Convergence criteria met!!'
+           print('Convergence criteria met!!')
         iteration+=1
-    print 'Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(iteration,time.time() - start_time,convergence_mu, convergence_kappa,L,LL_diff)
+    print('Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(iteration,time.time() - start_time,convergence_mu, convergence_kappa,L,LL_diff))
     #print 'AIC : %.2f'%(2*(mu_list.shape[0]*mu_list.shape[1])-2.*LL_list[-1])
     cluster_assignments = np.argmax(zij,axis=1)
     cluster_details = {'EM_VMM_means':mu_list, 'EM_VMM_kappas':kappa_list, 'EM_VMM_LL':LL_list, 'zij':zij}
@@ -1942,7 +1954,7 @@ def EM_VMM_clustering_wrapper(instance_array, n_clusters = 9, n_iterations = 20,
     seed_list = [i for i in range(number_of_starts)]
     rep = itertools.repeat
     from multiprocessing import Pool
-    input_data_iter = itertools.izip(rep(instance_array), rep(n_clusters),
+    input_data_iter = izip(rep(instance_array), rep(n_clusters),
                                      rep(n_iterations), rep(n_cpus), rep(start), rep(kappa_calc),
                                      rep(hard_assignments), rep(kappa_converged),
                                      rep(mu_converged),rep(min_iterations), rep(LL_converged),
@@ -1950,18 +1962,18 @@ def EM_VMM_clustering_wrapper(instance_array, n_clusters = 9, n_iterations = 20,
     if n_cpus>1:
         pool_size = n_cpus
         pool = Pool(processes=pool_size, maxtasksperchild=3)
-        print 'creating pool map'
+        print('creating pool map')
         results = pool.map(EM_VMM_clustering_wrapper2, input_data_iter)
-        print 'waiting for pool to close '
+        print('waiting for pool to close ')
         pool.close()
-        print 'joining pool'
+        print('joining pool')
         pool.join()
-        print 'pool finished'
+        print('pool finished')
     else:
         results = map(EM_VMM_clustering_wrapper2, input_data_iter)
     LL_results = []
     for tmp in results: LL_results.append(tmp[1]['LL'][-1])
-    print LL_results
+    print(LL_results)
     tmp_loc = np.argmax(LL_results)
     return results[tmp_loc]
 
@@ -2008,7 +2020,7 @@ class EM_VMM_clustering_class():
             start_time = time.time()
             self._EM_VMM_expectation_step()
             if self.hard_assignments:
-                print 'hard assignments'
+                print('hard assignments')
                 self.cluster_assignments = np.argmax(self.zij,axis=1)
                 self.zij = self.zij *0
                 for i in range(self.n_clusters):
@@ -2019,16 +2031,16 @@ class EM_VMM_clustering_class():
             self._EM_VMM_maximisation_step()
             if (self.iteration>=2): self.LL_diff = np.abs(((self.LL_list[-1] - self.LL_list[-2])/self.LL_list[-2]))
             if verbose:
-                print 'Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff)
+                print('Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff))
             self.convergence_record.append([self.iteration, self.convergence_mu, self.convergence_kappa])
             if (self.iteration > min_iterations) and (self.convergence_mu<mu_converged) and (self.convergence_kappa<kappa_converged) and (self.LL_diff<LL_converged):
                 converged = 1
-                print 'Convergence criteria met!!'
+                print('Convergence criteria met!!')
             elif self.iteration > n_iterations:
                 converged = 1
-                print 'Max number of iterations'
+                print('Max number of iterations')
             self.iteration+=1
-        print os.getpid(), 'Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff)
+        print(os.getpid(), 'Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff))
         #print 'AIC : %.2f'%(2*(mu_list.shape[0]*mu_list.shape[1])-2.*LL_list[-1])
         self.cluster_assignments = np.argmax(self.zij,axis=1)
         self.BIC = -2*self.LL_list[-1]+self.n_clusters*3*np.log(self.n_dimensions)
@@ -2050,17 +2062,17 @@ class EM_VMM_clustering_class():
         self.LL_list = []
         self.zij = np.zeros((self.instance_array.shape[0],self.n_clusters),dtype=float)
         if self.start=='k_means':
-            print 'Initialising clusters using a fast k_means run'
+            print('Initialising clusters using a fast k_means run')
             self.cluster_assignments, self.cluster_details = k_means_clustering(self.instance_array, n_clusters=self.n_clusters, sin_cos = 1, number_of_starts = 3, seed=self.seed)
             for i in list(set(self.cluster_assignments)):
                 self.zij[self.cluster_assignments==i,i] = 1
-            print 'finished initialising'
+            print('finished initialising')
         elif self.start=='EM_GMM':
             self.cluster_assignments, self.cluster_details = EM_GMM_clustering(self.instance_array, n_clusters=self.n_clusters, sin_cos = 1, number_of_starts = 1)
             for i in list(set(cluster_assignments)):
                 self.zij[cluster_assignments==i,i] = 1
         else:
-            print 'going with random option'
+            print('going with random option')
             #need to get this to work better.....
             self.zij = np.random.random(self.zij.shape)
             #and normalise so each row adds up to 1....
@@ -2120,7 +2132,7 @@ def EM_GMM_clustering_wrapper(instance_array, n_clusters = 9, n_iterations = 20,
     seed_list = [i for i in range(number_of_starts)]
     rep = itertools.repeat
     from multiprocessing import Pool
-    input_data_iter = itertools.izip(rep(instance_array), rep(n_clusters),
+    input_data_iter = izip(rep(instance_array), rep(n_clusters),
                                      rep(n_iterations), rep(n_cpus), rep(start), rep(kappa_calc),
                                      rep(hard_assignments), rep(kappa_converged),
                                      rep(mu_converged),rep(min_iterations), rep(LL_converged),
@@ -2128,18 +2140,18 @@ def EM_GMM_clustering_wrapper(instance_array, n_clusters = 9, n_iterations = 20,
     if n_cpus>1:
         pool_size = n_cpus
         pool = Pool(processes=pool_size, maxtasksperchild=3)
-        print 'creating pool map'
+        print('creating pool map')
         results = pool.map(EM_GMM_clustering_wrapper2, input_data_iter)
-        print 'waiting for pool to close '
+        print('waiting for pool to close ')
         pool.close()
-        print 'joining pool'
+        print('joining pool')
         pool.join()
-        print 'pool finished'
+        print('pool finished')
     else:
         results = map(EM_GMM_clustering_wrapper2, input_data_iter)
     LL_results = []
     for tmp in results: LL_results.append(tmp[1]['LL'][-1])
-    print LL_results
+    print(LL_results)
     tmp_loc = np.argmax(LL_results)
     return results[tmp_loc]
 
@@ -2182,7 +2194,7 @@ class EM_GMM_clustering_class():
             start_time = time.time()
             self._EM_GMM_expectation_step()
             if self.hard_assignments:
-                print 'hard assignments'
+                print('hard assignments')
                 self.cluster_assignments = np.argmax(self.zij,axis=1)
                 self.zij = self.zij *0
                 for i in range(self.n_clusters):
@@ -2193,16 +2205,16 @@ class EM_GMM_clustering_class():
             self._EM_GMM_maximisation_step()
             if (self.iteration>=2): self.LL_diff = np.abs(((self.LL_list[-1] - self.LL_list[-2])/self.LL_list[-2]))
             if verbose:
-                print 'Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff)
+                print('Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff))
             self.convergence_record.append([self.iteration, self.convergence_mu, self.convergence_kappa])
             if (self.iteration > min_iterations) and (self.convergence_mu<mu_converged) and (self.convergence_kappa<kappa_converged) and (self.LL_diff<LL_converged):
                 converged = 1
-                print 'Convergence criteria met!!'
+                print('Convergence criteria met!!')
             elif self.iteration > n_iterations:
                 converged = 1
-                print 'Max number of iterations'
+                print('Max number of iterations')
             self.iteration+=1
-        print os.getpid(), 'Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff)
+        print(os.getpid(), 'Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff))
         #print 'AIC : %.2f'%(2*(mu_list.shape[0]*mu_list.shape[1])-2.*LL_list[-1])
         self.cluster_assignments = np.argmax(self.zij,axis=1)
         self.BIC = -2*self.LL_list[-1]+self.n_clusters*3*np.log(self.n_dimensions)
@@ -2219,17 +2231,17 @@ class EM_GMM_clustering_class():
         self.LL_list = []
         self.zij = np.zeros((self.instance_array.shape[0],self.n_clusters),dtype=float)
         if self.start=='k_means':
-            print 'Initialising clusters using a fast k_means run'
+            print('Initialising clusters using a fast k_means run')
             self.cluster_assignments, self.cluster_details = k_means_clustering(self.instance_array, n_clusters=self.n_clusters, sin_cos = 1, number_of_starts = 3, seed=self.seed)
             for i in list(set(self.cluster_assignments)):
                 self.zij[self.cluster_assignments==i,i] = 1
-            print 'finished initialising'
+            print('finished initialising')
         elif self.start=='EM_GMM':
             self.cluster_assignments, self.cluster_details = EM_GMM_clustering(self.instance_array, n_clusters=self.n_clusters, sin_cos = 1, number_of_starts = 1)
             for i in list(set(cluster_assignments)):
                 self.zij[cluster_assignments==i,i] = 1
         else:
-            print 'going with random option'
+            print('going with random option')
             #need to get this to work better.....
             self.zij = np.random.random(self.zij.shape)
             #and normalise so each row adds up to 1....
@@ -2359,8 +2371,8 @@ def generate_artificial_data(n_clusters, n_dimensions, n_instances, prob=None, m
         means = np.random.rand(n_clusters,n_dimensions)*(random_means_bounds[1]-random_means_bounds[0]) + random_means_bounds[0]
     if variances is None:
         variances = np.random.rand(n_clusters,n_dimensions)*(random_var_bounds[1]-random_var_bounds[0]) + random_var_bounds[0]
-    print means
-    print variances
+    print(means)
+    print(variances)
     #figure out how many instances per cluster based on the probabilities
     if prob is None:
         prob = np.ones((n_clusters,),dtype=float)*1./(n_clusters)
@@ -2413,10 +2425,10 @@ def make_grid_subplots(n_subplots, sharex = 'all', sharey = 'all'):
     SH: 23May2013
     '''
     n_cols = int(math.ceil(n_subplots**0.5))
-    if n_subplots/float(n_cols)>n_subplots/n_cols:
-        n_rows = n_subplots/n_cols + 1
+    if n_subplots/float(n_cols)>n_subplots//n_cols:
+        n_rows = n_subplots//n_cols + 1
     else:
-        n_rows = n_subplots/n_cols
+        n_rows = n_subplots//n_cols
     fig, ax = pt.subplots(nrows = n_rows, ncols = n_cols, sharex = 'all', sharey = 'all'); ax = ax.flatten()
     #fig, ax = pt.subplots(nrows = n_rows, ncols = n_cols,subplot_kw=dict(projection='polar')); ax = ax.flatten()
     return fig, ax
@@ -2453,7 +2465,7 @@ def EM_VMM_GMM_clustering_wrapper(instance_array, instance_array_amps, n_cluster
     seed_list = [i for i in range(number_of_starts)]
     rep = itertools.repeat
     from multiprocessing import Pool
-    input_data_iter = itertools.izip(rep(instance_array), rep(instance_array_amps), rep(n_clusters),
+    input_data_iter = izip(rep(instance_array), rep(instance_array_amps), rep(n_clusters),
                                      rep(n_iterations), rep(n_cpus), rep(start), rep(kappa_calc),
                                      rep(hard_assignments), rep(kappa_converged),
                                      rep(mu_converged),rep(min_iterations), rep(LL_converged),
@@ -2461,18 +2473,18 @@ def EM_VMM_GMM_clustering_wrapper(instance_array, instance_array_amps, n_cluster
     if n_cpus>1:
         pool_size = n_cpus
         pool = Pool(processes=pool_size, maxtasksperchild=3)
-        print 'creating pool map'
+        print('creating pool map')
         results = pool.map(EM_VMM_GMM_clustering_wrapper2, input_data_iter)
-        print 'waiting for pool to close '
+        print('waiting for pool to close ')
         pool.close()
-        print 'joining pool'
+        print('joining pool')
         pool.join()
-        print 'pool finished'
+        print('pool finished')
     else:
         results = map(EM_VMM_GMM_clustering_wrapper2, input_data_iter)
     LL_results = []
     for tmp in results: LL_results.append(tmp[1]['LL'][-1])
-    print LL_results
+    print(LL_results)
     tmp_loc = np.argmax(LL_results)
     return results[tmp_loc]
 
@@ -2532,7 +2544,7 @@ class EM_VMM_GMM_clustering_class(clustering_object):
             start_time = time.time()
             self._EM_VMM_GMM_expectation_step()
             if self.hard_assignments:
-                print 'hard assignments'
+                print('hard assignments')
                 self.cluster_assignments = np.argmax(self.zij,axis=1)
                 self.zij = self.zij *0
                 for i in range(self.n_clusters):
@@ -2543,16 +2555,16 @@ class EM_VMM_GMM_clustering_class(clustering_object):
             self._EM_VMM_GMM_maximisation_step()
             if (self.iteration>=2): self.LL_diff = np.abs(((self.LL_list[-1] - self.LL_list[-2])/self.LL_list[-2]))
             if verbose:
-                print 'Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff)
+                print('Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff))
             self.convergence_record.append([self.iteration, self.convergence_mu, self.convergence_kappa])
             if (self.iteration > min_iterations) and (self.convergence_mu<mu_converged) and (self.convergence_kappa<kappa_converged) and (self.LL_diff<LL_converged):
                 converged = 1
-                print 'Convergence criteria met!!'
+                print('Convergence criteria met!!')
             elif self.iteration > n_iterations:
                 converged = 1
-                print 'Max number of iterations'
+                print('Max number of iterations')
             self.iteration+=1
-        print os.getpid(), 'Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff)
+        print(os.getpid(), 'Time for iteration %d :%.2f, mu_convergence:%.3e, kappa_convergence:%.3e, LL: %.8e, LL_dif : %.3e'%(self.iteration,time.time() - start_time,self.convergence_mu, self.convergence_kappa,self.LL_list[-1],self.LL_diff))
         #print 'AIC : %.2f'%(2*(mu_list.shape[0]*mu_list.shape[1])-2.*LL_list[-1])
         self.cluster_assignments = np.argmax(self.zij,axis=1)
         self.BIC = -2*self.LL_list[-1]+self.n_clusters*3*np.log(self.n_dimensions)
@@ -2577,17 +2589,17 @@ class EM_VMM_GMM_clustering_class(clustering_object):
         self.zij = np.zeros((self.instance_array.shape[0],self.n_clusters),dtype=float)
         #maybe only the random option is valid here.....
         if self.start=='k_means':
-            print 'Initialising clusters using a fast k_means run'
+            print('Initialising clusters using a fast k_means run')
             self.cluster_assignments, self.cluster_details = k_means_clustering(self.instance_array, n_clusters=self.n_clusters, sin_cos = 1, number_of_starts = 3, seed=self.seed)
             for i in list(set(self.cluster_assignments)):
                 self.zij[self.cluster_assignments==i,i] = 1
-            print 'finished initialising'
+            print('finished initialising')
         elif self.start=='EM_GMM':
             self.cluster_assignments, self.cluster_details = EM_GMM_clustering(self.instance_array, n_clusters=self.n_clusters, sin_cos = 1, number_of_starts = 1)
             for i in list(set(cluster_assignments)):
                 self.zij[cluster_assignments==i,i] = 1
         else:
-            print 'going with random option'
+            print('going with random option')
             #need to get this to work better.....
             self.zij = np.random.random(self.zij.shape)
             #and normalise so each row adds up to 1....

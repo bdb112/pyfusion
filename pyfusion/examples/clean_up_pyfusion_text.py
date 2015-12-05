@@ -1,13 +1,23 @@
 """
+strip bad lines out of pyfusion text files.
+
+Seems 2x slower in ana 3 and 2.7.10 (9sec) than 2.7.6 (4secs) PF2_130812_MP2010HMPno612_65139_384_rms_1
+
 (sort(lines[next_good:])==sort(lines[2*next_good-num-1:next_good-1])).all()
 
- strip bad lines out of pyfusion text files.
+Note the funny quotes below
+(should choose a few samples files, one that run faster)
+_PYFUSION_TEST_@@fileglob="glob.glob('PF2*1')[0]"
 """
 import bz2
-import StringIO
 import os
 import numpy as np
 import sys
+if sys.version>'3,':
+    import io 
+    print('Warning - this runs much slow with the io module - probably needs a rewrite')
+else:
+    import StringIO as io
 import glob
 
 def my_move(filename, subfolder='bad',overwrite=False):
@@ -24,16 +34,16 @@ def my_move(filename, subfolder='bad',overwrite=False):
     return(newfullname)
 
 
-_var_default="""
+_var_defaults="""
 debug=1
 all_errors=[]
 baddir = 'bad'
-fileglob = '/mythextra/datamining/PF2_121208/*2'
+fileglob = None  #  None alloes a glob expression to be entered
 fast = False
 
 """
 
-exec(_var_default)
+exec(_var_defaults)
 
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
@@ -47,9 +57,20 @@ exec(process_cmd_line_args())
 #for filename in np.sort(glob.glob('/home/bdb112/datamining/preproc/PF2_121208/PF2_121209_MP2010_113431_113431_1_384_rms_1.dat.bz2')):  # I killed it
 good_lines = 0
 
+if fileglob is None:
+    fileglob = '/mythextra/datamining/PF2_121208/*2'
+
 for filename in np.sort(glob.glob(fileglob)):
 
-    with bz2.BZ2File(filename) as fd:
+    ext = os.path.splitext(filename)
+    if ext == 'gz':
+        FileReader = gzip.open
+    elif ext == 'bz2':
+        FileReader = bz2.BZ2File
+    else:
+        FileReader = open
+
+    with FileReader(filename) as fd:
         lines=fd.readlines()
 
       # gets the first occurrence of 'Shot'
@@ -101,7 +122,7 @@ for filename in np.sort(glob.glob(fileglob)):
     badlines = []
 
     try:
-        dat = np.loadtxt(StringIO.StringIO(''.join(lines[shotline+1:])), 
+        dat = np.loadtxt(io.StringIO(''.join(lines[shotline+1:])), 
                          dtype=fs_dtype, ndmin=1)
         if debug: print('seems OK'),
         fast_read_error = 0
@@ -118,7 +139,7 @@ for filename in np.sort(glob.glob(fileglob)):
         last_time = None
         for l in range(shotline+1, num)[::-1]:  # read backwards so we can pop
             try:
-                dat = np.loadtxt(StringIO.StringIO(lines[l]), dtype=fs_dtype, ndmin=1)
+                dat = np.loadtxt(io.StringIO(lines[l]), dtype=fs_dtype, ndmin=1)
                 read_error = 0
                 if this_shot is None:
                     this_shot = dat['shot']
@@ -187,7 +208,7 @@ for filename in np.sort(glob.glob(fileglob)):
             filename = newname  # so that a my_move below moves the right thing
 
     # if we get here we should be clean!            
-    da = np.loadtxt(StringIO.StringIO(''.join(lines[shotline+1:])), 
+    da = np.loadtxt(io.StringIO(''.join(lines[shotline+1:])), 
                     dtype=fs_dtype, ndmin=1)                    
     # len(np.shape to guard against file with just one fs - should this be legal?
     if (len(np.shape(da['t_mid']))>0) and (len(da['t_mid'])>1):
@@ -210,10 +231,13 @@ for filename in np.sort(glob.glob(fileglob)):
             all_errors.append([filename, len(lines), errors, badlines])
             my_move(filename, 'bad_shotno')
 
+if good_lines==0:
+    print('Warning - no good lines found!')
+
 import pickle
 import time as tm
 
-p=open(tm.strftime('%Y%m%d%H%M%S_cleanup_data.pickle'),'w')
+p=open(tm.strftime('%Y%m%d%H%M%S_cleanup_data.pickle'),'wb')
 pickle.dump(all_errors,p)
 
 """

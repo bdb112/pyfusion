@@ -71,9 +71,6 @@ elif [ -d pyfusion ]; then
 elif [ -d ../pyfusion ]; then 
     cd ..
     pyfparent=$PWD		
-# this is surely a mistake - i.e. [ -d  ];
-elif [ -d  ]; then
-    pyfparent=$HOME/python/pyfusion
 fi
 
 # if we are running a w32 python from cygwin, need to prefix
@@ -112,31 +109,30 @@ else
 export PYFUSION_CONFIG_FILE=`pwd`/pyfusion_boyd_nov_2012.cfg
 fi
 
+if [[ `uname -a` =~ .*prl6.* ]]
+then export DA=/data/datamining/DA/
+fi
+
 # use $pyfparent/pyfusion rather than PYFUSIONPATH, as it may include c:/cygwin
 #cd $pyfparent/pyfusion
 #now we are good, push some lines if they are not there already
 
-set_window_title PYFUSION_$2
+# #set_window_title PYFUSION_$2_`hostname`
+# need to clear prompt command
+PROMPT_COMMAND=
+# 0 set icon name and window title to string
+/bin/echo -ne "\033]0;PyFusion:${USER}@`hostname`_Py`echo 'import sys;print(sys.version.split(' ')[0])'|python`_$2\007"
 
 # if there are not a lot like this there already, add some useful lines
 # you can ^R or up arrow back to
 let numhist=`history 50|grep -c "export PYFUSION"`
-if [[ $numhist -gt 10 ]]; then
+if [[ $numhist -gt 3 ]]; then
     echo looks like you already have $numhist hints in your history list - skip
 else	
     echo adding useful lines to history list, starting with least common
+# I have cut down the number - maybe cut it down a little more
     history -s export PYFUSION_SEGMENT_OVERLAP=1
     history -s export PYFUSION_N_SAMPLES_TIME_SEGMENT=256
-    history -s export PYFUSION_DEVICE=LHD
-    history -s export PYFUSION_SHOT_T_MIN="165."
-    history -s export PYFUSION_SHOT_T_MAX="295."
-    # a partial name to allow quick access as per the following line
-    export PSQL=mysql://127.0.0.1:3308
-    history -s 'export PYFUSION_SQL_SERVER=$PSQL/pyfhjn090307 ;ipython -c "import pyfusion; pyfusion.utils.show_db()"'
-    history -s export PYFUSION_SQL_SERVER=mysql://localhost/hj_sml_090111
-    history -s export PYFUSION_CONFIG_FILE=`pwd`/pyfusion_boyd_nov_2012.cfg
-    history -s export PYFUSION_SQL_SERVER='sqlite:///sqlite.txt'
-    history -s export PYFUSION_SQL_SERVER='sqlite://'
     history -s export PYFUSION_VERBOSE=1
     history -s export PYFUSION_DEBUG=1
 fi
@@ -148,4 +144,4 @@ history -s source $source_file $*
 echo Here are some relevant env vars
 env |grep PY
 # this avoids the wx graphics bar in anaconda
-ipython --pylab='tk' --profile pyfusion_E4300
+ipython --pylab='tk' --profile pyfusion

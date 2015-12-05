@@ -197,10 +197,10 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                     except IOError:
                         try:
                             dg = igetfile(filepath + '.gz', shot=shot, debug=debug-1)
-                        except exception, details:
+                        except exception as details:
                             if debug>0: print('diag at {fp} not found'
                                               .format(fp=filepath))
-                            print(details)
+                            print(details, details.args)
                             dg=None
                             #break  # give up and try next diagnostic
                 if dg is None:  # messy - break doesn't do what I want?

@@ -261,7 +261,7 @@ if clear_modes:
         #print(key, len(dd[key]))
         old_modes.update({key: dd.pop(key,None)})   #clear all the mode keys
 
-if not hasattr(dd,'has_key'):
+if not isinstance(dd, dict):
     raise LookupError("dd not loaded into memory - can't store")
 
 if mode is None: mode = mode_list[0]

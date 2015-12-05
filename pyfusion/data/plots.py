@@ -8,6 +8,7 @@ Also attempted to use subplots here to tidy up putting additonal graphs on top.
 See plots_1.py and svd_plots1.py - need to sovle subplot pars problem
 bdb made format more conforming. 2013
 """
+from __future__ import division
 from matplotlib.widgets import CheckButtons
 from matplotlib.font_manager import FontProperties
 import pylab as pl
@@ -50,7 +51,7 @@ plot_reg = {}
 def register(*class_names):
     def reg_item(plot_method):
         for cl_name in class_names:
-            if not plot_reg.has_key(cl_name):
+            if cl_name not in plot_reg:
                 plot_reg[cl_name] = [plot_method]
             else:
                 plot_reg[cl_name].append(plot_method)
@@ -88,7 +89,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
     if (n_rows > 3) and (hspace is None): 
         hspace = 0.001 # should be 0, but some plots omitted if 
                        #exactly zero - fixed in matplotlib 1
-    if pyfusion.VERBOSE > 3: print str(n_rows) + ' ' + str(n_columns)
+    if pyfusion.VERBOSE > 3: print(str(n_rows) + ' ' + str(n_columns))
 
     if labelfmt != None:
         if len(make_title(labelfmt, input_data, 0, raw_names=raw_names)) > 8: 
@@ -113,7 +114,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
             else:        chan_num = row*n_columns+col
 
             if chan_num >= input_data.signal.n_channels(): break
-            if pyfusion.VERBOSE>3: print (subplot_num+1,chan_num),
+            if pyfusion.VERBOSE>3: print(subplot_num+1,chan_num)
             if (row==0) and (col==0):
                 # note - sharex=None is required fo that overlays can be done
                 ax1 = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = None)
@@ -479,7 +480,7 @@ def svdplot(input_data, fmax=None, hold=0):
     n_SV = len(input_data.svs)
 
     #for chrono in input_data.chronos:
-    #    print peak_freq(chrono, input_data.dim1)
+    #    print(peak_freq(chrono, input_data.dim1))
 
     # define axes 
     ax1 = pl.subplot(221)
@@ -588,7 +589,7 @@ def svdplot(input_data, fmax=None, hold=0):
     for sv_i in range(n_SV):
         col = plot_list_1[sv_i].get_color()
         tmp_chrono = input_data.chronos[sv_i]
-        tmp_fft = np.fft.fft(tmp_chrono)[:len(tmp_chrono)/2]
+        tmp_fft = np.fft.fft(tmp_chrono)[:len(tmp_chrono)//2]
         freq_array = nyquist_kHz*np.arange(len(tmp_fft))/(len(tmp_fft)-1)
         plot_list_3[sv_i], = ax3.plot(freq_array, abs(tmp_fft), col,visible= button_setting_list[sv_i],alpha=0.5)
         
@@ -596,7 +597,7 @@ def svdplot(input_data, fmax=None, hold=0):
         ffact = 1e3  # seems like this routine is in kHz - where does it cvt?
         try:
             axt = eval(pyfusion.config.get('Plots','FT_Axis'))
-            if axt[3]<2e3: ffact=1
+            if axt[3]<2e3: ffact=1.0  # avoid a python3 issue 
             fmax = axt[3]/ffact
         except:
             fmax = nyquist_kHz

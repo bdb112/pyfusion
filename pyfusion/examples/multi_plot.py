@@ -1,12 +1,13 @@
 import pylab as pl
 import numpy as np
+import pyfusion
 from pyfusion.visual import sp, vis    
 from pyfusion.acquisition.LHD.read_igetfile import igetfile
 
 pl.rcParams['legend.fontsize']='small'
 
 
-_var_default = """
+_var_defaults = """
 egdiags = 'wp,ip'
 shot=105396
 diag_names='VSL0011'
@@ -15,9 +16,9 @@ dev_name='LHD'
 offset = 0    # -3  # for VSL signals before implementing pretrig
 hold = 0  # -1 for figure()
 """
-import pyfusion.utils
-exec(_var_default)
-exec(pyfusion.utils.process_cmd_line_args())
+from pyfusion.utils import process_cmd_line_args
+exec(_var_defaults)
+exec(process_cmd_line_args())
 
 dev = pyfusion.getDevice(dev_name)
 if hold == -1: pl.figure()

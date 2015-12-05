@@ -43,7 +43,7 @@ class BaseAcquisition(object):
 
     """
     def __init__(self, config_name=None, **kwargs):
-        if config_name != None:
+        if config_name is not None:
             self.__dict__.update(get_config_as_dict('Acquisition', config_name))
         self.__dict__.update(kwargs)
 
@@ -77,7 +77,7 @@ class BaseAcquisition(object):
         """
         from pyfusion import config
         # if there is a data_fetcher arg, use that, otherwise get from config
-        if kwargs.has_key('data_fetcher'):
+        if 'data_fetcher' in kwargs:
             fetcher_class_name = kwargs['data_fetcher']
         else:
             fetcher_class_name = config.pf_get('Diagnostic',
@@ -109,7 +109,7 @@ class BaseDataFetcher(object):
         #bdb?? add device name here, so can prepend to Diagnostic
         # e.g. LHD_Diagnostic - avoids ambiguity
         debug_(pyfusion.DEBUG,5,key='device_name')
-        if config_name != None:
+        if config_name is not None:
             self.__dict__.update(get_config_as_dict('Diagnostic', config_name))
             if pyfusion.VERBOSE>3: print(get_config_as_dict('Diagnostic', config_name))
         self.__dict__.update(kwargs)
@@ -152,17 +152,18 @@ class BaseDataFetcher(object):
         :py:meth:`do_fetch`
         """        
         if pyfusion.DEBUG>2:
-            exception = None  # defeat the try/except
+            exception = ()  # defeat the try/except
         else: exception = Exception
 
         try:
             self.setup()
         except exception as details:
+            traceback.print_exc()
             raise LookupError("%s\n%s" % (self.error_info(step='setup'),details))
         try:
             data = self.do_fetch()
-        except Exception as details:   # put None here to show exceptions.
-                                       # then replace with Exection once
+        except exception as details:   # put None here to show exceptions.
+                                       # then replace with Exception once
                                        # "error_info" is working well
 
             # this is to provide traceback from deep in a call stack

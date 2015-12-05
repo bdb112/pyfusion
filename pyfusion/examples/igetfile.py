@@ -9,7 +9,7 @@ try:
     pl.figure()
     dat.plot()
 except:
-    print('unable to read EG data')
+    print('unable to read EG data fomr /tmp - maybe no files there')
     pl.figure()
 try:
     # nice if we could always have it in this place (may be a soft link(

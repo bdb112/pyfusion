@@ -22,10 +22,18 @@ def newload(filename, verbose=1):
     if verbose>2: print(' contains %s' % dic.files)
     signalexpr=dic['signalexpr']
     timebaseexpr=dic['timebaseexpr']
-# savez saves ARRAYS always, so have to turn array back into scalar    
-    exec(signalexpr.tolist())
-    exec(timebaseexpr.tolist())
-    return({"signal":signal, "timebase":timebase, "parent_element": dic['parent_element']})
+    # savez saves ARRAYS always, so have to turn array back into scalar    
+    # exec(signalexpr.tolist())
+    # Changed exec code to eval for python3, otherwise the name was not defined
+    #   for the target variables - they could only be accessed with 
+    #   e.g. locals().signal 
+    # retdic = {"signal":locals()['signal'], "timebase":locals()['timebase'], 
+    #           "parent_element": dic['parent_element']}
+    # Sucess using eval instead of exec
+    signal = eval(signalexpr.tolist().split(b'=')[1])
+    timebase = eval(timebaseexpr.tolist().split(b'=')[1])
+    retdic = {"signal":signal, "timebase":timebase, "parent_element": dic['parent_element']}
+    return(retdic)
 
 from os import path
 from numpy import mean, array, double, arange, dtype

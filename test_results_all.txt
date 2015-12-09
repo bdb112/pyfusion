@@ -234,14 +234,13 @@ python 3 warnings coming from my files
 (82, 'pyfusion/examples/many_specs.py')
 (83, 'pyfusion/examples/gen_fs_general.py')
 
-=========== Python 3.5 anaconda ==========
-
+=========== Python 3.4 anaconda ========== (3.5 was 65, but I improved since then)
 examples/plot_specgram.py     : b'OK!'
 examples/get_basic_params.py  : b" import StringIO ImportError: No module named 'StringIO' "
 examples/slider_f_t.py        : b"ror: [Errno 2] No such file or directory: 'MP512all.npz' "
 examples/check_HD_histogram.py: b'OK!'
 examples/prepfs_range_mp_2.py : b'OK!'
-examples/merge_h1_diagnostics.py: b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/merge_h1_diagnostics.py: b"port__(name, gbls) ImportError: No module named 'mdsdcl' "
 examples/mode_identify_script_temp.py: b'e") LookupError: dd not loaded into memory - can\'t store '
 examples/barber_pole.py       : b'OK!'
 examples/example_fragments.py : b'overlap=220                ^ SyntaxError: invalid syntax '
@@ -252,8 +251,8 @@ examples/test_lasso_fs.py     : b"or key in dd.keys(): NameError: name 'dd' is n
 examples/medium_300.py        : b'OK!'
 examples/mode_identify_example_from_ICPP_2010.py: b"ll.txt' skip=4             ^ SyntaxError: invalid syntax "
 examples/prepfs_range.py      : b'OK!'
-examples/gen_fs_local.py      : b'ocessed: TypeError("unhashable type: \'TimeseriesData\'",) '
-examples/plot_svd.py          : b"   ^ SyntaxError: Missing parentheses in call to 'print' "
+examples/gen_fs_local.py      : b'OK!'
+examples/plot_svd.py          : b"port__(name, gbls) ImportError: No module named 'mdsdcl' "
 examples/DP14_mode_plot.py    : b'OK!'
 examples/mode_identify_script_old.py: b'e") LookupError: dd not loaded into memory - can\'t store '
 examples/plot_signals.py      : b'OK!'
@@ -262,20 +261,20 @@ examples/copy_DA.py           : b"mport tables as tb ImportError: No module name
 examples/labelled_N_modes.py  : b'_list=None                 ^ SyntaxError: invalid syntax '
 examples/h1_mode_lists.py     : b"ile(filename,'r')) NameError: name 'file' is not defined "
 examples/cluster_info.py      : b"ile(filename,'r')) NameError: name 'file' is not defined "
-examples/gen_fs_bands.py      : b' Time:  ########shot 27233: 0/0 fs finished in 0.18/0.56 '
+examples/gen_fs_bands.py      : b' Time:  ########shot 27233: 4/8 fs finished in 0.04/0.87 '
 examples/phase_histogram.py   : b"= len(phases[0]) NameError: name 'phases' is not defined "
 examples/find_last_data.py    : b'.format(l=low))  ValueError: low limit of None not there '
-examples/check_HMA_PMA_phase.py: b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/check_HMA_PMA_phase.py: b"port__(name, gbls) ImportError: No module named 'mdsdcl' "
 examples/plot_svd1.py         : b'                           ^ SyntaxError: invalid syntax '
 examples/find_close_shot.py   : b"ebug=0, verbose=1): NameError: name 'LHD' is not defined "
-examples/realtime_mode.py     : b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/realtime_mode.py     : b"port__(name, gbls) ImportError: No module named 'mdsdcl' "
 examples/process_chirps.py    : b" dfdtunit=dfdtunit)  NameError: name 'dd' is not defined "
-examples/cross_phase.py       : b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/cross_phase.py       : b"port__(name, gbls) ImportError: No module named 'mdsdcl' "
 examples/check_DA.py          : b"/datamining/old/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' "
 examples/prepfs_time_mp.py    : b'error: the following arguments are required: output_path '
-examples/plot_svd_simple.py   : b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/plot_svd_simple.py   : b"port__(name, gbls) ImportError: No module named 'mdsdcl' "
 examples/plot_many.py         : b'(),shot_list))             ^ SyntaxError: invalid syntax '
-examples/query_h1ds.py        : b"up ImportError: No module named 'sqlalchemy.ext.sqlsoup' "
+examples/query_h1ds.py        : b" create_engine ImportError: No module named 'sqlalchemy' "
 examples/plot_basic.py        : b"AttributeError: 'dict' object has no attribute 'has_key' "
 examples/cluster_phases_three_colour.py: b"wer() != 'n': NameError: name 'raw_input' is not defined "
 examples/new_mode_identify_script.py: b"esis.pickle','r')) NameError: name 'file' is not defined "
@@ -319,11 +318,11 @@ examples/__init__.py          : b'OK!'
 examples/new_mode_identify_script_0.py: b"# need to adjust NameError: name 'arange' is not defined "
 examples/channel_angle_games.py: b'OK!'
 examples/many_specs.py        : b"   ^ SyntaxError: Missing parentheses in call to 'print' "
-examples/gen_fs_general.py    : b'd \'mdsdevice\'",)   (shot,sys.exc_info()[1].__repr__()))) '
-examples/get_kappa.py         : b"t__(name, gbls) ImportError: No module named 'mdsdevice' "
+examples/gen_fs_general.py    : b'amed \'mdsdcl\'",)   (shot,sys.exc_info()[1].__repr__()))) '
+examples/get_kappa.py         : b"port__(name, gbls) ImportError: No module named 'mdsdcl' "
 examples/flip_phase.py        : b"b_0']))[0];len(wnan) NameError: name 'dd' is not defined "
 examples/plot_text_pyfusion.py: b'                           ^ SyntaxError: invalid syntax '
 examples/check_polarity_flips.py: b'OK!'
 examples/play_with_fft_signals.py: b'OK!'
-examples/prepfs_range_mp.py   : b"tributeError: module 'itertools' has no attribute 'izip' "
-65 errors out of 90
+examples/prepfs_range_mp.py   : b" AttributeError: 'module' object has no attribute 'izip' "
+64 errors out of 90  (3.5 was 65 )

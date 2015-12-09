@@ -287,7 +287,7 @@ class BaseDataSet(object):
             label = unique_id()
         self.label = label
         if not pyfusion.orm_manager.IS_ACTIVE:
-            self.data = set()  # python3 - could try list(), need add-> append
+            self.data = list()  # python3 - was set(), but can't be hashed (see also .add()
         
     def save(self):
         ## TODO: if orm_manager IS_ACTIVE=False, send message to logger...
@@ -307,7 +307,7 @@ class BaseDataSet(object):
         return self.data.copy()
         
     def add(self, item):
-        self.data.add(item)   # python3 if list, would be append(
+        self.data.append(item)   # python3 was set, and so add used to be add()
 
     def __iter__(self):
         return self.data.__iter__()

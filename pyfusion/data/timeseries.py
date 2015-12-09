@@ -154,7 +154,7 @@ class TimeseriesData(BaseData):
     # if it defines __eq__() but not __hash__(), its instances will not be usable as 
     # items in hashable collections.  To suppress warning, set __hash__ = None
     # http://stackoverflow.com/questions/15471333/how-to-eliminate-a-python3-deprecation-warning-for-the-equality-operator
-    #__hash__ = None
+    __hash__ = None
 
 
     ## Boyd tried this for fun - seems to work - should check the right way.

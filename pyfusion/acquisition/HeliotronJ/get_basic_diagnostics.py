@@ -19,11 +19,10 @@ from pyfusion.utils.read_csv_data import read_csv_data
 from pyfusion.utils.utils import warn
 from pyfusion.data.timeseries import TimeseriesData, Signal, Timebase
 from pyfusion.data.base import Coords, ChannelList, Channel
+from make_static_param_db import get_static_params
 
 import tempfile
 import re
-
-import gethjdata
 
 VERBOSE = pyfusion.VERBOSE
 OPT = 0
@@ -72,12 +71,15 @@ file_info.update({'NBI1Pwr': {'format': 'lhd_summary_data.csv','name':'NBI1Power
 file_info.update({'NBI2Pwr': {'format': 'lhd_summary_data.csv','name':'NBI2Power'}})
 """
 
+"""
 file_info.update({'IBHV': {'format': 'HJparams.npz','name':'IBHV'}})
-file_info.update({'IBTA': {'format': 'HJparams.npz','name':'IBTA'}})
-file_info.update({'IBTB': {'format': 'HJparams.npz','name':'IBTB'}})
-file_info.update({'IBAV': {'format': 'HJparams.npz','name':'IBAV'}})
-file_info.update({'IBIV': {'format': 'HJparams.npz','name':'IBIV'}})
-file_info.update({'b_0': {'format': 'HJparams.npz','name':'IBHV'}})
+"""
+file_info.update({'IBHV': {'format': 'get_static_params({shot})','name':'IBHV'}})
+file_info.update({'IBTA': {'format': 'get_static_params({shot})','name':'IBTA'}})
+file_info.update({'IBTB': {'format': 'get_static_params({shot})','name':'IBTB'}})
+file_info.update({'IBAV': {'format': 'get_static_params({shot})','name':'IBAV'}})
+file_info.update({'IBIV': {'format': 'get_static_params({shot})','name':'IBIV'}})
+file_info.update({'b_0': {'format': 'get_static_params({shot})','name':'IBHV'}})
 
 file_info.update({'DIA135': {'format': 'HeliotronJ','name':'DIA135'}})
 file_info.update({'MICRO01': {'format': 'HeliotronJ','name':'MICRO01'}})
@@ -186,15 +188,16 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
     vals.update({'check_shot':np.zeros(len(times),dtype=np.int)+shot})
     debug_(pyfusion.DEBUG,2,key='get_basic')
     for diag in diags:
-        if not(file_info.has_key(diag)):
+        if not(diag in file_info):
             warn('diagnostic {0} not found in shot {1}'.format(diag, shot),stacklevel=2)
             vals.update({diag: np.nan + times})
             debug_(pyfusion.DEBUG,2,key='get_basic')
         else:
             info = file_info[diag]
             varname = info['name']
-            subfolder = info['format'].split('@')[0]
-            filepath = os.path.sep.join([localigetfilepath,subfolder,info['format']])
+            infofmt = info['format']
+            subfolder = infofmt.split('@')[0]
+            filepath = os.path.sep.join([localigetfilepath,subfolder,infofmt])
             if ':' in varname: (oper,varname) = varname.split(':')
             else: oper = None
 
@@ -204,16 +207,23 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                     varname,rest=right.split(')')
                 except:
                     raise ValueError('in expression {v} - parens?'.format(varname))
-            if info['format'].find('.npz') > 0:
+            if infofmt.find('.npz') > 0:
                 try:
                     test=HJ_summary.keys()
                 except:    
-                    csvfilename = acq_HJ+'/'+info['format']
+                    csvfilename = acq_HJ+'/'+infofmt
                     if pyfusion.DEBUG>1: print('looking for HeliotronJ summary in' + csvfilename)
                     print('reloading {0}'.format(csvfilename))
                     HJ_summary = np.load(csvfilename)
 
                 val = HJ_summary[varname][shot]
+                valarr = np.double(val)+(times*0)
+            elif 'get_static_params' in infofmt:
+                pdicts = eval(infofmt.format(shot=shot))
+                if len(pdicts)>1:
+                    print('more than one dictionary returned')
+
+                val = pdicts[0][varname]
                 valarr = np.double(val)+(times*0)
             else:    # read signal from data system
                 debug_(max(pyfusion.DEBUG, debug), level=4, key='find_data')

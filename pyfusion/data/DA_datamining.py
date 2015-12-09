@@ -78,7 +78,9 @@ def process_file_name(filename):
 
 
 def append_to_DA_file(filename, new_dict, force=False):
-    """ open filename with mode=a, after checking if the indx variables align
+    """ 
+    Adds a new variable to the file - more like 'update' than append
+    open filename with mode=a, after checking if the indx variables align
     force=1 ignores checks for consistent length c.f. the var shot
 
     e.g.

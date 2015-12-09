@@ -45,6 +45,4 @@ pl.ylabel('frequency (kHz)')
 pl.xlabel('time (s)')
 
 pl.legend(loc=3)
-pl.show()
-
-
+pl.show(block=0)

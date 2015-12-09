@@ -16,6 +16,6 @@ DA766.update(dict(V_A=V_A))        #  Add it to the dictionary - no problem if y
 DA766.save('H1_766_new')           #  Save the data set (under a new name if you prefer).
                                    #  When you load the dataset in the future, the variable V_A will be there.
 plt.plot(k_h, freq*1e3/V_A,'.c')   # symbol '.', colour cyan - we see the values are in the range sqrt beta
-plt.plot(k_h[wb], freq[wb]*1e3/V_A[wb],'ob') # selecting large amplitude as above, we see beginnings of fig 6
+plt.plot(k_h[wb], freq[wb]*1e3/V_A[wb],'ob',ms=12) # selecting large amplitude as above, we see beginnings of fig 6
 plt.xlabel(r'$k_H$'); plt.ylabel(r'${\rm frequency/V_{Alfven}}$',fontdict={'fontsize':'large'})
 plt.show()

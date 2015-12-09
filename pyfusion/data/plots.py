@@ -193,7 +193,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
     if filename != None:
         pl.savefig(filename)
     else:
-        pl.show()
+        pl.show(block=0)
     debug_(pyfusion.DEBUG, 4, key='plot_signals')
 
 @register("TimeseriesData")
@@ -511,7 +511,7 @@ def svdplot(input_data, fmax=None, hold=0):
     # hack to make check buttons square
     check_box_stretch = 7
     for i in range(len(check.rectangles)):
-    #if (1 == 0):  # this to turn off the hack
+    #if (1 == 0):  # use this line instead of for i in... to turn off the hack
         check.rectangles[i].set_width(check_box_stretch*check.rectangles[i].get_height())
         for j in [0,1]: # two lines of the x
             orig_x_data = check.lines[i][j].get_xdata()
@@ -527,14 +527,11 @@ def svdplot(input_data, fmax=None, hold=0):
     #pl.xlabel('Time -*-get units from Timebase-*-')
     pl.ylabel('chronos [a.u.]')  # used to be labelled amplitude, but is not really.
     # you can get to the reconstructed signals via fs.signal, but chronos is better here
-    plot_list_1 = range(n_SV)
-    for sv_i in range(n_SV):
-	#plot_list_1[sv_i], = ax1.plot(array(input_data.dim1), input_data.chronos[sv_i], visible= button_setting_list[sv_i],alpha=0.5)
-        plot_list_1[sv_i], = ax1.plot(np.arange(len(input_data.chronos[sv_i])), input_data.chronos[sv_i], visible= button_setting_list[sv_i],alpha=0.5)
+    ## python3 - all these plot_lists refactored to look nicer in python2/3
+    plot_list_1 = [ ax1.plot(np.arange(len(input_data.chronos[sv_i])), input_data.chronos[sv_i], visible= button_setting_list[sv_i],alpha=0.5)[0] for sv_i in range(n_SV)]
     #pl.xlim(min(input_data.dim1), max(input_data.dim1))
 
     # axes 2: SVs
-    plot_list_2 = range(n_SV)
     pl.axes(ax2)
     sv_sv = [input_data.svs[i] for i in range(n_SV)]
     ax2.semilogy(np.arange(n_SV),sv_sv,'ko',markersize=3)
@@ -575,23 +572,26 @@ def svdplot(input_data, fmax=None, hold=0):
     ax2.text(0.96,0.85,labstr, color='r', **kwargs)
 
     # grid('True')
-    for sv_i in range(n_SV):
+    plot_list_2 = []
+    for sv_i in range(n_SV):        
         col = plot_list_1[sv_i].get_color()
-        plot_list_2[sv_i], = ax2.semilogy([sv_i], [input_data.svs[sv_i]], '%so' %(col),visible= button_setting_list[sv_i],markersize=8,alpha=0.5)
+        plot_list_2.append(ax2.semilogy([sv_i], [input_data.svs[sv_i]],
+                                        '%so' %(col),visible= button_setting_list[sv_i],
+                                        markersize=8,alpha=0.5)[0])
 
     # axes 3: fft(chrono)
     pl.axes(ax3)
-    plot_list_3 = range(n_SV)
     pl.xlabel('Frequency [kHz]')
     pl.ylabel('Power Spectrum')
     pl.grid(True)            # matplotlib 1.0.X wants a boolean (unquoted)
     nyquist_kHz = 1.e-3*0.5/np.average(np.diff(input_data.chrono_labels))
+    plot_list_3 = []
     for sv_i in range(n_SV):
         col = plot_list_1[sv_i].get_color()
         tmp_chrono = input_data.chronos[sv_i]
         tmp_fft = np.fft.fft(tmp_chrono)[:len(tmp_chrono)//2]
         freq_array = nyquist_kHz*np.arange(len(tmp_fft))/(len(tmp_fft)-1)
-        plot_list_3[sv_i], = ax3.plot(freq_array, abs(tmp_fft), col,visible= button_setting_list[sv_i],alpha=0.5)
+        plot_list_3.append(ax3.plot(freq_array, abs(tmp_fft), col,visible= button_setting_list[sv_i],alpha=0.5)[0])
         
     if fmax is None: 
         ffact = 1e3  # seems like this routine is in kHz - where does it cvt?
@@ -606,19 +606,19 @@ def svdplot(input_data, fmax=None, hold=0):
 
     # axes 4: topo
     pl.axes(ax4)
-    plot_list_4 = range(n_SV)
     pl.xlabel('Channel')
     pl.ylabel('Topo [a.u.]')
     angle_array = np.arange(n_SV+1)
     #channel_names = input_data.timesegment.data[input_data.diagnostic.name].ordered_channel_list
     #channel_names.append(channel_names[0])
     #pl.xticks(angle_array,channel_names, rotation=90)
+    plot_list_4 = []
     for sv_i in range(n_SV):
         col = plot_list_1[sv_i].get_color()
         tmp_topo = join_ends(input_data.topos[sv_i])
         pos,neg =  posNegFill(angle_array,np.zeros(len(angle_array)),tmp_topo)
         ### BUG: it looks like ax4.fill doesn't work in a couple of cases, leaving sub_plot_4_list[i] as int, which raises a set_visible() bug in button_action - also has problems with draw(). other subplots all worked fine before I started with subplot 4
-        sub_plot_4_list = range(len(pos)+len(neg)+2)
+        sub_plot_4_list = list(range(len(pos)+len(neg)+2))
         for j in range(len(pos)):
             sub_plot_4_list[j], = ax4.fill(pos[j][0],pos[j][1],col,visible= button_setting_list[sv_i],alpha=0.5)
         for j in range(len(neg)):
@@ -627,8 +627,8 @@ def svdplot(input_data, fmax=None, hold=0):
         sub_plot_4_list[len(neg)+len(pos)+0], = ax4.plot(angle_array,tmp_topo,'%so' %(col),visible= button_setting_list[sv_i],markersize=3)
         # show repeated val
         sub_plot_4_list[len(neg)+len(pos)+1], = ax4.plot([angle_array[-1]],[tmp_topo[-1]],'kx', visible= button_setting_list[sv_i],markersize=6)
-        plot_list_4[sv_i]=sub_plot_4_list
         debug_(pyfusion.DEBUG, 2, key='svdplot')
+        plot_list_4.append(sub_plot_4_list)
 
     def test_action(label):
         print(label)

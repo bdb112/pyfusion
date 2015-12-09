@@ -1,3 +1,5 @@
+from six.moves import input
+
 """ Plot the svd of a diag, either one with arbitrary time bounds
 or the sequence of svds of numpts starting at start_time (sec)
 keys typed at the terminal allow stepping backward and forward.
@@ -44,6 +46,7 @@ except:
     use_getch = False
 print(" getch is %savailable" % (['not ', ''][use_getch]))
 
+_var_defaults="""
 plot_mag = 0
 plot_phase = 0
 
@@ -73,7 +76,8 @@ offset=0   # the approx delta phase expected (helps check aliasing)
 verbose=0
 max_fs = 2
 shot_number = None
-
+"""
+exec(_var_defaults)
 exec(pf.utils.process_cmd_line_args())
 if help==1: 
     print(__doc__) 
@@ -228,7 +232,7 @@ else:
             if use_getch: 
                 pl.show()
                 k=getch.getch()
-            else: k=raw_input('enter one of "npqegshS?" (return->next time segment)')
+            else: k=input('enter one of "npqegshS?" (return->next time segment)')
             if k=='': k='n'
             if k in 'bBpP': i-=1
             # Note - if normalise or separate is toggled, it doesn't
@@ -248,7 +252,7 @@ else:
                 segs[ii].plot_signals()
                 pl.figure(1)
             else:  i+=1
-            if verbose: print i,ii
+            if verbose: print(i,ii)
         else: i+=1
 
         

@@ -178,8 +178,8 @@ def segment(input_data, n_samples, overlap=DEFAULT_SEGMENT_OVERLAP):
     no overlap.  overlap should divide into n_samples.  Probably should
     consider a nicer definition such as in pyfusion 0
     """
-    from pyfusion.data.base import DataSet
-    from pyfusion.data.timeseries import TimeseriesData
+    from .base import DataSet
+    from .timeseries import TimeseriesData
     if isinstance(input_data, DataSet):
         output_dataset = DataSet()
         for ii,data in enumerate(input_data):
@@ -268,7 +268,7 @@ def normalise(input_data, method=None, separate=False):
     
 @register("TimeseriesData")
 def svd(input_data):
-    from timeseries import SVDData
+    from .timeseries import SVDData
     svddata = SVDData(input_data.timebase, input_data.channels, linalg.svd(input_data.signal, 0))
     svddata.history = input_data.history
     svddata.scales = input_data.scales # need to pass it on to caller
@@ -284,7 +284,7 @@ def fs_group_geometric(input_data, max_energy = 1.0):
     we don't register this as a filter, because it doesn't return a Data or DataSet subclass
     TODO: write docs for how to use max_energy - not obvious if using flucstruc() filter...
     """
-    from timeseries import SVDData
+    from .timeseries import SVDData
     #from base import OrderedDataSet
 
     if not isinstance(input_data, SVDData):
@@ -296,7 +296,7 @@ def fs_group_geometric(input_data, max_energy = 1.0):
         max_element = searchsorted(cumsum(input_data.p), max_energy)
         remaining_ids = range(max_element)
     else:
-        remaining_ids = range(len(input_data.svs))
+        remaining_ids = list(range(len(input_data.svs)))
     
     self_cps = input_data.self_cps()
 
@@ -336,7 +336,7 @@ def fs_group_threshold(input_data, threshold=0.7):   # was 0.2 in earlier versio
 
     #max_element = searchsorted(cumsum(svs_norm_energy), energy_threshold)
     #remaining_ids = range(max_element)
-    remaining_ids = range(len(input_data.svs))
+    remaining_ids = list(range(len(input_data.svs)))
     
     self_cps = input_data.self_cps()
 

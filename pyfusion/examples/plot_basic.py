@@ -53,5 +53,5 @@ for (i,k) in enumerate(bp.keys()):
     pl.plot(times, scale*y, label = label)
     pl.legend()
     pl.title("{s}: {b_0:.3g}T".format(s=shot, b_0=bp['b_0'][0]))
-pl.show()
+pl.show(block=0)
  

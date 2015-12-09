@@ -11,7 +11,12 @@ Uses exec of a dict - very fast!
 
 
 import numpy as np
+import os
 
+from get_hj_modules import import_module, get_hj_modules
+hjmod, exe_path = get_hj_modules()
+import_module(hjmod,'gethjdata')
+save_exe = os.path.join(exe_path,'save_h_j_data')
 
 def params_to_dict(lines):
     """ read parameters from namelist output of Heliotron J static data
@@ -55,7 +60,7 @@ def find_helio_exe(exe):
         exe = this_dir + os.sep + "dummy_exe"
     return(exe)
 
-def get_static_params(shot, signal='DIA135',exe='save_h_j_data', press_on=True):
+def get_static_params(shot, signal='DIA135',exe=save_exe, press_on=True):
 
     exe = find_helio_exe(exe)
     cmd = str('echo {signal} {shot} nofile | {exe}'
@@ -78,7 +83,7 @@ def get_static_params(shot, signal='DIA135',exe='save_h_j_data', press_on=True):
             lines = lines.split(line_sep)
         return(params_to_dict(lines))
 
-def make_param_db(max_shot=70000, file_name='HJparams.npz', shot_range=range(50000,50010), signal='DIA135',db=None,exe='save_h_j_data'):
+def make_param_db(max_shot=70000, file_name='HJparams.npz', shot_range=range(50000,50010), signal='DIA135',db=None,exe=save_exe):
     if db is None:
         db = dict()
         for param in 'ISHOTNO,IBHV,IBTA,IBTB,IBAV,IBIV,ICH'.split(','):

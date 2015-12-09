@@ -436,7 +436,7 @@ class clustering_object():
         num = len(self.cluster_details['EM_VMM_kappas'])
         if not cl_num in range(num):
             raise LookupError('cluster number {c} not between 0 and {n} inclusive'
-                              .format(c=cl_num, n=num))
+                              .format(c=cl_num, n=num-1))
         return(np.where(self.cluster_assignments == cl_num)[0])
 
     def make_mode_list(self, min_kappa = 4, plot=False):

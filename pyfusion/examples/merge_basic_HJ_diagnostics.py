@@ -44,9 +44,11 @@ run -i pyfusion/examples/test_lasso_fs.py
 import pyfusion
 pyfusion.DEBUG=0
 
+from pyfusion.utils.regulator import Regulator
 from pyfusion.data.DA_datamining import DA
 #DAJ = DA('DA131128_HJ_ALL_50_52.npz',load=1)
 #dd=DAJ.da
+
 
 
 import os.path
@@ -70,6 +72,7 @@ maxshot=999999 # higher than even LHD
 shot_list = []
 diags=diag_basic
 diags_scalar="b_0,R_ax,Quad,Gamma".split(',')
+maxcpu=0.5
 
 import pyfusion.utils
 exec(pyfusion.utils.process_cmd_line_args())
@@ -81,6 +84,8 @@ missing_shots = []
 good_shots =[]
 
 ctr=0
+
+regulator=Regulator(maxcpu)
  
 if len(shot_list)==0:
     shots = np.unique(dd['shot'])
@@ -88,6 +93,7 @@ if len(shot_list)==0:
     shot_list = shots[wgt]
 
 for shot in shot_list:
+    regulator.wait()
     # ws is the set of indices corresponding to the shot
     ws = np.where(shot == dd['shot'])[0]
     if len(ws)==0:   # this is an impossible condition!
@@ -154,6 +160,7 @@ if verbose>0: print('missing shots are {0}'.format(missing_shots))
 
 for key in diags:
         print('{0:10s}: {1:.1f}%'.format(key, 100.0*np.sum(dd[key]*0==0)/sz))
-        n = len(np.unique(dd[key]))
-        if n < 10:
-            print('key {key} has vary few {n} different values'.format(key=key,n=n))
+        uv = np.unique(dd[key])
+        if len(uv) < 10:
+            print('key {key} has vary few ({n}) different values: \n{uv}'
+                  .format(key=key,n=len(uv),uv=uv))

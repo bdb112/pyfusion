@@ -2,6 +2,7 @@ import numpy as np
 import pylab as pl
 import pyfusion
 from time import time as seconds
+from time import sleep
 import re
 import sys
 
@@ -41,10 +42,11 @@ def find_data(file, target, skip = 0, recursion_level=0, debug=0):
                       format(t=target, f=file))
 
 
-def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isinteractive(), ms=100, hold=0, debug=0, quiet=1,  exception = Exception):
+def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isinteractive(), ms=100, hold=0, debug=0, quiet=1,  maxcpu=None, exception = Exception):
     """ Accepts a file or a list of files, returns a list of structured arrays
     See merge ds_list to merge and convert types (float -> pyfusion.prec_med
     """
+    wait_time=0.
     st = seconds(); last_update=seconds()
     file_list = files
     if len(np.shape(files)) == 0: file_list = [file_list]
@@ -55,9 +57,13 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
     comment_list =[]
     count = 0
     for (i,filename) in enumerate(file_list):
-        if seconds() - last_update > 30:
+        sleep(wait_time)
+        if seconds() - last_update > 0.1:
             last_update = seconds()
             tot = len(file_list)
+            if maxcpu is not None:
+                wait_time = (1-maxcpu)*(seconds()-st)/i
+                print('setting wait_time to {wt}'.format(wt=wait_time))
             print('reading {n}/{t}: ETA {m:.1f}m {f}'
                   .format(f=filename, n=i, t=tot,
                           m=(seconds()-st)*(tot-i)/float(60*i)))

@@ -156,4 +156,4 @@ for key in diags:
         print('{0:10s}: {1:.1f}%'.format(key, 100.0*np.sum(dd[key]*0==0)/sz))
         n = len(np.unique(dd[key]))
         if n < 10:
-            print('key {key} has vary few {n} different values'.format(key=key))
+            print('key {key} has vary few {n} different values'.format(key=key,n=n))

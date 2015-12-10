@@ -19,7 +19,13 @@ from pyfusion.utils.read_csv_data import read_csv_data
 from pyfusion.utils.utils import warn
 from pyfusion.data.timeseries import TimeseriesData, Signal, Timebase
 from pyfusion.data.base import Coords, ChannelList, Channel
+
+from get_hj_modules import import_module, get_hj_modules
+hjmod, exe_path = get_hj_modules()
+import_module(hjmod,'gethjdata',locals())
+
 from make_static_param_db import get_static_params
+
 
 import tempfile
 import re

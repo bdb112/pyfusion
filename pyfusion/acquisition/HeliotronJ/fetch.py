@@ -10,9 +10,9 @@ from pyfusion.acquisition.HeliotronJ.make_static_param_db import get_static_para
 from pyfusion.debug_ import debug_
 import sys
 # autocompile pulled out to get_hj_modules
-from .get_hj_modules import import_module, get_hj_module
-hjmod, exe_path = get_hj_module()
-import_module(hjmod,'gethjdata')
+from .get_hj_modules import import_module, get_hj_modules
+hjmod, exe_path = get_hj_modules()
+import_module(hjmod,'gethjdata',locals())
 
 VERBOSE = pyfusion.VERBOSE
 OPT = 0

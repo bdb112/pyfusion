@@ -15,7 +15,7 @@ import os
 
 from get_hj_modules import import_module, get_hj_modules
 hjmod, exe_path = get_hj_modules()
-import_module(hjmod,'gethjdata')
+import_module(hjmod,'gethjdata',locals())
 save_exe = os.path.join(exe_path,'save_h_j_data')
 
 def params_to_dict(lines):

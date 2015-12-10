@@ -10,19 +10,21 @@ import pyfusion
 
 """
 
-try: 
-    # this is the right way, but I can't load mod as name this way
-    from importlib import import_module_cant_make_it_wrk
-except:
-    if pyfusion.DEBUG>0: 
-        print("Can't load via official import_module, trying a workaround using exec()")
+# this is the right way, but I can't load mod as name this way
+#    from importlib import import_module
+if pyfusion.DEBUG>0: 
+    print("Can't load via official import_module, trying a workaround using exec()")
+
+def import_module(modstr, alt_name=None, dict1=None):
+    if alt_name is None: alt_name = modstr
+    if dict1 is None:
+        raise Exception('need a dictionary in dict1 (usually locals())')
+    else:
+        exec('import {m} as {a}'.format(m=modstr, a=alt_name),globals(),dict1)
+
+        
 
 
-    def import_module(modstr, alt_name=None):
-        if alt_name is None:
-            exec('import '+modstr)
-        else:
-            exec('import {m} as {a}'.format(m=modstr, a=alt_name))
 """
 #works
 exec('import pyfusion.acquisition.HeliotronJ.gethjdata2_7 as gethjdata')
@@ -50,19 +52,21 @@ def get_hj_modules():
 
     try:
         print('try import')
-        import_module(hj_module)
+        import_module(hj_module,dict1=locals())
     except Exception as reason:
-        print("Can't import get_hjdata at first attempt {r}, {args}"
-              .format(r=reason, args=reason.args))
+        print("Can't import {m} as get_hjdata at first attempt:  reason - {r}, {args}"
+              .format(r=reason, args=reason.args, m=hj_module))
     # Should use subprocess instead of command, and get more feedback
 
-        os.chdir(cdir) # move to the source dir
+        os.chdir(exe_path) # move to the exe dir (although module stays one up ../
         import subprocess
         print('Compiling Heliotron J data aquisition library, please wait...')
         ## Note: g77 will do, (remove --fcompiler-g95)  but can't use TRIM function etc 
-        cmds = ['{f} --fcompiler=gfortran -c -m {m} intel.o libfdata.o -lm  hj_get_data.f'
-                .format(m=hj_module, f=f2py),
-                'f77 -Lcdata save_h_j_data.f intel.o libfdata.o -o {exe}'
+        cmds = ['gcc -c -fPIC ../libfdata.c ../intel.c',
+                # f2py won't accept ../ or full path in the -m param! need to cd
+                'cd ..; {f} --fcompiler=gfortran -c -m {m} {xp}.o -lm  hj_get_data.f'
+                .format(m=hj_module, f=f2py,xp=os.path.join(exe_path,'*')),
+                'f77 -Lcdata ../save_h_j_data.f intel.o libfdata.o -o {exe}'
                 .format(exe=os.path.join(exe_path,'save_h_j_data')), # 2015
             ]
         for cmd in cmds:
@@ -78,8 +82,8 @@ def get_hj_modules():
             print('try after compiling...'),
             import_module(hj_module)
         except Exception as reason:
-            print("Can't import get_hjdata at first attempt {r}, {args}"
-                  .format(r=reason, args=reason.args))
+            print("Can't import {m} as get_hjdata at second attempt {r}, {args}"
+                  .format(r=reason, args=reason.args, m=hjmod))
             raise ImportError("Can't import Heliotron J data acquisition library")
     finally:
         os.chdir(oldwd)

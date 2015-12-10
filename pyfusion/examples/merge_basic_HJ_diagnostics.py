@@ -44,7 +44,6 @@ run -i pyfusion/examples/test_lasso_fs.py
 import pyfusion
 pyfusion.DEBUG=0
 
-from pyfusion.utils.regulator import Regulator
 from pyfusion.data.DA_datamining import DA
 #DAJ = DA('DA131128_HJ_ALL_50_52.npz',load=1)
 #dd=DAJ.da
@@ -85,7 +84,7 @@ good_shots =[]
 
 ctr=0
 
-regulator=Regulator(maxcpu)
+regulator = pyfusion.utils.Regulator(maxcpu)
  
 if len(shot_list)==0:
     shots = np.unique(dd['shot'])

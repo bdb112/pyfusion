@@ -140,7 +140,11 @@ class DA():
     is the most effective space saver, but you need to reload if more data
     is needed.  The alternative is to decimate at the extract stage (but this
     applies only to the variables extracted into namespace (e.g. locals())
-    Filename is processed for env vars etc
+    Filename is processed for env vars ~/ etc, but sometimes this seems to substitute 
+    the path of the DA module? (bug)
+
+    *Experimental* new feature allows use of the DA object itself as a dictionary (e.g. DA59['shot'])
+    For more info type help(DA)
     """
     def __init__(self, fileordict, debug=0, verbose=0, load=0, limit=None, mainkey=None):
         # may want to make into arrays here...
@@ -170,11 +174,11 @@ class DA():
             self.da = np.load(self.name)
             self.loaded = False  # i.e. not really loaded yet - just have the zipfile table
 
-        self.keys = self.da.keys()
-        if 'dd' in self.da:  # old style, all in one
-            print('old "dd" object style file')
+        self.keys = self.da.keys  # self.keys used to be a list, now a function
+        if 'dd' in self.da:  # old style, all in one - is this like a loadtxt return?
+            print('old "dd" object style file')  # should have a test example
             self.da = self.da['dd'].tolist()
-            self.keys = self.da.keys()
+            self.keys = self.da.keys
 
         # make the info available to self.
         # needs different actions if npzfile and not yet loaded
@@ -186,6 +190,8 @@ class DA():
                 self.infodict = self.da['info']
         else:
             self.infodict = {}
+
+        self.__doc__ += 'foo\n'  # this isn't accessible to the ? or help function
 
         self.mainkey = mainkey  # may be None!
         debug_(self.debug, 3)
@@ -245,6 +251,14 @@ class DA():
 
         start_mem = report_mem(start_mem)
     #shallow_copy = try:if da.copy
+
+## emulate a dictionary for convenience. See https://docs.python.org/3/reference/datamodel.html?emulating-container-types#emulating-container-types
+# implement __getitem__ and __iter__ so that 'shot' in DAHJ  works.
+    def __getitem__(self,k):
+        return(self.da[k])
+
+    def __iter__(self):   # surprised I needed iter() here
+        return(iter(list(self.da.keys())))
 
     def update(self, new_dict, check=True):
         """ Add a new variable to the dictionary.  Better than simply updating

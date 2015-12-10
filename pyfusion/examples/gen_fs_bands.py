@@ -106,7 +106,7 @@ raw_count = 0
 
 dev = pyfusion.getDevice(dev_name)
 for shot in shot_range:
-    while(os.path.exists(os.path.join(pyfusion.root_dir,'pause')):
+    while(os.path.exists(os.path.join(pyfusion.root_dir,'pause'))):
         print('paused until '+ pyfusion.root_dir+'/pause'+ ' is removed')
         sleep(int(20*(1+random.uniform())))  # wait 20-40 secs, so they don't all start together
 

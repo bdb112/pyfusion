@@ -234,6 +234,101 @@ python 3 warnings coming from my files
 (82, 'pyfusion/examples/many_specs.py')
 (83, 'pyfusion/examples/gen_fs_general.py')
 
+=============== V2.7 Anaconda =========
+examples/plot_specgram.py     : t_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
+examples/get_basic_params.py  : se ValueError('no good shots') ValueError: no good shots 
+examples/slider_f_t.py        : ror: [Errno 2] No such file or directory: 'MP512all.npz' 
+examples/check_HD_histogram.py: ngs will not be saved or shared with other applications. 
+examples/prepfs_range_mp_2.py : OK!
+examples/merge_h1_diagnostics.py: iconda/bin/../lib/libreadline.so.6: undefined symbol: PC 
+examples/mode_identify_script_temp.py:  mode = mode_list[0] IndexError: list index out of range 
+examples/barber_pole.py       : ngs will not be saved or shared with other applications. 
+examples/example_fragments.py : overlap=220                ^ SyntaxError: invalid syntax 
+examples/mode_identify_script.py:  mode = mode_list[0] IndexError: list index out of range 
+examples/DA_troubles.py       : OK!
+examples/setup_pyfusion.py    : OK!
+examples/test_lasso_fs.py     : or key in dd.keys(): NameError: name 'dd' is not defined 
+examples/medium_300.py        : OK!
+examples/mode_identify_example_from_ICPP_2010.py: ll.txt' skip=4             ^ SyntaxError: invalid syntax 
+examples/prepfs_range.py      : OK!
+examples/gen_fs_local.py      : OK!
+examples/plot_svd.py          : iconda/bin/../lib/libreadline.so.6: undefined symbol: PC 
+examples/DP14_mode_plot.py    : entwise comparison   if self._edgecolors == str('face'): 
+examples/mode_identify_script_old.py: ue') ValueError: Need to choose doN=True and/or doM=True 
+examples/plot_signals.py      : ngs will not be saved or shared with other applications. 
+examples/trace_cluster.py     : kh','freq',ind=w23) NameError: name 'w23' is not defined 
+examples/copy_DA.py           :  import tables as tb ImportError: No module named tables 
+examples/labelled_N_modes.py  : _list=None                 ^ SyntaxError: invalid syntax 
+examples/h1_mode_lists.py     : ngs will not be saved or shared with other applications. 
+examples/cluster_info.py      : OK!
+examples/gen_fs_bands.py      :         (actually not- bdb)^ SyntaxError: invalid syntax 
+examples/phase_histogram.py   : = len(phases[0]) NameError: name 'phases' is not defined 
+examples/find_last_data.py    : .format(l=low))  ValueError: low limit of None not there 
+examples/check_HMA_PMA_phase.py: iconda/bin/../lib/libreadline.so.6: undefined symbol: PC 
+examples/plot_svd1.py         : iconda/bin/../lib/libreadline.so.6: undefined symbol: PC 
+examples/find_close_shot.py   : ebug=0, verbose=1): NameError: name 'LHD' is not defined 
+examples/realtime_mode.py     : iconda/bin/../lib/libreadline.so.6: undefined symbol: PC 
+examples/process_chirps.py    :  dfdtunit=dfdtunit)  NameError: name 'dd' is not defined 
+examples/cross_phase.py       : iconda/bin/../lib/libreadline.so.6: undefined symbol: PC 
+examples/check_DA.py          : /datamining/old/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' 
+examples/prepfs_time_mp.py    :  output_path prepfs_time_mp.py: error: too few arguments 
+examples/plot_svd_simple.py   : iconda/bin/../lib/libreadline.so.6: undefined symbol: PC 
+examples/plot_many.py         : NOT AVAILABLE!!!!!') ValueError: SCAN NOT AVAILABLE!!!!! 
+examples/query_h1ds.py        : soup import SqlSoup ImportError: No module named sqlsoup 
+examples/plot_basic.py        : ngs will not be saved or shared with other applications. 
+examples/cluster_phases_three_colour.py: ngs will not be saved or shared with other applications. 
+examples/new_mode_identify_script.py: ue') ValueError: Need to choose doN=True and/or doM=True 
+examples/clean_up_pyfusion_text.py: OK!
+examples/check_other_data.py  : ngs will not be saved or shared with other applications. 
+examples/find_VSL_locking.py  : ist=mmm                    ^ SyntaxError: invalid syntax 
+examples/plot_text_fft.py     : r: [Errno 2] No such file or directory: 'g:fft26_50.dat' 
+examples/merge_text_pyfusion.py: OK!
+examples/multi_plot.py        : atamining/cache/ip/ip@105396.dat or .gz, .bz2 not found. 
+examples/shauns_clustering.py :         ^ SyntaxError: EOL while scanning string literal 
+examples/correct_VSL.py       : ppend_to_DA ImportError: cannot import name append_to_DA 
+examples/fft_magnitude_extraction.py:  import HMA_funcs ImportError: No module named HMA_funcs 
+examples/good_ones_density_cluster.py: _f32_diags.npz'            ^ SyntaxError: invalid syntax 
+examples/plot_shot.py         : OK!
+examples/check_dw_pdt.py      : OK!
+examples/wid_specgram.py      :  require Tix') _tkinter.TclError: can't find package Tix 
+examples/cluster_DA.py        : OK!
+examples/check_dw_pdt1.py     : OK!
+examples/igetfile.py          : ngs will not be saved or shared with other applications. 
+examples/mode_identify_example_2012.py: orbar=colorbar NameError: name 'colorbar' is not defined 
+examples/plot_signals_trivial.py: ngs will not be saved or shared with other applications. 
+examples/small_65.py          : OK!
+examples/ne_profile_preprocess.py: iconda/bin/../lib/libreadline.so.6: undefined symbol: PC 
+examples/small_300.py         : OK!
+examples/fft_magnitude_extraction_LHD.py: entwise comparison   if self._edgecolors == str('face'): 
+examples/merge_basic_diagnostics.py: rror: [Errno 2] No such file or directory: 'DA_file.npz' 
+examples/clean_up_pyfusion_text_mp.py: OK!
+examples/plot_svd_old.py      : iconda/bin/../lib/libreadline.so.6: undefined symbol: PC 
+examples/merge_basic_HJ_diagnostics.py: sz = len(dd['shot']) NameError: name 'dd' is not defined 
+examples/svd_simple_rotator.py: ngs will not be saved or shared with other applications. 
+examples/test_check_buttons1.py: ngs will not be saved or shared with other applications. 
+examples/testall.py           : OK!
+examples/save_to_local.py     : OK!
+examples/density_cluster.py   : s,method=method) NameError: name 'phases' is not defined 
+examples/fonts.py             : ngs will not be saved or shared with other applications. 
+examples/h1_mode_identify.py  : amples/cluster_info.py     ^ SyntaxError: invalid syntax 
+examples/prepfs_range_sep.py  : utput_path prepfs_range_sep.py: error: too few arguments 
+examples/read_DF.py           :  import tables as tb ImportError: No module named tables 
+examples/test_check_buttons.py: ngs will not be saved or shared with other applications. 
+examples/__init__.py          : OK!
+examples/new_mode_identify_script_0.py: # need to adjust NameError: name 'arange' is not defined 
+examples/channel_angle_games.py: ngs will not be saved or shared with other applications. 
+examples/many_specs.py        : iconda/bin/../lib/libreadline.so.6: undefined symbol: PC 
+examples/gen_fs_general.py    : ed symbol: PC',)   (shot,sys.exc_info()[1].__repr__()))) 
+examples/get_kappa.py         : iconda/bin/../lib/libreadline.so.6: undefined symbol: PC 
+examples/flip_phase.py        : b_0']))[0];len(wnan) NameError: name 'dd' is not defined 
+examples/plot_text_pyfusion.py: /pyfusion/examples/PF2_120227_HMPno12_27233_27233_1.dat' 
+examples/check_polarity_flips.py: ngs will not be saved or shared with other applications. 
+examples/play_with_fft_signals.py: OK!
+examples/prepfs_range_mp.py   : OK!
+
+69 errors out of 90
+
+
 =========== Python 3.4 anaconda ========== (3.5 was 65, but I improved since then)
 examples/plot_specgram.py     : b'OK!'
 examples/get_basic_params.py  : b" import StringIO ImportError: No module named 'StringIO' "

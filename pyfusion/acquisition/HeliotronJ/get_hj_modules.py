@@ -20,7 +20,7 @@ def import_module(modstr, alt_name=None, dict1=None):
     if dict1 is None:
         raise Exception('need a dictionary in dict1 (usually locals())')
     else:
-        exec('import {m} as {a}'.format(m=modstr, a=alt_name),globals(),dict1)
+        exec('from . import {m} as {a}'.format(m=modstr, a=alt_name),globals(),dict1)
 
         
 
@@ -51,7 +51,7 @@ def get_hj_modules():
         os.mkdir(exe_path)
 
     try:
-        print('try import')
+        if pyfusion.DEBUG>0: print('try import')
         import_module(hj_module,dict1=locals())
     except Exception as reason:
         print("Can't import {m} as get_hjdata at first attempt:  reason - {r}, {args}"

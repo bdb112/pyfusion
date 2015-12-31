@@ -19,3 +19,5 @@ plt.plot(k_h, freq*1e3/V_A,'.c')   # symbol '.', colour cyan - we see the values
 plt.plot(k_h[wb], freq[wb]*1e3/V_A[wb],'ob',ms=12) # selecting large amplitude as above, we see beginnings of fig 6
 plt.xlabel(r'$k_H$'); plt.ylabel(r'${\rm frequency/V_{Alfven}}$',fontdict={'fontsize':'large'})
 plt.show()
+# Note - there will be a warning "invalid value encountered in sqrt" due to noise in n_e
+# This could be eliminated by selecting using np.where(n_e >= 0)[0]

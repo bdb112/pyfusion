@@ -1,7 +1,10 @@
 # example code for figure 3.  The smaller data set in this package produces 
 #   different result - see example3_small_data_set.png
+# After running example1.py, do
+# run -i example3.py
+#      Note: if the -i is omitted you will get the message 'np' is not defined
 #
-# flag all profiles that can't be fitted well by a poly
+# First, flag all profiles that can't be fitted well by a poly
 inds = None
 deg = 5
 x = np.arange(len(ne_profile[0]))

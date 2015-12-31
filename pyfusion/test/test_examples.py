@@ -7,6 +7,9 @@ _PYFUSION_TEST_@@diag_name="DIA135"
 from __future__ import print_function
 import subprocess, glob, pickle, sys
 from time import localtime
+import tempfile, os
+from time import time as seconds
+
 _var_defaults="""
 filewild = 'pyfusion/examples/*.py'
 python_exe = 'python' # -3'
@@ -33,19 +36,36 @@ filelist = glob.glob(filewild)
 n_errs, total = 0, 0
 try:
     for filename in filelist:  #[1:3] for test
-        cmd = '{py} {file}'.format(file=filename, py=python_exe)
+        prerun, tmpfil = '',''
         flags = look_for_flags(filename)
+        args = ''
         if flags != []:
             if 'skip' in [flag.lower() for flag in flags]:
-                continue
+                continue  # this stops it from futher consideration (and from being run)
             else:
                 for flag in flags:
-                    if '=' in flag:
-                        cmd += ' '+flag
+                    if "PRE@" in flag:
+                        prerun = flag.split('PRE@')[1]
+                    elif '=' in flag:
+                        args += ' '+flag
+        if prerun != '':
+            runfile = tempfile.mktemp()
+            env = os.environ
+            ## env.update({'PYTHONSTARTUP':tmpfil}) only works in interactive
+            with open(filename,'rt') as pf:
+                prog = pf.readlines()
+            with open(runfile,'wt') as tf:
+                tf.write(prerun+'\n')
+                tf.writelines(prog)
+        else:
+            env = None
+            runfile = filename
 
+        cmd = '{py} {file} {args}'.format(file=runfile, py=python_exe, args=args)
         print(cmd)
 
-        sub_pipe = subprocess.Popen(cmd,  shell=True, stdout=subprocess.PIPE,
+        st = seconds()
+        sub_pipe = subprocess.Popen(cmd,  env=env, shell=True, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
         (resp,err) = sub_pipe.communicate()
         if (err != b'') or (sub_pipe.returncode != 0): 
@@ -53,7 +73,8 @@ try:
             n_errs += 1
 
         print(resp[-10000:])
-        out_list.append([filename, err, resp])
+        dt = round(seconds() - st, 3)
+        out_list.append([filename, err, resp, dt])
         total += 1
 except KeyboardInterrupt:
     pass
@@ -65,8 +86,10 @@ dumpname = str('test_output_V{V}_{yy:02d}{mm:02d}{dd:02d}_{hh:02d}:{mn:02d}.pick
 pickle.dump(out_list, open(dumpname,'wb'))
 
 print()
-for ll in out_list:
-    print('{fn:30s}: {msg}'.format(fn='/'.join(ll[0].split('/')[-2:]),msg=[ll[1][-57:].replace(b'\n',b' '),b'OK!'][ll[1]==b'']))
+for i,ll in enumerate(out_list):
+    print('{i:2d} {dt} {fn:30s}: {msg}'
+          .format(i=i, dt=ll[3], fn='/'.join(ll[0].split('/')[-2:]),
+                  msg=[ll[1][-57:].replace(b'\n',b' '),b'OK!'][ll[1]==b'']))
 
 print('{e} errors out of {t}'.format(e=n_errs, t=total))
 
@@ -75,10 +98,6 @@ if '-3' in python_exe:
     for (n,ll) in enumerate(out_list):
         if 'bdb112' in ll[1]:
             print(n, ll[0])
-
-
-
-
 """
 put this at the end of the file written
 %%% Local Variables: 

@@ -8,9 +8,23 @@ Overview
 
 Pyfusion uses simple text files to store information such as data acquisition settings, diagnostic coordinates, SQL database configurations, etc. A pyfusion configuration file looks something like this::
 
- [global]
- database = sqlite:///:memory:
+ # Some comments are indented below to show the actual options better 
+ # Indentation of comments is only allowed in version 0.6 onwards
 
+ [global]
+   # this section is a pyfusion feature to hold values that are universal
+   # These values have to be specifically queried.
+ database = sqlite:///:memory:
+ tmpdir = /tmp
+
+ [DEFAULT]
+   # This section is a standard configparser feature, and supplies
+   #  options to all sections.  The main use is to define substitutions
+ H1fetcher = pyfusion.acquisition.H1.fetch.H1DataFetcher
+   # The presence of these options or "keys" in all other sections can be
+   # annoying, and future versions may use ExtendedInterpolation to
+   # separate interpolations, thereby reducing key 'pollution'.
+ 
  [Device:H1]
  dev_class = pyfusion.devices.H1.device.H1
  acq_name = MDS_h1
@@ -29,7 +43,8 @@ Pyfusion uses simple text files to store information such as data acquisition se
  coord_transform = H1_mirnov
  
  [Diagnostic:H1_mirnov_array_1_coil_2]
- data_fetcher = pyfusion.acquisition.H1.fetch.H1DataFetcher
+   # example using interpolation or substitution instead of literal
+ data_fetcher = $(H1_fetcher)s
  mds_path = \h1data::top.operations.mirnov:a14_14:input_2
  coords_cylindrical = 1.185, 0.7732, 0.289
  coord_transform = H1_mirnov
@@ -44,14 +59,19 @@ Pyfusion uses simple text files to store information such as data acquisition se
  data_fetcher = pyfusion.acquisition.base.MultiChannelFetcher
  channel_1 = H1_mirnov_array_1_coil_1
  channel_2 = H1_mirnov_array_1_coil_2
- channel_3 = H1_mirnov_array_1_coil_3
+   # This next line corrects a phase flip error 
+   # better to do this in the multi-channel diag - more flexible and
+   # works well with local data in *npz files.
+ channel_3 = -H1_mirnov_array_1_coil_3
 
 
 
+There are two types of sections in this file: there are two `special`
+sections (global, DEFAULT) and several `component` sections (e.g. Device:H1, Acquisition:MDS_h1, CoordTransform:H1_mirnov, etc.)
 
-There are two types of sections in this file: there is one `special` section (global) and several `component` sections (e.g. Device:H1, Acquisition:MDS_h1, CoordTransform:H1_mirnov, etc.)
+See :ref:`configparser-basics` which includes some syntax rules.
 
-  .. ********** EDIT LINE.  ***********
+  .. ********** EDIT LINE. Is this where Dave got up to ??  ***********
 
 
 
@@ -77,7 +97,7 @@ see the configuration sections, type::
 
 Loading config files
 --------------------
-When pyfusion is imported, will load the default configuration file
+When pyfusion is imported, it will load the default configuration file
 provided in the source code (that is in the pyfusion directory)
 followed by your custom configuration file, 
 in ``$HOME/.pyfusion/pyfusion.cfg``, if it exists. 
@@ -95,18 +115,22 @@ filenames, as shown above. If you do not supply any argument,
 ones loaded when you import pyfusion). 
 
 To clear the loaded pyfusion configuration, use
-``pyfusion.clear_config()``. If you want to return the configuration
+``pyfusion.conf.utils.clear_config()``. If you want to return the configuration
 to the default settings (the configuration you have when you import
 pyfusion), type::
 
-	   pyfusion.clear_config()
+	   pyfusion.conf.utils.clear_config()
 	   pyfusion.read_config()
 
-
-
+See :ref:`testing-config`
 
 [variabletypes]
 ---------------
+`[Does not seem to be fully implemented as of Dec 2015 - it appears
+only in some test.cfg files.  This is probably because in most cases,
+the code knows the type.  Only in Diagnostic: sections does the
+information get interpreted by non-specific code (put into a dictionary) ]`.
+
 variabletypes is a section for defining the types (integer, float,
 boolean) of variables specified throughout the configuration file. By
 default, variables are assumed to be strings (text) - only variables
@@ -215,26 +239,127 @@ Database URLs are the same as for SQLAlchemy::
 
 	 driver://username:password@host:port/database
 
+For more details, refer to http://www.sqlalchemy.org/docs/05/dbengine.html#create-engine-url-arguments 
+
+.. _configparser-basics:
+
+Configparser basics
+-------------------
+Notes:
+
+* python 3 configparser.ConfigParser is more strict than the python2
+  ConfigParser.ConfigParser (newer python 2 versions have
+  SafeConfigParser which is very close of not the same as python 3 
+  ConfigParser.
+
+* pyfusion.config... accesses the standard python configparser functions, such as
+  ``pyfusion.config.get('Diagnostic:MP1','DIAG_NAME') --> 'FMD'``
+  whereas
+
+* pyfusion.conf. accesses the pyfusion specific functions (see example
+  below, note that the section name is given in two parts there
+  ('Diagnostic','MP1') 
+
+* Anything in the [DEFAULT] section will appear in the scope of the section (i.e. the
+  dictionary returned by ``pyfusion.conf.utils.get_config_as_dict()``
+
+e.g.::
+
+ pyfusion.conf.utils.get_config_as_dict('Diagnostic','MP1')
+ {'channel_number': '18',
+  'coord_transform': 'LHD_convenience',
+  'coords_reduced': '18.0, 0.0, 0.0',
+  'data_fetcher': 'pyfusion.acquisition.LHD.fetch.LHDTimeseriesDataFetcher',
+  'diag_name': 'FMD',
+  'filepath': '/tmp/LHDtmpdata',
+  'gain': '1',
+  'hjfetcher': 'pyfusion.acquisition.HeliotronJ.fetch.HeliotronJDataFetcher',
+  'lhdfetcher': 'pyfusion.acquisition.LHD.fetch.LHDTimeseriesDataFetcher',
+  'lhdtmpdata': '/tmp/LHDtmpdata',
+  'local_diag_path': 'None',
+  'my_tmp': '/tmp'}
+
+The properties from HJfetcher down come from the [DEFAULT] section, and
+most of them are defined for use in substitutions (below).
+
+.. _substitutions:
+
 Simplifying changes by substitution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The syntax %(sym)s will substitute the contents of sym.  e.g.
-fetchr =  pyfusion.acquisition.H1.fetch.H1LocalTimeseriesDataFetcherh1datafetcher
-data_fetcher = %(fetchr)s
+The syntax %(sym)s will substitute the contents of sym.  e.g.::
+
+ fetchr =  pyfusion.acquisition.H1.fetch.H1LocalTimeseriesDataFetcherh1datafetcher
+ data_fetcher = %(fetchr)s
+
+Overriding substitutions
+~~~~~~~~~~~~~~~~~~~~~~~~
+cfg files read subsequently will override substitutions.  
+Values to be substituted should be defined (in a safe way) in files
+that use those substitutions.  Files loaded subsequently can then
+override.
+e.g. - in the main config file, put mytmp = /tmp
+then   mytmp = $HOME/temp             
+will override
+
+
+Syntax
+~~~~~~
 
 This way only one edit needs to be made to change all diagnostics, if
-the definition is fetchr is in the special [DEFAULT] section
+the definition is fetchr is in the special [DEFAULT] section.
+
+(From the 2.7 docs: 3 is a little different and cleaner)
+
+The configuration file consists of sections, led by a [section] header
+and followed by name: value entries, with continuations in the style
+of RFC 822 (see section 3.1.1, “LONG HEADER FIELDS”); name=value is
+also accepted. Note that leading whitespace is removed from
+values. The optional values can contain format strings which refer to
+other values in the same section, or values in a special DEFAULT
+section. Additional defaults can be provided on initialization and
+retrieval. Lines beginning with '#' or ';' are ignored and may be used
+to provide comments.  Inline comments are should be avoided, and are
+not accepted in the pyfusion python 3 version.
+
+ .. _testing-config 
+
+Testing config file behaviour
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Importing pyfusion automatically reads several files, so the way to
+test is to start by clearing, *then* reading::
+>>> cd pyfusion/test
+>>> pyfusion.conf.utils.clear_config()
+>>> pyfusion.read_config(["test1.cfg"])
+# files ending in e should produce errors 
+# this one has a substitution referencing an option defined in global
+>>> pyfusion.read_config(["test1e.cfg"])
+
+>>> pyfusion.conf.utils.clear_config()
+>>> pyfusion.read_config(["test1.cfg"])
+# the substitution in test2a (bar2a) overrides the initial one
+>>> pyfusion.read_config(['test2a.cfg'])
+
+>>> pyfusion.conf.utils.get_config_as_dict('Diagnostic','H1_multi')
+ {'channel_1': 'H1MP',
+  'channel_2': '-H1MP',
+  'data_fetcher': 'pyfusion.acquisition.base.MultiChannelFetcher',
+  'foo': 'bar2a',
+  'other_attr': 'other',
+  'some_attr': 'bar2a'}
+
 
 User Defined Sections
 ~~~~~~~~~~~~~~~~~~~~~
-We will probably include a section Plots containing things like
-FT_Axis = [0, 0.08, 0, 300000]
+Under test is a section [Plots] containing things like
+
+``FT_Axis = [0, 0.08, 0, 300000]``
+
 to provide defaults for the Frequency-Time axis etc
-Note that such settings are highly device dependent and although they
-will be recognised in the code, they usually should not be given
-values in code distributions.
 
-The User could put their own items in there or other sections to avoid 
+Note that such settings are highly dependent on the fusion experiment
+and although they will be recognised in the code, they usually should
+not be given values in code distributions.
 
-For more details, refer to http://www.sqlalchemy.org/docs/05/dbengine.html#create-engine-url-arguments 
+The user could put their own items in there or other sections to avoid 
 

@@ -30,7 +30,7 @@ if __name__ == "__main__":
 #    doctest.testmod()
 
     import pyfusion
-    temp_path = pyfusion.config.get('DEFAULT', 'LHDtmpdata')
+    temp_path = pyfusion.config.get('global', 'LHDtmpdata')
     
     before = get_free_bytes(temp_path)
     purge_old(temp_path, '*xxx', 10)

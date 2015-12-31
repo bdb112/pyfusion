@@ -16,37 +16,37 @@ These initial attempts were not efficient - pyfftw is much better
 speedup is 3-10x
 /bin/fftw3bench cf$((32768+37)) 1.08ms on E4300 fftw3, 1.66 for numpy
 improve a little with "exhaustive" on lenny, but no improvement on laptop
- ./bench -oexhaustive cif$((32768+37))
-Problem: cif32805, setup: 34.59 s, time: 974.75 us, ``mflops'': 2524.4
+./bench -oexhaustive cif$((32768+37))
+Problem: cif32805, setup: 34.59 s, time: 974.75 us, ''mflops'': 2524.4
 
 larger FFT
-lenny: cif$((32768*256)) 519.58 ms, ``mflops'': 1856.7 (8M samples)
-E4300                    724.98 ms, ``mflops'': 1330.6
+lenny: cif$((32768*256)) 519.58 ms, ''mflops'': 1856.7 (8M samples)
+E4300                    724.98 ms, ''mflops'': 1330.6
 
 IDL 8 fft is similar speed, but not for some odd sizes (e.g. 2**15+37)
 
 Speeds with ./configure --enable-sse2 
 bdb112@lenny:/tmp/fftw3/fftw-3.3.3/tests$ ./bench cif$((32768))
-Problem: cif32768, setup: 1.79 s, time: 569.31 us, ``mflops'': 4316.8
+Problem: cif32768, setup: 1.79 s, time: 569.31 us, ''mflops'': 4316.8
 bdb112@lenny:/tmp/fftw3/fftw-3.3.3/tests$ ./bench -onosimd cif$((32768))
-Problem: cif32768, setup: 1.12 s, time: 816.06 us, ``mflops'': 3011.5
+Problem: cif32768, setup: 1.12 s, time: 816.06 us, ''mflops'': 3011.5
 bdb112@lenny:/tmp/fftw3/fftw-3.3.3/tests$ ./bench -onosimd cif$((32768*32))
-Problem: cif1048576, setup: 2.34 s, time: 50.32 ms, ``mflops'': 2083.9
+Problem: cif1048576, setup: 2.34 s, time: 50.32 ms, ''mflops'': 2083.9
 bdb112@lenny:/tmp/fftw3/fftw-3.3.3/tests$ ./bench cif$((32768*32))
-Problem: cif1048576, setup: 2.00 s, time: 39.95 ms, ``mflops'': 2625
+Problem: cif1048576, setup: 2.00 s, time: 39.95 ms, ''mflops'': 2625
 
 ./configure --enable-sse2  --with-combined-threads --enable-threads
 2 threads -> 1.65x - 3 a tiny bit faster, 4 same as 2threads
-Problem: cif1048576, setup: 1.93 s, time: 40.18 ms, ``mflops'': 2609.6
+Problem: cif1048576, setup: 1.93 s, time: 40.18 ms, ''mflops'': 2609.6
 bdb112@lenny:/tmp/fftw3/fftw-3.3.3$ tests/bench -onthreads=2 cif$((32768*32))
-Problem: cif1048576, setup: 1.68 s, time: 24.78 ms, ``mflops'': 4230.7
+Problem: cif1048576, setup: 1.68 s, time: 24.78 ms, ''mflops'': 4230.7
 
 8M elts 2 is 1.8x faster, 4 no better.
 bdb112@lenny:/tmp/fftw3/fftw-3.3.3$ tests/bench -onthreads=1 cif$((32768*256))
-Problem: cif8388608, setup: 96.84 s, time: 361.73 ms, ``mflops'': 2666.9
+Problem: cif8388608, setup: 96.84 s, time: 361.73 ms, ''mflops'': 2666.9
 estimate only gives 486 ms
 bdb112@lenny:/tmp/fftw3/fftw-3.3.3$ tests/bench -onthreads=2 cif$((32768*256))
-Problem: cif8388608, setup: 72.35 s, time: 204.83 ms, ``mflops'': 4709.6
+Problem: cif8388608, setup: 72.35 s, time: 204.83 ms, ''mflops'': 4709.6
 
 -nosimd c128 (r64,i64) 50ms for cif1048576 cf 37ms.  c64 is 1.9x faste -> 27ms
 

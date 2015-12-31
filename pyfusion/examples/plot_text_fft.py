@@ -4,7 +4,7 @@
 import numpy as np
 import pylab as pl
 
-_var_default="""
+_var_defaults="""
 
 phase_array = np.zeros(5)
 verbose=1
@@ -19,7 +19,7 @@ try:
 except:
     oldfilename = ""
 
-exec(_var_default)
+exec(_var_defaults)
 
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())

@@ -54,7 +54,7 @@ class CoordHD():
         for (i, index) in enumerate(indices):
             if index>= self.dims[i]:
                 raise LookupError()
-        if not self.d.has_key(indices): return(0)
+        if indices not in self.d: return(0)
         return(self.d[indices])
     
     def set(self, indices, val):
@@ -77,7 +77,7 @@ class CoordHDs():
     def get(self, indices):
         """ string version doesn't require the tuple notation (*)  """
         if self.debug>0: print('get indices', indices)
-        if not self.d.has_key(indices): return(0)
+        if indices not in self.d: return(0)
         return(self.d[indices])
     
     def set(self, indices, val):
@@ -230,7 +230,7 @@ def histogramHD(d, bins=None, method='safe'):
         vals = []
         for inds in inds_list:
             #debug_(max(pyfusion.DEBUG, hdd.debug), key='histogramHD')
-            if hdd.d.has_key(inds): 
+            if inds in hdd.d: 
                 vals.append(hdd.d[inds])
             else: 
                 vals.append(0)
@@ -279,11 +279,11 @@ if __name__ == '__main__':
         print('Too big for histogramdd')
         
     # the high dimensional way
-    sel = range(0,10)
-    sel.extend(range(12,16))
+    sel = list(range(0,10))
+    sel.extend(list(range(12,16)))
     hHD = histogramHD(phases,bins = n_bins)
-    phs = hHD.d.keys()
-    counts = [hHD.d[k] for k in hHD.d.keys()]
+    phs = list(hHD.d.keys())
+    counts = [hHD.d[k] for k in list(hHD.d.keys())]
     print('{n} elements set, total of {t}, max count of {m}'
           .format(n=len(counts), t=np.sum(counts), m=np.max(counts)))
 

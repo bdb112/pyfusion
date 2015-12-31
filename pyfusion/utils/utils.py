@@ -172,7 +172,7 @@ def warn(warning, category=UserWarning ,stacklevel=2, exception=None):
     e.g.  warn('extracting data from shot %d' % (shot), exception=ex)
     will print Exception type .., <args>: extraction data from shot 1
 
-     Downside compared to print() is that it generates 2-3 lines
+    Downside compared to print() is that it generates 2-3 lines
     (including line number of caller) instead of one.  Perhaps use for 
     infrequent or more dangerous situations
     - for "nagging" purposes, print is probably better.

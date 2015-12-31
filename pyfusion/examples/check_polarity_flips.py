@@ -28,7 +28,7 @@ import pyfusion
 #pyfusion.settings.SHOT_T_MIN=1.
 #pyfusion.settings.SHOT_T_MAX=3.
 
-_var_default = """
+_var_defaults = """
 dev_name= 'LHD' # 'H1Local'
 shot_number=None
 diag_name = ""
@@ -44,7 +44,7 @@ markersize=0.05
 ref_index=None
 """
 
-exec(_var_default)
+exec(_var_defaults)
 
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
@@ -169,7 +169,7 @@ for i in range(len(chans)):
           .format(dev_name=dev_name, diag_name=diag_name, 
                    shot_number=shot_number))
 
-if pl.isinteractive: pl.show()
+if pl.isinteractive: pl.show(block=0)
 elif fileroot != None:
     pl.gcf().savefig(fileroot.format(shot_number))
 ## quick test:

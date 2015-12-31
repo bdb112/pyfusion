@@ -3,23 +3,7 @@ This gets the data directly from the data server, and so only runs on LHD dmana
 v0: Large chunks of code copied from Boyd, not covered by unit tests.
 v1: 
 
-need:
-export Retrieve=~/retrieve/bin/  # (maybe not) 
-export INDEXSERVERNAME=DasIndex.LHD.nifs.ac.jp/LHD
-
-== test lines ==
-retrieve SX8O 74181 1 33
-retrieve Magnetics3lab1 74181 1 33
-2015: retrieve_t seems to only work on FMD
-retrieve_t FMD 117242 1 33 
-different error messages on Magnetics3lab1
-
-Using retrieve_t
-Don't know when it is needed -  always trying it first?
-                                if it gives an error, calculate accoring to .prm
-timeit fmd=retriever.retrieve('Magnetics3lab1',105396,1,[33],False)
-142ms without retrieve_t, 224 with, including failure (set True in above)
-
+See the docstring under class LHDTImeseries
 """
 import subprocess
 import sys
@@ -45,61 +29,96 @@ data_fileformat = "%(diag_name)s-%(shot)d-1-%(channel_number)s"
 
 class LHDBaseDataFetcher(BaseDataFetcher):
 
-     def error_info(self, step=None):
-          """ can only access items that are part of self - others may be volatile
-          """
-          debug_(pyfusion.DEBUG, level=3, key='error_info',msg='entering error_info')
-          """try:
-               tree = self.tree
-          except:
-               try: 
-                    tree = self.mds_path_components['tree']
-               except:
-                    tree = "<can't determine>"
-                    debug_(DEBUG, level=1, key='error_info_cant_determine')
+    def error_info(self, step=None):
+        """ can only access items that are part of self - others may be volatile
+        """
+        debug_(pyfusion.DEBUG, level=3, key='error_info',msg='entering error_info')
+        """"
+        try:
+             tree = self.tree
+        except:
+             try: 
+                  tree = self.mds_path_components['tree']
+             except:
+               tree = "<can't determine>"
+               debug_(DEBUG, level=1, key='error_info_cant_determine')
 
-          """
-          msg = str("LHDbasedata: Could not open %s, shot %d, channel = %s, step=%s"      
-                    %(self.diag_name, self.shot, self.channel_number, step))
-          if step == 'do_fetch':
-              pass
-          #msg += str(" using mode [%s]" % self.fetch_mode)
+        """
+        msg = str("LHDbasedata: Could not open %s, shot %d, channel = %s, step=%s"      
+                  %(self.diag_name, self.shot, self.channel_number, step))
+        if step == 'do_fetch':
+            pass
 
-          return(msg)
+        #msg += str(" using mode [%s]" % self.fetch_mode)
 
-     pass
+        return(msg)
+
+
 
 class LHDIgetfileReader(LHDBaseDataFetcher):
-     """ This uses the igetfile function to return one diagnostic at a time,
-     on its own timebase.  The original use of get_basic_diagnostics was to
-     get a bunch of diags, on a given timebase.  Might be better to separate the 
-     functions in the future.
-     Will probably drop the dictionary approach and make each item a separte enetity
-     in the .cfg file soon.
-     """
-     def do_fetch(self):
-          if pyfusion.DEBUG>2: print('in fetch',self.diag_name, self)
-          debug_(pyfusion.DEBUG, level=3, key='igetfile_fetch')
-          diag = self.config_name
-          infodict = eval(eval(self.info))
-          vardict = get_basic_diagnostics(diags=[diag], times=None, shot=self.shot,
-                                          file_info={diag:infodict}, debug=1, 
-                                          exception=None)
-          debug_(pyfusion.DEBUG, level=2, key='after get_basic')
+    """ This uses the igetfile function to return one diagnostic at a time,
+    on its own timebase.  The original use of get_basic_diagnostics was to
+    get a bunch of diags, on a given timebase.  Might be better to separate the 
+    functions in the future.
+    Will probably drop the dictionary approach and make each item a separte enetity
+    in the .cfg file soon.
+    """
+    def do_fetch(self):
+        if pyfusion.DEBUG>2: print('in fetch',self.diag_name, self)
+        debug_(pyfusion.DEBUG, level=3, key='igetfile_fetch')
+        diag = self.config_name
+        infodict = eval(eval(self.info))
+        vardict = get_basic_diagnostics(diags=[diag], times=None, shot=self.shot,
+                                        file_info={diag:infodict}, debug=1, 
+                                        exception=None)
+        debug_(pyfusion.DEBUG, level=2, key='after get_basic')
           
-          output_data = TimeseriesData(timebase=Timebase(vardict['check_tm']),
-                                       signal=Signal(vardict[self.config_name]),
-                                       channels=Channel(self.config_name,Coords('dummy',(0,0,0))))
-          output_data.config_name = self.config_name  # ??? bdb - my fault?
-          return output_data
+        output_data = TimeseriesData(timebase=Timebase(vardict['check_tm']),
+                                     signal=Signal(vardict[self.config_name]),
+                                     channels=Channel(self.config_name,Coords('dummy',(0,0,0))))
+        output_data.config_name = self.config_name  # ??? bdb - my fault?
+        return output_data
      
 class LHDTimeseriesDataFetcher(LHDBaseDataFetcher):
+     """
+     need: export Retrieve=~/retrieve/bin/ # (maybe not) export
+     INDEXSERVERNAME=DasIndex.LHD.nifs.ac.jp/LHD
 
-    def do_fetch(self):
-        # Allow for movement of Mirnov signals from A14 to PXI crate
+     **Debugging**
+
+     **Off-site**
+     in pyfusion::
+
+      # set the config to use LHD fetcher
+      pyfusion.config.set('DEFAULT','LHDfetcher','pyfusion.acquisition.LHD.fetch.LHDTimeseriesDataFetcher')
+      # choose a shot that doesn't exist locally
+      run pyfusion/examples/plot_signals.py shot_number=999 diag_name='VSL_6' dev_name='LHD'
+
+     **On-site**
+     test lines for exes::
+
+      retrieve SX8O 74181 1 33
+      retrieve Magnetics3lab1 74181 1 33
+      2015: retrieve_t seems to only work on FMD
+      retrieve_t FMD 117242 1 33 
+      different error messages on Magnetics3lab1
+
+     Using retrieve_t::
+
+      Don't know when it is needed -  always trying it first?
+      if it gives an error, calculate according to .prm
+      timeit fmd=retriever.retrieve('Magnetics3lab1',105396,1,[33],False)
+      142ms without retrieve_t, 224 with, including failure (set True in above)
+
+     """
+     def do_fetch(self):
+          # Allow for movement of Mirnov signals from A14 to PXI crate
         if pyfusion.VERBOSE>1: print('LHDfetch - timeseries')
         chnl = int(self.channel_number)
         dggn = self.diag_name
+        if not hasattr(self,'filepath'):
+             self.filepath = pyfusion.config.get('global','LHDtmpdata')
+
         # the clever "-" thing should only be used in members of multi signal diagnostics.
         # so I moved it to base.py.  This means it won't cause sign errors 
         # by doubling up when retrieving from local storage.
@@ -163,7 +182,7 @@ def read_data_from_file(fetcher):
     prm_dict = read_prm_file(fetcher.basename+".prm")
     bytes = int(prm_dict['DataLength(byte)'][0])
     bits = int(prm_dict['Resolution(bit)'][0])
-    if not(prm_dict.has_key('ImageType')):      #if so assume unsigned
+    if 'ImageType' not in prm_dict:      #if so assume unsigned
         bytes_per_sample = 2
         dat_arr = Array.array('H')
         offset = 2**(bits-1)
@@ -209,20 +228,20 @@ def read_data_from_file(fetcher):
     else:  #  use the info from the .prm file
          clockHz = None
 
-         if prm_dict.has_key('SamplingClock'): 
+         if 'SamplingClock' in prm_dict: 
              clockHz =  double(prm_dict['SamplingClock'][0])
-         if prm_dict.has_key('SamplingInterval'): 
+         if 'SamplingInterval' in prm_dict: 
              clockHz =  clockHz/double(prm_dict['SamplingInterval'][0])
-         if prm_dict.has_key('ClockInterval(uSec)'):  # VSL dig
+         if 'ClockInterval(uSec)' in prm_dict:  # VSL dig
               clockHz =  1e6/double(prm_dict['ClockInterval(uSec)'][0])
-         if prm_dict.has_key('ClockSpeed'): 
+         if 'ClockSpeed' in prm_dict: 
              if clockHz != None:
                  pyfusion.utils.warn('Apparent duplication of clock speed information')
              clockHz =  double(prm_dict['ClockSpeed'][0])
              clockHz = LHD_A14_clk(fetcher.shot)  # see above
 
          if clockHz != None:
-              if prm_dict.has_key('PreSamples/Ch'):   # needed for "WE" e.g. VSL  
+              if 'PreSamples/Ch' in prm_dict:   # needed for "WE" e.g. VSL  
                    pretrig = float(prm_dict['PreSamples/Ch'][0])/clockHz
               else:
                    pretrig = 0.

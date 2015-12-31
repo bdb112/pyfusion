@@ -206,7 +206,7 @@ for cl in cls:
     pl.title(titl)
     pl.suptitle(suptitl)
     pl.xlabel(xlab)
-    pl.show()
+    pl.show(block=0)
     report_mem(start_mem)
     pl.figure(num='cl[{cl}] freq-time'.format(cl=cl))
     if clearfigs: pl.clf()
@@ -232,6 +232,6 @@ for cl in cls:
     pl.ylabel('insts')
     pl.xlabel(xlab)
     if pl.isinteractive():
-        pl.show()
+        pl.show(block=0)
 
-pl.show()
+pl.show(block=0)

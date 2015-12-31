@@ -261,7 +261,7 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
     if filename != None:
         pl.savefig(filename)
     else:
-        pl.show()
+        pl.show(block=0)
 
 #def plot_multichannel_coord(input_data, coord=None, savefig=None):
 #    pass

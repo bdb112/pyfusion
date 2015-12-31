@@ -1,3 +1,17 @@
+"""
+Typical use
+LHD=load('/data/datamining/LHD_summary.npz')['LHD'].tolist()
+run -i pyfusion/examples/find_close_shot.py
+find_close_shot(36208,'MagneticField,MagneticAxis,nl_max,GAMMA,Quadruple,wp_max',subrange=np.loadtxt('300_series_shots.lst',dtype=int),debug=0,limit=8)
+
+Note: with the current db, encoding='latin1' has to be used in load()
+
+_PYFUSION_TEST_@@PRE@import numpy; LHD=numpy.load('/data/datamining/LHD_summary.npz')['LHD'].tolist()
+PYTHON3PYFUSION_TEST_@@PRE@import numpy; LHD=numpy.load('/data/datamining/LHD_summary.npz',encoding='latin1')['LHD'].tolist()
+
+
+
+"""
 
 import numpy as np
 import pylab as pl
@@ -27,7 +41,7 @@ def find_close_shot(sh, diags, limit=10, summarydb = LHD, subrange=None, debug=0
     SDB = summarydb
     shots = SDB['Shot']  # boyd's notation - allows for cross check
 
-    if subrange != None:
+    if subrange is not None:
         inds = np.array(subrange)
         #inds = []  # this option too slow
         #for s in subrange:
@@ -81,7 +95,7 @@ def find_close_shot(sh, diags, limit=10, summarydb = LHD, subrange=None, debug=0
         print(''.join(['{k:^14}'.format(k=k) for k in pkeys]))
         pinds = np.insert(inds[index[0:imax]],0,sh)
         fmts = len(pkeys)*['{v:^14.3f}']
-        fmts[0] = '{v:^14s}'
+        fmts[0] = '{v:^14d}'
         for i in pinds:
             print(''.join([fmts[ii]
                            .format(v=LHD[k][i]) for (ii,k) in enumerate(pkeys)]))

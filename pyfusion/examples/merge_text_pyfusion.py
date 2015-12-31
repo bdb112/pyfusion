@@ -3,10 +3,17 @@ from pyfusion.acquisition.read_text_pyfusion import read_text_pyfusion, merge_ds
 from glob import glob
 import numpy as np
 from pyfusion.debug_ import debug_
+"""
 
-_var_default="""
+run  pyfusion/examples/merge_text_pyfusion.py "target=b'^Shot.*'"
+Note: quotes will be gobbled unless you double quote as above 
+THis may be a new problem since python3 compatibility changes
+
+
+"""
+_var_defaults="""
 debug=0
-target='^Shot .*'  # to allow searches for e.g. '^Shot .*'  or skip lines ==4
+target=b'^Shot .*'  # to allow searches for e.g. '^Shot .*'  or skip lines ==4
 quiet=1
 append = False
 append_old_method =False   # not sure if the old method ever worked - takes a lot of mem
@@ -15,7 +22,7 @@ file_list = [pyfusion.root_dir+'/acquisition/PF2_121206_54185_384_rms_1.dat.bz2'
 save_filename="None"
 """
 
-exec(_var_default)
+exec(_var_defaults)
 
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())

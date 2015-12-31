@@ -12,6 +12,9 @@ At present, only saves if compress_local is true.
 # tuning compression parameters - (this example shows very little difference
 run examples/save_to_local.py shot_number=18993 'local_dir="c:/cygwin/tmp"' diag_name="mirnov_small" save_kwargs='{"delta_encode_signal":True}'
 
+# A mult-channel diag: 
+run pyfusion/examples/save_to_local.py shot_list=86507 dev_name='H1Local' diag_name='ElectronDensity15'
+
 from the old pyfusion - may need to tidy up
 _PYFUSION_TEST_@@local_dir=/tmp/ overwrite_local=True
 """
@@ -28,6 +31,8 @@ diag_name = 'SLOW2k'
 diag_name = "MP1"
 dev_name='LHD'
 readback=False
+downsample=None
+time_range=None
 shot_list=33343  # number or a list
 shot_list=[27233]
 compress_local=1
@@ -35,6 +40,7 @@ overwrite_local=False
 save_kwargs = {} 
 prefix=''  #'HeliotronJ_'
 local_dir=''
+exception= Exception
 """
 exec(_var_defaults)
 exec(process_cmd_line_args())
@@ -63,8 +69,13 @@ else:
 for diag in diag_list:
     diag = prefix+diag
     for shot_number in shot_list:
-        dev=pyfusion.getDevice(dev_name)
-        data=dev.acq.getdata(shot_number,diag)
+        dev = pyfusion.getDevice(dev_name)
+        data = dev.acq.getdata(shot_number, diag)
+        if downsample is not None:
+            data = data.downsample(downsample)
+
+        if time_range is not None:  # not tested!!
+            data = data.reduce_time(time_range, fftopt=True)
         
         # I don't believe this test - always true!
 
@@ -94,11 +105,15 @@ for diag in diag_list:
                 if hasattr(data, 'params'):  # add the other params
                     params.update(data.params)
 
-                if singleton:
-                    signal = data.signal
-                else: 
-                    signal = data.signal[c]
-
+                try:
+                    if singleton:
+                        signal = data.signal
+                    else: 
+                        signal = data.signal[c]
+                except exception as reason:
+                    print('failed to read shot {shot_number}, {r} {args}'
+                          .format(shot=shot, r=reason, args=r.args))
+                    
                 if os.path.isfile(localfilename) and not overwrite_local:
                     raise IOError('file {f} exists'.format(f=localfilename))
 

@@ -207,7 +207,7 @@ def make_ML_modes(sd=0.2, mode_phases=None):    # modes to match with VSL flux l
         ML_modes.append(Mode('N={N}'.format(N=N),N=N, NN=i*(100), cc=mode_phases[i], csd=sd*np.ones(len(mode_phases[0]))))
     return(ML_modes)
 
-_var_default="""
+_var_defaults="""
 inds = None
 mode_list=[]   # should always specify mode list in command line
 mode=None
@@ -226,7 +226,7 @@ ideal_sd = 0.5
 """
 
 import pyfusion.utils
-exec(_var_default)
+exec(_var_defaults)
 exec(pyfusion.utils.process_cmd_line_args())
 
 ideal_modes = make_ideal_modes(ideal_sd=ideal_sd)

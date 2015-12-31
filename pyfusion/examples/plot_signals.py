@@ -5,6 +5,7 @@ run pyfusion/examples/plot_signals dev_name='H1Local' diag_name='H1Poloidal1' sh
 # multichannel example
 run pyfusion/examples/plot_signals dev_name='H1Local' diag_name='ElectronDensity' shot_number=76887
 run pyfusion/examples/plot_signals diag_name='LHD_n_e_array' shot_number=42137 sharey=1
+run pyfusion/examples/plot_signals.py dev_name='HeliotronJ' shot_number=50136 diag_name=HeliotronJ_MP_array
 """
 import pyfusion
 

@@ -7,11 +7,11 @@ from pyfusion.utils.utils import fix2pi_skips, modtwopi
 from pyfusion.visual.sp import sp
 from pyfusion.data.convenience import between, btw, bw, decimate, his, broaden
 
-_var_default="""
+_var_defaults="""
 DAfilename='DA65MP2010HMPno612b5_M_N_fmax.npz'
 """
 
-exec(_var_default)
+exec(_var_defaults)
 
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())

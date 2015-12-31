@@ -1,1 +1,1 @@
-Please note that the data fies included in the download are downsampled to reduce the download size, so the results will usually be a little different from the published figures.  In those cases, a sample png has been included using the downsampled data.
+Please note that the data files included in the download are downsampled to reduce the download size, so the results will usually be a little different from the published figures.  In those cases, a sample png has been included using the downsampled data.

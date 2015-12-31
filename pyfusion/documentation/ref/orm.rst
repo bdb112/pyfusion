@@ -1,6 +1,9 @@
 Object relational mapping
 =========================
 
+**Note that ORM is far from properly implemented in the 2015 version,
+in part because of significant speed reductions**
+
 Overview
 --------
 

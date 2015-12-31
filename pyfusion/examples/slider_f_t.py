@@ -66,7 +66,7 @@ def NFunc(label):
 radio.on_clicked(NFunc)
 
 def get_data(shotind, scale=5):
-    if dd.has_key('N'): 
+    if 'N' in dd: 
         w = where((shots[shotind] == dd['shot']) & (dd['N']==N))[0]
     else:
         w = where((shots[shotind] == dd['shot']))[0]

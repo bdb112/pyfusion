@@ -1,5 +1,6 @@
 """ Extra example to go with Example 1&2, JSPS tutorial: more realistic density profile scan 
 Takes about a minute to run in full on a 2015 model machine
+Needs full data files, so won't run with download package alone.
 """
 import pyfusion as pf   # (we will assume these three import lines in all future examples)
 import numpy as np

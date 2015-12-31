@@ -87,5 +87,5 @@ for offs in [0,1,2]:
 pl.setp(ax, xlabel=str('frequency ({xlab})'.format(xlab=xlab)), xlim = [1,100])   
 ax.legend(prop={'size':'small'},loc='lower right')
 
-pl.show()
+pl.show(block=0)
 

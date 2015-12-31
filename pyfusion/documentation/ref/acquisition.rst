@@ -56,6 +56,10 @@ Classes
 
 .. automodule:: pyfusion.acquisition.LHD
 
+Classes
+"""""""
+.. autoclass:: pyfusion.acquisition.LHD.fetch.LHDTimeseriesDataFetcher
+
 :mod:`DSV`
 ^^^^^^^^^^
 

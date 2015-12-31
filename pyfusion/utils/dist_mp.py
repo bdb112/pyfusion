@@ -34,7 +34,7 @@ class ThreadWorker():
 
         #unless thread exists and is alive start or restart it
         self.thread = threading.Thread(target=self.func,args=params, kwargs=kwargs)
-        if kwargs.has_key('debug') and (kwargs['debug']>0): print(kwargs)
+        if 'debug' in kwargs and (kwargs['debug']>0): print(kwargs)
         self.thread.start()
         return 'started'
 

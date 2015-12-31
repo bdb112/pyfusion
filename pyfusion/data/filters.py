@@ -69,23 +69,24 @@ class MetaFilter(type):
 
 def next_nice_number(N):
     """ return the next highest power of 2 including nice fractions (e.g. 2**n *5/4)
-    takes about 10us  - should rewrite more carefully to calculate 
+    takes about 10us  - should rewrite more carefully to calculate
     starting from smallest power of 2 less than N, but hard to do better
-    >>> print(next_nice_number(256), next_nice_number(257)) 
+    >>> print(next_nice_number(256), next_nice_number(257))
     (256, 288)
 
     Have to be careful this doen't take more time than it saves!
     """
     if N is None:
-        (minp2, maxp2) = (6,16)
+        (minp2, maxp2) = (6, 16)
     else:
         minp2 = int(np.log2(N))
         maxp2 = minp2 + 2
 
-    nice = [2**p * n/16 for p in range(minp2,maxp2) for n in [16, 18, 20, 24, 27]]
+    nice = [2**p * n/16 for p in range(minp2, maxp2) for n in [16, 18, 20, 24, 27]]
     if N is None: return(np.array(nice))
     for n in nice:
         if n>=N: return(n)
+
 
 def get_optimum_time_range(input_data, new_time_range):
     """ This grabs a few more (or a few less, if enough not available)
@@ -100,10 +101,10 @@ def get_optimum_time_range(input_data, new_time_range):
     nt_args = searchsorted(input_data.timebase, new_time_range)
     # try for 20 more points
     extension = ((new_time_range[1]-new_time_range[0])
-                *float(20)/(nt_args[1]-nt_args[0]))
-    (dum,trial_upper) = searchsorted(input_data.timebase, 
-                                  [new_time_range[0],
-                                   new_time_range[1]+extension])
+                 * float(20)/(nt_args[1]-nt_args[0]))
+    (dum, trial_upper) = searchsorted(input_data.timebase,
+                                      [new_time_range[0],
+                                       new_time_range[1]+extension])
     # if not consider using less than the original request
     trial_lower = trial_upper - 20
     times = []
@@ -117,36 +118,37 @@ def get_optimum_time_range(input_data, new_time_range):
                                     old=nt_args[1]-nt_args[0]))
 
     best_upper_time = input_data.timebase[newupper]
-    new_time_range[1] = (best_upper_time 
+    new_time_range[1] = (best_upper_time
                          - 0.5*np.average(np.diff(input_data.timebase)))
-    if pyfusion.VERBOSE>0: 
+    if pyfusion.VERBOSE > 0:
         print('returning new time range={n}'.format(n=new_time_range))
     return(new_time_range)
+
 
 @register("TimeseriesData", "DataSet")
 def reduce_time(input_data, new_time_range, fftopt=False):
     """ reduce the time range of the input data in place(copy=False)
-    or the returned Dataset (copy=True - default at present). 
+    or the returned Dataset (copy=True - default at present).
     if fftopt, then extend time if possible, or if not reduce it so that
     ffts run reasonably fast. Should consider moving this to actual filters?
     But this way users can obtain optimum fft even without filters.
     The fftopt is only visited when it is a dataset, and this isn't happening
     """
     from pyfusion.data.base import DataSet
-    if pyfusion.VERBOSE>1: 
+    if pyfusion.VERBOSE > 1:
         print('Entering reduce_time, fftopt={0}, isinst={1}'
-              .format(fftopt,isinstance(input_data, DataSet) ))
+              .format(fftopt, isinstance(input_data, DataSet)))
         pyfusion.logger.warning("Testing: can I see this?")
-    if (min(input_data.timebase)>=new_time_range[0] and 
-        max(input_data.timebase)<=new_time_range[1]):
+    if (min(input_data.timebase) >= new_time_range[0] and 
+        max(input_data.timebase) <= new_time_range[1]):
         print('time range is already reduced')
         return(input_data)
-        
+
     if isinstance(input_data, DataSet):
         if fftopt: new_time_range = get_optimum_time_range(input_data, new_time_range)
 
-        #output_dataset = input_data.copy()
-        #output_dataset.clear()
+        # output_dataset = input_data.copy()
+        # output_dataset.clear()
         print('****new time range={n}'.format(n=new_time_range))
         output_dataset = DataSet(input_data.label+'_reduce_time')
         for data in input_data:
@@ -156,15 +158,15 @@ def reduce_time(input_data, new_time_range, fftopt=False):
                 pyfusion.logger.warning("Data filter 'reduce_time' not applied to item in dataset")
         return output_dataset
     # else: this is effectively a matching 'else' - omit to save indentation
-    #??? this should not need to be here - should only be called from
+    # ??? this should not need to be here - should only be called from
     # above when passed as a dataset (more efficient)
     if fftopt: new_time_range = get_optimum_time_range(input_data, new_time_range)
     new_time_args = searchsorted(input_data.timebase, new_time_range)
-    input_data.timebase =input_data.timebase[new_time_args[0]:new_time_args[1]]
+    input_data.timebase = input_data.timebase[new_time_args[0]:new_time_args[1]]
     if input_data.signal.ndim == 1:
         input_data.signal = input_data.signal[new_time_args[0]:new_time_args[1]]
     else:
-        input_data.signal = input_data.signal[:,new_time_args[0]:new_time_args[1]]
+        input_data.signal = input_data.signal[:, new_time_args[0]:new_time_args[1]]
     if pyfusion.VERBOSE>1: print('reduce_time to length {l}'
                                  .format(l=np.shape(input_data.signal))),
     return input_data
@@ -180,6 +182,11 @@ def segment(input_data, n_samples, overlap=DEFAULT_SEGMENT_OVERLAP):
     """
     from .base import DataSet
     from .timeseries import TimeseriesData
+    if n_samples<1:
+        dt = np.average(np.diff(input_data.timebase))
+        n_samples = next_nice_number(n_samples/dt)
+        print('used {n} sample segments'.format(n=n_samples))
+
     if isinstance(input_data, DataSet):
         output_dataset = DataSet()
         for ii,data in enumerate(input_data):
@@ -455,12 +462,17 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     n_pb_low = int(norm_passband[0]*NA/2)
     n_pb_hi = int(norm_passband[1]*NA/2)
     n_sb_hi = int(norm_stopband[1]*NA/2)
+    
+    if  n_sb_hi >= len(mask):
+        raise ValueError('Filter frequency too high for data - units '
+                         'problem? - sample spacing is {dt:.2g}'
+                         .format(dt=float(np.max(np.diff(input_data.timebase)))))
 
     # twid is the transition width, and should default so that the sloped part is the same width as the flat?
     # !!!! doesn't do that yet.
     # make the transition width an even number, and the larger of the two
     # need to pull this code out and be sure it works.
-    twid = 2*(1+max(n_pb_low - n_sb_low,n_sb_hi - n_pb_hi)/2)
+    twid = 2*(1+max(n_pb_low - n_sb_low,n_sb_hi - n_pb_hi)//2)
     if (twid < 4) or (n_sb_low < 0): 
         if taper == 2: 
             raise ValueError(
@@ -507,8 +519,8 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         n_sb_low = n_pb_low-twid  # sacrifice the stop band, not the pass
         n_sb_hi = n_pb_hi+twid
 
-        low_mid = n_pb_low - twid/2
-        high_mid = n_pb_hi + twid/2
+        low_mid = n_pb_low - twid//2
+        high_mid = n_pb_hi + twid//2
         for n in range(n_sb_low,low_mid):
             mask[n] = float(n - n_sb_low)/(low_mid - 1 - n_sb_low) # trapezoid
             mask[2*low_mid-n-1] = mask[n] #down ramp - repeat max
@@ -613,6 +625,34 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
 #########################################
 ## wrappers to numpy signal processing ##
 #########################################
+@register("TimeseriesData")
+def downsample(input_data, skip=10, chan=None, copy=False):
+    """ Good example of filter that changes the size of the data.
+    """
+    from .base import DataSet
+    from .timeseries import TimeseriesData
+    if isinstance(input_data, DataSet):
+        output_dataset = DataSet()
+        for ii,data in enumerate(input_data):
+            try:
+                output_dataset.update(data.downsample(skip))
+            except AttributeError:
+                pyfusion.logger.warning("Data filter 'downsample' not applied to item in dataset")
+        return output_dataset
+    # python3 check this
+    if input_data.signal.ndim == 1:
+        tmp_data = TimeseriesData(timebase=input_data.timebase[::skip],
+                                  signal=input_data.signal[::skip],
+                                  channels=input_data.channels, bypass_length_check=True)
+    else:
+        tmp_data = TimeseriesData(timebase=input_data.timebase[::skip],
+                                  signal=input_data.signal[:,::skip],
+                                  channels=input_data.channels, bypass_length_check=True)
+
+    tmp_data.meta = input_data.meta.copy()
+    tmp_data.history = input_data.history  # bdb - may be redundant now meta is copied
+    return tmp_data
+
 @register("TimeseriesData")
 def integrate(input_data, baseline=[], chan=None, copy=False):
     """ Return the time integral of a signal, 

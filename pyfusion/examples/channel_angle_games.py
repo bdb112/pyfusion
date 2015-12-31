@@ -21,7 +21,7 @@ pl.plot(Phi, linestyle='steps')
 Phi_circ = fix2pi_skips(np.append(Phi, Phi[0]), around=0)
 dp = np.diff(Phi_circ)
 pl.plot(dp, linestyle='steps')
-pl.show()
+pl.figure()
 pl.subplot(122)
 phases = []
 for N in range(-5, 5):
@@ -29,7 +29,7 @@ for N in range(-5, 5):
     phases.append(ph)
     pl.plot(phases[-1], label='N={N}'.format(N=N))
 pl.legend()
-pl.show()
+pl.show(block=0)
 
 # fake up a clusters file
 clinds = [[c] for c in np.arange(len(phases))]

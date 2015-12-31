@@ -1,7 +1,8 @@
 '''
 SH : 2May2013
 bdb lots of mods 
-test: pyfusion/examples/clusterDA.py
+testing: pyfusion/examples/clusterDA.py
+Lots of duplication - needs rationalisation
 '''
 
 from __future__ import print_function

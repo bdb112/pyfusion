@@ -4,7 +4,7 @@ import pyfusion, sys
 import pylab as pl
 import numpy as np 
 
-_var_default="""
+_var_defaults="""
 
 shot_range=[27233]
 plot=True
@@ -13,7 +13,7 @@ diag_name='HMP01'
 dev_name="LHD"
 """
 
-exec(_var_default)
+exec(_var_defaults)
 
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())

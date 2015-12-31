@@ -1,7 +1,7 @@
 import pyfusion
 from pyfusion.acquisition.process_chirps import process_chirps
 
-_var_default="""
+_var_defaults="""
 Ms = None
 Ns = [2]
 dfdtunit=1
@@ -18,7 +18,7 @@ plt=True
 debug=0
 verbose=1
 """
-exec(_var_default)
+exec(_var_defaults)
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 

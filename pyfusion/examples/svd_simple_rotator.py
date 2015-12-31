@@ -6,7 +6,7 @@ from numpy import arange, sin, cos, pi, transpose, array, diag, allclose, dot
 from numpy.linalg import svd
 import pylab as pl
 import numpy as np
-_var_default = """
+_var_defaults = """
 t=arange(0,1e-4,1e-6)
 w=2*pi*20e3
 hold=0
@@ -22,7 +22,7 @@ svmax = 100  # limit the number of singular vectors used in reconstruction.
 """
 
 # tweak above parameters according to command line args
-exec(_var_default)
+exec(_var_defaults)
 
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
@@ -65,4 +65,4 @@ pl.subplot(2,2,4)
 pl.plot(topo[:,0:3],hold=0)
 pl.plot(topo[:,3:6],linewidth=0.5,hold=1)
 pl.title('top 3 topos')
-pl.show()
+pl.show(block=0)

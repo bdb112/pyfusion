@@ -51,7 +51,7 @@ def timeinfo(message, outstream=sys.stdout):
     st = seconds()
     return
 
-_var_default="""
+_var_defaults="""
 dev_name = 'LHD'
 
 #min_shot = 84000
@@ -84,7 +84,7 @@ outfile="None"
 # ids are usually handled by sqlalchemy, without SQL we need to look after them ourselves
 fs_id = 0
 """
-exec(_var_default)
+exec(_var_defaults)
 
 # ideally should be a direct call, passing the local dictionary
 import pyfusion.utils

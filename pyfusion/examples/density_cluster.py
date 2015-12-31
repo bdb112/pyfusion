@@ -12,11 +12,11 @@ New "unsafe" method takes 680 sec and 1.4GB for 16M of 18M phases
 })
 Idea: put each unique hash or the index itself into one of 1000-1M  an arrays until
 one array is full.  Then empty all arrays that are more than half full into their dict 
-
+_PYFUSION_TEST_@@sel="range(5)"@@PRE@from pyfusion.data.DA_datamining import da ; da=da(dd=False) ; da.extract(locals())
 """
 import numpy as np
 import pylab as pl
-
+from numpy import float32, sqrt
 from pyfusion.data.histogramHD import histogramHD
 
 colorset=('b,g,r,c,m,y,k,orange,purple,lightgreen,gray'.split(',')) # to be rotated
@@ -109,7 +109,7 @@ def group_clustersold(instances, radius=None):
     #if debug: 1/0    
     return(clusters)
 
-_var_default="""
+_var_defaults="""
 
 method='unsafe'
 mincount=3
@@ -135,7 +135,7 @@ except:
     result=None  # will not be None after a clustering - so can re run without reclustering
 
 """
-exec(_var_default)
+exec(_var_defaults)
 
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())

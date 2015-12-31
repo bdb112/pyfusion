@@ -387,7 +387,7 @@ if __name__ == '__main__':
     sd = mode.std(phases)
 
     for mname in 'N,NN,M,MM'.split(','):
-        if not(dd.has_key(mname)):
+        if mname not in dd:
             use_dtype=int16
             minint = np.iinfo(use_dtype).min
             dd[mname] = minint*np.ones(len(dd['shot']),dtype=use_dtype)

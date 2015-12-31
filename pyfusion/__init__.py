@@ -68,10 +68,14 @@ except:
 # var, depending on taste.
 VERBOSE = int(os.getenv('PYFUSION_VERBOSE','0'))  # allows config info to be debugged
 #read_config([DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
-""" the USER_CONFIG file must be there at first to define local items (e.g. 
-paths) and  then after DEFAULT_CONFIG to override defaults
+""" 
+Common stuff in DEFAULT_CONFIG_FILE, including my_tmp
+Computer specific personalisation in USER_CONFIG_FILE
+e.g. my_tmp = /tmp/blackwell
+Conputer independent personalisation in  USER_ENV_CONFIG_FILE
+the USER_CONFIG file (.pyfusion) must be after DEFAULT_CONFIG to override defaults
 """
-read_config([USER_CONFIG_FILE, DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
+read_config([DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
 
 # verbosity level from environment has priority, otherwise use config, which 
 # defaults to 0.  Note that we looked at the env var previously to allow debug of config

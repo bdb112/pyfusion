@@ -1,2 +1,4 @@
 # ignore sphinx build files
 .build
+# ignore the text versions of the 'snapshot' of the documentation
+built_html/_sources

@@ -2,6 +2,7 @@ import numpy as np
 import pylab as pl
 import pyfusion
 from time import time as seconds
+import traceback
 from time import sleep
 import re
 import sys
@@ -15,7 +16,10 @@ def find_data(file, target, skip = 0, recursion_level=0, debug=0):
     The recursive part could be handled more nicely.
     about 0.14 secs to read 3500 lines, 0.4 if after 11000 lines of text
     """
-    lines = np.loadtxt(file,dtype=str,delimiter='FOOBARWOOBAR',skiprows=skip)
+    # unless dtype=str, we get a bytestring quoted as a string  "b'asd'"
+    # solution is dtype='S' or stype=bytes - then -> b'asd'
+    # open on the other hand lets you choose   'rb' or 'rt' (default)
+    lines = np.loadtxt(file,dtype=bytes,delimiter='FOOBARWOOBAR',skiprows=skip)
     # re.match /loadtxt are confused by a python3  "b" at the beginning
     wh_shotlines = np.where(
         np.array([re.match(target, line) is not None for line in lines]))[0]
@@ -42,7 +46,7 @@ def find_data(file, target, skip = 0, recursion_level=0, debug=0):
                       format(t=target, f=file))
 
 
-def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isinteractive(), ms=100, hold=0, debug=0, quiet=1,  maxcpu=1, exception = Exception):
+def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinteractive(), ms=100, hold=0, debug=0, quiet=1,  maxcpu=1, exception = Exception):
     """ Accepts a file or a list of files, returns a list of structured arrays
     See merge ds_list to merge and convert types (float -> pyfusion.prec_med
     """
@@ -66,20 +70,22 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
                           m=(seconds()-st)*(tot-i)/float(60*i)))
 
         try:
-            if pl.is_string_like(target): 
+            if (isinstance(target,str) or isinstance(target,bytes)): 
                 skip = 1+find_data(filename, target,debug=debug)
-            else: 
+            elif isinstance(target, int): 
                 skip = target
+            else:
+                raise Exception('target ({target}) is not recognised'.format(target=target))
             if quiet == 0:
                 print('{t:.1f} sec, loading data from line {s} of {f}'
                       .format(t = seconds()-st, s=skip, f=filename))
             #  this little bit to determine layout of data
             # very inefficient to read twice, but in a hurry!
-            txt = np.loadtxt(fname=filename, skiprows=skip-1, dtype=str, 
+            txt = np.loadtxt(fname=filename, skiprows=skip-1, dtype=bytes, 
                              delimiter='FOOBARWOOBAR')
             header_toks = txt[0].split()
             # look for a version number first
-            if header_toks[-1][-1] in '0123456789.':
+            if header_toks[-1][-1] in b'0123456789.':
                 version = float(header_toks.pop())
                 if 'ersion' not in header_toks.pop():
                     raise ValueError('Error reading header in {f}'
@@ -88,7 +94,7 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
             # noticed that the offset moved in 2015 - when did it  happen?
             phase_offs = -4 if sys.version>'3,' else -2
             # is the first character of the 2nd last a digit?
-            if header_toks[phase_offs][0] in '0123456789': 
+            if header_toks[phase_offs][0] in b'0123456789': 
                 if pyfusion.VERBOSE > 0: 
                     print('found new header including number of phases')
                 n_phases = int(header_toks[phase_offs])
@@ -128,8 +134,8 @@ def read_text_pyfusion(files, target='^Shot .*', ph_dtype=None, plot=pl.isintera
             print('Lookup error while reading {f} with loadtxt - {info}'.format(f=filename, info=info))
         
         except exception as info:
-            print('Other exception while reading {f} with loadtxt - {info}'.format(f=filename, info=info))
-
+            print('Other exception while reading {f} with loadtxt - {info} {a}'.format(f=filename, info=info, a=info.args))
+            traceback.print_exc()
     print("{c} out of {t} files".format(c=count, t=len(file_list)))
     if plot>0 and len(ds_list)>0: 
         ds = ds_list[0]

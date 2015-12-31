@@ -100,7 +100,7 @@ def get_local_shot_numbers(partial_name):
     global shot_list
     return(shot_list)
 
-_var_default="""
+_var_defaults="""
 wild_card = ''
 
 dev_name= 'LHD' # 'H1Local'
@@ -126,7 +126,7 @@ fmod=0
 
 chan_name=''
 """
-exec(_var_default)
+exec(_var_defaults)
 
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())

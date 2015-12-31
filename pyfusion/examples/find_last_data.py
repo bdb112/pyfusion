@@ -1,11 +1,11 @@
 import pyfusion
 
-_var_default="""
+_var_defaults="""
 diag_name = 'MP'
 dev_name = 'LHD'
 rng = None
 """
-exec(_var_default)
+exec(_var_defaults)
 
 # ideally should be a direct call, passing the local dictionary
 import pyfusion.utils

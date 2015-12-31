@@ -240,8 +240,8 @@ class DA():
         else:
             indtmp = self.da['indx']
             if (len(indtmp) != len(self.da[self.mainkey]) or
-                (min(indtmp) != 0) or np.unique(np.diff(indtmp)) !=[1]):
-                print("**** warning - index is not montonic from 0 ")
+                (min(indtmp) != 0) or np.max(np.diff(indtmp))>1):
+                print("**** warning - index is not montonic from 0 ***** ")
 
         self.infodict.update({'mainkey':self.mainkey}) # update in case it has changed
         if type(self.da) == dict:
@@ -706,11 +706,12 @@ class DA():
         if dictionary == False: 
             return(val_tuple)
 
-def da(filename='300_small.npz'):
+def da(filename='300_small.npz',dd=True):
     """ return a da dictionary (used to be called dd - not the DA object)
     mainly for automated tests of example files.
     """
-    return(DA(filename,load=1).da)
+    if dd: return(DA(filename,load=1).da)
+    else: return(DA(filename,load=1))
 
 if __name__ == "__main__":
 

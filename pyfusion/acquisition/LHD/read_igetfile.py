@@ -188,7 +188,7 @@ def read_igetfile(filename=None, verbose=0, plot=True, hold=True, debug=0, quiet
     from numpy import where, diff, loadtxt, array
     if (quiet > 0) and (debug > 0): quiet=0  # debug is stronger than quiet
     import time
-    from StringIO import StringIO
+    from io import StringIO
 
     if filename is None: filename = '/home/bdb112/python/mmw@50623.dat'
     if os.path.split(filename)[0] == '':
@@ -214,11 +214,12 @@ def read_igetfile(filename=None, verbose=0, plot=True, hold=True, debug=0, quiet
             # avoid breaking into token by using impossible delimiter
             # or just "\n" will do
             #   comments has to be a character - '\000' seems OK
-            fbuff = loadtxt(filename, delimiter='\n', dtype='S',comments='~')
+            # for this case, convert to str type, avoids lots of b'..'
+            fbuff = [l.decode() for l in loadtxt(filename, delimiter='\n', dtype='S',comments='~')]
             # careful - loadtxt removes the \n, readlines doesn't
             reader='loadtxt'
         except:     
-            if type(filename) == type('str'): fp=open(filename)
+            if type(filename) == type('str'): fp=open(filename,'rt')
             else: fp=filename
             fp.seek(0)
             #print(fp.readlines())

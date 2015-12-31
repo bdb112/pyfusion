@@ -2,9 +2,31 @@ This folder contains documentation in reStructuredText format. These
 source files are converted to html, pdf, etc using Sphinx
 [http://sphinx.pocoo.org].
 
+e.g. for ubuntu
+sudo aptitude install python-sphinx
+
 Please don't commit built files (html, pdf, etc) to the source
 repository (subversion, git). The .build subdirectory should be
 empty. 
 
-To generate the module documentation from docstrings, run (from this directory):
+However a recent html copy may be included (2015) at least until a
+suitable repository site (e.g. anu.edu.au or readthedocs) can be found.
+e.g.  chromium-browser pyfusion/documentation/built_html/index.html 
+
+To generate the module documentation from docstrings, run 
+(from this directory):
 python generate_modules.py -f -d modules -s rst ..
+
+Actual line Dec 2015:
+Hard to get the excludes to work - used full path in the end
+
+run generate_modules1.py ../../pyfusion -f  -d modules -s rst exclude /home/bdb112/pyfusion/mon121210/pyfusion/pyfusion/examples/
+
+Then to generate the complete documentation (e.g. in html)
+
+cd pyfusion/documentation
+make html
+
+Example of reasonable in-line python documentation in LHD/fetch.py
+
+Hope to redo sphix, using numpydoc!

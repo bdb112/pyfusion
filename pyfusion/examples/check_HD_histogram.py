@@ -7,7 +7,7 @@ import numpy as np
 import pylab as pl
 
 
-_var_default="""
+_var_defaults="""
 NDim=5
 n_bins=50
 thisSTD=0.2
@@ -17,7 +17,7 @@ pow=None
 NRand=int(2e6)
 first_std = 0.5
 """
-exec(_var_default)
+exec(_var_defaults)
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
@@ -44,7 +44,7 @@ maxsd = np.sqrt(np.max(test_mode.csd**2))
 max_valid_s = 1.5/maxsd  # I would have thought Pi/maxsd
 pl.semilogy([max_valid_s, max_valid_s],pl.ylim(),'r--',linewidth=2)
 #if pl.isinteractive():
-pl.show()
+pl.show(block=0)
 
 # Now try to adjust the bin sizes so uniform dist is constant count
 bins = [0,float(first_std)]
@@ -67,4 +67,4 @@ if np.min(dist)>np.max(bins):
                      .format(n=len(bins), lastbin=bins[-1]))
 pl.hist(dist, bins=bins,log=1)
 pl.semilogy([max_valid_s, max_valid_s],pl.ylim(),'r--',linewidth=2)
-pl.show
+pl.show(block=0)

@@ -32,7 +32,8 @@ Next level keys are
 """
 file_info={}
 #file_info.update({'n_e': {'format': 'fircall@{0}.dat','name':'ne_bar(3939)'}})
-# this form should be phase out, as it is an unsuitable variable name 
+# this form should be phased out, as it is an unsuitable variable name 
+
 file_info.update({'<n_e19>': {'format': 'fircall@{0}.dat','name':'ne_bar\(3[0-9]+\)'}})
 # fircall starts around 36142 and goes to at least 54198 - although 90000 has firc.
 file_info.update({'n_e19b0': 
@@ -172,7 +173,7 @@ def get_basic_diagnostics(diags=None, file_info=file_info, shot=54196, times=Non
     vals = {}
 
     for diag in diags:
-        if not(file_info.has_key(diag)):
+        if not(diag in file_info):
             warn('diagnostic {0} not found in shot {1}'.format(diag, shot),stacklevel=2)
             vals.update({diag: np.nan + times})
         else:
@@ -185,7 +186,7 @@ def get_basic_diagnostics(diags=None, file_info=file_info, shot=54196, times=Non
 
             if info['format'].find('.csv') > 0:
                 try:
-                    test=lhd_summary.keys()
+                    test=list(lhd_summary.keys())
                 except:    
                     csvfilename = acq_LHD+'/'+info['format']
                     if pyfusion.DEBUG>1: print('looking for lhd summary in' + csvfilename)
@@ -279,7 +280,7 @@ def get_basic_diagnostics(diags=None, file_info=file_info, shot=54196, times=Non
 if not(os.path.exists(localigetfilepath)):
     os.makedirs(localigetfilepath)
 
-get_basic_diagnostics.__doc__ += 'Some diagnostics are \n' + ', '.join(file_info.keys())
+get_basic_diagnostics.__doc__ += 'Some diagnostics are \n' + ', '.join(list(file_info.keys()))
 
 
 if __name__ == "__main__":

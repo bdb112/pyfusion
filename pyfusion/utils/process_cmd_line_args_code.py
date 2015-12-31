@@ -92,7 +92,7 @@ def list_vars(locdict, Stop, tail_msg=''):
                         print(ans)
                         break
 
-        if _rhs != None:
+        if _rhs != None and _rhs != "None":
             if not _rhs in locdict:
                 print('RHS < {rhs} > is not in local dictionary - if you wish to refer to '
                        'a variable from the working interactive namespace, then '
@@ -101,9 +101,9 @@ def list_vars(locdict, Stop, tail_msg=''):
     if Stop: 
         print('======== make sure there are *NO SPACES* - e.g.  x=123  not x = 123 ======')
         if tail_msg !='': print(tail_msg)
-        ans=input(' q or ^C (<CR) to stop')  # raw_input still needs a CR 
+        ans=input(' q or ^C (+<CR>) to stop')  # raw_input still needs a CR 
         if ans.upper() == 'Q': 
-            sys.exit()
+            _sys.exit()
         return()  # I thought I didn't know how to just "stop" - maybe the above works
     try:
         import pydb; pydb.set_trace('s','print "set vars, c to continue"')

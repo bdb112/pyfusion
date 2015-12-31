@@ -4,7 +4,7 @@ import numpy as np
 import pylab as pl
 from matplotlib.mlab import stineman_interp
 
-_var_default="""
+_var_defaults="""
 
 debug=0
 verbose=1
@@ -15,7 +15,7 @@ diags='b_0,k_h,ne_1,ne_4,ne_7,p_rf,phd_rf,flow_1,flow_2,flow_3'
 
 # assume dd contains data dictionary
 
-exec(_var_default)
+exec(_var_defaults)
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 

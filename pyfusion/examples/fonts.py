@@ -21,4 +21,4 @@ for k, style in enumerate(styles):
     font.set_style(style)
     t = plt.text(0.4, yp[k], style, fontproperties=font,
                  **alignment)
-plt.show()
+plt.show(block=0)

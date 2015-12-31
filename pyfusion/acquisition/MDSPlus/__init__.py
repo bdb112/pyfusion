@@ -25,7 +25,8 @@ section::
   [Diagnostic:my_probe]
   data_fetcher = pyfusion.acquisition.MDSPlus.fetch.MDSPlusDataFetcher
   mds_node_path = \mydata::top.probe_signal
- 
+    # Note that changing data sources (fetchers) is easier with :ref:`substitutions`
+
 Local data access
 -----------------
 

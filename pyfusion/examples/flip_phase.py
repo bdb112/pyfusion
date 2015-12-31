@@ -4,6 +4,7 @@ checks against phorig to make sure that phase is not flipped twice.
 quick check:
 (dd['phorig']*dd['b_0']*dd['phases'][:,0] >= 0).all() # True if with B
 
+_PYFUSION_TEST_@@PRE@from pyfusion.data.DA_datamining import da ; dd=da()
 
 """
 

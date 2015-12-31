@@ -7,11 +7,42 @@ from numpy.testing import assert_array_almost_equal
 from pyfusion.conf.utils import import_setting, kwarg_config_handler, \
      get_config_as_dict, import_from_str
 from pyfusion.data.timeseries import Signal, Timebase, TimeseriesData
-from pyfusion.data.base import ChannelList
+from pyfusion.data.base import Coords, Channel, ChannelList
 from pyfusion.debug_ import debug_
 import traceback
-import sys
+import sys, os
 import pyfusion  # only needed for .VERBOSE and .DEBUG
+
+def newload(filename, verbose=1):
+    """ Intended to replace load() in numpy
+    """
+    from numpy import load as loadz
+    from numpy import cumsum
+    dic=loadz(filename)
+#    if dic['version'] != None:
+#    if len((dic.files=='version').nonzero())>0:
+    if len(dic.files)>3:
+        if verbose>2: print ("local v%d " % (dic['version'])),
+    else: 
+        if verbose>2: print("local v0: simple "),
+        return(dic)  # quick, minimal return
+
+    if verbose>2: print(' contains %s' % dic.files)
+    signalexpr=dic['signalexpr']
+    timebaseexpr=dic['timebaseexpr']
+    # savez saves ARRAYS always, so have to turn array back into scalar    
+    # exec(signalexpr.tolist())
+    # Changed exec code to eval for python3, otherwise the name was not defined
+    #   for the target variables - they could only be accessed with 
+    #   e.g. locals().signal 
+    # retdic = {"signal":locals()['signal'], "timebase":locals()['timebase'], 
+    #           "parent_element": dic['parent_element']}
+    # Sucess using eval instead of exec
+    signal = eval(signalexpr.tolist().split(b'=')[1])
+    timebase = eval(timebaseexpr.tolist().split(b'=')[1])
+    retdic = {"signal":signal, "timebase":timebase, "parent_element": dic['parent_element']}
+    return(retdic)
+
 
 class BaseAcquisition(object):
     """Base class for datasystem specific acquisition classes.
@@ -114,7 +145,7 @@ class BaseDataFetcher(object):
             if pyfusion.VERBOSE>3: print(get_config_as_dict('Diagnostic', config_name))
         self.__dict__.update(kwargs)
         self.config_name=config_name
-#        print('BDFinit',config_name,self.__dict__.keys())
+#        print('BaseDFinit',config_name,self.__dict__.keys())
 
     def setup(self):
         """Called by :py:meth:`fetch` before retrieving the data."""
@@ -227,6 +258,31 @@ class MultiChannelFetcher(BaseDataFetcher):
         channel_list.sort()
         return [i[1] for i in channel_list]
     
+    def try_fetch_local(self, bare_chan, sgn):
+        """ return data if in the local cache, otherwise None
+        """
+        for each_path in pyfusion.config.get('global', 'localdatapath').split(':'):
+            self.localname = os.path.join(each_path, '{shot}_{bc}.npz'
+                                              .format(shot=self.shot, bc=bare_chan))
+            # original - data_filename %filename_dict)
+            files_exist = os.path.exists(self.localname)
+            debug_(pyfusion.DEBUG, 2, key='try_local_fetch')
+            if files_exist: break
+            
+        if not files_exist:
+            return None
+
+        signal_dict = newload(self.localname)
+            
+#        coords = get_coords_for_channel(**self.__dict__)
+        ch = Channel(bare_chan,  Coords('dummy', (0,0,0)))
+        output_data = TimeseriesData(timebase=Timebase(signal_dict['timebase']),
+                                 signal=Signal(sgn*signal_dict['signal']), channels=ch)
+        # bdb - used "fetcher" instead of "self" in the "direct from LHD data" version
+        output_data.config_name = self.config_name  # when using saved files, same as name
+        output_data.meta.update({'shot':self.shot})
+        return(output_data)
+
     def fetch(self):
         """Fetch each  channel and combine into  a multichannel instance
         of :py:class:`~pyfusion.data.timeseries.TimeseriesData`.
@@ -251,8 +307,10 @@ class MultiChannelFetcher(BaseDataFetcher):
             if chan[0]=='-': sgn = -sgn
             bare_chan = (chan.split('-'))[-1]
             fetcher_class = import_setting('Diagnostic', bare_chan, 'data_fetcher')
-            tmp_data = fetcher_class(self.acq, self.shot,
-                                     config_name=bare_chan).fetch()
+            tmp_data = self.try_fetch_local(bare_chan, sgn)  # is there a local copy?
+            if tmp_data is None:          # Otherwise, get from appropriate data system
+                tmp_data = fetcher_class(self.acq, self.shot,
+                                         config_name=bare_chan).fetch()
 
             if len(t_range) == 2:
                 tmp_data = tmp_data.reduce_time(t_range)
@@ -283,8 +341,10 @@ class MultiChannelFetcher(BaseDataFetcher):
                         assert_array_almost_equal(timebase, tmp_data.timebase)
                         data_list.append(tmp_data.signal)
                     except:
-                        raise
-        signal=Signal(data_list)
+                        print('matching error - perhaps timebase not the same as the previous channel')
+                        raise 
+
+        signal = Signal(data_list)
         output_data = TimeseriesData(signal=signal, timebase=timebase,
                                      channels=channels)
         #output_data.meta.update({'shot':self.shot})

@@ -13,7 +13,7 @@ import pyfusion as pf
 import pylab as pl
 import matplotlib.cm as cm  # import for convenience of user input.
 
-_var_default="""
+_var_defaults="""
 dev_name='H1Local'   # 'LHD'
 dev_name='LHD'
 # ideally should be a direct call, passing the local dictionary
@@ -28,7 +28,7 @@ hold=0
 cmap=cm.jet   # see also cm.gray_r etc
 """
 
-exec(_var_default)
+exec(_var_defaults)
 
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())

@@ -5,35 +5,7 @@ to reading the files obtained by retrieve
 """
 from pyfusion.debug_ import debug_
 
-def newload(filename, verbose=1):
-    """ Intended to replace load() in numpy
-    """
-    from numpy import load as loadz
-    from numpy import cumsum
-    dic=loadz(filename)
-#    if dic['version'] != None:
-#    if len((dic.files=='version').nonzero())>0:
-    if len(dic.files)>3:
-        if verbose>2: print ("local v%d " % (dic['version'])),
-    else: 
-        if verbose>2: print("local v0: simple "),
-        return(dic)  # quick, minimal return
-
-    if verbose>2: print(' contains %s' % dic.files)
-    signalexpr=dic['signalexpr']
-    timebaseexpr=dic['timebaseexpr']
-    # savez saves ARRAYS always, so have to turn array back into scalar    
-    # exec(signalexpr.tolist())
-    # Changed exec code to eval for python3, otherwise the name was not defined
-    #   for the target variables - they could only be accessed with 
-    #   e.g. locals().signal 
-    # retdic = {"signal":locals()['signal'], "timebase":locals()['timebase'], 
-    #           "parent_element": dic['parent_element']}
-    # Sucess using eval instead of exec
-    signal = eval(signalexpr.tolist().split(b'=')[1])
-    timebase = eval(timebaseexpr.tolist().split(b'=')[1])
-    retdic = {"signal":signal, "timebase":timebase, "parent_element": dic['parent_element']}
-    return(retdic)
+from ..base import newload
 
 from os import path
 from numpy import mean, array, double, arange, dtype

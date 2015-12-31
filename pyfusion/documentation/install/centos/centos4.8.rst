@@ -34,7 +34,10 @@ The PYTHONPATH and PATH (and LOCALDIR if PATH refers to it) exports should also 
 Python
 ------
 
-Now install Python - the version number is the latest in December 2010, you can use a later one if it exists, but don't use Python 3.x::
+Now install Python - the version number is the latest in December
+2010, you can use a later one if it exists. If you wish to use
+Python 3.x, check you have the latest pyfusion download from Boyd's
+fork, and veiw the issues file ::
 
   cd $SOURCEDIR
   wget http://www.python.org/ftp/python/2.7.1/Python-2.7.1.tar.bz2

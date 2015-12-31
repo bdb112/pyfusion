@@ -15,14 +15,18 @@ def pl(array, comment=None,**kwargs):
 # get the variables into local scope - so they can be accessed directly
 myDA.extract(locals())        
 
-# the ne profiles are in an Nx15 array, where N is the numer of profiles
+# the ne profiles are in an Nx15 array, where N is the numer of channels
 pl(ne_profile[40,:],'one profile')
-# plot all profiles by using a transpose
-pl(ne_profile.T, 'all profiles',color='b',linewidth=.01)
 
 # plot a sequence of profiles, showing every fifth 
-for prof in ne_profile[5:20:5]:
+for prof in ne_profile[10:20:5]:
     pl(prof)
+
+# plot all profiles by using the transpose operator to get profiles
+pl(ne_profile.T, 'all profiles',color='b',linewidth=.01)
+
+# without the transpose, you will get the time variation for the data
+pl(ne_profile, 'time variation, all channels',color='b',linewidth=.3)
 
 # see all profiles as a false colour image
 # time and shot number run vertically, each band is a shot

@@ -32,4 +32,5 @@ myDA = pf.data.DA_datamining.DA(dict(shot=shot, ne_profile=ne_profile, t_mid=t_m
 # the next step - write to arff
 myDA.write_arff('ne_profile.arff',['ne_profile'])
 
-# run -i example1a.py                    # to see some plots (note the -i)
+print('for graphics, \nrun -i example1a.py')
+

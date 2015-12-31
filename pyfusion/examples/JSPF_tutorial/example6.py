@@ -1,3 +1,4 @@
+# Python3 produces a different clustering to Python2 - not sure why?
 from sklearn import mixture
 from pyfusion.data.DA_datamining import DA, report_mem
 import numpy as np

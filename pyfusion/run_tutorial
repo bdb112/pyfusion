@@ -101,7 +101,7 @@ else
 fi
 
 # use $pyfparent/pyfusion rather than PYFUSIONPATH, as it may include c:/cygwin
-cd $pyfparent/pyfusion/examples/JSPS_tutorial
+cd $pyfparent/pyfusion/examples/JSPF_tutorial
 #now we are good, push some lines if they are not there already
 
 set_window_title PYFUSION_$2
@@ -113,8 +113,6 @@ if [[ $numhist -gt 3 ]]; then
     echo looks like you already have $numhist hints in your history list - skip
 else	
     echo adding useful lines to history list, starting with least common
-    history -s export PYFUSION_SEGMENT_OVERLAP=1
-    history -s export PYFUSION_N_SAMPLES_TIME_SEGMENT=256
     history -s export PYFUSION_VERBOSE=1
     history -s export PYFUSION_DEBUG=1
 fi
@@ -126,7 +124,8 @@ history -s source $source_file $*
 echo Here are some relevant env vars
 env |grep PY
 # this avoids the wx graphics bar in anaconda
-echo ========   Try:   run example4.py   ========   |grep "==.*$"
+echo =============   Try:   run example4.py   =============   |grep "==.*$"
+echo also example1, example1a, example3, example5 and example6 |grep ".*$"
 echo " "
 ipython --pylab='tk'
 

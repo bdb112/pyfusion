@@ -1,4 +1,5 @@
-30 Dec 2015
+This file was run on 30 Dec 2015, - future ones will be prepended.
+==python 2.7.6==
  0 2.402 examples/plot_specgram.py     : t_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
  1 0.442 examples/get_basic_params.py  : se ValueError('no good shots') ValueError: no good shots 
  2 1.24 examples/tables_extract.py    : OK!
@@ -92,6 +93,8 @@
 90 1.919 examples/check_polarity_flips.py: OK!
 91 0.43 examples/play_with_fft_signals.py: OK!
 92 0.148 examples/prepfs_range_mp.py   : OK!
+42 errors out of 93
+When run stand alone, 29 work, 43 errors out of 72
 
 Python3.5 30 dec
  0 1.853 examples/plot_specgram.py     : b'OK!'

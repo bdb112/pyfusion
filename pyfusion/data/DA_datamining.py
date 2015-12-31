@@ -314,7 +314,7 @@ class DA():
     def write_arff(self, filename, keys=[]):
         """ keys is a list of keys to include, and empty list includes all
         """
-        from write_arff import write_arff
+        from .write_arff import write_arff
         write_arff(self, filename, keys)
 
 

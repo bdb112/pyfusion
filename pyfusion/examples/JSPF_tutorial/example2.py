@@ -1,4 +1,4 @@
-""" Extra example to go with Example 1&2, JSPS tutorial: more realistic density profile scan 
+""" Extra example to go with Example 1&2, JSPF tutorial: more realistic density profile scan 
 Takes about a minute to run in full on a 2015 model machine
 Needs full data files, so won't run with download package alone.
 """
@@ -11,9 +11,14 @@ dev = pf.getDevice('H1Local')  # open the device (choose the experiment: e.g H-1
 # prepare empty lists for ne_profile, shot and time of measurement
 ne_profile, t_mid, shot = [], [], []
 # for shot_number in range(86507, 86517+1):  # the +1 ensures 86517 is the last shot
-lst = range(83130, 83212+1, 1)
+lst = list(range(83130, 83212+1, 1))
 # 133,162,163 weird, 166 172 missing, 171 and 205 channel8 starts late.
 for sh in [83133, 83162, 83163, 83166, 83171, 83172, 83205]: lst.remove(sh)
+try:
+    d = dev.acq.getdata(100000+lst[0], 'ElectronDensity15')
+except LookupError as reason:
+    raise LookupError('{r}\n\n** Only works with access to full H1 data set **'.format(r=reason))
+                        
 for shot_number in lst:  # the +1 ensures 86517 is the last shot
     d = dev.acq.getdata(shot_number, 'ElectronDensity15')     # a multichannel diagnostic
     sections = d.segment(n_samples=1024)   # break into time segments

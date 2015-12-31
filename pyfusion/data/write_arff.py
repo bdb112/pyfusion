@@ -45,7 +45,7 @@ def split_vectors(dd):   #  , keep_scalars=False):
     """ pop any vectors and replace them with scalars consecutively numbered
     """
     sub_list = []
-    for k in dd.keys():
+    for k in list(dd.keys()):
         order = len(np.shape(dd[k]))
         if order==0:
             dd.pop(k)

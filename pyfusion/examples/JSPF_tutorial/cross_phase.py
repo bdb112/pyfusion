@@ -39,7 +39,7 @@ exec(_var_defaults)
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
-pf.config.set('global','localdatapath',os.path.join(pf.PYFUSION_ROOT_DIR,'examples','JSPS_tutorial','local_data')) # this line points to local data
+pf.config.set('global','localdatapath',os.path.join(pf.PYFUSION_ROOT_DIR,'examples','JSPF_tutorial','local_data')) # this line points to local data
 
 
 if nr > 0:

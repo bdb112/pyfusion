@@ -1,8 +1,8 @@
-""" Example 1, JSPS tutorial: simple density profile scan 
+""" Example 1, JSPF tutorial: simple density profile scan 
 
 In this file, data was downsampled to save space in the download package.
 # The following line was used to downsample the data:
-run pyfusion/examples/save_to_local.py shot_list=range(86507,86517+1)  overwrite_local=1 dev_name='H1Local' diag_name='ElectronDensity15' downsample=100 local_dir='pyfusion/examples/JSPS_tutorial/local_data'
+run pyfusion/examples/save_to_local.py shot_list=range(86507,86517+1)  overwrite_local=1 dev_name='H1Local' diag_name='ElectronDensity15' downsample=100 local_dir='pyfusion/examples/JSPF_tutorial/local_data'
 """
 import pyfusion as pf    # (we will assume these three import lines in all future examples)
 import numpy as np       

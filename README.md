@@ -1,18 +1,33 @@
 # pyfusion
 ## python code for data mining plasma fluctuations
+
+Update: Version 0.58 now supports the full set of examples in the JSPF tutorial article.  All will run in the download package, apart from two marked (*) requiring access to full databases.
+
+<pre>
+example1.py
+example1a.py
+example1_LHD.py*
+example2.py*
+example3.py
+example4.py
+example5.py
+example6.py
+</pre>
+
+The tutorial article will appear soon in http://www.jspf.or.jp/eng/jpfr_contents.html (in Japanese) and will be posted on the H-1 heliac website (http://apfrf.anu.edu.au/collaborate/pyfusion/) in english, along with full documentation of pyfusion.  In time, the latest docs will be automatically generated on readthedocs.org.
+
 This is my fork of David Pretty's original pyfusion code, with much input 
-recently from Shaun Haskey.  Most of the code is compatible with python 2.6+ or 3.3+
-(https://github.com/bdb112/pyfusion).   
+recently from Shaun Haskey.  The code runs in 2.6+ and most of the code is compatible with python 3.3+.(https://github.com/bdb112/pyfusion).   
 
-The six module is required for both pythons for commits >= fb757c75 
+The 'six' module is required for both pythons for commits >= fb757c75 
 
-For python 2, release >205b21 is recommended use with the tutorial article in JSPS 2015, although newer releases should also work.
-A later release is recommended for python 3.  
+For python 2, release >205b21 is recommended use with the tutorial article in JSPF 2015, although newer releases should also work.
+The latest release is recommended for python 3.  
 To run the examples therein, install the files from the zip or the git repository anywhere, and do
 <pre><code>
 source pyfusion/run_tutorial     # or wherever you installed it
 </code></pre>
-This will add the pyfusion path to your PYTHONPATH, and cd to the JSPS_tutorial directory, and put you into ipython.  Then try
+This will add the pyfusion path to your PYTHONPATH, and cd to the JSPF_tutorial directory, and put you into ipython.  Then try
 <pre><code>
 In [1]: run example4.py
 </code></pre>

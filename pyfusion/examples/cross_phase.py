@@ -5,7 +5,7 @@ H-1 88673 is a nice example
 
 mlab.cohere_pairs is > 10x faster on 15 signals than separate cohere() calls
 See also csd in  /usr/lib/pymodules/python2.7/matplotlib/pyplot.py
-The fully annotated version of this is in examples/JSPS_tutorial
+The fully annotated version of this is in examples/JSPF_tutorial
 """
 
 import pyfusion

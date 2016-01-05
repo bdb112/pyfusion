@@ -2,7 +2,7 @@ from time import time as seconds
 from time import sleep
 
 class Regulator():
-    """ create a regulator=Regulato(maxcpu) and put regulator.wait() into a loop
+    """ create a regulator=Regulator(maxcpu) and put regulator.wait() into a loop
     and it will wait so that max cpu is controlled.
     """
     def __init__(self, maxcpu=0.5):

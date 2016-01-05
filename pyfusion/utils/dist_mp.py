@@ -1,9 +1,9 @@
-# from test_dist.py
-# meant for multiprocessing distance calculations for clustering
-#
-# return for multithreading based on last example in
-# http://stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-python
-
+""" 
+ Multiprocessing distance calculations for clustering
+ Return for multithreading based on last example in
+ http://stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-python
+   from test_dist.py
+"""
 from __future__ import division
 import threading
 import numpy as np

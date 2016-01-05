@@ -322,7 +322,7 @@ retrieval. Lines beginning with '#' or ';' are ignored and may be used
 to provide comments.  Inline comments are should be avoided, and are
 not accepted in the pyfusion python 3 version.
 
- .. _testing-config 
+ .. _testing-config:
 
 Testing config file behaviour
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

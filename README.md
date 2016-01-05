@@ -14,7 +14,7 @@ example5.py
 example6.py
 </pre>
 
-The tutorial article will appear soon in http://www.jspf.or.jp/eng/jpfr_contents.html (in Japanese) and will be posted on the H-1 heliac website (http://apfrf.anu.edu.au/collaborate/pyfusion/) in english, along with full documentation of pyfusion.  In time, the latest docs will be automatically generated on readthedocs.org.
+The tutorial article will appear soon in http://www.jspf.or.jp/eng/jpfr_contents.html (in Japanese) and will be posted on the H-1 heliac website in english, along with full documentation of pyfusion (now at http://people.physics.anu.edu.au/~bdb112/pyfusion/).  In time, the latest docs will be automatically generated on readthedocs.org.
 
 This is my fork of David Pretty's original pyfusion code, with much input 
 recently from Shaun Haskey.  The code runs in 2.6+ and most of the code is compatible with python 3.3+.(https://github.com/bdb112/pyfusion).   

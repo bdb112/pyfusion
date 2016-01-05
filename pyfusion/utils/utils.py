@@ -5,9 +5,10 @@ import warnings
 import pyfusion
 
 # this could run slower in python2 (used to be xrange)
-def find_last_shot(fun, range=range(1, 200000), ex=True, quiet=False):
+def find_last_shot(fun, range=[1, 200000], ex=True, quiet=False):
     """ find the last shot for which fun(shot) does not return an error
         Actually more general than this.  Only tested for low lim yes, uplim no
+        
     >>> def myfun(shot): return(shot <= 12345)
     >>> find_last_shot(myfun, quiet=True)
     12345

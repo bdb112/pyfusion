@@ -2,7 +2,9 @@
 
 import os, re
 import numpy as np
-import MDSplus
+from pyfusion.utils.utils import warn
+# Don't import MDSplus in this header, so that .npz files can be used - e.g. JSPF_tutorial example1
+
 from pyfusion.acquisition.base import BaseDataFetcher
 from pyfusion.data.timeseries import TimeseriesData, Signal, Timebase
 from pyfusion.data.base import Coords, ChannelList, Channel
@@ -41,6 +43,15 @@ def get_tsd_from_node(fetcher, node):
      output_data.config_name = fetcher.config_name   #bdb config_name fix
      output_data.meta.update({'shot':fetcher.shot})
      return output_data
+
+# Don't import in the header, so that .npz files can be used - e.g. JSPF_tutorial example1
+try:
+     import MDSplus
+except ImportError:
+     warn(' No MIT MDSplus software found - will only work on local .npz data'
+          '   Try easy_install mdsplus, or see the ubuntu/redhat... mdsplus distros '
+          'http://www.mdsplus.org '
+          'if you wish to access native MDSplus data')
 
 class MDSPlusDataFetcher(BaseDataFetcher):
      """Determine which access mode should be used, and fetch the MDSplus data."""

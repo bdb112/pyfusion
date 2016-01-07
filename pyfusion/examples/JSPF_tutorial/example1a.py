@@ -1,9 +1,8 @@
-# this needs to be pasted in after running example1.py, or
-# you can just do  
+#   After running example1.py, you can just do  
 # run -i example1a.py
-# the -i preserves the variables 
-# if you omit the -i, you will see this error "name 'myDA' is not defined"
-
+#   (the -i preserves the variables )
+# If you omit the -i, you will see this error "name 'myDA' is not defined"
+# (or you can paste in into ipython (after running example1.py))
 
 # first, define a convenient shortcut function to plot in a new window
 # [you could just use plt.plot() instead]

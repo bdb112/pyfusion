@@ -1,5 +1,5 @@
-# example code for figure 3.  The smaller data set in this package produces 
-#   different result - see example3_small_data_set.png
+# Example code for figure 3.  The smaller data set in this package produces 
+#   different result than the full data set in the article - see example3_small_data_set.png
 # After running example1.py, do
 # run -i example3.py
 #      Note: if the -i is omitted you will get the message 'np' is not defined

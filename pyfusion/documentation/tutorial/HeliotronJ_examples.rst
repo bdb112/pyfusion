@@ -32,7 +32,7 @@ Feature extraction on Heliotron-J
 
 1b/  for many shots - multi processing::
 
- run  pyfusion/examples/prepfs_range_mp.py . --MP=3  --exe='gen_fs_bands.py n_samples=None df=2. exception=None max_bands=1 dev_name="HeliotronJ" ' --shot_range=range(60619,60550,-1) --time_range=\'\"default\"\' --seg_dt=1. --overlap=2.5  --diag_name=\'HeliotronJ_ALL\'
+ run  pyfusion/examples/prepfs_range_mp.py . --MP=3  --exe='gen_fs_bands.py n_samples=None df=2. exception=None max_bands=1 dev_name="HeliotronJ" ' --shot_range=range(60619,60550,-1) --time_range='"default"' --seg_dt=1. --overlap=2.5  --diag_name='HeliotronJ_ALL'
 
 Result is a text file(s), which is then merged with others, to form a
 DA (Dictionary of Arrays) object
@@ -52,10 +52,14 @@ Result is a DA data set
 Result: DA data set including other data for each time segment.
 
 4/ Clustering::
- run pyfusion/examples/cluster_DA.py DAfilename='DAHJ60k.npz'
+ # DAHJ60k.npz is already prepared in the hj-mhd DA file area (defined in pyfusion.cfg)
+ run pyfusion/examples/cluster_DA.py DAfilename='$DAPATH/DAHJ60k.npz'
  co.plot_clusters_phase_lines()  # show clusters
+ # Clusters 0,2,5 look interesting, but the phase difference at 2 in
+ #   all these looks out by pi
 
-  
+ # alternatively, check the one you just prepared in the previous step
+ run pyfusion/examples/cluster_DA.py DAfilename='DAHJ60k.npz'
 
 Setting up hj-mhd
 =================

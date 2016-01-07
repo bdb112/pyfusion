@@ -71,6 +71,15 @@ except ImportError:
 
 
 def process_file_name(filename):
+    # not tested in windows
+    if '$DAPATH' in os.path.split(filename):
+        try:
+            import pyfusion
+            filename = filename.replace('$DAPATH',pyfusion.config.get('global','DAPATH'))
+        except importError:
+            print('Warning - apparently running outside of pyfusion - will check environment')
+
+    # expand env and home
     fname = os.path.expanduser(os.path.expandvars(filename))
     if not (os.path.exists(fname)) and ('.npz' not in fname):
             fname += '.npz'

@@ -90,7 +90,7 @@ if [[ $PYTHONPATH != *${pyfparent}${pathsep}* ]]; then
 else 
     echo no need to add path -  PYTHONPATH already includes $pyfparent
 fi
-# add prl_local to the path
+# add prl_local to the END of the path to get Shaun's additions
 export PYTHONPATH=$PYTHONPATH:/home/bdb112/python/prl_python_h1
 
 cd $pyfparent

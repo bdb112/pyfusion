@@ -21,7 +21,10 @@ First Steps
 .. toctree::
    :maxdepth: 1
 
+   
    Overview <overview>
+   Release Notes <../../README.md>
+   Release Notes <../../README.rst>
    Installing <install/index>
    Tutorial <tutorial/index>
 

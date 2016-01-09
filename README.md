@@ -1,7 +1,7 @@
 # pyfusion
 ## python code for data mining plasma fluctuations
 
-Update: Version 0.58 now supports the full set of examples in the JSPF tutorial article.  All will run in the download package, apart from two marked (*) requiring access to full databases.
+Update: Version 0.58 now supports the full set of examples in the JSPF tutorial article, and includes the data files (in downsampled form).  All will run in the download package, apart from two marked (*) requiring access to full databases.
 
 <pre>
 example1.py
@@ -14,15 +14,9 @@ example5.py
 example6.py
 </pre>
 
-The tutorial article will appear soon in http://www.jspf.or.jp/eng/jpfr_contents.html (in Japanese) and will be posted on the H-1 heliac website in english, along with full documentation of pyfusion (now at http://people.physics.anu.edu.au/~bdb112/pyfusion/).  In time, the latest docs will be automatically generated on readthedocs.org.
+## JSPF tutorial
+A tutorial article will appear soon in http://www.jspf.or.jp/eng/jpfr_contents.html (in Japanese) and will be posted on the H-1 heliac website in english, along with full documentation of pyfusion (now at http://people.physics.anu.edu.au/~bdb112/pyfusion/).  In time, the latest docs will be automatically generated on readthedocs.org.
 
-This is my fork of David Pretty's original pyfusion code, with much input 
-recently from Shaun Haskey.  The code runs in 2.6+ and most of the code is compatible with python 3.3+.(https://github.com/bdb112/pyfusion).   
-
-The 'six' module is required for both pythons for commits >= fb757c75 
-
-For python 2, release >205b21 is recommended use with the tutorial article in JSPF 2015, although newer releases should also work.
-The latest release is recommended for python 3.  
 To run the examples therein, install the files from the zip or the git repository anywhere, and do
 <pre><code>
 source pyfusion/run_tutorial     # or wherever you installed it
@@ -32,7 +26,27 @@ This will add the pyfusion path to your PYTHONPATH, and cd to the JSPF_tutorial 
 In [1]: run example4.py
 </code></pre>
 
-## Datamining Applications in Plasma Physics.
+## Pyfusion code
+This is my fork of David Pretty's original pyfusion code, with much input 
+recently from Shaun Haskey.  The code runs in 2.6+ and most of the code is compatible with python 3.3+.(https://github.com/bdb112/pyfusion).   The 'six' module is required for both pythons for commits >= fb757c75 
+
+For python 2, release >205b21 is recommended use with the tutorial article in JSPF 2015, although all later releases should also work.
+The latest release is recommended for python 3.  
+
+## Quick Installation
+Install the default anaconda or canopy python environment for python 3.  For anaconda, add
+<pre><code>
+conda install scikit-learn
+</code></pre>
+
+For more details see
+<pre><code>
+http://people.physics.anu.edu.au/~bdb112/pyfusion/tutorial/install/index.html
+</code></pre>
+
+
+
+## Extract from the Tutorial Article "Datamining Applications in Plasma Physics"
 High temperature plasma has many sources of magnetic and kinetic energy, which can drive instabilities.  These may disrupt the plasma, damage components in the plasma vessel, or at best waste energy, reducing efficiency.  Achieving efficient, economic fusion power requires that these instabilities be understood, and with this knowledge, controlled or suppressed.
 ### What are the objectives?
 <pre><list>

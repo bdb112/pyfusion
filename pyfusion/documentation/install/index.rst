@@ -14,6 +14,7 @@ fork, and view the issues file.
 .. toctree::
    :maxdepth: 2
 
+   Easy Method <anaconda_canopy.rst>
    Ubuntu <ubuntu>
    WindowsXP <windowsxp.rst>
    Centos <centos/centos4.8.rst>

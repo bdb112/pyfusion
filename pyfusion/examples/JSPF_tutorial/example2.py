@@ -1,52 +1,34 @@
-""" Extra example to go with Example 1&2, JSPF tutorial: more realistic density profile scan 
-Takes about a minute to run in full on a 2015 model machine
-Needs full data files, so won't run with download package alone.
-"""
-import pyfusion as pf   # (we will assume these three import lines in all future examples)
-import numpy as np
-import matplotlib.pyplot as plt
-plt.figure('Example 2')
+# Example code to accompany figure 6, the python k means version of Example 2.
+#  The smaller data set in this package produces a slighly different result than the 
+#  full data set in the article - see example2_small_data_set.png
+#  The code for the actual figure is in example2a.py
+#  After running example1.py, do
+# run -i example2.py
+#      Note: if the -i is omitted you will get the message 'np' is not defined
+#
+import sys
+try:  # catch error if user forgets to set up the data first, make it available to this with -i
+    x = np.arange(len(ne_profile[0]))  
+    myDA.extract(locals())  # makes sure they are all numpy floating point arrays
+except NameError as reason:
+    print('please run example1 first, THEN run -i example2   (so that myDA is carried over)')
+    sys.exit()
 
-dev = pf.getDevice('H1Local')  # open the device (choose the experiment: e.g H-1, LHD, Heliotron-J)
-# prepare empty lists for ne_profile, shot and time of measurement
-ne_profile, t_mid, shot = [], [], []
-# for shot_number in range(86507, 86517+1):  # the +1 ensures 86517 is the last shot
-lst = list(range(83130, 83212+1, 1))
-# 133,162,163 weird, 166 172 missing, 171 and 205 channel8 starts late.
-for sh in [83133, 83162, 83163, 83166, 83171, 83172, 83205]: lst.remove(sh)
-try:
-    d = dev.acq.getdata(100000+lst[0], 'ElectronDensity15')
-except LookupError as reason:
-    raise LookupError('{r}\n\n** Only works with access to full H1 data set **'.format(r=reason))
-                        
-for shot_number in lst:  # the +1 ensures 86517 is the last shot
-    d = dev.acq.getdata(shot_number, 'ElectronDensity15')     # a multichannel diagnostic
-    sections = d.segment(n_samples=1024)   # break into time segments
-    # work through each time segment, extracting the average density during that time
-    for seg in sections:
-        ne_profile.append(np.average(seg.signal, axis=1))   # axis=1 -> avg over time, not channel
-        t_mid.append(np.average(seg.timebase))
-        shot.append(shot_number)
-# store the data in a DA (Dictionary of Arrays) object, which is like a DataFrame in R or panda
-myDA = pf.data.DA_datamining.DA(dict(shot=shot, ne_profile=ne_profile, t_mid=t_mid))
-myDA.save('ne_profile2')
 
 ###########  Now we will process the data a little before clustering. ###############
 
 # flag all profiles that can't be fitted well by a poly of degree 5
 # This will eliminate rubbish data - we record an error, which we can later set a threshold on
-deg = 5
-x = np.arange(len(ne_profile[0]))
-myDA.extract(locals(), limit=6000)  # set limit=2000 to speed up, None to take all data
 
-err = 0 * t_mid                     # prepare an empyy array of the right size to hold errors
+deg = 5
+err = 0 * t_mid                     # prepare an empty array of the right size to hold errors
 for (i, nep) in enumerate(ne_profile):
     p = np.polyfit(x, nep, deg, w=nep)
     err[i] = 1/np.sqrt(len(nep)) * np.linalg.norm(nep*(nep - np.polyval(p, x)))
-    small = 0.5  # 0.5 for LHD, 0.2 for H-1
+    small = 0.2  # 0.5 for LHD, 0.2 for H-1
     # disqualify if there are fewer than deg (poly degree) non-small samples
     if len(np.where(nep > small)[0]) < deg:
-        err[i] = 9
+        err[i] = 9                  #  (flag as bad by setting large error)
 
     # disqualify if the average density is too small
     if np.average(nep) < small/3:
@@ -58,18 +40,30 @@ for (i, nep) in enumerate(ne_profile):
     avg[i] = np.average(nep)
     ne_profile[i] = nep/avg[i]
 
-##########  Now we can cluster ############
+# Plot only the normalised profiles that are reasonably smooth and not discarded above
+plt.figure(num = "normalised profiles, excluding erroneous data")
+for (e,pr) in zip(err,ne_profile):
+    if e < small/2:
+        plt.plot(pr,color='g',linewidth=.04)
+    plt.ylim(0,2)    
+plt.show(0)
+# The darker areas show recurring profiles.
+# We would need more information (e.g. power, transform, B_0) to investigate the
+#   reason for the different profiles.
+
+########## simple k-means clustering ###########
+
 
 from scipy.cluster.vq import vq, kmeans, whiten
-lw = 0.02  # linewidth - for overplotting many lines, so darkness indicates density
-# consider on profiles with low polyfit error (i.e. not really jagged
-features = ne_profile[np.where(err<0.2)[0]]
+# consider only profiles with low polyfit error (i.e. not really jagged
+features = ne_profile[np.where(err < small/2)[0]]
+lw=50./len(features)     # linewidth - for overplotting many lines, so darkness indicates density
+
 whitened = whiten(features)
 # set up the random number generator in a reproducible way - good for examples
-# but in reallike, we usually want random starts
+# but in real life, we usually want random starts
 from numpy import random
 random.seed((1000,2000))
-
 # compute the cluster centres, for 4 clusters (in normalised space)
 ccs, distortion = kmeans(whitened, k_or_guess=4)
 # get the cluster ids, use the normalised features (whitened)
@@ -77,15 +71,17 @@ cids, dist  = vq(whitened, ccs)
 
 cols = ('c,g,r,m,b,y,k,orange,purple,lightgreen,gray'.split(','))  # colours to be rotated thru
 
-# plot all data and overlay the cluster centres, un real units and notmalised
-fig,[axunnorm, axnorm] = plt.subplots(1,2)
-#axunnorm = None; fig,[[axnorm]] = plt.subplots(1,1,squeeze=False) # to ignore unnormalised
+# plot all data and overlay the cluster centres, in real units and normalised
+# comment one of the following two lines
+fig,[axunnorm, axnorm] = plt.subplots(1,2)     # this shows both norm and unnorm
+#axunnorm = None; fig,[[axnorm]] = plt.subplots(1,1,squeeze=False) # this ignore unnormalised
 
 # this order will reproduce the example image, if all the data is used, and seed is set
 # but now it doesn't reproduce it exactly.
 corder = [1, 3, 2, 0]
 plt.rc('font',**{'size':18, 'family':'serif'})
 
+# plot, colouring according to cluster membership
 for c in corder:
     ws = np.where(cids == c)[0]
     if axunnorm is not None:   # restore to real space by mult. by avg
@@ -94,8 +90,8 @@ for c in corder:
     axnorm.plot(features[ws].T,cols[c],linewidth=lw)
 # and the cluster centres
 for c in corder:
-    axnorm.plot(ccs[c]*np.std(features,axis=0),'k',linewidth=9,)
-    axnorm.plot(ccs[c]*np.std(features,axis=0),cols[c],linewidth=6,)
+    axnorm.plot(ccs[c]*np.std(features,axis=0),'k',linewidth=9,)     #  outline effect
+    axnorm.plot(ccs[c]*np.std(features,axis=0),cols[c],linewidth=6,) #  color
 
 
 plt.ylabel(r'$n_e/10^{18}$',fontdict={'fontsize':'large'}) ; plt.xlabel('channel')

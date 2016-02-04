@@ -28,11 +28,12 @@ unit_freq = 1000
 dat=None
 time_range=[0.04,0.05]
 omit=[]
-lw=1
+lw=2
 lwtot=2*lw
 chans=None
 nr=2
 shade=[22.5,24.5]   # None supresses the shaded area
+mono=False          # JSPF wants mono pdfs
 """
 exec(_var_defaults)
 
@@ -45,7 +46,8 @@ pf.config.set('global','localdatapath',os.path.join(pf.PYFUSION_ROOT_DIR,'exampl
 if nr > 0:
     try:  # use my nicer version if it is available
         from subplots import subplots
-        spkwargs=dict(apportion=[2,1])
+        # close up space between graphs
+        spkwargs=dict(apportion=[2,1],spadj_kwargs=dict(hspace=0))
     except ImportError:
         from matplotlib.pyplot import subplots
         spkwargs={}
@@ -91,14 +93,33 @@ pairs = [(chans[i],chans[i+1]) for i in range(len(chans)-1)]
 pairs.insert(0, (pairs[0][0],pairs[-1][1]))  #  the first elt is from end to end
 coh,cp,freq = plt.mlab.cohere_pairs(X,pairs,NFFT=NFFT,Fs=1/dt/float(unit_freq))
 
-colorset=('b,g,r,c,m,y,k,orange,purple,lightgreen,gray,yellow,brown,teal,tan'.split(',')) # to be rotated
+colorset=('b,g,r,c,m,y,k,orange,purple,lightgreen,gray,yellow,brown,teal,tan'.split(','))
+if mono: colorset = 4 * ['black', 'darkgray','gray','lightgray']
 
+totph_col = 'k' if mono else 'b'
+dph_0_13_col = 'gray' if mono else 'r'
+fillcol = "#ebebeb" if mono else "lightcyan"
+
+# Here is a cute way to define a whole range of dash/dot line styles
+# 
+s, l, L = 2, 5, 8  # short, long, ExtraLong
+# define them in a simple, compact manner
+lines = 's,sl,ssl,ssll,sll,sssl,sssl,slll,slsll,ssssl,sllll,sL,L,ssL,sLL,sssL'
+# turn them into list for 'dashes=' by adding short spaces, and convert to nums 
+lineset = []
+for st in lines.split(","):
+    lineset.append(eval('('+',s,'.join(st)+',s)'))
+
+# go through the pairs of phase diffs, starting at strtpair
 for (i,pair) in enumerate(pairs[strtpair:]): 
-    plt.plot(freq,coh[pair],label='dph'+str(pair),color=colorset[i],linewidth=lw)
-    plt.plot(freq,cp[pair],color=colorset[i],linestyle=['--','-'][i==0 and strtpair==0],
+    col = colorset[i]
+    lines = plt.plot(freq,coh[pair],label='dph'+str(pair),color=col,linewidth=lw)
+    plt.setp(lines, dashes = lineset[i])
+    lines = plt.plot(freq,cp[pair],color=col,linestyle=['--','-'][i==0 and strtpair==0],
             linewidth=lw)
+    plt.setp(lines, dashes = lineset[i])  # this sets the dash style
     
-plt.setp(ax2, ylim=(-4,4), ylabel = 'phase difference (rad) || coherence')
+plt.setp(ax1, ylim=(-4,4), ylabel = 'phase difference (rad) || coherence')
 totph=np.sum([cp[pair] for pair in pairs[0:-1]],0)
 hist = data.history
 sz = 'small' if len(hist.split('\n'))>3 else 'medium'
@@ -106,25 +127,25 @@ plt.title(hist + str(': NFFT={NFFT}, noverlap={noverlap}'
                             .format(NFFT=NFFT, noverlap=noverlap)),size=sz)
 if nr>1:
     plt.ylim(-2.5,1.2)
-    plt.legend(prop={'size':'small'},loc='lower right')
+    plt.legend(prop={'size':'x-small'},loc='lower right')
 
 if shade is not None:  # shade the area of interest for the tutorial
     from matplotlib.patches import Rectangle
     someX, someY = 23.5, -0.5
-    ax1.add_patch(Rectangle((shade[0], someY - 2), shade[1]-shade[0], 4, facecolor="lightcyan",
+    ax1.add_patch(Rectangle((shade[0], someY - 2), shade[1]-shade[0], 4, facecolor=fillcol,
                             edgecolor='lightgray'))
 
-ax2.plot (freq,totph,':',label='total phase',color='b',linewidth=lwtot)
+ax2.plot (freq,totph,':',label='total phase',color=totph_col,linewidth=lwtot)
 if nr>1: plt.setp(ax2, ylim=(-14.5,-12.5), ylabel='phase (rad)')
 plt.setp(ax2.get_yticklabels()[-1],visible=False)
-# plot a few to make sure at lest one is in range
+# plot a few to make sure at least one is in range and visible
 for offs in [0, 2]:
-    ax2.plot(freq, mod(totph,2*pi)-offs*pi,':',color='b',linewidth=lwtot)
+    ax2.plot(freq, mod(totph,2*pi)-offs*pi,':',color=totph_col,linewidth=lwtot)
 endendpair = pairs[0]
 for offs in [0,1,2]:
-    ax2.plot(freq,cp[endendpair]-offs*2*pi,color='r',
+    ax2.plot(freq,cp[endendpair]-offs*2*pi,color=dph_0_13_col,
              linewidth=lwtot,label=['dph'+str(endendpair),'',''][offs])
-ax2.legend(prop={'size':'small'},loc='lower right')
+ax2.legend(prop={'size':'x-small'},loc='lower right')
 xl = [15,30] if nr>1 else [1,100] # lower limit of 1 is better for log x scale
 plt.setp(ax2, xlabel=str('frequency ({xlab})'.format(xlab=xlab)), xlim = xl)   
 

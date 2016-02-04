@@ -12,14 +12,14 @@ Anaconda
 
 Required
 --------
- * base installation, using bash in your home directory 
+ * perform base installation, using bash in your home directory 
  * conda install scikit-learn
 
 Recommended 
 -----------
- * git  (e.g sudo aptitude install git-core) allows accessing other 
-   versions of pyfusion, and is recommended to use for firther development.
- * tig or alternative to browse the repository
+ * git (e.g sudo aptitude install git-core) allows accessing other 
+   versions of pyfusion, and is recommended to use for further development.
+ * tig or alternative to browse the git repository
  * f77 for access to Heliotron-J data
  * MDSplus for access to H-1 data (beyond the small extract in the
    download package)
@@ -27,7 +27,7 @@ Recommended
  * cython for some probability density clustering routines
    (sudo aptitude install cython)
  * fftw3 to speed up some pyfusion Fourier transforms 
-   (sudo aptitude install fftw3, and python interface XX)
+   (sudo aptitude install fftw3), and python interface  - (easy_install pyfftw)
 
 .. _install-canopy:
 Canopy
@@ -41,6 +41,7 @@ Required
  * Use canopy terminal for the examples, starting with source
    pyfusion/run_tutorial as described elsewhere.
 
+See `Recommended` above
 
 Installing pyfusion
 ===================

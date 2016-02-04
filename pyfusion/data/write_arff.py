@@ -41,19 +41,25 @@ def tomagphase(dd, key):
     dd.update({'phase_'+key: np.angle(dd[key])})
     dd.pop(key)
 
-def split_vectors(dd):   #  , keep_scalars=False):
+def split_vectors(dd, newfmts={}):   #  , keep_scalars=False):
     """ pop any vectors and replace them with scalars consecutively numbered
+    can supply a dictionary of formats for the new names - else use oldkey_0 etc
+    Alters the dd to contain the items to be saved as scalars
     """
     sub_list = []
     for k in list(dd.keys()):
         order = len(np.shape(dd[k]))
-        if order==0:
+        if order==0:   # remove scalars - e.g. info
             dd.pop(k)
         elif order>1:
             cols = np.array(dd.pop(k)).T
             newks = []  # a list of vector keys and the corresponding split ones
             for i in range(len(cols)):
-                newk = '{k}_{i}'.format(k=k, i=i)
+                if k in newfmts:
+                    newfmt = newfmts[k]
+                else:
+                    newfmt = '{k}_{i}'
+                newk = newfmt.format(k=k, i=i)
                 dd.update({newk: cols[i]})
                 newks.append(newk)
             sub_list.append([k, newks])

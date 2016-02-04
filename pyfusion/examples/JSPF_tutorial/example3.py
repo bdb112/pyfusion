@@ -1,74 +1,41 @@
-# Example code for figure 3.  The smaller data set in this package produces 
-#   different result than the full data set in the article - see example3_small_data_set.png
-# After running example1.py, do
-# run -i example3.py
-#      Note: if the -i is omitted you will get the message 'np' is not defined
-#
-# First, flag all profiles that can't be fitted well by a poly
-inds = None
-deg = 5
-x = np.arange(len(ne_profile[0]))
-myDA.extract(locals(),inds=inds)  # make sure they are all numpy variables
-err = 0 * t_mid
-for (i, nep) in enumerate(ne_profile):
-    p = np.polyfit(x, nep,deg, w=nep)
-    # the error of the polynomial fit
-    err[i] = 1/sqrt(len(nep)) * np.linalg.norm(nep*(nep - np.polyval(p, x)))
-    small=0.2  # 0.5 for LHD, 0.2 for H-1
-    # discard all profiles with too many small data points
-    if len(np.where(nep>small)[0]) < deg:
-        err[i]=999
-    # and discard profiles that are very small
-    if np.average(nep)<small/3:
-        err[i]=998
+""" Example 3 - SQL example, similar to the python Dictionary of arryas version in example4.py
+Plot all flucstrucs found, and the select the large rotating modes.
 
-# normalise to the average value
-avg = 0 * t_mid
-for (i, nep) in enumerate(ne_profile):
-    avg[i] = np.average(nep)
-    ne_profile[i] = nep/avg[i]
+SQLAchemy has many ways to access data from python.  This is not the neatest of them, but I chose 
+it because the queries match textbook 'text mode' SQL query-based approach.
 
-# Plot normalised profiles that are reasonably smooth and not discared above
-plt.figure(num = "normalised profiles, excluding erroneous data")
-for (e,pr) in zip(err,ne_profile):
-    if e < small/2:
-        plt.plot(pr,color='g',linewidth=.04)
-    plt.ylim(0,2)    
-plt.show(0)
-# the darker areas show recurring profiles.
-# We need more information (e.g. power, transform, B_0) to investigate the
-# reason for the different profiles.
+== Aside on alternatives ==
+One alternative SQLAlchemy access model means tables (everthing in fact) look like objects 
+Using this mode, you could write more concisely 
+    plt.plot(H1.t_mid, H1.freq)
+Which is really nice and simple, unlike the messy iteration in this example.
+    [row['t_mid'] for row in alldata]
 
-########## simple clustering ###########
-#plt.figure(num='simple vq-means clustering')
+Queries would contain phrases like and_(H1.freq.between(4,20), H1.comment.line('%argon%')
+which are quite different to text mode, but easier to compose 'on the fly'
+   
+"""
+from pyfusion.data.DA_datamining import DA
+from sqlalchemy import create_engine 
+import matplotlib.pyplot as plt
+import os
 
-from scipy.cluster.vq import vq, kmeans, whiten
-features = ne_profile[np.where(err < small/2)[0]]
-lw=50./len(features)
+if not os.path.isfile('H1_766.sqlite'):  #  if not there, make it
+    myDA = DA('H1_766.npz')
+    myDA.to_sqlalchemy('sqlite:///H1_766.sqlite', newfmts=dict(phases='dphi_{i:02d}'),
+                       mytable='H1_766', chunk=5000, n_recs=1e9)
 
-whitened = whiten(features)
-from numpy import random
-random.seed((1000,2000))
-codes = 4
-code_book, distortion = kmeans(whitened,codes)
-code,dist = vq(whitened , code_book)
+engine = create_engine('sqlite:///H1_766.sqlite')
+conn = engine.connect()
+result = conn.execute('select shot, t_mid, freq, a12, amp from H1_766')
+alldata = result.fetchall() # all the instances, and overplot in feint colour
+plt.plot([row['t_mid'] for row in alldata], [row['freq'] for row in alldata],'o',alpha=0.02)
+plt.xlabel('time (s)') ; plt.ylabel('freq (kHz)')
 
-cols = ('c,g,r,m,b,y,k,orange,purple,lightgreen,gray'.split(',')) # to be rotated
-
-axnorm=None
-#fig,[axnorm, axunnorm] = plt.subplots(1,2)
-plt.fig,[[axunnorm]] = plt.subplots(1,1,squeeze=False)
-corder = range(len(code_book))[::-1]
-corder = [1,3,2,0]
-for c in corder:
-    ws = np.where(code==c)[0]
-    if axnorm is not None:
-        axnorm.plot(avg[ws]*features[ws].T,cols[c],linewidth=lw)
-
-    axunnorm.plot(features[ws].T,cols[c],linewidth=lw) #,rasterized=True)
-
-for c in corder:
-    axunnorm.plot(code_book[c]*std(features,axis=0),'k',linewidth=9,)
-    axunnorm.plot(code_book[c]*std(features,axis=0),cols[c],linewidth=6,)
-plt.xlim(7,15); plt.ylim(0,2)
+# Ex 3a. this time, select the large rotating modes, (note - we combine two lines here, 
+#    even though it makes it less readable) 
+plt.figure()
+sel = conn.execute('select shot, t_mid, freq, a12, amp from H1_766 where amp> 0.05 and a12>0.7').fetchall()
+#  for the selected data,  plot freq against t_mid in red circles('r'), whose size reflects the amplitude 
+plt.scatter([row['t_mid'] for row in sel], [row['freq'] for row in sel],[300*row['amp'] for row in sel],'r')
 plt.show()

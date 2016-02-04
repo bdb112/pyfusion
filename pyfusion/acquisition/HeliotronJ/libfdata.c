@@ -12,6 +12,7 @@
 
 #define HDISKFILE "/HDISK"
 #define HDISKLIST "/data/HDISK.list"
+#define DEBUG
 
 typedef struct {
         char dir_name[5];
@@ -313,12 +314,20 @@ int     startshot, endshot, sshot;
         *findno = 0;
         for(i=0;i<128;i++)    
                 Data_HD[i] = (char *)malloc(10);
+		// HDISK.list must be in fixed format 
         if((fp = fopen(HDISKLIST, "r")) == NULL) {
                 printf("no hdisk list\n");
                 return 1;
         }
            
-        l1 = 0;
+		// Add the local directory at the head of the list, so it looks there first.
+		l1 = 0;
+		memcpy(&sdisklist[l1].dir_name[0], "/HDD2 00000 99999   " , sizeof(Hdisklist));              
+                sdisklist[l1].lf1 = '\0';
+                sdisklist[l1].lf2 = '\0';
+                sdisklist[l1].lf3 = '\0';
+
+				l1 = 1;   // Now start at 1 instead of 0
         for (;;) {
         if(fread(&hdisklist, 1, sizeof(Hdisklist), fp) < 1) {
                 break;
@@ -339,10 +348,10 @@ int     startshot, endshot, sshot;
                 startshot = atoi(sdisklist[i].start_shot);
                 endshot = atoi(sdisklist[i].end_shot);
                 sshot = atoi(shotparam.shot_no);
-/*         
+#ifdef DEBUG
 printf("%d %s\n",i, hdiskfile);
 printf("start shot %d endshot %d search shot %d\n",startshot, endshot, sshot);
-*/
+#endif
                 if(sshot>=startshot && sshot <=endshot) {
                         if((fp = fopen(hdiskfile, "r")) == NULL)
                                 continue;
@@ -361,9 +370,18 @@ printf("start shot %d endshot %d search shot %d\n",startshot, endshot, sshot);
                         }
                 }
         }        
-        if(*findno > 0) return 0;
-        else return 1;
-
+        if(*findno > 0) {
+		  #ifdef DEBUG 
+		  printf("IFOUND>0: found\n");		  
+		  #endif
+		  return 0;
+		}
+        else {
+		  #ifdef DEBUG 
+		  printf("IFOUND=0: not found\n");
+		  #endif
+		  return 1;
+		}
 }
 
 int

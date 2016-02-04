@@ -327,7 +327,9 @@ class DA():
         write_arff(self, filename, keys)
 
 
-    def to_sqlalchemy(self,db = 'sqlite:///:memory:',n_recs=1000, chunk=1000):
+    def to_sqlalchemy(self,db = 'sqlite:///:memory:',mytable='fs_table', n_recs=1000, newfmts={}, chunk=1000):
+        from .write_arff import split_vectors
+
         """ Write to an sqlachemy database 
             chunk = 500: 2000 34 element recs/sec to (big) sqllite file, 
                     1600/sec to mysql.  cat file|mysql junk is ~ 16,000/sec
@@ -364,10 +366,14 @@ class DA():
         # define the table
         self.engine = SA.create_engine(db, echo=self.debug>2)
         self.metadata = SA.MetaData()
-        self.fs_table = SA.Table('fs_table', self.metadata)
+        self.mytable = SA.Table(mytable, self.metadata)
+
+        dd = self.copyda()
+        sub_list = split_vectors(dd, newfmts=newfmts)
+
         (dbkeys,dbtypes)=([],[])
-        for k in self.da.keys():
-            arr = self.da[k]
+        for k in np.sort(list(dd.keys())):
+            arr = dd[k]
             typ = None
             print(k)
             if hasattr(arr,'dtype'):
@@ -381,7 +387,7 @@ class DA():
                 if typ != None: # if it gets here, it is recognised
                     dbkeys.append(k)
                     dbtypes.append(typ)
-                    self.metadata.tables['fs_table'].append_column(SA.Column(k, typ))
+                    self.metadata.tables[mytable].append_column(SA.Column(k, typ))
                     debug_(self.debug, 2)
 
             if self.debug>0: print(self.metadata.tables)
@@ -391,16 +397,17 @@ class DA():
         conn=self.engine.connect()
         if self.len > n_recs: print('Warning - only storing n_rec = {n} records'
                                     .format(n=n_recs))
-        for c in range(0,min(n_recs,len(self.da[dbkeys[0]])),chunk):
+        for c in range(0,min(int(n_recs),len(dd[dbkeys[0]])),chunk):
             print(c, min(c+chunk, self.len))
+            # for each chunk, make a list if dicts containing the fs record
             lst = []
             for i in range(c,min(c+chunk, min(self.len,n_recs))):
                 dct = {}
                 for (k,key) in enumerate(dbkeys): 
-                    dct.update({key: cvt(self.da[key][i])})
+                    dct.update({key: cvt(dd[key][i])})
                 lst.append(dct)    
             if self.debug>0: print(lst)
-            conn.execute(self.fs_table.insert(),lst)
+            conn.execute(self.mytable.insert(),lst)
                 
                 
 

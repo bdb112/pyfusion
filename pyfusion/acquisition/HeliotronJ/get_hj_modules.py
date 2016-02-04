@@ -35,7 +35,9 @@ import_module('.gethjdata2_7','pyfusion.acquisition.HeliotronJ')
 import_module('gethjdata2_7','pyfusion.acquisition.HeliotronJ.gethjdata2_7')
 """
 
-def get_hj_modules():
+def get_hj_modules(force_recompile=False):
+    """ find the path to the exes, and optionally (if force_recompile=True) or automatically recompile
+    """
     # append python version number - but hide '.' 
     hj_module  = 'gethjdata'+sys.version[0:3].replace('.','_')
     # Note: 3.4 may need f2py3.4 - 3.5 f2py3 gives PyCObject_Type error
@@ -56,8 +58,9 @@ def get_hj_modules():
     except Exception as reason:
         print("Can't import {m} as get_hjdata at first attempt:  reason - {r}, {args}"
               .format(r=reason, args=reason.args, m=hj_module))
+        force_recompile = True
     # Should use subprocess instead of command, and get more feedback
-
+    if force_recompile:
         os.chdir(exe_path) # move to the exe dir (although module stays one up ../
         import subprocess
         print('Compiling Heliotron J data aquisition library, please wait...')
@@ -83,11 +86,11 @@ def get_hj_modules():
             import_module(hj_module)
         except Exception as reason:
             print("Can't import {m} as get_hjdata at second attempt {r}, {args}"
-                  .format(r=reason, args=reason.args, m=hjmod))
-            raise ImportError("Can't import Heliotron J data acquisition library")
-    finally:
-        os.chdir(oldwd)
-        return(hj_module, exe_path)
+                  .format(r=reason, args=reason.args, m=hj_module))
+            raise ImportError("Can't import Heliotron J data acquisition library, staying in exe dir")
+        
+    os.chdir(oldwd)
+    return(hj_module, exe_path)
 
     # Dave had some reason for not including the auto compile - Boyd added 2013
     # probably should suppress the auto compile during tests - this was his code.

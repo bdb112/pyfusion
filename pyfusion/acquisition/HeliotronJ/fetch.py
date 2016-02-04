@@ -44,7 +44,7 @@ class HeliotronJDataFetcher(BaseDataFetcher):
 
 """
 ### Debugging 
-Excellent test method for fetch
+Excellent test method for fetch - see below to recompile
 from pyfusion.acquisition.HeliotronJ import gethjdata2_7
 x=arange(1e6)
 gethjdata2_7.gethjdata(58000,100,'DIA135',verbose=1,opt=0,outname='foo',outdata=x)
@@ -61,4 +61,10 @@ make_static_param_db.get_static_params(58000)
   'IAMPFILE': -11,
 etc
 
+To recompile, rename the old .so and then
+from pyfusion.acquisition.HeliotronJ import get_hj_modules
+get_hj_modules.get_hj_modules
+  - or -
+run pyfusion/acquisition/HeliotronJ/manual_recompile.py
+# which you can edit to put your own test case in
 """

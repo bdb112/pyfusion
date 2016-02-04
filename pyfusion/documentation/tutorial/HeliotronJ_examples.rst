@@ -9,6 +9,9 @@ Examples from the JSPF tutorial article
 .. literalinclude:: ../../examples/JSPF_tutorial/example2.py
    :caption:
 
+.. literalinclude:: ../../examples/JSPF_tutorial/example2a.py
+   :caption:
+
 .. literalinclude:: ../../examples/JSPF_tutorial/example3.py
    :caption:
 
@@ -19,6 +22,9 @@ Examples from the JSPF tutorial article
    :caption:
 
 .. literalinclude:: ../../examples/JSPF_tutorial/example6.py
+   :caption:
+
+.. literalinclude:: ../../examples/JSPF_tutorial/cross_phase.py
    :caption:
 
 A more advanced example in four steps
@@ -52,6 +58,7 @@ Result is a DA data set
 Result: DA data set including other data for each time segment.
 
 4/ Clustering::
+
  # DAHJ60k.npz is already prepared in the hj-mhd DA file area (defined in pyfusion.cfg)
  run pyfusion/examples/cluster_DA.py DAfilename='$DAPATH/DAHJ60k.npz'
  co.plot_clusters_phase_lines()  # show clusters

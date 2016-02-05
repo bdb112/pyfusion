@@ -23,15 +23,15 @@ def params_to_dict(lines):
     into a dictionary(ies).  Returns a list of dictionaries.
     """
     lines = np.char.strip(lines)
-    wp = np.where(np.char.find(lines,'DATAPARM')>-1)[0]
-    we = np.where(np.char.rfind(np.char.add(lines,'@#@#'),'/@#@#') > -1)[0]
+    wp = np.where(np.char.find(lines,b'DATAPARM')>-1)[0]
+    we = np.where(np.char.rfind(np.char.add(lines,b'@#@#'),b'/@#@#') > -1)[0]
 
     if len(wp) != len(we):
         raise LookupError('different number of starts {s} and ends {s}'
                           .format(s=len(wp), e=len(we)))
     dics = []
     for (s,e) in zip(wp,we):
-        dics.append(eval('dict('+''.join(lines[s+1:e]).replace(chr(0),'')+')'))
+        dics.append(eval(b'dict(b'+b''.join(lines[s+1:e]).replace(chr(0).encode(),b'')+b')'))
     return(dics)
 
 def test(datafile='pyfusion/acquisition/HeliotronJ/params.out'):
@@ -58,6 +58,7 @@ def find_helio_exe(exe):
         print('Can''t find exe \n{exe}\ndummy data using dummy exe "dummy_exe"'.
               format(exe=exe))
         exe = this_dir + os.sep + "dummy_exe"
+    print('helio exe is ', exe)
     return(exe)
 
 def get_static_params(shot, signal='DIA135',exe=save_exe, press_on=True):
@@ -69,7 +70,7 @@ def get_static_params(shot, signal='DIA135',exe=save_exe, press_on=True):
     parm_pipe = subprocess.Popen(cmd,  shell=True, stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
     (resp,err) = parm_pipe.communicate()
-    if (err != '') or (parm_pipe.returncode != 0): 
+    if (len(err) != 0) or (parm_pipe.returncode != 0): 
         if press_on: 
             print('ignoring failure to get params')
             return({})
@@ -77,7 +78,8 @@ def get_static_params(shot, signal='DIA135',exe=save_exe, press_on=True):
     else:
         lines = resp
         if len(np.shape(lines))==0:
-            for line_sep in ['\n\r','\r\n','\n','\r']:
+            # to avoid all these b', could do lines = [ln.decode() for ln in dd]
+            for line_sep in [b'\n\r',b'\r\n',b'\n',b'\r']:
                 if line_sep in lines:
                     break
             lines = lines.split(line_sep)

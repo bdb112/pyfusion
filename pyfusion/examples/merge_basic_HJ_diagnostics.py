@@ -161,5 +161,5 @@ for key in diags:
         print('{0:10s}: {1:.1f}%'.format(key, 100.0*np.sum(dd[key]*0==0)/sz))
         uv = np.unique(dd[key])
         if len(uv) < 10:
-            print('key {key} has vary few ({n}) different values: \n{uv}'
+            print('key {key} has very few ({n}) different values: \n{uv}'
                   .format(key=key,n=len(uv),uv=uv))

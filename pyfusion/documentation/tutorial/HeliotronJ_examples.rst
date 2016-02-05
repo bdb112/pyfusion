@@ -45,7 +45,7 @@ DA (Dictionary of Arrays) object
 
 2/ Merge feature files::
 
- run pyfusion/examples/merge_text_pyfusion.py  "file_list=glob('PF2_151120*_60*')"  target="b'Shot .*"
+ run pyfusion/examples/merge_text_pyfusion.py  "file_list=glob('PF2_151120*_60*')"
 
 Result is a DA data set
 

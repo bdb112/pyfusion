@@ -320,9 +320,9 @@ int     startshot, endshot, sshot;
                 return 1;
         }
            
-		// Add the local directory at the head of the list, so it looks there first.
+		// Add the a phantom local directory at the head of the list, so it looks there first for local caching
 		l1 = 0;
-		memcpy(&sdisklist[l1].dir_name[0], "/HDD2 00000 99999   " , sizeof(Hdisklist));              
+		memcpy(&sdisklist[l1].dir_name[0], "/hdd2 54000 99999   " , sizeof(Hdisklist));              
                 sdisklist[l1].lf1 = '\0';
                 sdisklist[l1].lf2 = '\0';
                 sdisklist[l1].lf3 = '\0';
@@ -372,7 +372,7 @@ printf("start shot %d endshot %d search shot %d\n",startshot, endshot, sshot);
         }        
         if(*findno > 0) {
 		  #ifdef DEBUG 
-		  printf("IFOUND>0: found\n");		  
+		  printf("IFOUND>0: found! \n");		  
 		  #endif
 		  return 0;
 		}
@@ -416,6 +416,9 @@ int adcbit;
                 memcpy(&buff1[0], signalnm, 15);
                 strip_space(&buff1[0]);
                 strcat(buff, buff1);
+#ifdef DEBUG 
+		printf("trying %s\n", buff);
+#endif
                 if( (   fp = fopen(buff,"r")) != NULL)
                         break;
         }

@@ -235,14 +235,17 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                 debug_(max(pyfusion.DEBUG, debug), level=4, key='find_data')
                 try:
                     #get HJparams
+                    channel = info['name']
                     outdata=np.zeros(1024*2*256+1)
                     channel_length =(len(outdata)-1)/2
                     with tempfile.NamedTemporaryFile(prefix="pyfusion_") as outfile:
-                        getrets=gethjdata.gethjdata(shot,channel_length,
-                                                    info['name'],
-                                                    VERBOSE, OPT,
-                                                    outfile.name, outdata)
+                        ierror, getrets=gethjdata.gethjdata(shot,channel_length,
+                                                            info['name'],
+                                                            verbose=VERBOSE, opt=OPT, ierror=2,
+                                                            outname=outfile.name, outdata=outdata)
 
+                        if ierror != 0:
+                            raise LookupError('data not found for {s}:{c}'.format(s=shot, c=channel))
                         ch = Channel(info['name'], Coords('dummy', (0,0,0)))
                         dg = TimeseriesData(timebase=Timebase(getrets[1::2]),
                                             signal=Signal(getrets[2::2]), channels=ch)

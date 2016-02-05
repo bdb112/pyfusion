@@ -87,7 +87,7 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
             # look for a version number first
             if header_toks[-1][-1] in b'0123456789.':
                 version = float(header_toks.pop())
-                if 'ersion' not in header_toks.pop():
+                if b'ersion' not in header_toks.pop():
                     raise ValueError('Error reading header in {f}'
                                      .format(f=filename))
             else: version=-1  # pre Aug 12 2013

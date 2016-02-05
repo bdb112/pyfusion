@@ -72,18 +72,21 @@ def get_hj_modules(force_recompile=False):
                 'f77 -Lcdata ../save_h_j_data.f intel.o libfdata.o -o {exe}'
                 .format(exe=os.path.join(exe_path,'save_h_j_data')), # 2015
             ]
+        print(cmds)
         for cmd in cmds:
             sub_pipe = subprocess.Popen(cmd,  shell=True, stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
             (resp,err) = sub_pipe.communicate()
+            if resp !='': print(resp[-10:])
             if (err != b'') or (sub_pipe.returncode != 0): 
                 print(resp,err,'.') #
                 print(err.split(b'\n')[-2]),
-            if resp !='': print(resp[-10:])
-
+                print('returned',sub_pipe.returncode)
+                if sub_pipe.returncode != 0:
+                    print('*****ERROR****',200*'*','\n')
         try:
             print('try after compiling...'),
-            import_module(hj_module)
+            import_module(hj_module,dict1=locals())
         except Exception as reason:
             print("Can't import {m} as get_hjdata at second attempt {r}, {args}"
                   .format(r=reason, args=reason.args, m=hj_module))
@@ -99,3 +102,12 @@ def get_hj_modules(force_recompile=False):
     #    # TODO: this should go into logfile
     #    print ImportError, "Can't import Heliotron J data aquisition library"
 
+"""
+doesn't work - get  Attempted relative import in non-package
+if __name__ == "__main__":
+    from pyfusion.acquisition.HeliotronJ.get_hj_modules import get_hj_modules
+    hjmod, exepath =  get_hj_modules()
+    import_module(hjmod, dict1=locals())
+    x = zeros(int(1e6))
+    ierror, ret = gethjdata(58000,100,"DIA135",verbose=4, opt=0, ierror=1, outname='foo', outdata=x)
+"""

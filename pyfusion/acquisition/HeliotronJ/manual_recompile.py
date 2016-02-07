@@ -24,7 +24,7 @@ except:
 # and /data/HDISK.lst and HDISK have been copied from HeliotronJ
 # note that the original code requires that HDISK.list be in fixed format.
 #  at the moment, this gives no errors but returns all zeros?
-ierr,retdata = gethjdata.gethjdata(shot,100,'MP1',verbose=1,opt=0,ierror=1,outname='foo',outdata=x)
+ierr,retdata = gethjdata.gethjdata(shot,100,'MP1',verbose=1,opt=1,ierror=1,outname='foo',outdata=x)
 if ierr != 0: print('ierror = ',ierr)
 if x[1] == retdata[1]: print('no new data returned in x??')
 

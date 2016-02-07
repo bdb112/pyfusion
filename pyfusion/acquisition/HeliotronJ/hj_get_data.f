@@ -6,7 +6,7 @@ c *** programed by S. Yamamoto on Feb. 14, 2005              ***
 c *** hacked by D. Pretty on Feb.  2008                      ***
 c * Boyd fixed it (argument list subtleties, made it pass directly
 C * but even so, it takes ~1 sec per channel, compared to a fraction
-C * when reading from npz files with the same data
+C * when reading from npz files with the same data - solved - don't write file!
 C * See test examples at the end of fetch.py
       subroutine gethjdata (ishotno,lendata,chname,verbose,
      $     opt, ierror, outname, outdata,n)
@@ -57,7 +57,7 @@ c      do 100 i=1,14
       call getdata(chname,modulenm,paneldt,datascl,dataunit,sdate,
      &  stime,tmpary,tary,tsamp,tdelay,ampgain,sc_max,sc_min,bitzero,
      &  iadc_bit,iampfile,ishotno,ibhv,ibta,ibtb,ibav,ibiv,
-     &  ich,isample,iswch,ierror)
+     &  ich,isample,iswch,ierror,verbose)
 c        do 200 j=1,262144
 c            dataary(i,j) = tmpary(j)
 c  200   continue

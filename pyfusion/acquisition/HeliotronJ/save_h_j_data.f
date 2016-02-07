@@ -33,10 +33,11 @@ c
 c
 	parameter (BIGDATA=10 000 000)   ! yes, you can have spaces in fortran statements - crazy but true!
 	dimension dataary(BIGDATA),tary(BIGDATA),rdata(BIGDATA)
-	integer iadc_bit,iampfilt,ishotno
+	integer iadc_bit,iampfile,ishotno
 	integer ibhv,ibta,ibtb,ibav,ibiv
 	integer ich,isample,iswch
-	integer ierror
+c this is not set by the caller yet...	
+	integer ierror, idebug
 c
 	character*16 signalnm,modulenm
 	character*100 paneldt,unf_file
@@ -53,9 +54,10 @@ c
      &	iadc_bit,iampfile,ishotno,ibhv,ibta,ibtb,ibav,ibiv,
      &	ich,isample,iswch,ierror,unf_file
 c
+	idebug = 0
 	fmtted=.false.
 	signalnm='DIA135'
-	write(6,*) 'signalnm,shotno free format'
+	write(6,*) 'signalnm,shotno,filename free format - commas, spaces, crs'
 	read(5,*) signalnm,ishotno,unf_file
 	write(6,*) signalnm,ishotno,unf_file
 	fmtted = ((ltrim(unf_file) .le. 1) .and. (unf_file .eq. "f")) ! sometimes null strings are too hard
@@ -66,7 +68,7 @@ c
 	call getdata(signalnm,modulenm,paneldt,datascl,dataunit,sdate,
      &	stime,dataary,tary,tsamp,tdelay,ampgain,sc_max,sc_min,bitzero,
      &	iadc_bit,iampfile,ishotno,ibhv,ibta,ibtb,ibav,ibiv,
-     &	ich,isample,iswch,ierror)
+     &	ich,isample,iswch,ierror,idebug)
 c
 	if(ierror.ne.0) then 
 		write(6,*) 'read error'

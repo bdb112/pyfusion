@@ -12,6 +12,7 @@ Uses exec of a dict - very fast!
 
 import numpy as np
 import os
+import pyfusion  # just for VERBOSE, DEBUG
 
 from .get_hj_modules import import_module, get_hj_modules
 hjmod, exe_path = get_hj_modules()
@@ -29,9 +30,10 @@ def params_to_dict(lines):
     if len(wp) != len(we):
         raise LookupError('different number of starts {s} and ends {s}'
                           .format(s=len(wp), e=len(we)))
-    dics = []
+    if pyfusion.VERBOSE>0: print('len wp', len(wp))
+    dics = {}
     for (s,e) in zip(wp,we):
-        dics.append(eval(b'dict(b'+b''.join(lines[s+1:e]).replace(chr(0).encode(),b'')+b')'))
+        dics.update(eval(b'dict(b'+b''.join(lines[s+1:e]).replace(chr(0).encode(),b'')+b')'))
     return(dics)
 
 def test(datafile='pyfusion/acquisition/HeliotronJ/params.out'):
@@ -58,7 +60,7 @@ def find_helio_exe(exe):
         print('Can''t find exe \n{exe}\ndummy data using dummy exe "dummy_exe"'.
               format(exe=exe))
         exe = this_dir + os.sep + "dummy_exe"
-    print('helio exe is ', exe)
+    if pyfusion.VERBOSE > 0: print('helio exe is ', exe)
     return(exe)
 
 def get_static_params(shot, signal='DIA135',exe=save_exe, press_on=True):
@@ -72,9 +74,9 @@ def get_static_params(shot, signal='DIA135',exe=save_exe, press_on=True):
     (resp,err) = parm_pipe.communicate()
     if (len(err) != 0) or (parm_pipe.returncode != 0): 
         if press_on: 
-            print('ignoring failure to get params')
+            print('ignoring failure to get params{resp}{err}'.format(resp=resp,err=err))
             return({})
-        raise Exception('failed to run \n{cmd}\n{err}'.format(cmd=cmd, err=err))
+        raise Exception('failed to run \n{cmd}\{resp}\n{err}'.format(cmd=cmd, err=err, resp=resp))
     else:
         lines = resp
         if len(np.shape(lines))==0:

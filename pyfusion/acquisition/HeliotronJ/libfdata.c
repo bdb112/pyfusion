@@ -11,8 +11,10 @@
 #include "helgra.h"
 
 #define HDISKFILE "/HDISK"
-#define HDISKLIST "/data/HDISK.list"
-#define DEBUG
+// to do this properly, need to pass the cache directory name to libfdata (and the shot range)
+#define HDISKLIST "/cach/HDISK.list"   // bdb
+//#define DEBUG
+int debug = 0;
 
 typedef struct {
         char dir_name[5];
@@ -118,16 +120,17 @@ getdata_(signalnm, modulenm, paneldt, datascl, dataunit,  sdate, stime,\
 	dataary, tary, tsamp, tdelay, ampgain, \
 	sc_max, sc_min, bitzero,\
 	iadc_bit, iampfilt, ishotno, ibhv, ibta, ibtb, ibav, ibiv, \
-	ich, isample, iswch, ierror)
+		 ich, isample, iswch, ierror, idebug)
 char *signalnm, *modulenm, *paneldt, *datascl, *dataunit, *sdate, *stime;
 float	*dataary, *tary, *tsamp, *tdelay, *ampgain;
 float	*sc_max, *sc_min, *bitzero;
 int	*iadc_bit,*iampfilt, *ishotno;
 int	*ibhv, *ibta, *ibtb, *ibav, *ibiv;
 int	*ich, *isample, *iswch;
-int	*ierror;
+int	*ierror, *idebug;
 {
-
+	debug = *idebug;
+	if (debug != 0) printf("idebug %d debug %d\n",*idebug, debug);
 	char buff[129];
 	float bitmax, r12;
 	char *p;
@@ -321,8 +324,9 @@ int     startshot, endshot, sshot;
         }
            
 		// Add the a phantom local directory at the head of the list, so it looks there first for local caching
+// to do this properly, need to pass the cache directory name to libfdata (and the shot range).  still use phantom at head of HDISK.list, but need a python script to make a valid HDISK file for the cache
 		l1 = 0;
-		memcpy(&sdisklist[l1].dir_name[0], "/hdd2 54000 99999   " , sizeof(Hdisklist));              
+		memcpy(&sdisklist[l1].dir_name[0], "/cach 54000 99999   " , sizeof(Hdisklist));    //bdb          
                 sdisklist[l1].lf1 = '\0';
                 sdisklist[l1].lf2 = '\0';
                 sdisklist[l1].lf3 = '\0';
@@ -348,10 +352,10 @@ int     startshot, endshot, sshot;
                 startshot = atoi(sdisklist[i].start_shot);
                 endshot = atoi(sdisklist[i].end_shot);
                 sshot = atoi(shotparam.shot_no);
-#ifdef DEBUG
-printf("%d %s\n",i, hdiskfile);
-printf("start shot %d endshot %d search shot %d\n",startshot, endshot, sshot);
-#endif
+		if (debug != 0) {
+		  printf("%d %s\n",i, hdiskfile);
+		  printf("start shot %d endshot %d search shot %d\n",startshot, endshot, sshot);
+		}
                 if(sshot>=startshot && sshot <=endshot) {
                         if((fp = fopen(hdiskfile, "r")) == NULL)
                                 continue;
@@ -416,9 +420,7 @@ int adcbit;
                 memcpy(&buff1[0], signalnm, 15);
                 strip_space(&buff1[0]);
                 strcat(buff, buff1);
-#ifdef DEBUG 
-		printf("trying %s\n", buff);
-#endif
+		if (debug !=0 ) printf("trying %s\n", buff);
                 if( (   fp = fopen(buff,"r")) != NULL)
                         break;
         }
@@ -483,7 +485,7 @@ int i,j;
         }
         
         if(j < i) 
-                *(buff+j+1)=(char)NULL;
+                *(buff+j+1)=(char)0;
 
 }       
 void
@@ -501,7 +503,7 @@ int i,j;
         }
         
         if(j < i) 
-                *(buff+j)=(char)NULL;
+                *(buff+j)=(char)0;
 
 }       
 char *fGets(char *s, int n, FILE *iop)

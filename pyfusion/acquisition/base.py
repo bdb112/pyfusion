@@ -190,7 +190,7 @@ class BaseDataFetcher(object):
             self.setup()
         except exception as details:
             traceback.print_exc()
-            raise LookupError("%s\n%s" % (self.error_info(step='setup'),details))
+            raise LookupError("{inf}\n{details}".format(inf=self.error_info(step='setup'),details=details))
         try:
             data = self.do_fetch()
         except exception as details:   # put None here to show exceptions.
@@ -214,7 +214,8 @@ class BaseDataFetcher(object):
                 for tbk in traceback.extract_tb(tb):
                     print("Line {0}: {1}, {2}".format(tbk[1],tbk[0],tbk[2:]))
 
-            raise LookupError("%s\n%s" % (self.error_info(step='do_fetch'),details))
+            raise LookupError("{inf}\n{details}{CLASS}".format(inf=self.error_info(step='setup'),
+                                                        details=details,CLASS=details.__class__))
         data.meta.update({'shot':self.shot})
         # Coords shouldn't be fetched for BaseData (they are required
         # for TimeSeries)
@@ -260,6 +261,7 @@ class MultiChannelFetcher(BaseDataFetcher):
     
     def try_fetch_local(self, bare_chan, sgn):
         """ return data if in the local cache, otherwise None
+        doesn't work for single channel HJ data.
         """
         for each_path in pyfusion.config.get('global', 'localdatapath').split(':'):
             self.localname = os.path.join(each_path, '{shot}_{bc}.npz'

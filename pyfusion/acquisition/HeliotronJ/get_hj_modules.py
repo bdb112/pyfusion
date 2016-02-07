@@ -1,5 +1,7 @@
+from __future__ import print_function
 import os, sys
 import pyfusion
+
 """ Find binaries and compile if required
 
    The binaries are different for python2 and 3 etc, so name gethjdata accordingly
@@ -81,7 +83,7 @@ def get_hj_modules(force_recompile=False):
             if (err != b'') or (sub_pipe.returncode != 0): 
                 print(resp,err,'.') #
                 print(err.split(b'\n')[-2]),
-                print('returned',sub_pipe.returncode)
+                print('compile subproc returned',sub_pipe.returncode)
                 if sub_pipe.returncode != 0:
                     print('*****ERROR****',200*'*','\n')
         try:

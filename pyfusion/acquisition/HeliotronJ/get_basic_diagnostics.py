@@ -238,11 +238,13 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                     channel = info['name']
                     outdata=np.zeros(1024*2*256+1)
                     channel_length =(len(outdata)-1)/2
-                    with tempfile.NamedTemporaryFile(prefix="pyfusion_") as outfile:
-                        ierror, getrets=gethjdata.gethjdata(shot,channel_length,
-                                                            info['name'],
-                                                            verbose=VERBOSE, opt=OPT, ierror=2,
-                                                            outname=outfile.name, outdata=outdata)
+                    # outdfile only needed for opt=1 (get data via temp file)
+                    # with tempfile.NamedTemporaryFile(prefix="pyfusion_") as outdfile:
+                    ierror, getrets=gethjdata.gethjdata(shot,channel_length,
+                                                        info['name'],
+                                                        verbose=VERBOSE, opt=1,
+                                                        ierror=2,
+                                                        outdata=outdata, outname='')
 
                         if ierror != 0:
                             raise LookupError('data not found for {s}:{c}'.format(s=shot, c=channel))

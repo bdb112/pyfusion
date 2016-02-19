@@ -78,9 +78,13 @@ def worker(arglist):
     print(' {s} done!'.format(s=shot))
     return(err)
 
+try:
+    from itertools import izip
+except:
+    izip = zip
+
 def mymap(pool, fn, list, extra):
-    import itertools
-    zippedarg = itertools.izip(list, itertools.repeat(extra))
+    zippedarg = izip(list, itertools.repeat(extra))
     return(pool.map(fn, zippedarg))
 
 if __name__ == '__main__':

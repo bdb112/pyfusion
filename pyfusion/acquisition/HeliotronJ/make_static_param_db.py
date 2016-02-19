@@ -39,7 +39,7 @@ def params_to_dict(lines):
 def test(datafile='pyfusion/acquisition/HeliotronJ/params.out'):
     """
     >>> dics = test()
-    >>> dics[0]['IBTA']
+    >>> dics['IBTA']
     -92
     """
     fp=open(datafile,'r')
@@ -114,11 +114,11 @@ def make_param_db(max_shot=70000, file_name='HJparams.npz', shot_range=range(500
             for sig in (signal, 'MP1'):
                 params = get_static_params(shot, signal=signal, 
                                           exe=exe, press_on=(sig==signal))
-                if len(params[0].keys())>0:
+                if len(params.keys())>0:
                     break
                                               
             for key in db.keys():
-                db[key][shot] = params[0][key]
+                db[key][shot] = params[key]
         except Exception as reason:
             args = str('{args}'.format(args=reason.args))
             errors.append([shot, reason, args])
@@ -133,5 +133,5 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
     dics = test()
-    print("dics[0]['IBTA']) = {v}".format(v=dics[0]['IBTA']))
+    print("dics['IBTA']) = {v}".format(v=dics['IBTA']))
     

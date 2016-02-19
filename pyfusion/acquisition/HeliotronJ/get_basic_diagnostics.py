@@ -226,10 +226,10 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                 valarr = np.double(val)+(times*0)
             elif 'get_static_params' in infofmt:
                 pdicts = eval(infofmt.format(shot=shot))
-                if len(pdicts)>1:
-                    print('more than one dictionary returned')
+                if len(pdicts)==0:
+                    print('empty dictionary returned')
 
-                val = pdicts[0][varname]
+                val = pdicts[varname]
                 valarr = np.double(val)+(times*0)
             else:    # read signal from data system
                 debug_(max(pyfusion.DEBUG, debug), level=4, key='find_data')
@@ -246,11 +246,11 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                                                         ierror=2,
                                                         outdata=outdata, outname='')
 
-                        if ierror != 0:
-                            raise LookupError('data not found for {s}:{c}'.format(s=shot, c=channel))
-                        ch = Channel(info['name'], Coords('dummy', (0,0,0)))
-                        dg = TimeseriesData(timebase=Timebase(getrets[1::2]),
-                                            signal=Signal(getrets[2::2]), channels=ch)
+                    if ierror != 0:
+                        raise LookupError('data not found for {s}:{c}'.format(s=shot, c=channel))
+                    ch = Channel(info['name'], Coords('dummy', (0,0,0)))
+                    dg = TimeseriesData(timebase=Timebase(getrets[1::2]),
+                                        signal=Signal(getrets[2::2]), channels=ch)
                 except exception as reason:
                     if debug>0:
                         print('exception running gethjdata {r} {a}', format(r=reason, a=reason.args))

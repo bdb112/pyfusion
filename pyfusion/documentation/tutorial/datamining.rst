@@ -6,9 +6,11 @@ Example: MHD Data mining with pyfusion
 
 Here we show a method for finding classes of coherent fluctuations from many multi-channel timeseries signals (see Pretty and Blackwell paper). 
 
-It is implement on LHD in the following example, using text files for
-intermediate preprocessed data.  Currently this is faster than using a
-database for this stage by about one order.
+It is implemented on LHD in the following example, using text files for
+intermediate preprocessed data.  Currently this is faster than using an
+SQLAlchemy database for this stage by about one order.
+
+A more complete example is provided for Heliotron-J :ref:`advanced-examples`
 
 *******************************************************
 using text files and a dictionary instead of a database

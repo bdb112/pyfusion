@@ -9,6 +9,10 @@ initially have used a little of six, but maybe python-future is more python 3 or
 
 *** // test using -3 is a runtime test, and will miss unexplored branches of if
 
+raw_input 
+
+izip
+
 ============  Bugs ===========
 
 **** plot_svd runs slowly under python2

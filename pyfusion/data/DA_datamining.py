@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from time import time as seconds
 import os
+import sys
 from warnings import warn
 
 """ Note: in programming, be careful not to refer to .da[k] unnecessarily
@@ -18,6 +19,16 @@ except:
             print('attempt to debug {msg}'.format(msg=msg)+ 
                   " need boyd's debug_.py to debug properly")
 
+def info_to_bytes(inf):
+    #for k in inf:  # just do comment for now
+    # can't do isinstance(xx, unicode) as unicode is not defined in P3
+    if sys.version > '3,':
+        for c in inf['comment']:
+            if not isinstance(c, bytes):
+                print("warning - unicode in info, can't read in python2, even 2.7")
+                # do nothing for now
+    return(inf)
+        
 def mylen(ob):
     """ return the length of an array or dictionary for diagnostic info """
     if type(ob) == type({}):
@@ -460,7 +471,7 @@ class DA():
             print('{Shots} {s}\n Vars: '.format(Shots=self.mainkey,s=shotstr))
 
             lenshots = self.len
-            for k in np.sort(self.da.keys()):
+            for k in np.sort(list(self.da.keys())):
                 varname = k
                 var = self.da[k]
                 if hasattr(var, 'dtype') and var.dtype=='O':
@@ -559,6 +570,7 @@ class DA():
         report_mem(start_mem)
         return(True)
 
+
     def save(self, filename, verbose=None, sel=None, use_dictionary=False,tempdir=None, zipopt=-1):
         """ Save as an npz file, using an incremental method, which
         only uses as much /tmp space as required by each var at a time.
@@ -620,6 +632,7 @@ class DA():
 
         if verbose: print(' Saving only {k}'.format(k=use_keys))
 
+        if 'info' in use_keys:  info = info_to_bytes(self['info'])  # avoid py3 unicode error
 
         args=','.join(["{k}=save_dict['{k}']".
                        format(k=k) for k in use_keys])

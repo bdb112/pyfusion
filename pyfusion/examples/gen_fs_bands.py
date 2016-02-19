@@ -1,9 +1,10 @@
 """ Try band limited generation of flucstrucs
 from gen_fs_local Feb 2013
-#exception=None catches no exceptions, so you get a stop and a traceback
+#exception=() catches no exceptions, so you get a stop and a traceback () is python3 syntax, works for 2 also
 #exception=Exception catches all, so it continues, but no traceback
 python dm/gen_fs.py shot_range=[27233] exception=None
-
+info:  0 some info in header, none after (using info+first)
+       1, 2  
 71 secs to sqlite.txt (9MB) (21.2k in basedata, 3.5k fs, 17.7k float_delta
 34 secs with db, but no fs_set.save()
 17 secs to text 86kB - but only 1k fs
@@ -68,7 +69,7 @@ n_samples = None  # was 512
 n_samples_max = 128000
 overlap=1.0
 diag_name= 'MP2010'
-exception=Exception
+exception=Exception    # use () to reveal any errors
 time_range = None
 min_svs=2
 max_H=0.97
@@ -105,7 +106,9 @@ count = 0  #  we print the header right before the first data
 raw_count = 0
 
 dev = pyfusion.getDevice(dev_name)
-for shot in shot_range:
+
+for (cnt, shot) in enumerate(shot_range):
+    first = cnt==0
     while(os.path.exists(os.path.join(pyfusion.root_dir,'pause'))):
         print('paused until '+ pyfusion.root_dir+'/pause'+ ' is removed')
         sleep(int(20*(1+random.uniform())))  # wait 20-40 secs, so they don't all start together
@@ -136,13 +139,13 @@ for shot in shot_range:
             d.reduce_time(time_range, copy=False)
 
         sections = d.segment(n_samples, overlap)
-        write('<<{h}, {l} sections, version = {vsn}\n'
-              .format(h=d.history, l=len(sections), 
-                      vsn=pyfusion.version.get_version('verbose')))
+        if info+first > 0: write('<<{h}, {l} sections, version = {vsn}\n'
+                         .format(h=d.history, l=len(sections), 
+                                 vsn=pyfusion.version.get_version('verbose')))
         try:
             for k in pyfusion.conf.history.keys():
                 # the || prevent lines starting with a number
-                write('||'+pyfusion.conf.history[k][0].split('"')[1])
+                if info>2: write('||'+pyfusion.conf.history[k][0].split('"')[1])
                 if info>1: sys.stdout.writelines(pyfusion.conf.utils.dump())
         except: pass    
 
@@ -178,7 +181,7 @@ for shot in shot_range:
                 for fs in fs_set:
                     if raw_count==0: 
                         # show history if info says to, and avoid starting line with a digit
-                        if info > 0: write('< '+fs.history.
+                        if info+first > 0: write('< '+fs.history.
                                            replace('\n201','\n< 201'))
                         # Version number should end in digit!
                         SVtitle_spc = (n_channels - 2)*' '

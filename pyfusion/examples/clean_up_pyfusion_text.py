@@ -9,6 +9,7 @@ Note the funny quotes below
 (should choose a few samples files, one that run faster)
 _PYFUSION_TEST_@@fileglob="glob.glob('PF2*1')[0]"
 """
+from six.moves import input
 import bz2
 import os
 import numpy as np
@@ -163,7 +164,8 @@ for filename in np.sort(glob.glob(fileglob)):
                 errors.append(l)
                 badlines.append([l,lines[l]])
                 if len(errors)<3: print(lines[l])
-                if debug>0: ans = raw_input('delete this line? (Y, A(ll),^C to stop)').lower()
+                if debug>0: ans = input('delete this line? (Y, A(ll),^C to stop, line{l})'
+                                        .format(l=l)).lower()
                 if ans=='a': 
                     debug=0
                 if ans in ['y','','a']:   # need ans to act!

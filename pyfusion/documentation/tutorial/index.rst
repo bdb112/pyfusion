@@ -16,4 +16,4 @@ Pyfusion overview text here.
    workingwithdata.rst
    datahistory.rst
    datamining.rst
-   HeliotronJ_examples.rst
+   Examples.rst

@@ -11,6 +11,8 @@ def find_data(file, target, skip = 0, recursion_level=0, debug=0):
     """ find the last line number which contains the string (regexp) target 
     work around a "feature" of loadtxt, which ignores empty lines while reading data
     but counts them while skipping.
+    2016 - maybe this bug is fixed - but this code should work with or without the bug??
+    13 Feb 2016-fails if there is a blank line just before Shot
     This way, everything goes through one reader (instead of gzip.open), simplifying,
     and allowing caching.
     The recursive part could be handled more nicely.
@@ -23,7 +25,8 @@ def find_data(file, target, skip = 0, recursion_level=0, debug=0):
     # re.match /loadtxt are confused by a python3  "b" at the beginning
     wh_shotlines = np.where(
         np.array([re.match(target, line) is not None for line in lines]))[0]
-    if debug>0: print('main, rec, skip=', 
+    debug = max(debug, pyfusion.DEBUG)
+    if debug>0: print('in find, rec, skip=, last shotline num, line', 
                       recursion_level, skip, wh_shotlines[-1],lines[wh_shotlines[-1]])
     if len(wh_shotlines) == 0: 
         raise LookupError('target {t} not found in file "{f}". Line 0 follows\n{l}'.
@@ -65,13 +68,13 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
         if seconds() - last_update > 10:
             last_update = seconds()
             tot = len(file_list)
-            print('reading {n}/{t}: ETA {m:.1f}m {f}'
+            print('read {n}/{t}: ETA {m:.1f}m {f}'
                   .format(f=filename, n=i, t=tot,
                           m=(seconds()-st)*(tot-i)/float(60*i)))
 
         try:
             if (isinstance(target,str) or isinstance(target,bytes)): 
-                skip = 1+find_data(filename, target,debug=debug)
+                skip = 1+find_data(filename, target, debug=debug)
             elif isinstance(target, int): 
                 skip = target
             else:
@@ -81,6 +84,7 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
                       .format(t = seconds()-st, s=skip, f=filename))
             #  this little bit to determine layout of data
             # very inefficient to read twice, but in a hurry!
+            print('skiprows = ', skip-1)
             txt = np.loadtxt(fname=filename, skiprows=skip-1, dtype=bytes, 
                              delimiter='FOOBARWOOBAR')
             header_toks = txt[0].split()
@@ -102,7 +106,7 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
                 
             if 'frlow' in header_toks:  # add the two extra fields
                 fs_dtype= [ ('shot','i8'), ('t_mid','f8'), 
-                            ('_binary_svs','f8'),    # really want i8 here, but npyio 
+                            ('_binary_svs','u8'),    # f16 - really want u8 here,  but npyio 
                                                       #has problem converting 10000000000000000000000000
                                                       #OverflowError: Python int too large to convert to C long
                                                       # doesn't happen if text is read in directly with loadtxt
@@ -111,7 +115,7 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
                             ('frlow','f8'), ('frhigh', 'f8'),('phases',ph_dtype)]
             else:
                 fs_dtype= [ ('shot','i8'), ('t_mid','f8'), 
-                            ('_binary_svs','i8'), 
+                            ('_binary_svs','u8'), 
                             ('freq','f8'), ('amp', 'f8'), ('a12','f8'),
                             ('p', 'f8'), ('H','f8'), ('phases',ph_dtype)]
 
@@ -127,7 +131,8 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
                            dtype= fs_dtype, ndmin=1)  # ENSURE a 1D array
             )
             count += 1
-            comment_list.append(filename)
+            # npz reads in python 2 can't cope with unicode - don't report errors unless really debugging
+            comment_list.append(filename.encode(errors=['ignore','strict'][pyfusion.DEBUG>5]))
         except ValueError as info:
             print('Conversion error while reading {f} with loadtxt - {info} {args}'.format(f=filename, info=info, args = info.args))
         except LookupError as info:
@@ -188,7 +193,7 @@ def merge_ds(ds_list, comment_list=[], old_dd=None, debug=True, force=False):
                 newtype = np.dtype('float32')
             # until binary svs are properly binary, need 64 bits for 10 channels or more
             if k == '_binary_svs' and np.issubdtype(newtype, np.dtype(int)):
-                newtype = np.dtype('int64')
+                newtype = np.dtype('uint64')
 
             arr = np.array(ds_list[0][k].tolist(),dtype=newtype)# this gets rid 
         # of the record stuff and saves space (pyfusion.med_prec is in .cfg)

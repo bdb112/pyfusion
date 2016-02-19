@@ -10,7 +10,7 @@ shot_range = range(86507, 86517+1)  # the +1 ensures 86517 is the last shot
 time_range = [0.02, 0.04]
 n_samples = 1024 # define the time interval for averaging n_e 
 overlap=1.0      # take an extra n_samples for overlap - 1/2 before and 1/2 after
-exception = None
+exception = Exception 
 
 import pyfusion.utils
 exec(pf.utils.process_cmd_line_args())

@@ -10,6 +10,7 @@ This finds all matching fiels and sends the first one as a glob string
 Note that there is no easy way send more than one this way, apart from all.
 (sort(lines[next_good:])==sort(lines[2*next_good-num-1:next_good-1])).all()
 """
+from six.moves import input
 import bz2
 import os
 import numpy as np
@@ -128,7 +129,7 @@ def clean_up_file(filename, debug = 1):
                 badlines.append([l,lines[l]])
                 if len(errors)<3: print(lines[l])
                 if not MP and debug>0: 
-                    ans = raw_input('delete this line? (Y, A(ll),^C to stop)').lower()
+                    ans = input('delete this line? (Y, A(ll),^C to stop)').lower()
                 else: 
                     ans = 'a'  # this is a fudge - need to rethink logic
 

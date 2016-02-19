@@ -420,7 +420,7 @@ int adcbit;
                 memcpy(&buff1[0], signalnm, 15);
                 strip_space(&buff1[0]);
                 strcat(buff, buff1);
-		if (debug !=0 ) printf("trying %s\n", buff);
+		if (debug !=0 ) printf("Trying %s\n", buff);
                 if( (   fp = fopen(buff,"r")) != NULL)
                         break;
         }

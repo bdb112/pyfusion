@@ -249,6 +249,7 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
 
     if filename!=None:
         if verbose>0: print('========> Saving as %s <=======' % filename)
+        # time_unit_in_seconds is automatically set by a fudge - won't work for W7-X Op2
         tus=[.001,1][max(abs(array(timebase)))<100]
 
         savez_compressed(filename, timebaseexpr=timebaseexpr, 

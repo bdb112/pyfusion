@@ -15,9 +15,10 @@ import pyfusion  # only needed for .VERBOSE and .DEBUG
 
 def newload(filename, verbose=1):
     """ Intended to replace load() in numpy
+    counterpart is data/savez_compress.py
     """
     from numpy import load as loadz
-    from numpy import cumsum
+    from numpy import cumsum, array
     dic=loadz(filename)
 #    if dic['version'] != None:
 #    if len((dic.files=='version').nonzero())>0:
@@ -30,6 +31,11 @@ def newload(filename, verbose=1):
     if verbose>2: print(' contains %s' % dic.files)
     signalexpr=dic['signalexpr']
     timebaseexpr=dic['timebaseexpr']
+    if 'time_unit_in_seconds' in dic:
+        timeunitexpr = dic['time_unit_in_seconds']
+    else:
+        timeunitexpr = array(1)
+
     # savez saves ARRAYS always, so have to turn array back into scalar    
     # exec(signalexpr.tolist())
     # Changed exec code to eval for python3, otherwise the name was not defined
@@ -39,9 +45,37 @@ def newload(filename, verbose=1):
     #           "parent_element": dic['parent_element']}
     # Sucess using eval instead of exec
     signal = eval(signalexpr.tolist().split(b'=')[1])
-    timebase = eval(timebaseexpr.tolist().split(b'=')[1])
+    time_unit_in_seconds = timeunitexpr.tolist()
+    timebase = time_unit_in_seconds * eval(timebaseexpr.tolist().split(b'=')[1])
     retdic = {"signal":signal, "timebase":timebase, "parent_element": dic['parent_element']}
     return(retdic)
+
+def try_fetch_local(input_data, bare_chan, sgn):
+    """ return data if in the local cache, otherwise None
+    doesn't work for single channel HJ data.
+    """
+    for each_path in pyfusion.config.get('global', 'localdatapath').split(':'):
+        input_data.localname = os.path.join(each_path, '{shot}_{bc}.npz'
+                                          .format(shot=input_data.shot, bc=bare_chan))
+        # original - data_filename %filename_dict)
+        files_exist = os.path.exists(input_data.localname)
+        debug_(pyfusion.DEBUG, 2, key='try_local_fetch')
+        if files_exist: break
+
+    if not files_exist:
+        return None
+
+    signal_dict = newload(input_data.localname)
+
+#    coords = get_coords_for_channel(**input_data.__dict__)
+    ch = Channel(bare_chan,  Coords('dummy', (0,0,0)))
+    output_data = TimeseriesData(timebase=Timebase(signal_dict['timebase']),
+                             signal=Signal(sgn*signal_dict['signal']), channels=ch)
+    # bdb - used "fetcher" instead of "self" in the "direct from LHD data" version
+    output_data.config_name = input_data.config_name  # when using saved files, same as name
+    output_data.meta.update({'shot':input_data.shot})
+    return(output_data)
+
 
 
 class BaseAcquisition(object):
@@ -185,37 +219,45 @@ class BaseDataFetcher(object):
         if pyfusion.DEBUG>2:
             exception = ()  # defeat the try/except
         else: exception = Exception
+        sgn = 1
+        chan = self.config_name
+        if chan[0]=='-': sgn = -sgn
+        bare_chan = (chan.split('-'))[-1]
+        tmp_data = try_fetch_local(self, bare_chan, sgn)  # is there a local copy?
+        if tmp_data is None:
+            try:
+                self.setup()
+            except exception as details:
+                traceback.print_exc()
+                raise LookupError("{inf}\n{details}".format(inf=self.error_info(step='setup'),details=details))
+            try:
+                data = self.do_fetch()
+            except exception as details:   # put None here to show exceptions.
+                                           # then replace with Exception once
+                                           # "error_info" is working well
 
-        try:
-            self.setup()
-        except exception as details:
-            traceback.print_exc()
-            raise LookupError("{inf}\n{details}".format(inf=self.error_info(step='setup'),details=details))
-        try:
-            data = self.do_fetch()
-        except exception as details:   # put None here to show exceptions.
-                                       # then replace with Exception once
-                                       # "error_info" is working well
+                # this is to provide traceback from deep in a call stack
+                # the normal traceback doesn't see past the base.py into whichever do_fetch
+                #  Avoid printing exception stuff unless we want a little verbosity
+                if pyfusion.VERBOSE>0:
+                    #  this simple method doesn't work, as it only has info after 
+                    #  getting to the prompt
+                    if  hasattr(sys, "last_type"):
+                        traceback.print_last()
+                    else: 
+                        print('sys has not recorded any exception - needs to be at prompt?')
 
-            # this is to provide traceback from deep in a call stack
-            # the normal traceback doesn't see past the base.py into whichever do_fetch
-            #  Avoid printing exception stuff unless we want a little verbosity
-            if pyfusion.VERBOSE>0:
-                #  this simple method doesn't work, as it only has info after 
-                #  getting to the prompt
-                if  hasattr(sys, "last_type"):
-                    traceback.print_last()
-                else: 
-                    print('sys has not recorded any exception - needs to be at prompt?')
+                    # this one DOES work.
+                    print(sys.exc_info())
+                    (extype, ex, tb) = sys.exc_info()
+                    for tbk in traceback.extract_tb(tb):
+                        print("Line {0}: {1}, {2}".format(tbk[1],tbk[0],tbk[2:]))
 
-                # this one DOES work.
-                print(sys.exc_info())
-                (extype, ex, tb) = sys.exc_info()
-                for tbk in traceback.extract_tb(tb):
-                    print("Line {0}: {1}, {2}".format(tbk[1],tbk[0],tbk[2:]))
+                raise LookupError("{inf}\n{details}{CLASS}".format(inf=self.error_info(step='setup'),
+                                                            details=details,CLASS=details.__class__))
+        else:
+            data = tmp_data
 
-            raise LookupError("{inf}\n{details}{CLASS}".format(inf=self.error_info(step='setup'),
-                                                        details=details,CLASS=details.__class__))
         data.meta.update({'shot':self.shot})
         # Coords shouldn't be fetched for BaseData (they are required
         # for TimeSeries)
@@ -259,32 +301,6 @@ class MultiChannelFetcher(BaseDataFetcher):
         channel_list.sort()
         return [i[1] for i in channel_list]
     
-    def try_fetch_local(self, bare_chan, sgn):
-        """ return data if in the local cache, otherwise None
-        doesn't work for single channel HJ data.
-        """
-        for each_path in pyfusion.config.get('global', 'localdatapath').split(':'):
-            self.localname = os.path.join(each_path, '{shot}_{bc}.npz'
-                                              .format(shot=self.shot, bc=bare_chan))
-            # original - data_filename %filename_dict)
-            files_exist = os.path.exists(self.localname)
-            debug_(pyfusion.DEBUG, 2, key='try_local_fetch')
-            if files_exist: break
-            
-        if not files_exist:
-            return None
-
-        signal_dict = newload(self.localname)
-            
-#        coords = get_coords_for_channel(**self.__dict__)
-        ch = Channel(bare_chan,  Coords('dummy', (0,0,0)))
-        output_data = TimeseriesData(timebase=Timebase(signal_dict['timebase']),
-                                 signal=Signal(sgn*signal_dict['signal']), channels=ch)
-        # bdb - used "fetcher" instead of "self" in the "direct from LHD data" version
-        output_data.config_name = self.config_name  # when using saved files, same as name
-        output_data.meta.update({'shot':self.shot})
-        return(output_data)
-
     def fetch(self):
         """Fetch each  channel and combine into  a multichannel instance
         of :py:class:`~pyfusion.data.timeseries.TimeseriesData`.
@@ -309,7 +325,7 @@ class MultiChannelFetcher(BaseDataFetcher):
             if chan[0]=='-': sgn = -sgn
             bare_chan = (chan.split('-'))[-1]
             fetcher_class = import_setting('Diagnostic', bare_chan, 'data_fetcher')
-            tmp_data = self.try_fetch_local(bare_chan, sgn)  # is there a local copy?
+            tmp_data = try_fetch_local(self, bare_chan, sgn)  # is there a local copy?
             if tmp_data is None:          # Otherwise, get from appropriate data system
                 tmp_data = fetcher_class(self.acq, self.shot,
                                          config_name=bare_chan).fetch()

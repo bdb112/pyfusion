@@ -19,7 +19,7 @@ dev_name='LHD'
 # ideally should be a direct call, passing the local dictionary
 
 shot_number = None
-diag_name = None
+diag_name = ""
 NFFT=256
 noverlap=None
 time_range = None

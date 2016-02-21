@@ -31,7 +31,7 @@ for shot in shots:
     except IOError:		
         missing_shots.append(shot)
 
-pl.show()
+pl.show(block=0)
 
 print("{0} missing shots out of {1}".format(len(missing_shots),(len(missing_shots)+len(good_shots))))
 

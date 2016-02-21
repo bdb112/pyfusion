@@ -68,18 +68,23 @@ parameters.
   time_range - automatically finds MHD activity on HeliotronJ at
   least - but you can restrict the time range by setting this
 
+  From version 0.60 time units in general are seconds, this can be changed for plots
+  only in the configuration file.
+  
   MP -  number of processors (only for scripts that have MP in the
   name) 1 avoids multiprocessing
 
   overlap - fraction of time segment added to the data  (half before, and half after)
-  info - 0 1, 2, 3 retains progressively more descriptive text
+  info - 0 1, 2, 3 retains progressively more descriptive and
+  diagnostic text
 
 Feature extraction on Heliotron-J
 ---------------------------------
+
 1a/ for one shot (or a few)::
 
   # the MP array has just four members - so this is a quick test. -  see below for use of exception
-  run  pyfusion/examples/gen_fs_bands.py n_samples=None df=2. exception=() max_bands=1 dev_name="HeliotronJ" 'time_range="default"' seg_dt=1. overlap=2.5  diag_name='HeliotronJ_MP_array' shot_range=[60573] info=0 outfile='PF2_151119_60573'
+  run  pyfusion/examples/gen_fs_bands.py n_samples=None df=2e3 exception=() max_bands=1 dev_name="HeliotronJ" 'time_range="default"' seg_dt=1e-3 overlap=2.5  diag_name='HeliotronJ_MP_array' shot_range=[60573] info=0 outfile='PF2_151119_60573'
 
 1b/  for many shots - multi processing::
 
@@ -87,7 +92,7 @@ Feature extraction on Heliotron-J
   # exception=() will stop on any error for debugging.  To skip over  errors, use exception=Exception
   # This example uses argparse arguments (e.g. ==MP=3) and one long
   # string (--exe) which has some bdb_utils args inside it (in the quotes)
-  run  pyfusion/examples/prepfs_range_mp.py . --MP=3  --exe='gen_fs_bands.py n_samples=None df=2. exception=() max_bands=1 dev_name="HeliotronJ" ' --shot_range=range(60619,60550,-1) --time_range='"default"' --seg_dt=1. --overlap=2.5  --diag_name='HeliotronJ_ALL'
+  run  pyfusion/examples/prepfs_range_mp.py . --MP=3  --exe='gen_fs_bands.py n_samples=None df=2e3. exception=() max_bands=1 dev_name="HeliotronJ" ' --shot_range=range(60619,60550,-1) --time_range='"default"' --seg_dt=1e-3 --overlap=2.5  --diag_name='HeliotronJ_ALL'
 
 Result is a text file(s), which is then merged with others, to form a
 DA (Dictionary of Arrays) object

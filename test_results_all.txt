@@ -1,3 +1,103 @@
+This file was run on 21 Feb 2016, version 0.6  - future ones will be prepended.
+==python 2.7.6==
+ 0 0.467 examples/plot_specgram.py     : ) ConfigParser.NoSectionError: No section: 'Diagnostic:' 
+ 1 0.475 examples/get_basic_params.py  : se ValueError('no good shots') ValueError: no good shots 
+ 2 1.103 examples/tables_extract.py    : OK!
+ 3 0.305 examples/slider_f_t.py        : ror: [Errno 2] No such file or directory: 'MP512all.npz' 
+ 4 1.686 examples/check_HD_histogram.py: OK!
+ 5 1.284 examples/prepfs_range_mp_2.py : OK!
+ 6 0.331 examples/merge_h1_diagnostics.py:  t_mid = dd['t_mid'] NameError: name 'dd' is not defined 
+ 7 0.491 examples/mode_identify_script_temp.py:  mode = mode_list[0] IndexError: list index out of range 
+ 8 0.582 examples/barber_pole.py       : OK!
+ 9 0.013 examples/example_fragments.py : overlap=220                ^ SyntaxError: invalid syntax 
+10 0.464 examples/mode_identify_script.py:  mode = mode_list[0] IndexError: list index out of range 
+11 0.168 examples/DA_troubles.py       : OK!
+12 0.175 examples/setup_pyfusion.py    : OK!
+13 0.266 examples/test_lasso_fs.py     : or key in dd.keys(): NameError: name 'dd' is not defined 
+14 1.657 examples/medium_300.py        : OK!
+15 0.016 examples/mode_identify_example_from_ICPP_2010.py: ll.txt' skip=4             ^ SyntaxError: invalid syntax 
+16 7.659 examples/prepfs_range.py      : OK!
+17 4.626 examples/gen_fs_local.py      : OK!
+18 2.497 examples/plot_svd.py          : OK!
+19 0.839 examples/DP14_mode_plot.py    : OK!
+20 0.012 examples/compare_bands.py     : ption=()                   ^ SyntaxError: invalid syntax 
+21 0.464 examples/mode_identify_script_old.py: ue') ValueError: Need to choose doN=True and/or doM=True 
+22 1.072 examples/plot_signals.py      : OK!
+23 2.177 examples/trace_cluster.py     : kh','freq',ind=w23) NameError: name 'w23' is not defined 
+24 0.366 examples/copy_DA.py           : ./datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' 
+25 0.016 examples/labelled_N_modes.py  : _list=None                 ^ SyntaxError: invalid syntax 
+26 7.272 examples/h1_mode_lists.py     : OK!
+27 2.499 examples/cluster_info.py      : OK!
+28 7.045 examples/gen_fs_bands.py      : :  ########shot 27233: 230/1428 fs finished in 5.33/6.38 
+29 2.593 examples/phase_histogram.py   : OK!
+30 0.454 examples/find_last_data.py    : .format(l=low))  ValueError: low limit of None not there 
+31 1.12 examples/check_HMA_PMA_phase.py: OK!
+32 2.424 examples/plot_svd1.py         : OK!
+33 0.459 examples/find_close_shot.py   : OK!
+34 0.521 examples/realtime_mode.py     : e also cm.gray_r etc NameError: name 'cm' is not defined 
+35 0.269 examples/process_chirps.py    :  dfdtunit=dfdtunit)  NameError: name 'dd' is not defined 
+36 1.687 examples/cross_phase.py       : OK!
+37 0.267 examples/check_DA.py          : /datamining/old/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' 
+38 0.072 examples/prepfs_time_mp.py    :  output_path prepfs_time_mp.py: error: too few arguments 
+39 2.468 examples/plot_svd_simple.py   : OK!
+40 0.256 examples/plot_many.py         : NOT AVAILABLE!!!!!') ValueError: SCAN NOT AVAILABLE!!!!! 
+41 0.196 examples/query_h1ds.py        : soup import SqlSoup ImportError: No module named sqlsoup 
+42 2.551 examples/plot_basic.py        : vide by zero encountered in true_divide   1/(dy1+dy2),)) 
+43 5.692 examples/cluster_phases_three_colour.py: to [10 11 12 13 14 15] - i.e. cldata has different sel,  
+44 0.286 examples/new_mode_identify_script.py: ue') ValueError: Need to choose doN=True and/or doM=True 
+45 3.604 examples/clean_up_pyfusion_text.py: OK!
+46 0.318 examples/test_args.py         : OK!
+47 7.085 examples/check_other_data.py  : OK!
+48 0.017 examples/find_VSL_locking.py  : ist=mmm                    ^ SyntaxError: invalid syntax 
+49 2.872 examples/cluster_DA_0.py      : OK!
+50 0.256 examples/plot_text_fft.py     : r: [Errno 2] No such file or directory: 'g:fft26_50.dat' 
+51 0.553 examples/merge_text_pyfusion.py: OK!
+52 1.013 examples/multi_plot.py        : : igetfile None/wp/wp@105396.dat or .gz, .bz2 not found. 
+53 2.149 examples/channel_spectra.py   : OK!
+54 0.019 examples/shauns_clustering.py :         ^ SyntaxError: EOL while scanning string literal 
+55 0.276 examples/correct_VSL.py       : ppend_to_DA ImportError: cannot import name append_to_DA 
+56 0.269 examples/fft_magnitude_extraction.py:  import HMA_funcs ImportError: No module named HMA_funcs 
+57 0.013 examples/good_ones_density_cluster.py: _f32_diags.npz'            ^ SyntaxError: invalid syntax 
+58 0.28 examples/plot_shot.py         : OK!
+59 0.165 examples/check_dw_pdt.py      : OK!
+60 1.393 examples/wid_specgram.py      : l_data/', '/g/lhd_shots/'])<type 'exceptions.Exception'> 
+61 8.149 examples/cluster_DA.py        : OK!
+62 0.17 examples/check_dw_pdt1.py     : OK!
+63 1.208 examples/igetfile.py          : OK!
+64 0.27 examples/mode_identify_example_2012.py: orbar=colorbar NameError: name 'colorbar' is not defined 
+65 2.533 examples/plot_signals_trivial.py: OK!
+66 0.341 examples/small_65.py          : OK!
+67 3.21 examples/ne_profile_preprocess.py: OK!
+68 0.313 examples/small_300.py         : OK!
+69 3.615 examples/fft_magnitude_extraction_LHD.py: OK!
+70 0.46 examples/merge_basic_diagnostics.py: rror: [Errno 2] No such file or directory: 'DA_file.npz' 
+71 3.681 examples/clean_up_pyfusion_text_mp.py: OK!
+72 2.463 examples/plot_svd_old.py      : OK!
+73 0.451 examples/merge_basic_HJ_diagnostics.py: sz = len(dd['shot']) NameError: name 'dd' is not defined 
+74 0.777 examples/svd_simple_rotator.py: OK!
+75 0.475 examples/test_check_buttons1.py: OK!
+76 0.49 examples/testall.py           : OK!
+77 1.003 examples/save_to_local.py     : OK!
+78 7.755 examples/density_cluster.py   : OK!
+79 0.414 examples/fonts.py             : OK!
+80 0.013 examples/h1_mode_identify.py  : amples/cluster_info.py     ^ SyntaxError: invalid syntax 
+81 1.491 examples/test_HJ.py           : OK!
+82 0.024 examples/prepfs_range_sep.py  : utput_path prepfs_range_sep.py: error: too few arguments 
+83 2.868 examples/read_DF.py           : g/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags_comp5.h5...done 
+84 0.44 examples/test_check_buttons.py: OK!
+85 0.162 examples/__init__.py          : OK!
+86 0.174 examples/new_mode_identify_script_0.py: # need to adjust NameError: name 'arange' is not defined 
+87 1.711 examples/channel_angle_games.py: OK!
+88 2.347 examples/many_specs.py        : r import Node ImportError: No module named node_explorer 
+89 2.88 examples/gen_fs_general.py    : OK!
+90 0.108 examples/get_kappa.py         : >     kh = 0.*shot NameError: name 'shot' is not defined 
+91 0.31 examples/flip_phase.py        : OK!
+92 0.287 examples/plot_text_pyfusion.py: /pyfusion/examples/PF2_120227_HMPno12_27233_27233_1.dat' 
+93 2.089 examples/check_polarity_flips.py: OK!
+94 0.482 examples/play_with_fft_signals.py: OK!
+95 0.14 examples/prepfs_range_mp.py   : OK!
+43 errors out of 96: 53 good
+
 This file was run on 7 Feb 2016, - future ones will be prepended.
 ==python 2.7.6==
  0 3.064 examples/plot_specgram.py     : t_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
@@ -94,7 +194,7 @@ This file was run on 7 Feb 2016, - future ones will be prepended.
 91 2.804 examples/check_polarity_flips.py: OK!
 92 0.424 examples/play_with_fft_signals.py: OK!
 93 0.131 examples/prepfs_range_mp.py   : OK!
-43 errors out of 94
+43 errors out of 94: 51 good
 
 == Python 3.5 7 Feb 2016 - no improvement,,bt also no new bugs
  0 2.813 examples/plot_specgram.py     : b'OK!'

@@ -9,10 +9,16 @@ import sys
 
 def find_data(file, target, skip = 0, recursion_level=0, debug=0):
     """ find the last line number which contains the string (regexp) target 
-    work around a "feature" of loadtxt, which ignores empty lines while reading data
-    but counts them while skipping.
-    2016 - maybe this bug is fixed - but this code should work with or without the bug??
-    13 Feb 2016-fails if there is a blank line just before Shot
+    work around a "feature" of loadtxt, which ignores empty lines while reading
+    data,    but counts them while skipping.
+
+    2016 - this bug was not fixed up until Feb2016, failed if there were 
+    blank lines before the Shot line - fixed by double loop (see final_tries)
+    
+    Really should consider rewriting without loadtxt - this could also allow
+    us to avoid a lot of the b'  ' stuff
+
+    Using loadtxt at least for now:
     This way, everything goes through one reader (instead of gzip.open), simplifying,
     and allowing caching.
     The recursive part could be handled more nicely.
@@ -21,30 +27,51 @@ def find_data(file, target, skip = 0, recursion_level=0, debug=0):
     # unless dtype=str, we get a bytestring quoted as a string  "b'asd'"
     # solution is dtype='S' or stype=bytes - then -> b'asd'
     # open on the other hand lets you choose   'rb' or 'rt' (default)
-    lines = np.loadtxt(file,dtype=bytes,delimiter='FOOBARWOOBAR',skiprows=skip)
+    debug = max(debug, pyfusion.DEBUG)
+    if debug>3: print('before loadtxt, skip={sk}'.format(sk=skip))
+    lines = np.loadtxt(file,dtype=bytes,delimiter='FOOBARWOOBAR',skiprows=skip, ndmin=1)
+    if debug>3: print('after, got {n} lines'.format(n=len(lines)))
     # re.match /loadtxt are confused by a python3  "b" at the beginning
+    # find all the lines with the Shot target string
     wh_shotlines = np.where(
         np.array([re.match(target, line) is not None for line in lines]))[0]
-    debug = max(debug, pyfusion.DEBUG)
-    if debug>0: print('in find, rec, skip=, last shotline num, line', 
-                      recursion_level, skip, wh_shotlines[-1],lines[wh_shotlines[-1]])
+
     if len(wh_shotlines) == 0: 
-        raise LookupError('target {t} not found in file "{f}". Line 0 follows\n{l}'.
-                          format(t=target, f=file, l=lines[0]))
+        if (recursion_level == 0):
+            raise LookupError('target {t} not found in file "{f}". Line 0 follows\n{l}'.
+                              format(t=target, f=file, l=lines[0]))
+        else: return(None)
+
+    if debug>0: print('in find, recurs={r}, skip={sk}, last shotline num={las}, \nline={ln}'
+                      .format(r=recursion_level, sk=skip, las=wh_shotlines[-1],ln=lines[wh_shotlines[-1]]))
     sk = wh_shotlines[-1]
+    # if we are recursing, we must be checking that it is still there after skipping lines
+    # return the number of the last one
     if recursion_level>0: return(sk)
 
-    for tries in range(10):
-        if debug>0: print(sk, wh_shotlines[-1], lines[sk])
+    for tries in range(20):
+        if debug>0: print('before find', sk, wh_shotlines[-1])
 
         sk1 = find_data(file, target=target, skip=sk, 
                         recursion_level=recursion_level+1)
-        if debug>0: print(sk, sk1)
+        if debug>0: print('after find', sk, sk1)
         
-        if sk1 ==0: return(sk)
-        else: sk += sk1
-
-    raise LookupError('too many blank lines?'
+        # if the target seems to be at line zero, we just about have the right answer
+        #  but the first line after the skip might still be blank
+        if sk1 == 0:  # so keeping looking until the target is not there
+            for final_tries in range(10):
+                sk += 1
+                sk2 = find_data(file, target=target, skip=sk, 
+                            recursion_level=recursion_level+1)
+                if sk2 is None:
+                    return(sk-1)
+                    
+            raise LookupError('too many blank lines in second search? '
+                      'target {t} not found in file {f}'.
+                      format(t=target, f=file))
+        else:
+            sk += sk1
+    raise LookupError('too many blank lines? '
                       'target {t} not found in file {f}'.
                       format(t=target, f=file))
 
@@ -84,9 +111,9 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
                       .format(t = seconds()-st, s=skip, f=filename))
             #  this little bit to determine layout of data
             # very inefficient to read twice, but in a hurry!
-            print('skiprows = ', skip-1)
+            if debug>2: print('skiprows = \n', skip-1)
             txt = np.loadtxt(fname=filename, skiprows=skip-1, dtype=bytes, 
-                             delimiter='FOOBARWOOBAR')
+                             delimiter='FOOBARWOOBAR',ndmin=1)
             header_toks = txt[0].split()
             # look for a version number first
             if header_toks[-1][-1] in b'0123456789.':
@@ -124,20 +151,24 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
                 fs_dtype.insert(-1,('fpkf', 'f8'))  # they appear in this order
                 
             if pyfusion.VERBOSE > 0: 
-                print(version, fs_dtype)
+                print(version, fs_dtype, '\n')
 
-            ds_list.append(
-                np.loadtxt(fname=filename, skiprows = skip, 
-                           dtype= fs_dtype, ndmin=1)  # ENSURE a 1D array
-            )
-            count += 1
-            # npz reads in python 2 can't cope with unicode - don't report errors unless really debugging
-            comment_list.append(filename.encode(errors=['ignore','strict'][pyfusion.DEBUG>5]))
+            ds = np.loadtxt(fname=filename, skiprows = skip, 
+                            dtype= fs_dtype, ndmin=1)  # ENSURE a 1D array
+
+            if len(ds) > 0:
+                ds_list.append(ds)
+                count += 1
+                # npz reads in python 2 can't cope with unicode - don't report errors unless really debugging
+                comment_list.append(filename.encode(errors=['ignore','strict'][pyfusion.DEBUG>5]))
+            else:
+                print('no data in {f}'.format(f=filename))
+
         except ValueError as info:
-            print('Conversion error while reading {f} with loadtxt - {info} {args}'.format(f=filename, info=info, args = info.args))
-        except LookupError as info:
-            print('Lookup error while reading {f} with loadtxt - {info}'.format(f=filename, info=info))
-        
+            print('Conversion error while processing {f} with loadtxt - {info} {args}'
+                  .format(f=filename, info=info, args=info.args))
+            traceback.print_exc()
+
         except exception as info:
             print('Other exception while reading {f} with loadtxt - {info} {a}'.format(f=filename, info=info, a=info.args))
             traceback.print_exc()

@@ -38,7 +38,10 @@ class HeliotronJDataFetcher(BaseDataFetcher):
         # looks like the time,data is interleaved in a 1x256 array
         # it is fed in as real*64, but returns as real*32! (as per fortran decl)
         debug_(pyfusion.DEBUG, 4, key='Heliotron_fetch', msg='after call to getdata')
-        output_data = TimeseriesData(timebase=Timebase(getrets[1::2]),
+        # timebase in secs (ms in raw data) - could add a preferred unit?
+        # this is partly allowed for in savez_compressed, newload, and
+        # for plotting, in the config file.
+        output_data = TimeseriesData(timebase=Timebase(1e-3 * getrets[1::2]),
                                  signal=Signal(getrets[2::2]), channels=ch)
         output_data.meta.update({'shot':self.shot})
         if pyfusion.VERBOSE>0: print('HJ config name',self.config_name)

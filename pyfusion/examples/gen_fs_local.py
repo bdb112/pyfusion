@@ -115,7 +115,7 @@ for shot in shot_range:
                     if info > 0: print('< '+fs.history.replace('\n201','\n< 201'))
                     # Version number should end in digit!
                     SVtitle_spc = (n_channels - 2)*' '
-                    print('Shot    time   {spc}SVS    freq  Amp    a12   p    H     frlow frhigh  cpkf  fpkf  {np:2d} Phases       Version 0.7'
+                    print('Shot    time   {spc}SVS  freq(k)  Amp   a12   p    H     frlow frhigh  cpkf  fpkf  {np:2d} Phases       Version 0.7'
                           .format(np=len(fs.dphase),spc=SVtitle_spc))
                 count += 1
                 if fs.H < max_H and fs.p>0.01 and len(fs.svs())>=min_svs:

@@ -14,6 +14,7 @@
    devices
    acquisition
    data
+   flucstrucs
    config
    coords
    orm

@@ -30,6 +30,8 @@ from numpy import searchsorted, arange, mean, resize, repeat, fft, conjugate, li
 from numpy import correlate as numpy_correlate
 import numpy as np
 from time import time as seconds
+from mpl_toolkits.axes_grid1 import host_subplot
+import matplotlib.pyplot as plt
 
 try:
     from scipy import signal as sp_signal
@@ -430,30 +432,13 @@ def sp_filter_butterworth_bandpass(input_data, passband, stopband, max_passband_
 
     return output_data
 
-@register("TimeseriesData")
-def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=None):
-    """ 
-    Note: Is MUCH (2.2x faster) more efficient to use real ffts, (implemented April)
-    Use a Fourier space taper/tophat or pseudo gaussian filter to perform 
-    narrowband filtering (much narrower than butterworth).  
-    Problem is that bursts may generate ringing. (should be better with taper=2)  
-    twid is the width of the transition from stop to pass
-    >>> tb = dummytb(np.linspace(0,20,512))
-    >>> w = 2*np.pi* 1  # 1 Hertz
-    >>> dat = dummysig(tb,np.sin(w*tb.timebase)*(tb.timebase<np.max(tb.timebase)/3))
-    >>> fop = filter_fourier_bandpass(dat,[0.9,1.1],[0.8,1.2],debug=1).signal[0]
-
+def make_mask(NA, norm_passband, norm_stopband, input_data, taper):
+    """  works well now, except that the stopband is adjusted to be
+    symmetric about the passband (take the average of the differences
+    The problem with crashes (zero mask) was solved by shifting the 
+    mask before and after integrating, also a test for aliasing (on the
+    mask before integration).
     """
-    if debug is None: debug = pyfusion.DEBUG
-# normalising makes it easier to think about - also for But'w'h 
-    norm_passband = input_data.timebase.normalise_freq(np.array(passband))
-    norm_stopband = input_data.timebase.normalise_freq(np.array(stopband))
-    NS = len(input_data.signal[0])
-    NA = next_nice_number(NS)
-    input_data.history += str(" {fftt} : nice number: {NA} cf {NS}\n"
-                              .format(fftt=pyfusion.fft_type, NA=NA, NS=NS))
-    # take a little more to speed up FFT
-
     mask = np.zeros(NA)
     # define the 4 key points 
     #         /npblow-------------npbhi\
@@ -463,22 +448,24 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     n_pb_hi = int(norm_passband[1]*NA/2)
     n_sb_hi = int(norm_stopband[1]*NA/2)
     
+    dt = float(np.average(np.diff(input_data.timebase)))
     if  n_sb_hi >= len(mask):
         raise ValueError('Filter frequency too high for data - units '
                          'problem? - sample spacing is {dt:.2g}'
-                         .format(dt=float(np.max(np.diff(input_data.timebase)))))
+                         .format(dt=dt))
 
     # twid is the transition width, and should default so that the sloped part is the same width as the flat?
-    # !!!! doesn't do that yet.
+    # !!! twid is not an input - !!!! doesn't do that yet.
     # make the transition width an even number, and the larger of the two
     # need to pull this code out and be sure it works.
     twid = 2*(1+max(n_pb_low - n_sb_low,n_sb_hi - n_pb_hi)//2)
-    if (twid < 4) or (n_sb_low < 0): 
+    if (twid < 4):  # or (n_sb_low < 0):  #< not requ since fixed  
         if taper == 2: 
             raise ValueError(
-            'taper 2 requres a bigger margin between stop and pass') 
+            'taper 2 requires a bigger margin between stop and pass') 
         elif taper is None:
-            warn('defaulting taper to 1 as band edges are sharp')
+            warn('defaulting taper to 1 as band edges are sharp: twid={twid}'
+                 .format(twid=twid))
             taper = 1
     else: 
         if taper is None:
@@ -529,16 +516,79 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
             mask[n] = float(n_pb_hi - n)/(high_mid - n_pb_hi - 1) # trapezoid
             mask[2*high_mid - n - 1] = mask[n]
         before_integration = mask    
-        mask = np.cumsum(mask) # integrate
+        # after running filters.py, this should be OK   
+        # make_mask(512, [0.8,.93], [0.9,.98],dat,2)
+        # but changing 0.98 to 0.99 will give aliasing error. 
+        if np.max(np.abs(mask[NA//2-4:NA//2+4]))>0:
+            raise ValueError('mask aliasing error')
+        # note: ifftshift is only different for an odd data length
+        # the fftshifts were necessary to avoid weirdness if the
+        # stopband went below zero freq.
+        mask = np.fft.ifftshift(np.cumsum(np.fft.fftshift(mask))) # integrate
+        if pyfusion.DEBUG>1:
+            nonr = 0.5/dt
+            fig = plt.figure()
+            ax1 = fig.add_subplot(111)
+            ax1.plot(np.arange(len(mask))/dt/float(NA), mask, '.-')
+            ax1.plot(np.arange(len(mask))/dt/float(NA), before_integration)
+            ax1.set_xlabel('real freq. units, (norm on top scale), npoints={NA}, norm/real = {nonr}'
+                           .format(NA=NA, nonr=nonr))
+            ax2 = ax1.twiny()
+            # this is my hack - it should be OK, but may be a little out
+            ax2.set_xlim(np.array(ax1.get_xlim())/nonr)
+            fig.suptitle('mask before normalisation - twid={twid}'.format(twid=twid))
+            plt.show(0)
+
         if np.max(mask) == 0:
             raise ValueError('zero mask, '
-                             'passband = {pb}, stopband={sb}, taper {t}'
-                             .format(pb = passband, sb = stopband, t=taper))
+                             'norm_passband = {pb}, norm_stopband={sb}, taper {t}'
+                             .format(pb = norm_passband, sb = norm_stopband, t=taper))
         mask = mask/np.max(mask)
     # reflection only required for complex data
     # this even and odd is not totally thought through...but it seems OK
     if np.mod(NA,2)==0: mask[:NA/2:-1] = mask[1:(NA/2)]   # even
     else:            mask[:1+NA/2:-1] = mask[1:(NA/2)] # odd 
+    return(mask)
+
+@register("TimeseriesData")
+def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=None):
+    """ 
+    Note: Is MUCH (2.2x faster) more efficient to use real ffts, (implemented April)
+    Use a Fourier space taper/tophat or pseudo gaussian filter to perform 
+    narrowband filtering (much narrower than butterworth).  
+    Problem is that bursts may generate ringing. 
+    This should be better with taper=2, but it is not clear
+    
+    See the __main__ code below for nice test facilities
+    twid is the width of the transition from stop to pass (not impl.?)
+    >>> tb = timebase(np.linspace(0,20,512))
+    >>> w = 2*np.pi* 1  # 1 Hertz
+    >>> dat = dummysig(tb,np.sin(w*tb)*(tb<np.max(tb)/3))
+    >>> fop = filter_fourier_bandpass(dat,[0.9,1.1],[0.8,1.2],debug=1).signal[0]
+
+    Testing can be done on the dummy data set generated after running 
+    filters.py
+    e.g. (with pyfusion,DEBUG=2
+    make_mask(512, [0.8,.93], [0.9,.98],dat,2)
+    # medium sharp shoulder
+    fopmed = filter_fourier_bandpass(dat,[9.5,10.5],[9,11],debug=1).signal[0]
+    # very sharp shoulders
+    fopsharp = filter_fourier_bandpass(dat,[9.1,10.9],[9,11],debug=1)
+    """
+    if debug is None: debug = pyfusion.DEBUG
+# normalising makes it easier to think about - also for But'w'h 
+    if (passband[0]<stopband[0]) or (passband[1]>stopband[1]):
+        raise ValueError('passband {pb} outside stopband {sb}'
+                         .format(pb=passband, sb=stopband))
+    norm_passband = input_data.timebase.normalise_freq(np.array(passband))
+    norm_stopband = input_data.timebase.normalise_freq(np.array(stopband))
+    NS = len(input_data.signal[0])
+    NA = next_nice_number(NS)
+    input_data.history += str(" {fftt} : nice number: {NA} cf {NS}\n"
+                              .format(fftt=pyfusion.fft_type, NA=NA, NS=NS))
+    # take a little more to speed up FFT
+
+    mask = make_mask(NA, norm_passband, norm_stopband, input_data, taper)
     output_data = deepcopy(input_data)  # was output_data = input_data
 
     if (pyfusion.fft_type == 'fftw3'):
@@ -607,16 +657,23 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         
     if debug>2: print('ids of fftw3 input and output: {t}'.format(t=ids))
     if debug>0: 
-        import pylab as pl
-        pl.figure()
-        pl.plot(mask,'r.-',label='mask')
-        pl.plot(np.abs(FT)/len(mask),label='FT')
-        pl.plot(input_data.signal[0],label='input')
+        fig = plt.figure()
+        #fplot = host_subplot(111)
+        fplot = fig.add_subplot(111)
+        tplot = fplot.twinx()
+        tplot.plot(input_data.signal[0],'c',label='input')
         # for a while I needed a factor of 3 here too for fftw - why ????
-        #pl.plot(output_data.signal[0]/(3*NA),'m',label='output/{N}'.format(N=3*NA))
-        pl.plot(output_data.signal[0],'m',label='output')
-        pl.legend()
-        pl.show()
+        #plt.plot(output_data.signal[0]/(3*NA),'m',label='output/{N}'.format(N=3*NA))
+        tplot.plot(output_data.signal[0],'m',label='output')
+        tplot.set_ylim(-2.4,1.1)
+        fplot.plot(mask,'r.-',label='mask')
+        fplot.plot(np.abs(FT)/len(mask),label='FT')
+        fplot.set_ylim(-.2,3.8)
+        fig.suptitle('Passband {pbl}...{pbh}'
+                        .format(pbl=passband[0],pbh=passband[1]))
+        fplot.legend(loc=4)   # bottom right
+        tplot.legend(loc=0)
+        plt.show()
     debug_(debug, 2, key='filter_fourier')
     if np.max(mask) == 0: raise ValueError('Filter blocks all signals')
     return output_data
@@ -736,30 +793,40 @@ def correlate(input_data, index_1, index_2, **kwargs):
 
 if __name__ == "__main__":
 # this is a pain - I can see the benefit of unit tests/nose tests. bdb
-    class dummytb():
-        def normalise_freq(self, freq):
-            return(2*freq*np.average(np.diff(self.timebase)))
+# make a class that looks like a timebase
+    class timebase(np.ndarray):
+        def __new__(cls, input_array):
+            obj = np.asarray(input_array).view(cls).copy()
+            return(obj)
 
-        def __init__(self, tb):
-            self.timebase = tb
+        def normalise_freq(self, freq):
+            return(2*freq*np.average(np.diff(self)))
+        
+
 
     class dummysig():
         def __init__(self, tb,sig):
+            """ timebase is given as an array in seoncds
+            30 (10 lots of three) signals are generated: as scaled copies 1,2,3x
+            """
             self.timebase = tb
             self.signal = 10*[sig, 2*sig, 3*sig]
             self.history = ''
 
     import doctest
-    import pylab as pl
+    from mpl_toolkits.axes_grid1 import host_subplot
+    import matplotlib.pyplot as plt
 
-    tb = dummytb(np.linspace(0,20,2048))
+
+    tb = timebase(np.linspace(0,20,2048))
     w = 2*np.pi* 10  # 10 Hertz
-    dat = dummysig(tb,np.sin(w*tb.timebase)*(tb.timebase<np.max(tb.timebase)/3))
+    wL = 2*np.pi* 0.1  # 10 Hertz
+    dat = dummysig(tb,np.sin(w*tb) + np.sin(wL*tb)*(tb<np.max(tb)/3))
     # below is 680us/loop fftw3, 3x2k signals. 1.2ms with numpy
     #         1.84us                           8.5ms for 10*3 signals
-    fop = filter_fourier_bandpass(dat,[9,11],[8,12],debug=1).signal[0]
-    pl.title('test 2 - 10Hz'); pl.show()
-    fopwide = filter_fourier_bandpass(dat,[0,30],[8,12],debug=1).signal[0]
-    pl.title('test 2 - 10Hz wide'); pl.show()
+    fop = filter_fourier_bandpass(dat,[9,11],[8,12],debug=1,taper=2).signal[0]
+    plt.title('test 2 - 10Hz, +/- 1Hz'); plt.show()
+    fopwide = filter_fourier_bandpass(dat,[8,12], [0,30],debug=1).signal[0]
+    plt.title('test 2 - 10Hz wide'); plt.show()
 
     doctest.testmod()

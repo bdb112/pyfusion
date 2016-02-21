@@ -170,13 +170,20 @@ for (cnt, shot) in enumerate(shot_range):
 
                 
                 (lfs, hfs) = subdivide_interval(np.append(fpk, fmax), debug=0, overlap=(df/2,df*2))
+            elif max_bands == 1:       # these two compare with and without fourier filter  
+                (lfs,hfs) = ([0],[fmax*0.99])
             else:
                 (lfs,hfs) = ([0],[fmax])
 
+
             for i in range(len(lfs)):
                 (frlow,frhigh)= (lfs[i],hfs[i])
-                f_seg = t_seg.filter_fourier_bandpass(
-                    [lfs[i],hfs[i]], [lfs[i]-df,hfs[i]+df]) 
+                if max_bands > 0:
+                    f_seg = t_seg.filter_fourier_bandpass(
+                        [lfs[i],hfs[i]], [lfs[i]-df,hfs[i]+df]) 
+                else:
+                    f_seg = t_seg
+
                 fs_set = f_seg.flucstruc(method=method, separate=separate)
                 for fs in fs_set:
                     if raw_count==0: 
@@ -185,7 +192,8 @@ for (cnt, shot) in enumerate(shot_range):
                                            replace('\n201','\n< 201'))
                         # Version number should end in digit!
                         SVtitle_spc = (n_channels - 2)*' '
-                        write('\nShot    time   {spc}SVS    freq  Amp    a12   p    H     frlow frhigh  cpkf  fpkf  {np:2d} Phases       Version 0.7 \n'
+                        if first: write('\n< See documentation/ref/fluctrucs for definition of columns >')
+                        write('\nShot    time   {spc}SVS  freq(k)  Amp   a12   p    H     frlow frhigh  cpkf  fpkf  {np:2d} Phases       Version 0.7 \n'
                               .format(np=len(fs.dphase),spc=SVtitle_spc))
                     raw_count += 1
                     if fs.H < max_H and fs.p>0.01 and len(fs.svs())>=min_svs:
@@ -215,11 +223,11 @@ for (cnt, shot) in enumerate(shot_range):
         # the -f stops the rm cmd going to the terminal
 #        subprocess.call(['/bin/rm -f /data/tmpboyd/pyfusion/FMD*%d*' %shot], shell=True)
 #        subprocess.call(['/bin/rm -f /data/tmpboyd/pyfusion/SX8*%d*' %shot], shell=True)
-    except exception:
-#set Exception=None to allow traceback to show - it can never happen
+    except exception as info:
+#set Exception=() to allow traceback to show - it can never happen
 # otherwise, the warnigns.warn will prevent multiple identical messages
-        warning_msg = str('shot %d not processed: %s' % 
-                          (shot,sys.exc_info()[1].__repr__()))
+        warning_msg = str('shot {s} not processed: ei={ei}, {info}' 
+                          .format(s=shot,ei=sys.exc_info()[1].__repr__(),info=info))
         warnings.warn(warning_msg,stacklevel=2)
 
 if pyfusion.orm_manager.IS_ACTIVE: 

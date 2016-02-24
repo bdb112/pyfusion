@@ -15,10 +15,23 @@ izip
 
 ============  Bugs ===========
 
-**** plot_svd runs slowly under python2
-run pyfusion/examples/plot_svd.py "dev_name='HeliotronJ'" start_time=250 "normalise='r'" shot_number=50136 numpts=384 diag_name=HeliotronJ_MP_array "filter=dict(centre=90,bw=30,taper=2)" plot_mag=1 plot_phase=1 separate=1 closed=1
+****** python 3.5.1 MDSplus imports, but generates errors: still a problem 22 Feb 2016 *****
+confirmed 22-Feb-2016  pyfusion c474ee1l python 3.5.1; MDSplus alpha-7.0.185 (alpha
+ name 'MDSplus' is not defined
 
-*******problem since at least b3d5c
+**** Not a BUG!  plot_svd runs slowly under python2 - solved if save_wisdom is used!!
+takes about 10 sec for first plot - python 3 ~ 1 sec - otherwise same
+confirmed for 0.6 c474ee1
+run pyfusion/examples/plot_svd.py "dev_name='HeliotronJ'" start_time=.250 "normalise='r'" shot_number=50136 numpts=384 diag_name=HeliotronJ_MP_array "filter=dict(centre=90e3,bw=30e3,taper=2)" plot_mag=1 plot_phase=1 separate=1 closed=1"
+
+Note: previously, for versions before 0.6 c474ee1, use:  start_time=250 "filter=dict(centre=90,bw=30,taper=2)"
+
+******* FIXED c474ee1 problem in merge_test_pyfusion with blank line immediately preceding shot line ******
+
+******** FIXED c474ee1 local cache of .npz data only works in  multichannel data *******
+
+******* FIXED in 0.6 c474ee1 problem since at least b3d5c ********** 
+solution was to shift fft before and after integration, check for aliasing
 run pyfusion/examples/gen_fs_bands seg_dt=0.001 time_range=[1,1.5]
 : ValueError('zero mask, passband = [1406.2500000005493, 6847.6562500008931], stopband=[-593.74999999945067, 8847.6562500008931], taper 2',)
 (lots of minus 2s)

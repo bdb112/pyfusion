@@ -165,7 +165,11 @@ for (cnt, shot) in enumerate(shot_range):
                 w_in_range = np.where(fpk < fmax)[0]
                 (ipk, fpk, apk) = (ipk[w_in_range], fpk[w_in_range], apk[w_in_range])
                 if len(ipk)>max_bands: 
-                    warn('too many peaks - reducing to {mb}'.format(mb=max_bands))
+                    if pyfusion.DEBUG>0:
+                        # in python3 at least, the traceback info is
+                        # out one level.
+                        warn('too many peaks - choosing largest {mb}'.format(mb=max_bands))
+
                     fpk = np.sort(fpk[np.argsort(apk)[-(max_bands+1):]])
 
                 

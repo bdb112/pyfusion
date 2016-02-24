@@ -4,8 +4,13 @@ pyfusion
 python code for data mining plasma fluctuations
 -----------------------------------------------
 
-Update: Version 0.58 now supports the full set of examples in the JSPF
-tutorial article, and includes the data files (in downsampled form). All
+Update: Version 0.60 supports Python 2/3 for almost all scripts 
+(MDSplus is the main problem - see issues) and the full set of examples in the JSPF tutorial article. 
+The 4 criteria on the development roadmap have been achieved, and the
+five that were postponed until 0.7 are at least partially
+implemented.
+
+The download includes the JSPF data files (in downsampled form). All
 will run in the download package, apart from two marked (\*) requiring
 access to full databases.
 

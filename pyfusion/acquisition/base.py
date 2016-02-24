@@ -4,6 +4,7 @@ inherited by subclasses in the acquisition sub-packages.
 
 """
 from numpy.testing import assert_array_almost_equal
+from numpy import ndarray
 from pyfusion.conf.utils import import_setting, kwarg_config_handler, \
      get_config_as_dict, import_from_str
 from pyfusion.data.timeseries import Signal, Timebase, TimeseriesData
@@ -55,11 +56,17 @@ def try_fetch_local(input_data, bare_chan, sgn):
     doesn't work for single channel HJ data.
     """
     for each_path in pyfusion.config.get('global', 'localdatapath').split(':'):
+        # check for multi value shot, e.g. utc bounds for W7-X data
+        shot = input_data.shot
+        if isinstance(shot, (tuple, list, ndarray)):
+            shot_str = '{s0}_{s1}'.format(s0=shot[0], s1=shot[1])
+        else:
+            shot_str = str(shot)
         input_data.localname = os.path.join(each_path, '{shot}_{bc}.npz'
-                                          .format(shot=input_data.shot, bc=bare_chan))
+                                          .format(shot=shot_str, bc=bare_chan))
         # original - data_filename %filename_dict)
         files_exist = os.path.exists(input_data.localname)
-        debug_(pyfusion.DEBUG, 2, key='try_local_fetch')
+        debug_(pyfusion.DEBUG, 3, key='try_local_fetch')
         if files_exist: break
 
     if not files_exist:
@@ -152,7 +159,7 @@ class BaseAcquisition(object):
         ## Problem:  no check to see if it is a diag of the right device!??
         d = fetcher_class(self, shot,
                              config_name=config_name, **kwargs).fetch()
-        d.history += "\n:: shot: %d :: config: %s" %(shot, config_name)
+        d.history += "\n:: shot: {s} :: config: {c}".format(s=shot, c=config_name)
 
         return d
         

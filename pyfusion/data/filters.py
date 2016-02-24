@@ -272,7 +272,7 @@ def normalise(input_data, method=None, separate=False):
     input_data.history += ", method={0}, separate={1}".format(method, separate)
     input_data.scales = norm_value
 
-    debug_(pyfusion.DEBUG, key='normalise',msg='about to return from normalise')
+    debug_(pyfusion.DEBUG, level=2, key='normalise',msg='about to return from normalise')
     return input_data
     
 @register("TimeseriesData")
@@ -282,7 +282,7 @@ def svd(input_data):
     svddata.history = input_data.history
     svddata.scales = input_data.scales # need to pass it on to caller
     if pyfusion.DEBUG>4: print("input_data.scales",input_data.scales)
-    debug_(pyfusion.DEBUG, key='svd',msg='about to return from svd')
+    debug_(pyfusion.DEBUG, level=2, key='svd',msg='about to return from svd')
     return svddata
 
 
@@ -656,7 +656,7 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
             output_data.signal[i] = IFT.real[0:NS]
         
     if debug>2: print('ids of fftw3 input and output: {t}'.format(t=ids))
-    if debug>0: 
+    if debug>1: 
         fig = plt.figure()
         #fplot = host_subplot(111)
         fplot = fig.add_subplot(111)
@@ -668,7 +668,11 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         tplot.set_ylim(-2.4,1.1)
         fplot.plot(mask,'r.-',label='mask')
         fplot.plot(np.abs(FT)/len(mask),label='FT')
-        fplot.set_ylim(-.2,3.8)
+        #fplot.set_ylim(-.2,3.8)
+        #fplot.set_yscale('log', subsy=[2,5])
+        #fplot.set_ylim(1e-7,1e5)
+        fplot.set_yscale('symlog', linthreshy=1e-6)
+        fplot.set_ylim(0,1e8)
         fig.suptitle('Passband {pbl}...{pbh}'
                         .format(pbl=passband[0],pbh=passband[1]))
         fplot.legend(loc=4)   # bottom right

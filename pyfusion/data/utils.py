@@ -110,7 +110,7 @@ def find_peaks(arr, minratio=.001, debug=0):
                 if debug>1: print('arr elt {ii} = {v:.2f}'
                                   .format(ii=iarrmax, 
                                           v=arr[iarrmax]))
-    debug_(pyfusion.DEBUG,1, key='find_peaks')
+    debug_(pyfusion.DEBUG,level=2, key='find_peaks')
     return(np.array(maxi))
 
 

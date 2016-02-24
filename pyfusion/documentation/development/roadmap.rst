@@ -15,16 +15,19 @@ version 0.6
 * local .npz storage implemented in acqusition/base to work on all devices
 * signal amplitudes able to be extracted from flucstrucs
 * re-implement Heliotron-J interface
+
+version 0.7
+-----------
 * metadata API (access to B_0, heating power)
 * clustering interface
 * capability for efficient I/O (text file?) while doing (multi-process) pre-processing, and put back into sql asynchronously.
 * allow separate configuration files for different devices, etc.
 * Switch to SafeConfigParser 
   (with Extended Interpolation in 0.7? - but this works only in python 3)
-
-version 0.7
------------
 * implement W7X interface
+
+version 0.8
+-----------
 * re-implement TJII, W7-AS interfaces
 * more of Shaun's clustering
 

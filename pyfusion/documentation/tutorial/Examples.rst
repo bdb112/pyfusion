@@ -89,35 +89,48 @@ Feature extraction on Heliotron-J
 1b/  for many shots - multi processing::
 
   # include all the MP and PMPs here - takes a few minutes. 
-  # exception=() will stop on any error for debugging.  To skip over  errors, use exception=Exception
+  # exception=() will stop on any error for debugging.  To skip over
+  # errors, and continue processing other good data, use exception=Exception
   # This example uses argparse arguments (e.g. ==MP=3) and one long
   # string (--exe) which has some bdb_utils args inside it (in the quotes)
-  run  pyfusion/examples/prepfs_range_mp.py . --MP=3  --exe='gen_fs_bands.py n_samples=None df=2e3. exception=() max_bands=1 dev_name="HeliotronJ" ' --shot_range=range(60619,60550,-1) --time_range='"default"' --seg_dt=1e-3 --overlap=2.5  --diag_name='HeliotronJ_ALL'
+  run  pyfusion/examples/prepfs_range_mp.py . --MP=3  --exe='gen_fs_bands.py n_samples=None df=2e3 exception=() max_bands=1 dev_name="HeliotronJ" ' --shot_range=range(60619,60550,-1) --time_range='"default"' --seg_dt=1e-3 --overlap=2.5  --diag_name='HeliotronJ_ALL'
 
-Result is a text file(s), which is then merged with others, to form a
+Result is a text file(s), which will be merged with others in step 2, to form a
 DA (Dictionary of Arrays) object
 
 2/ Merge feature files::
 
- run pyfusion/examples/merge_text_pyfusion.py  "file_list=glob('PF2_151120*_60*')"
+ run pyfusion/examples/merge_text_pyfusion.py  "file_list=glob('PF2_151119*_60*')"
+
+The file 'wildcard' expression above needs to be adjusted to include
+the files you generated in step 1a or 1b.  The example given works for 1a/.
+For 1b, the file names will depend on the date - e.g. 'PF2_1602*' gets
+all output generated in feb 2016 regardless of shot number.
 
 Result is a DA data set
 
 3/ Add other data (B_0, NBI, etc)::
 
  run -i pyfusion/examples/merge_basic_HJ_diagnostics.py diags=diag_extra+diag_basic dd exception=None
- DAHJ60k = DA(dd)
- DAHJ60k.save('DAHJ60k.npz')
+ from pyfusion.data.DA_datamining import DA
+ DAHJ60573 = DA(dd)                   #  for 1b, it would make sense to call it DAHJ60k = DA(dd)
+ DAHJ60573.save('DAHJ60573.npz')
 
 Result: DA data set including other data for each time segment.
 
-4/ Clustering::
+4/ Compare with spectrogram/sonogram::
+
+ run pyfusion/examples/plot_specgram.py dev_name='HeliotronJ' shot_number=60573 diag_name=HeliotronJ_MP_array hold=1
+ from pyfusion.visual import window_manager, sp, tog 
+ sp(DAHJ60573.da, 't_mid', 'freq', 'amp', 'a12', hold=1) 
+  
+5/ Clustering::
 
  # DAHJ60k.npz is already prepared in the hj-mhd DA file area (defined in pyfusion.cfg)
  run pyfusion/examples/cluster_DA.py DAfilename='$DAPATH/DAHJ60k.npz'
  co.plot_clusters_phase_lines()  # show clusters
  # Clusters 0,2,5 look interesting, but the phase difference at 2 in
- #   all these looks out by pi
+ #   all these looks out by pi - is this a wiring change?
 
  # alternatively, check the one you just prepared in the previous step
  run pyfusion/examples/cluster_DA.py DAfilename='DAHJ60k.npz'

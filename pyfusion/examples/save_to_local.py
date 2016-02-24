@@ -55,7 +55,13 @@ def getlocalfilename(shot_number, channel_name, local_dir=''):
     """
     if local_dir == '': # default to first path in localdatapath
         local_dir =  pyfusion.config.get('global', 'localdatapath').split(':')[0]
-    return local_dir+'/%d_%s.npz' %(shot_number, channel_name)
+    # allow for multi-valued shot numbers - e.g. W7-X data with from,to utc
+    if isinstance(shot_number, (tuple, list, np.ndarray)):
+        fn = str(local_dir+'/{s0}_{s1}_{c}.npz'
+                 .format(s0=shot_number[0], s1=shot_number[1], c=channel_name))
+    else:
+        fn = local_dir+'/{s}_{c}.npz'.format(s=shot_number, c=channel_name)
+    return fn
 
 # main
 if len(np.shape(shot_list))==0:

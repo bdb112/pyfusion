@@ -58,12 +58,27 @@ def register(*class_names):
         return plot_method
     return reg_item
 
+def mydiff(t,y):
+    """ numpy diff in a wrapper to give correct time and units"""
+    return((t[0:-1] + t[1:])/2, np.diff(y)/np.average(np.diff(t)))
+
+def myiden(y):
+    return(y)
+
+def myiden2(t,y):
+    return(t,y)
+
 @register("TimeseriesData")
-def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="%(short_name)s", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b'):
+def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="%(short_name)s", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', fun=myiden, fun2=None):
     """ 
     Plot a figure full of signals using n_columns[1], 
         sharey [=1]  "gangs" y axes  - sim for sharex - sharex=None stops this
         x axes are ganged by default: see Note:
+
+    fun, fun2: optionally plot a function of the signal.  fun= refers
+    to a function of one variable.  fun2 is a function (t,x), such as
+    one that returns a different timebase (diff should do this)
+    if fun2 is given (a function of t and sig), then fun is ignored 
 
         labelfmt["%(short_name)s"] controls the channel labels.  
             The default ignores the shot and uses an abbreviated form of the channel name.  
@@ -83,6 +98,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
         
         suptitle by default refers to the shot number
     """
+    print(fun, fun2)
     import pylab as pl
     n_rows = input_data.signal.n_channels()
     n_rows = int(round(0.49+(n_rows/float(n_columns))))
@@ -138,16 +154,26 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
 
             kwargs = dict(marker=marker, markersize=markersize, 
                           linestyle=linestyle, label = lab, color=color)
-            if downsamplefactor==1:
-                pl.plot(input_data.timebase, 
-                        input_data.signal.get_channel(chan_num),
-                        **kwargs)
+            if fun2 is not None:
+                pl.plot(*fun2(input_data.timebase[::downsamplefactor], 
+                              input_data.signal.get_channel(
+                                  chan_num)[::downsamplefactor]),**kwargs)
             else:
-                plotdata=input_data.signal.get_channel(chan_num)
-                timedata=input_data.timebase
-                pl.plot(timedata[0:len(timedata):downsamplefactor], 
-                        plotdata[0:len(timedata):downsamplefactor], 
-                        **kwargs)
+                pl.plot(input_data.timebase[::downsamplefactor], 
+                        fun(input_data.signal.get_channel(
+                            chan_num)[::downsamplefactor]),**kwargs)
+
+# this old code was no faster
+#           #   if downsamplefactor==1:
+#            pl.plot(input_data.timebase, 
+#                    input_data.signal.get_channel(chan_num),
+#                    **kwargs)
+#            else:
+#                plotdata=input_data.signal.get_channel(chan_num)
+#                timedata=input_data.timebase
+#                pl.plot(timedata[0:len(timedata):downsamplefactor], 
+#                        plotdata[0:len(timedata):downsamplefactor], 
+#                        **kwargs)
 #                pl.axis([-0.01,0.1,-5,5])
 
             pl.xticks(**fontkwargs)
@@ -249,9 +275,11 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
         
 
     try:
-        tit = str("%d, %s"%(input_data.meta['shot'], input_data.channels[channel_number].name))
+        tit = str("{s}, {c}"
+                  .format(s=input_data.meta['shot'], c=input_data.channels[channel_number].name))
     except:
-        tit = str("%d, %s"%(input_data.meta['shot'], input_data.channels.name))
+        tit = str("{s}, {c}"
+                  .format(s=input_data.meta['shot'], c=input_data.channels.name))
     if title is None or title == '':  # get the default title
         pass # tit is the default
     else:

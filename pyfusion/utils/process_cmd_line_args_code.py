@@ -61,7 +61,8 @@ from pylab import is_string_like
 
 def list_vars(locdict, Stop, tail_msg=''):
     if '_var_defaults' in locdict:
-        print('\n=========== Variables, and default values =========')
+        print('\n===== Input variables, and their default values '
+              '(from _var_default) ======')
         print(locdict['_var_defaults'])
     # check the global namespace too - can't see _var_defaults when
     # running with "run -i" (but it hasn't helped).    
@@ -101,7 +102,7 @@ def list_vars(locdict, Stop, tail_msg=''):
     if Stop: 
         print('======== make sure there are *NO SPACES* - e.g.  x=123  not x = 123 ======')
         if tail_msg !='': print(tail_msg)
-        ans=input(' q or ^C (+<CR>) to stop')  # raw_input still needs a CR 
+        ans=input(' q or ^C (+<CR>) to stop? ')  # raw_input still needs a CR 
         if ans.upper() == 'Q': 
             _sys.exit()
         return()  # I thought I didn't know how to just "stop" - maybe the above works
@@ -133,7 +134,8 @@ else:     # argv[0] is hopefully a python script, and we don't want to parse it
 for _expr in _args:
     if (array(_expr.upper().split('-')) == "HELP").any():
         if '__doc__' in locals():
-            print(" ==================== printing local __doc__ (from caller's source file) ===")
+            print("\n======Documentation from caller's source file "
+                  "(__doc__ captures the first comment ===\n")
             print(locals()['__doc__'])
         else: print('No local help')
         list_vars(locals(), Stop=True)

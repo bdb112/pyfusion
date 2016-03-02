@@ -167,8 +167,8 @@ else:  # need something so process_cmd can work
     shot_number=0
 if wild_card == '': wild_card = chan_name+'*'    
 if pyfusion.VERBOSE>2: 
-    print("Using device '%s', chan_name '%s', shot_number %d" %    
-          (dev_name, chan_name, shot_number))
+    print("Using device {d}, chan_name {ch}, shot_number {s}"    
+          .format(d=dev_name, ch=chan_name, s=shot_number))
 
 if channel_number is None: channel_number=0
 
@@ -185,7 +185,7 @@ def call_spec():
     z=_window(y)
     if _type=='F': 
         shot=callback.get_shot()
-        print("shot=%d") % shot
+        print("shot={s}".format(s=shot))
         data = device.acq.getdata(shot, diag_name)    
         if chan_name=='':
             try:
@@ -331,7 +331,7 @@ except:
 # before putting these in a module, check that exec works on module vars
 def make_inherited_var(name):
     exec('val='+name)
-    return("%s=%s" % (name, val))
+    return("{n}={v}".format(n=name, v=val))
 
 def inherited_vars(vars=None, extras=None):
     """ Return a list of var=value suitable forprocess_cmd_line_args.py

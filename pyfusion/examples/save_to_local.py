@@ -12,8 +12,11 @@ At present, only saves if compress_local is true.
 # tuning compression parameters - (this example shows very little difference
 run examples/save_to_local.py shot_number=18993 'local_dir="c:/cygwin/tmp"' diag_name="mirnov_small" save_kwargs='{"delta_encode_signal":True}'
 
-# A mult-channel diag: 
+# A multi-channel diag: 
 run pyfusion/examples/save_to_local.py shot_list=86507 dev_name='H1Local' diag_name='ElectronDensity15'
+
+# example with a two component shot number
+run pyfusion/examples/save_to_local.py shot_list='[[20160225,s] for s in range(1,50)]'  overwrite_local=1 dev_name='W7X' diag_name='W7X_L57_LP1_8'  local_dir='/data/datamining/local_data/' exception=Exception
 
 from the old pyfusion - may need to tidy up
 _PYFUSION_TEST_@@local_dir=/tmp/ overwrite_local=True
@@ -76,53 +79,57 @@ for diag in diag_list:
     diag = prefix+diag
     for shot_number in shot_list:
         dev = pyfusion.getDevice(dev_name)
-        data = dev.acq.getdata(shot_number, diag)
-        if downsample is not None:
-            data = data.downsample(downsample)
+        try: 
+            data = dev.acq.getdata(shot_number, diag)
+            if downsample is not None:
+                data = data.downsample(downsample)
 
-        if time_range is not None:  # not tested!!
-            data = data.reduce_time(time_range, fftopt=True)
-        
-        # I don't believe this test - always true!
+            if time_range is not None:  # not tested!!
+                data = data.reduce_time(time_range, fftopt=True)
 
-        if readback:
-            srb = pyfusion.get_shot(shot_number)
-            srb.load_diag(diag, savelocal=False, ignorelocal=False)
-            srb==s
+            # I don't believe this test - always true!
 
-        if (compress_local is not None):
-            from pyfusion.data.save_compress import discretise_signal as savez_new
-            from matplotlib.cbook import is_string_like
+            if readback:
+                srb = pyfusion.get_shot(shot_number)
+                srb.load_diag(diag, savelocal=False, ignorelocal=False)
+                srb==s
 
-            tb = data.timebase
-            singleton =  len(np.shape(data.channels))==0
-            if singleton:  chan_list = [data.channels]
-            else: chan_list = data.channels
+            if (compress_local is not None):
+                from pyfusion.data.save_compress import discretise_signal as savez_new
+                from matplotlib.cbook import is_string_like
 
-            for (c,chan) in enumerate(chan_list):
-                if local_dir !='':
-                    #probably should be chan.config_name here (not chan.name)
-                    localfilename = getlocalfilename(
-                        shot_number, chan.config_name, local_dir = local_dir)
-                else:
-                    localfilename = getlocalfilename(shot_number, chan.config_name)
+                tb = data.timebase
+                singleton =  len(np.shape(data.channels))==0
+                if singleton:  chan_list = [data.channels]
+                else: chan_list = data.channels
 
-                params = dict(name = diag, device = dev_name)
-                if hasattr(data, 'params'):  # add the other params
-                    params.update(data.params)
+                for (c,chan) in enumerate(chan_list):
+                    if local_dir !='':
+                        #probably should be chan.config_name here (not chan.name)
+                        localfilename = getlocalfilename(
+                            shot_number, chan.config_name, local_dir = local_dir)
+                    else:
+                        localfilename = getlocalfilename(shot_number, chan.config_name)
 
-                try:
-                    if singleton:
-                        signal = data.signal
-                    else: 
-                        signal = data.signal[c]
-                except exception as reason:
-                    print('failed to read shot {shot_number}, {r} {args}'
-                          .format(shot=shot, r=reason, args=r.args))
-                    
-                if os.path.isfile(localfilename) and not overwrite_local:
-                    raise IOError('file {f} exists'.format(f=localfilename))
+                    params = dict(name = diag, device = dev_name, utc=data.utc)
+                    if hasattr(data, 'params'):  # add the other params
+                        params.update(data.params)
 
-                savez_new(signal=signal, timebase=tb, filename=localfilename, 
-                          params = np.array(params),
-                          verbose=pyfusion.VERBOSE, **save_kwargs)
+                    try:
+                        if singleton:
+                            signal = data.signal
+                        else: 
+                            signal = data.signal[c]
+                    except exception as reason:
+                        print('failed to read shot {shot_number}, {r} {args}'
+                              .format(shot=shot, r=reason, args=r.args))
+
+                    if os.path.isfile(localfilename) and not overwrite_local:
+                        raise IOError('file {f} exists'.format(f=localfilename))
+
+                    savez_new(signal=signal, timebase=tb, filename=localfilename, 
+                              params = np.array(params),
+                              verbose=pyfusion.VERBOSE, **save_kwargs)
+
+        except exception as reason:
+            print('skipping shot {s} because {r}'.format(r=reason, s=shot_number))

@@ -77,6 +77,12 @@ the USER_CONFIG file (.pyfusion) must be after DEFAULT_CONFIG to override defaul
 """
 read_config([DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
 
+def reset_config():
+    """ convenience function to read in new config.  Not sure if it is kosher..
+    So if in doubt, restart pyfusion.
+    """
+    read_config([DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
+
 # verbosity level from environment has priority, otherwise use config, which 
 # defaults to 0.  Note that we looked at the env var previously to allow debug of config
 VERBOSE = int(os.getenv('PYFUSION_VERBOSE',

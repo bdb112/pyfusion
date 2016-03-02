@@ -4,7 +4,7 @@ inherited by subclasses in the acquisition sub-packages.
 
 """
 from numpy.testing import assert_array_almost_equal
-from numpy import ndarray
+from numpy import ndarray, shape
 from pyfusion.conf.utils import import_setting, kwarg_config_handler, \
      get_config_as_dict, import_from_str
 from pyfusion.data.timeseries import Signal, Timebase, TimeseriesData
@@ -48,7 +48,8 @@ def newload(filename, verbose=1):
     signal = eval(signalexpr.tolist().split(b'=')[1])
     time_unit_in_seconds = timeunitexpr.tolist()
     timebase = time_unit_in_seconds * eval(timebaseexpr.tolist().split(b'=')[1])
-    retdic = {"signal":signal, "timebase":timebase, "parent_element": dic['parent_element']}
+    retdic = {"signal":signal, "timebase":timebase, "parent_element":
+              dic['parent_element'], "params": dic['params'].tolist()}
     return(retdic)
 
 def try_fetch_local(input_data, bare_chan, sgn):
@@ -81,6 +82,10 @@ def try_fetch_local(input_data, bare_chan, sgn):
     # bdb - used "fetcher" instead of "self" in the "direct from LHD data" version
     output_data.config_name = input_data.config_name  # when using saved files, same as name
     output_data.meta.update({'shot':input_data.shot})
+    if 'utc' in signal_dict['params']:
+        output_data.utc =  signal_dict['params']['utc']
+    else:
+        output_data.utc = None
     return(output_data)
 
 
@@ -191,6 +196,7 @@ class BaseDataFetcher(object):
     def setup(self):
         """Called by :py:meth:`fetch` before retrieving the data."""
         pass
+
     def do_fetch(self):
         """Actually fetches  the data, using  the environment set  up by
         :py:meth:`setup`
@@ -204,9 +210,11 @@ class BaseDataFetcher(object):
         a subclass of :py:class:`BaseDataFetcher` will.
         """
         pass
+
     def pulldown(self):
         """Called by :py:meth:`fetch` after retrieving the data."""
         pass
+
     def error_info(self, step=None):
         """ return specific information about error to aid interpretation - e.g for mds, path
         The dummy return should be replaced in the specific routines
@@ -266,6 +274,8 @@ class BaseDataFetcher(object):
             data = tmp_data
 
         data.meta.update({'shot':self.shot})
+        if not hasattr(data,'utc'):
+            data.utc = None
         # Coords shouldn't be fetched for BaseData (they are required
         # for TimeSeries)
         #data.coords.load_from_config(**self.__dict__)
@@ -320,9 +330,10 @@ class MultiChannelFetcher(BaseDataFetcher):
         debug_(pyfusion.DEBUG, level=2, key='base_multi_fetch')
         ordered_channel_names = self.ordered_channel_names()
         data_list = []
-        channels = ChannelList()
+        channels = ChannelList()  # empty I guess
         timebase = None
         meta_dict={}
+        group_utc = None  # assume no utc, will be replaced.
         if hasattr(self, 't_min') and hasattr(self, 't_max'):
             t_range = [float(self.t_min), float(self.t_max)]
         else:
@@ -339,6 +350,10 @@ class MultiChannelFetcher(BaseDataFetcher):
 
             if len(t_range) == 2:
                 tmp_data = tmp_data.reduce_time(t_range)
+
+            if hasattr(tmp_data,'utc'):
+                group_utc = tmp_data.utc
+
             channels.append(tmp_data.channels)
             # two tricky things here - tmp.data.channels only gets one channel hhere
             # Config_name for a channel is attached to the multi part -
@@ -359,20 +374,41 @@ class MultiChannelFetcher(BaseDataFetcher):
                 timebase = tmp_data.timebase
                 data_list.append(tmp_data.signal)
             else:
-                if hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'true':
-                    data_list.append(tmp_data.signal)
+                if hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'True':
+                    # append regardless, but will have to go back over
+                    # later to check length cf timebase
+                    if len(tmp_data.signal)<len(timebase):
+                        timebase = tmp_data.timebase
+                    data_list.append(tmp_data.signal[0:len(timebase)])
                 else:
                     try:
                         assert_array_almost_equal(timebase, tmp_data.timebase)
                         data_list.append(tmp_data.signal)
                     except:
-                        print('matching error - perhaps timebase not the same as the previous channel')
+                        print('####  matching error in {c} - perhaps timebase not the same as the previous channel'.format(c=tmp_data.config_name))
                         raise 
 
+        if hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'True':
+            #  Messy - if we ignored timebase checks, then we have to check
+            #  length and cut to size, otherwise it will be stored as a signal (and 
+            #  we will end up with a signal of signals)
+            #  This code may look unpythonic, but it avoids a copy()
+            #  and may be faster than for sig in data_list....
+            ltb = len(timebase)
+            for i in range(len(data_list)):
+                if len(data_list[i]) > ltb:
+                    data_list.insert(i,data_list.pop(i)[0:ltb])
+
         signal = Signal(data_list)
+        print(shape(signal))
+
         output_data = TimeseriesData(signal=signal, timebase=timebase,
                                      channels=channels)
         #output_data.meta.update({'shot':self.shot})
         output_data.meta.update(meta_dict)
+        #if not hasattr(output_data,'utc'):
+        #    output_data.utc = None  # probably should try to get it
+        #                           # from a channel - but how?
+        output_data.utc = group_utc   # should check that all channels have same utc
         return output_data
 

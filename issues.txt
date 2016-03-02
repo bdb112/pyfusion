@@ -1,5 +1,12 @@
-python3
-Philosopy:  Only aim for 2.6,2.7 compat, make code in 3 idiom as much as poss.,
+Requests:
+add pyfusion.TSTART pyfusion.TSTOP  which can be set by env vars, and
+may be seconds or samples (if integers).  Error warning if integers
+are < 1000 as it seems a mistake.
+
+a function to increment either style of shot number
+
+python3 Philosopy:  
+Only aim for 2.6,2.7 compat, make code in 3 idiom as much as poss.,
 
 for //, avoid import division - but use the // op. This will allow bugs to show up in comparing python 2 and 3 output.
 

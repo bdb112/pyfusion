@@ -26,7 +26,7 @@ class Timebase(np.ndarray):
         # should this follow the example in doc/subclassing.py?... (it doesn't)
         obj = np.asarray(input_array).view(cls).copy()
         if obj[1]==obj[0]: 
-            print('timeseries error elts 0 and 1 are both {o}'
+            print('Expect frequency errors: timeseries error elts 0 and 1 are both {o}'
                   .format(o = 1.0* obj[0]))  # format bug
         obj.sample_freq = 1.0/(obj[1]-obj[0])
         obj.meta = PfMetaData()

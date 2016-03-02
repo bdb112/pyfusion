@@ -11,12 +11,17 @@ run pyfusion/examples/plot_signals.py dev_name='HeliotronJ' shot_number=50136 di
 run pyfusion/examples/plot_signals.py dev_name='HeliotronJ' shot_number=58000 diag_name=HeliotronJ_MP_array
 """
 import pyfusion
+from pyfusion.data.plots import myiden, myiden2, mydiff
+from pyfusion.utils.time_utils import utc_ns
 
 _var_defaults = """
 dev_name = "LHD"
 diag_name = "MP1"
 shot_number = 27233
 sharey=False
+fun=myiden
+fun2=myiden2
+plotkws={}
 """
 exec(_var_defaults)
 
@@ -27,6 +32,7 @@ dev = pyfusion.getDevice(dev_name)
 data = dev.acq.getdata(shot_number,diag_name)
 
 # maybe should be in data/plots.py, but config_name not fully implemented
-data.plot_signals(suptitle='shot {shot}: '+diag_name, sharey=sharey)
+data.plot_signals(suptitle='shot {shot}: '+diag_name, sharey=sharey,
+                  fun=fun, fun2=fun2, **plotkws)
 
 # for shot in range(76620,76870,10): dev.acq.getdata(shot,diag_name).plot_signals()

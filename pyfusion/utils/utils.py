@@ -157,7 +157,7 @@ if pyfusion.COLORS != None:
         red = tc.LightRed
         normal = tc.Normal
     except None:
-        (red, normal) = ('***','***')  # make error prominent if no clours
+        (red, normal) = ('***','***')  # make error prominent if no colours
 
     def my_show(message, category, filename, lineno, file=None, line=None):
         orig_show(red + message.message + normal, 

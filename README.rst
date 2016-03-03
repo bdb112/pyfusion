@@ -4,7 +4,12 @@ pyfusion
 python code for data mining plasma fluctuations
 -----------------------------------------------
 
-Update: Version 0.60 supports Python 2/3 for almost all scripts 
+
+Update: Version 0.61 includes first working version of W7-X archiveDB
+support, without much care for python3 compability of the new code.
+beginning support for two component shot number e.g. [20160301,5]
+
+Best Version 0.60 is 09ba5 - supports Python 2/3 for almost all scripts 
 (MDSplus is the main problem - see issues) and the full set of examples in the JSPF tutorial article. 
 The 4 criteria on the development roadmap have been achieved, and the
 five that were postponed until 0.7 are at least partially

@@ -41,6 +41,7 @@ class HeliotronJDataFetcher(BaseDataFetcher):
         # timebase in secs (ms in raw data) - could add a preferred unit?
         # this is partly allowed for in savez_compressed, newload, and
         # for plotting, in the config file.
+        # important that the 1e-3 be inside the Timebase()
         output_data = TimeseriesData(timebase=Timebase(1e-3 * getrets[1::2]),
                                  signal=Signal(getrets[2::2]), channels=ch)
         output_data.meta.update({'shot':self.shot})

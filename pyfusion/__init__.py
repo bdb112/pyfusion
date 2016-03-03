@@ -77,7 +77,7 @@ the USER_CONFIG file (.pyfusion) must be after DEFAULT_CONFIG to override defaul
 """
 read_config([DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
 
-def reset_config():
+def reload_config():
     """ convenience function to read in new config.  Not sure if it is kosher..
     So if in doubt, restart pyfusion.
     """

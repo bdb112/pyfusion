@@ -57,7 +57,7 @@ def getlocalfilename(shot_number, channel_name, local_dir=''):
     At present, we assume the numpy savez method is used - other save options may be added later
     """
     if local_dir == '': # default to first path in localdatapath
-        local_dir =  pyfusion.config.get('global', 'localdatapath').split(':')[0]
+        local_dir =  pyfusion.config.get('global', 'localdatapath').split('+')[0]
     # allow for multi-valued shot numbers - e.g. W7-X data with from,to utc
     if isinstance(shot_number, (tuple, list, np.ndarray)):
         fn = str(local_dir+'/{s0}_{s1}_{c}.npz'

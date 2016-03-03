@@ -7,7 +7,7 @@ from __future__ import print_function
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sys, json, time, os
+import sys, json, time, os, calendar
 
 from future.standard_library import install_aliases
 install_aliases()
@@ -18,8 +18,10 @@ from urllib.error import HTTPError
 
 fr_UTC = '20150101 00:00:00'
 to_UTC = '20170101 00:00:00'
-fr_utc = int(1e9 * int(time.strftime('%s', time.strptime(fr_UTC, '%Y%m%d %H:%M:%S'))))
-to_utc = int(1e9 * int(time.strftime('%s', time.strptime(to_UTC, '%Y%m%d %H:%M:%S'))))
+# This %s doens't work under windows, and is not in the docs
+#fr_utc = int(1e9 * int(time.strftime('%s', time.strptime(fr_UTC, '%Y%m%d %H:%M:%S'))))
+fr_utc = int(1e9) * int(calendar.timegm(time.strptime(fr_UTC, '%Y%m%d %H:%M:%S')))
+to_utc = int(1e9) * int(calendar.timegm(time.strptime(to_UTC, '%Y%m%d %H:%M:%S')))
 
 # for online access
 ArchiveDB = 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/ProjectDesc.1/ProgramLabelLog/parms/{key}/_signal.json?from={fr_utc}&upto={to_utc}'
@@ -39,7 +41,7 @@ shotDA.update({'start_utc': shotinfo['date']['dimensions'][::2]})
 shotDA.update({'end_utc': shotinfo['date']['dimensions'][1::2]})
 
 for k in ['date','progId', 'start_utc', 'end_utc']:
-  shotDA.update({k: np.array(shotDA[k], np.int)})  # make it an array of ints
+  shotDA.update({k: np.array(shotDA[k], np.int64)})  # make it an array of ints
 
 d = np.unique(shotDA['date'])
 wL = np.where((shotDA['end_utc']-shotDA['start_utc'])>60e9)[0]
@@ -48,7 +50,7 @@ print('Over {d} days, there were {n} shots, {N} longer than 100ms'
 
 #for i in range(10): 
 for i in range(-110,-1): 
-    print(shotDA['date'][i],shotDA['progId'][i],time.ctime(shotDA['end_utc'][i]/1e9),
+    print(shotDA['date'][i],shotDA['progId'][i],time.asctime(time.gmtime(shotDA['end_utc'][i]/1e9)),
           1e-9*(shotDA['end_utc'][i]-shotDA['start_utc'][i]),shotDA['comment'][i])
 
 import pickle

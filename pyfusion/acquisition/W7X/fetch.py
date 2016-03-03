@@ -27,12 +27,15 @@ def regenerate_dim(x):
     diffs = np.diff(x)
     sorted_diffs = np.sort(diffs[np.where((diffs > 0) & (diffs < 100000))[0]])
     counts = np.bincount(sorted_diffs)
-    print([[argc, counts[argc]] for argc in np.argsort(counts)[::-1][0:3]])
+    if pyfusion.VERBOSE>1:
+        print([[argc, counts[argc]] for argc in np.argsort(counts)[::-1][0:3]])
     dtns = 1 + np.argmax(counts[1:])  # skip the first position - it is 0
     # wgt0 = np.where(sorted_diffs > 0)[0]  # we are in ns, so no worry about rounding
     x01111 = np.ones(len(x))  # x01111 will be all 1s except for the first elt.
     x01111[0] = 0
-    print('********** repaired length {l}, dtns={dtns}'.format(l=len(x01111), dtns=dtns))
+    if pyfusion.VERBOSE>0: 
+        print('********** repaired length {l:,}, dtns={dtns:,}'
+              .format(l=len(x01111), dtns=dtns))
     return(np.cumsum(x01111)*dtns)
     
 
@@ -60,7 +63,7 @@ class W7XDataFetcher(BaseDataFetcher):
 
         params.update(f=f, t=t)
         url = fmt.format(**params)
-        if pyfusion.DEBUG>-1:
+        if pyfusion.VERBOSE > 0:
             print('===> fetching url {u}'.format(u=url))
 
         # seems to take twice as long as timeout requested.
@@ -93,7 +96,8 @@ class W7XDataFetcher(BaseDataFetcher):
         output_data.utc = [dat['dimensions'][0], dat['dimensions'][-1]]
 
         if pyfusion.VERBOSE > 0:
-            print(' config name', self.config_name)
+            print('shot {s}, config name {c}'
+                  .format(c=self.config_name, s=self.shot))
 
         output_data.config_name = self.config_name
 

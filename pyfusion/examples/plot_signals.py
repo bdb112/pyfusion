@@ -13,6 +13,7 @@ run pyfusion/examples/plot_signals.py dev_name='HeliotronJ' shot_number=58000 di
 import pyfusion
 from pyfusion.data.plots import myiden, myiden2, mydiff
 from pyfusion.utils.time_utils import utc_ns
+import matplotlib.pyplot as plt
 
 _var_defaults = """
 dev_name = "LHD"
@@ -22,6 +23,7 @@ sharey=False
 fun=myiden
 fun2=myiden2
 plotkws={}
+hold=0
 """
 exec(_var_defaults)
 
@@ -30,6 +32,8 @@ exec(process_cmd_line_args())
 
 dev = pyfusion.getDevice(dev_name)
 data = dev.acq.getdata(shot_number,diag_name)
+
+if hold>0: plt.figure()
 
 # maybe should be in data/plots.py, but config_name not fully implemented
 data.plot_signals(suptitle='shot {shot}: '+diag_name, sharey=sharey,

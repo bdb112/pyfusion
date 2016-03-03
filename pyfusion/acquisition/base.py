@@ -56,7 +56,7 @@ def try_fetch_local(input_data, bare_chan, sgn):
     """ return data if in the local cache, otherwise None
     doesn't work for single channel HJ data.
     """
-    for each_path in pyfusion.config.get('global', 'localdatapath').split(':'):
+    for each_path in pyfusion.config.get('global', 'localdatapath').split('+'):
         # check for multi value shot, e.g. utc bounds for W7-X data
         shot = input_data.shot
         if isinstance(shot, (tuple, list, ndarray)):
@@ -74,13 +74,16 @@ def try_fetch_local(input_data, bare_chan, sgn):
         return None
 
     signal_dict = newload(input_data.localname)
-
+    
 #    coords = get_coords_for_channel(**input_data.__dict__)
     ch = Channel(bare_chan,  Coords('dummy', (0,0,0)))
     output_data = TimeseriesData(timebase=Timebase(signal_dict['timebase']),
                              signal=Signal(sgn*signal_dict['signal']), channels=ch)
     # bdb - used "fetcher" instead of "self" in the "direct from LHD data" version
-    output_data.config_name = input_data.config_name  # when using saved files, same as name
+    #  when using saved files, should use the name - not input_data.config_name
+    #  it WAS the config_name coming from the raw format.
+    output_data.config_name = bare_chan
+    # would be nice to get to the gain here - but how - maybe setup will get it
     output_data.meta.update({'shot':input_data.shot})
     if 'utc' in signal_dict['params']:
         output_data.utc =  signal_dict['params']['utc']

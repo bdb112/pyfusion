@@ -43,7 +43,7 @@ class LHDTimeseriesDataFetcher(LHDBaseDataFetcher):
         #                 'shot':self.shot}
 
         debug_(pf.DEBUG, 4, key='local_fetch')
-        for each_path in pf.config.get('global', 'localdatapath').split(':'):
+        for each_path in pf.config.get('global', 'localdatapath').split('+'):
             self.basename = path.join(each_path, data_filename %filename_dict)
     
             files_exist = path.exists(self.basename)
@@ -53,7 +53,7 @@ class LHDTimeseriesDataFetcher(LHDBaseDataFetcher):
             raise Exception("file {fn} not found. (localdatapath was {p})"
                             .format(fn=self.basename, 
                                     p=pf.config.get('global', 
-                                                    'localdatapath').split(':')))
+                                                    'localdatapath').split('+')))
         else:
             signal_dict = newload(self.basename)
             

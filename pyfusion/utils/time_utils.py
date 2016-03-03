@@ -1,4 +1,4 @@
-import time
+import time, calendar
 
 def utc_ns(s):
     """ return utc corresponding to the string s format 20160302.14:55  """
@@ -18,5 +18,6 @@ def utc_ns(s):
         raise ValueError('time string {s} has an unexpected length {l}'
                          .format(s=s, l=len(s)))
     tm = time.strptime(s, fmt)
-    secs = time.strftime('%s', tm)
+    #secs = time.strftime('%s', tm)  # seems like %s is not standard?
+    secs = calendar.timegm(tm)
     return(int(1e9) * int(secs))

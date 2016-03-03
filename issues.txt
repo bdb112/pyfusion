@@ -21,6 +21,7 @@ raw_input
 izip
 
 ============  Bugs ===========
+Problem in pyplot 1.4.3 won't accept plt.show(block=0), will accept plt.show(0)
 
 ****** python 3.5.1 MDSplus imports, but generates errors: still a problem 22 Feb 2016 *****
 confirmed 22-Feb-2016  pyfusion c474ee1l python 3.5.1; MDSplus alpha-7.0.185 (alpha

@@ -72,6 +72,7 @@ diag_name= 'MP2010'
 exception=Exception    # use () to reveal any errors
 time_range = None
 min_svs=2
+min_p=.01
 max_H=0.97
 info=2
 separate=1
@@ -108,6 +109,11 @@ raw_count = 0
 dev = pyfusion.getDevice(dev_name)
 
 for (cnt, shot) in enumerate(shot_range):
+    if isinstance(shot, (list, tuple)):
+        s_shot = 1000*(shot[0]-20000000) + shot[1]
+    else:
+        s_shot = shot
+
     first = cnt==0
     while(os.path.exists(os.path.join(pyfusion.root_dir,'pause'))):
         print('paused until '+ pyfusion.root_dir+'/pause'+ ' is removed')
@@ -200,7 +206,8 @@ for (cnt, shot) in enumerate(shot_range):
                         write('\nShot    time   {spc}SVS  freq(k)  Amp   a12   p    H     frlow frhigh  cpkf  fpkf  {np:2d} Phases       Version 0.7 \n'
                               .format(np=len(fs.dphase),spc=SVtitle_spc))
                     raw_count += 1
-                    if fs.H < max_H and fs.p>0.01 and len(fs.svs())>=min_svs:
+                    #print(fs.H, fs.p, fs.svs)
+                    if fs.H < max_H and fs.p > min_p and len(fs.svs())>=min_svs:
                         count += 1
                         phases = ' '.join(["%5.2f" % j.delta for j in fs.dphase])
                         # was t_seg.scales, but now it is copies, t_seg is not updated 
@@ -218,7 +225,7 @@ for (cnt, shot) in enumerate(shot_range):
                             SV_fmt = "{{0:{w}b}}".format(w=2+n_channels)
                             write ("%d %8.5g %s %6.3g %6.5f %.2f %.3f %.3f %5.1f %5.1f %5.1f %5.1f %s\n" % (
                                     #shot, fs.t0, "{0:11b}".format(fs._binary_svs), 
-                                    shot, fs.t0-toff, SV_fmt.format(fs._binary_svs), 
+                                    s_shot, fs.t0-toff, SV_fmt.format(fs._binary_svs), 
                                     fs.freq/1000., sqrt(fs.p)*RMS_scale, # was sqrt(fs.E*fs.p)*RMS_scale see above
                                     fs.a12, fs.p, fs.H, frlow/1e3, frhigh/1e3, 
                                     fs.cpkf, fs.fpkf, #fs.E, fs.E is constant!

@@ -69,10 +69,11 @@ def myiden2(t,y):
     return(t,y)
 
 @register("TimeseriesData")
-def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="%(short_name)s", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', fun=myiden, fun2=None):
+def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="{short_name} {units}", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', fun=myiden, fun2=None):
     """ 
     Plot a figure full of signals using n_columns[1], 
         sharey [=1]  "gangs" y axes  - sim for sharex - sharex=None stops this
+        sharey: 2 gangs all but first (top) axis
         x axes are ganged by default: see Note:
 
     fun, fun2: optionally plot a function of the signal.  fun= refers
@@ -80,11 +81,11 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
     one that returns a different timebase (diff should do this)
     if fun2 is given (a function of t and sig), then fun is ignored 
 
-        labelfmt["%(short_name)s"] controls the channel labels.  
+        labelfmt["{short_name} {units}"] controls the channel labels.  
             The default ignores the shot and uses an abbreviated form of the channel name.  
             If the short form is very short, it becomes a y label.
-            A full version is "%(name)s" and if > 8 chars, will become the x label.
-            Even longer is "Shot=%(shot), k_h=%(kh)s, %(name)s"
+            A full version is "{name} {units}" and if > 8 chars, will become the x label.
+            Even longer is "Shot={shot}, k_h={kh}, {name}"
         labeleg: If 'True' put label in legend - else use this str as a legend lab
         linestyle: default of True means use '-' if no marker, and nothing if a 
             marker is given      
@@ -108,7 +109,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
     if pyfusion.VERBOSE > 3: print(str(n_rows) + ' ' + str(n_columns))
 
     if labelfmt != None:
-        if len(make_title(labelfmt, input_data, 0, raw_names=raw_names)) > 8: 
+        if len(make_title(labelfmt, input_data, 0, raw_names=raw_names)) > 10: 
             mylabel = pl.xlabel
         else:
             mylabel = pl.ylabel
@@ -119,9 +120,10 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
         if marker == 'None': linestyle = '-'
         else: linestyle = ''
         
+    axcount = -1  # so the first will be 0
     for row in range(n_rows):
         for col in range(n_columns):
-
+            axcount += 1
             # natural sequence for subplot is to fillacross l-r, then top-down 
             subplot_num = row*n_columns+col
 
@@ -131,14 +133,19 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
 
             if chan_num >= input_data.signal.n_channels(): break
             if pyfusion.VERBOSE>3: print(subplot_num+1,chan_num)
-            if (row==0) and (col==0):
+            if axcount == 0:
                 # note - sharex=None is required fo that overlays can be done
-                ax1 = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = None)
-                axn = ax1
+                axlead = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = None)
+                axn = axlead
+                axlead_x = axlead if sharex else None
             else:
-                if sharex == True: sharex = ax1
-                if sharey: axn = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = sharex, sharey=ax1)
-                else: axn = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = sharex)
+                if axcount >= sharey: 
+                    axn = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = axlead_x, sharey=axlead)
+                else: # another noshare y, but sharex
+                    axn = pl.subplot(n_rows, n_columns, subplot_num+1,
+                                     sharex = axlead_x)
+                    axlead = axn
+
             #  Clumsy addition to put labels in the legend
             #  To do better, should be one or the other, but the
             #  original code is after the plot - need to move it

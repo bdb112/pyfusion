@@ -21,7 +21,16 @@ raw_input
 izip
 
 ============  Bugs ===========
-Problem in pyplot 1.4.3 won't accept plt.show(block=0), will accept plt.show(0)
+****** python3 doesn't like the npz files created since around Mar 1 2016?
+ Unpickling a python object failed: UnicodeDecodeError('ascii', b'l\x9f\xb5}i[8\x14', 1, 2, 'ordinal not in range(128)')
+You may need to pass the encoding= option to numpy.load
+problem in params from
+'/data/datamining/local_data/20160303_6_W7X_L57_LP1_U.npz'
+Works fine on tut data.
+
+****** Problem in one version of winpy pyplot 1.4.3 won't accept
+       plt.show(block=0), will accept plt.show(0), even though help
+       docs say it block is the kw
 
 ****** python 3.5.1 MDSplus imports, but generates errors: still a problem 22 Feb 2016 *****
 confirmed 22-Feb-2016  pyfusion c474ee1l python 3.5.1; MDSplus alpha-7.0.185 (alpha

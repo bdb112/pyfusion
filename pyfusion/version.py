@@ -24,7 +24,8 @@ def git_sha():
     return p.communicate()[0]
 
 
-VERSION = (0, 6, 0, 'beta', 0)   #  set version here (was 0.58)
+VERSION = (0, 6, 1, 'beta', 0)   #  set version here (was 0.58)
+# note - need to edit version in conf.py also
 
 def get_version(form='short'):
     """

@@ -233,27 +233,33 @@ def split_names(names, pad=' ',min_length=3):
             ''.join(nms_arr[0,0:first]),
             ''.join(nms_arr[0,last+1:maxlen+1])))
 
-def make_title(formatstr, input_data, channum=None, dict = {}, min_length=3, raw_names=False):
-    """ return a string describing the shot number, channel name etc using a formatstr
-    which referes to items in a dictionary, assembled in this routine, based on input_data
-    and an optional dictionary which contains anything not otherwise available in input_data
+def make_title(formatstr, input_data, channum=None, at_dict = {}, min_length=3, raw_names=False):
+    """ Return a string describing the shot number, channel name etc using
+    a formatstr which refers to items in a dictionary (at_dict), assembled in
+    this routine, based on input_data and an optional dictionary which
+    contains anything not otherwise available in input_data
+
     """
-##    dict.update({'shot': input_data.meta['shot']})
+##    at_dict.update({'shot': input_data.meta['shot']})
+    exception = () if pyfusion.DEBUG > 3 else Exception
     try:
-        dict.update(input_data.meta)  # this gets all of it!
+        at_dict.update(input_data.meta)  # this gets all of it!
 
 
         if channum is None:
             name = ''
         else:
-            if raw_names:
-                try: name = input_data.channels[channum].name
-                except: name = input_data.channels.name
+            if  isinstance(input_data.channels, list):
+                chan = input_data.channels[channum]
             else:
-                try: name = input_data.channels[channum].config_name
-                except: name = input_data.channels.config_name
+                chan = input_data.channels
+            if raw_names:
+                name = chan.name
+            else:
+                name = chan.config_name
                 
-        dict.update({'name': name})
+        at_dict.update({'units':chan.units})
+        at_dict.update({'name': name})
 # replace internal strings of non-numbers with a single .  a14_input03 -> 14.03
         short_name=''
         last_was_number = False
@@ -274,11 +280,11 @@ def make_title(formatstr, input_data, channum=None, dict = {}, min_length=3, raw
             # else allow 4 more chars - makes about 6-8 chars
             else: short_name = discarded[-4:] + short_name
 
-        dict.update({'short_name': short_name})
+        at_dict.update({'short_name': short_name})
 
-        return(formatstr % dict)
-    except Exception as ex:
-        warn('in make_title for format="%s", dict=%s' % (formatstr, dict),
+        return(formatstr.format(**at_dict))
+    except exception as ex:
+        warn('in make_title for format="%s", at_dict=%s' % (formatstr, at_dict),
              exception=ex)
         return('')
 

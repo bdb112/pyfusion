@@ -15,6 +15,7 @@ install_aliases()
 from urllib.parse import urlparse, urlencode
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
+import codecs  # this is a workaround for urlopen/json - requests is supposed to be better
 
 fr_UTC = '20150101 00:00:00'
 to_UTC = '20170101 00:00:00'
@@ -27,11 +28,13 @@ to_utc = int(1e9) * int(calendar.timegm(time.strptime(to_UTC, '%Y%m%d %H:%M:%S')
 ArchiveDB = 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/ProjectDesc.1/ProgramLabelLog/parms/{key}/_signal.json?from={fr_utc}&upto={to_utc}'
 #ArchiveDB = 'file:///data/databases/W7X/cache/{key}.json'  # for local files
 
+reader = codecs.getreader("utf-8")
+
 shotinfo = {}
 for itm in ['comment','ProgramLogLabel/progId','ProgramLogLabel/date']:
     key = itm.split('/')[-1]  # choose the last part of the name
     url = ArchiveDB.format(key=itm,fr_utc=fr_utc,to_utc=to_utc)
-    shotinfo.update({key: json.load(urlopen(url))})
+    shotinfo.update({key: json.load(reader(urlopen(url)))})
 
 shotDA = {}
 for k in shotinfo:
@@ -55,4 +58,4 @@ for i in range(-110,-1):
 
 import pickle
 this_dir = os.path.dirname(__file__)
-pickle.dump(shotDA, open(os.path.join(this_dir,'shotDA.pickle'),'w'))
+pickle.dump(shotDA, open(os.path.join(this_dir,'shotDA.pickle'),'wb'),protocol=2)

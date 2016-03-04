@@ -241,8 +241,18 @@ class BaseDataFetcher(object):
         chan = self.config_name
         if chan[0]=='-': sgn = -sgn
         bare_chan = (chan.split('-'))[-1]
+        # use its gain, or if it doesn't have one, its acq gain.
+        gain_units = "1 V"
+        if hasattr(self,'gain'):
+            gain_units = self.gain
+        elif hasattr(self.acq, 'gain'):
+            gain_units = self.acq.gain
+
+        sgn *= float(gain_units.split()[0])
+
         tmp_data = try_fetch_local(self, bare_chan, sgn)  # is there a local copy?
         if tmp_data is None:
+            method = 'specific'
             try:
                 self.setup()
             except exception as details:
@@ -275,6 +285,7 @@ class BaseDataFetcher(object):
                                                             details=details,CLASS=details.__class__))
         else:
             data = tmp_data
+            method = 'local_npz'
 
         data.meta.update({'shot':self.shot})
         if not hasattr(data,'utc'):
@@ -285,7 +296,12 @@ class BaseDataFetcher(object):
         if pyfusion.VERBOSE>0: 
             print("base.py: data.config_name", data.config_name)
         data.channels.config_name=data.config_name
-        self.pulldown()
+        if len(gain_units.split()) > 1:
+            data.channels.units = gain_units.split()[-1]
+        else:
+            data.channels.units = ' '
+        if method == 'specific':  # don't pull down if we didn't setup
+            self.pulldown()
         return data
 
 class MultiChannelFetcher(BaseDataFetcher):
@@ -334,61 +350,52 @@ class MultiChannelFetcher(BaseDataFetcher):
         ordered_channel_names = self.ordered_channel_names()
         data_list = []
         channels = ChannelList()  # empty I guess
-        timebase = None
+        common_tb = None  # common_timebase
         meta_dict={}
-        group_utc = None  # assume no utc, will be replaced.
+
+        group_utc = None  # assume no utc, will be replaced by channels
+        # t_min, t_max seem obsolete, and should be done in single chan fetch
         if hasattr(self, 't_min') and hasattr(self, 't_max'):
             t_range = [float(self.t_min), float(self.t_max)]
         else:
             t_range = []
         for chan in ordered_channel_names:
-            sgn = 1
-            if chan[0]=='-': sgn = -sgn
-            bare_chan = (chan.split('-'))[-1]
-            fetcher_class = import_setting('Diagnostic', bare_chan, 'data_fetcher')
-            tmp_data = try_fetch_local(self, bare_chan, sgn)  # is there a local copy?
-            if tmp_data is None:          # Otherwise, get from appropriate data system
-                tmp_data = fetcher_class(self.acq, self.shot,
-                                         config_name=bare_chan).fetch()
-
+            ch_data = self.acq.getdata(self.shot, chan)
             if len(t_range) == 2:
-                tmp_data = tmp_data.reduce_time(t_range)
+                ch_data = ch_data.reduce_time(t_range)
 
-            if hasattr(tmp_data,'utc'):
-                group_utc = tmp_data.utc
+            if hasattr(ch_data,'utc'):
+                group_utc = ch_data.utc
 
-            channels.append(tmp_data.channels)
+            channels.append(ch_data.channels)
             # two tricky things here - tmp.data.channels only gets one channel hhere
             # Config_name for a channel is attached to the multi part -
             # We need to move it to the particular channel 
             # Was  channels[-1].config_name = chan
             # 2013 - default to something if config_name not defined
             if pyfusion.VERBOSE>0:
-                print("base:multi tmp_data.config_name", tmp_data.config_name)
-            if hasattr(tmp_data,'config_name'):
-                channels[-1].config_name = tmp_data.config_name                
+                print("base:multi ch_data.config_name", ch_data.config_name)
+            if hasattr(ch_data,'config_name'):
+                channels[-1].config_name = ch_data.config_name                
             else:
                 channels[-1].config_name = 'fix_me'
-            meta_dict.update(tmp_data.meta)
-            #print(tmp_data.signal[-1], sgn)
-            tmp_data.signal = sgn * tmp_data.signal
-            #print(tmp_data.signal[-1], sgn)
-            if timebase is None:
-                timebase = tmp_data.timebase
-                data_list.append(tmp_data.signal)
+            meta_dict.update(ch_data.meta)
+            if common_tb is None:
+                common_tb = ch_data.timebase
+                data_list.append(ch_data.signal)
             else:
                 if hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'True':
                     # append regardless, but will have to go back over
-                    # later to check length cf timebase
-                    if len(tmp_data.signal)<len(timebase):
-                        timebase = tmp_data.timebase
-                    data_list.append(tmp_data.signal[0:len(timebase)])
+                    # later to check length cf common_tb
+                    if len(ch_data.signal)<len(common_tb):
+                        common_tb = ch_data.timebase
+                    data_list.append(ch_data.signal[0:len(common_tb)])
                 else:
                     try:
-                        assert_array_almost_equal(timebase, tmp_data.timebase)
-                        data_list.append(tmp_data.signal)
+                        assert_array_almost_equal(common_tb, ch_data.timebase)
+                        data_list.append(ch_data.signal)
                     except:
-                        print('####  matching error in {c} - perhaps timebase not the same as the previous channel'.format(c=tmp_data.config_name))
+                        print('####  matching error in {c} - perhaps timebase not the same as the previous channel'.format(c=ch_data.config_name))
                         raise 
 
         if hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'True':
@@ -397,7 +404,7 @@ class MultiChannelFetcher(BaseDataFetcher):
             #  we will end up with a signal of signals)
             #  This code may look unpythonic, but it avoids a copy()
             #  and may be faster than for sig in data_list....
-            ltb = len(timebase)
+            ltb = len(common_tb)
             for i in range(len(data_list)):
                 if len(data_list[i]) > ltb:
                     data_list.insert(i,data_list.pop(i)[0:ltb])
@@ -405,7 +412,7 @@ class MultiChannelFetcher(BaseDataFetcher):
         signal = Signal(data_list)
         print(shape(signal))
 
-        output_data = TimeseriesData(signal=signal, timebase=timebase,
+        output_data = TimeseriesData(signal=signal, timebase=common_tb,
                                      channels=channels)
         #output_data.meta.update({'shot':self.shot})
         output_data.meta.update(meta_dict)

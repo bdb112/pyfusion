@@ -4,8 +4,9 @@ import numpy as np
     
 # should think about avoiding reloads
 this_dir = os.path.dirname(__file__)
-# 'rb' causes a problem with winpy
-shotDA = pickle.load(open(os.path.join(this_dir,'shotDA.pickle'),'r'))
+# 'rb' causes a problem with winpy - maybe using protocol 2 will fix?
+#  under proto 2, need ,encoding='ascii' in python3 if file written by python2
+shotDA = pickle.load(open(os.path.join(this_dir,'shotDA.pickle'),'rb'))
 
 def get_shot_utc(date, shot):
     ws = np.where((shotDA['date'] == date) & (shotDA['progId'] == shot))[0]

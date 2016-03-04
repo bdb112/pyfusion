@@ -80,8 +80,13 @@ read_config([DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
 def reload_config():
     """ convenience function to read in new config.  Not sure if it is kosher..
     So if in doubt, restart pyfusion.
+    Fails to forget lines that were commented out
+    maybe need also   config = PyfusionConfigParser() and return it
+    but this is worse - commented out.
     """
+    #config = PyfusionConfigParser()
     read_config([DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
+    #return(config)
 
 # verbosity level from environment has priority, otherwise use config, which 
 # defaults to 0.  Note that we looked at the env var previously to allow debug of config

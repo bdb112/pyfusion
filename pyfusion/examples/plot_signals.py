@@ -33,7 +33,7 @@ exec(process_cmd_line_args())
 dev = pyfusion.getDevice(dev_name)
 data = dev.acq.getdata(shot_number,diag_name)
 
-if hold>0: plt.figure()
+if hold==0: plt.figure()
 
 # maybe should be in data/plots.py, but config_name not fully implemented
 data.plot_signals(suptitle='shot {shot}: '+diag_name, sharey=sharey,

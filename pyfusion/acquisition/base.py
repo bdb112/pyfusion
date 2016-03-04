@@ -242,11 +242,14 @@ class BaseDataFetcher(object):
         if chan[0]=='-': sgn = -sgn
         bare_chan = (chan.split('-'))[-1]
         # use its gain, or if it doesn't have one, its acq gain.
-        gain_units = "1 V"
-        if hasattr(self,'gain'):
-            gain_units = self.gain
-        elif hasattr(self.acq, 'gain'):
-            gain_units = self.acq.gain
+        if pyfusion.RAW == 0:
+            gain_units = "1 arb"
+            if hasattr(self,'gain'):
+                gain_units = self.gain
+            elif hasattr(self.acq, 'gain'):
+                gain_units = self.acq.gain
+        else:
+            gain_units = "1 raw"
 
         sgn *= float(gain_units.split()[0])
 
@@ -288,6 +291,7 @@ class BaseDataFetcher(object):
             method = 'local_npz'
 
         data.meta.update({'shot':self.shot})
+        data.signal = sgn * data.signal
         if not hasattr(data,'utc'):
             data.utc = None
         # Coords shouldn't be fetched for BaseData (they are required

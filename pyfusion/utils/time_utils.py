@@ -1,14 +1,18 @@
 import time, calendar
 
 def utc_ns(s):
-    """ return utc corresponding to the string s format 20160302.14:55  """
+    """ return utc corresponding to the string s format 20160302.14:55  
+    e.g.  utc_ns(['20160303.143659','20160303.143661'])
+    """
     #   time.strptime('20160302.14:55','%Y%m%d.%H:%M'
     if isinstance(s, (list, tuple)):
         return([utc_ns(s[0]), utc_ns(s[1])])
 
-    if len(s) == 14:
+    if len(s) == 15:
+        fmt = '%Y%m%d.%H%M%S'
+    elif len(s) == 14:
         fmt = '%Y%m%d.%H:%M'
-    if len(s) == 13:
+    elif len(s) == 13:
         fmt = '%Y%m%d.%H%M'
     elif len(s) == 11:
         fmt = '%Y%m%d.%H'

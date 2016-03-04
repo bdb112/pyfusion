@@ -94,6 +94,10 @@ VERBOSE = int(os.getenv('PYFUSION_VERBOSE',
                     config.get('global','VERBOSE',vars={'VERBOSE':'0'})))
 ## Variable precision - allows data sets to be much bigger - up to 4x  bdb Dec-2012
 
+# This allows gain factors to be ignored, to see raw digitiser output
+RAW = int(os.getenv('PYFUSION_RAW',
+                    config.get('global','RAW',vars={'RAW':'0'})))
+
 root_dir = os.path.split(os.path.abspath( __file__ ))[0]
 
 # cache control is likely to be computer dependent

@@ -44,10 +44,14 @@ save_kwargs = {}
 prefix=''  #'HeliotronJ_'
 local_dir=''
 exception= Exception
+pyfusion.RAW=1   # save in raw mode by default, so gain is not applied twice.
 """
 exec(_var_defaults)
 exec(process_cmd_line_args())
 
+if 'W7' in diag_name and 'LP' in diag_name:
+    print('override encode time')
+    save_kwargs={"delta_encode_time":False}
 
 #s = pyfusion.get_shot(shot_number)
 #s.load_diag(diag_name, savelocal=True, ignorelocal=(compress_local==None), downsample=True)
@@ -111,7 +115,7 @@ for diag in diag_list:
                     else:
                         localfilename = getlocalfilename(shot_number, chan.config_name)
 
-                    params = dict(name = diag, device = dev_name, utc=data.utc)
+                    params = dict(name = diag, device = dev_name, utc=data.utc, raw=pyfusion.RAW)
                     if hasattr(data, 'params'):  # add the other params
                         params.update(data.params)
 

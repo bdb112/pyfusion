@@ -14,8 +14,9 @@ import traceback
 import sys, os
 import pyfusion  # only needed for .VERBOSE and .DEBUG
 
-def newload(filename, verbose=1):
-    """ Intended to replace load() in numpy
+def newloadv3(filename, verbose=1):
+    """ This the the version that works in python 3, but can't handle Nans
+    Intended to replace load() in numpy
     counterpart is data/savez_compress.py
     """
     from numpy import load as loadz
@@ -52,9 +53,15 @@ def newload(filename, verbose=1):
               dic['parent_element'], "params": dic['params'].tolist()}
     return(retdic)
 
-def try_fetch_local(input_data, bare_chan, sgn):
+if sys.version<'3,':
+    from pyfusion.data.save_compress import newload
+else:
+    newload = newloadv3
+
+def try_fetch_local(input_data, bare_chan):
     """ return data if in the local cache, otherwise None
     doesn't work for single channel HJ data.
+    sgn (incl. gain) should be only be used at the single channel base/fetch level
     """
     for each_path in pyfusion.config.get('global', 'localdatapath').split('+'):
         # check for multi value shot, e.g. utc bounds for W7-X data
@@ -78,7 +85,7 @@ def try_fetch_local(input_data, bare_chan, sgn):
 #    coords = get_coords_for_channel(**input_data.__dict__)
     ch = Channel(bare_chan,  Coords('dummy', (0,0,0)))
     output_data = TimeseriesData(timebase=Timebase(signal_dict['timebase']),
-                             signal=Signal(sgn*signal_dict['signal']), channels=ch)
+                             signal=Signal(signal_dict['signal']), channels=ch)
     # bdb - used "fetcher" instead of "self" in the "direct from LHD data" version
     #  when using saved files, should use the name - not input_data.config_name
     #  it WAS the config_name coming from the raw format.
@@ -243,7 +250,7 @@ class BaseDataFetcher(object):
         bare_chan = (chan.split('-'))[-1]
         # use its gain, or if it doesn't have one, its acq gain.
         if pyfusion.RAW == 0:
-            gain_units = "1 arb"
+            gain_units = "1 arb"  # default to gain 1, no units
             if hasattr(self,'gain'):
                 gain_units = self.gain
             elif hasattr(self.acq, 'gain'):
@@ -252,8 +259,9 @@ class BaseDataFetcher(object):
             gain_units = "1 raw"
 
         sgn *= float(gain_units.split()[0])
+        print('Gain factor', sgn, self.config_name)
 
-        tmp_data = try_fetch_local(self, bare_chan, sgn)  # is there a local copy?
+        tmp_data = try_fetch_local(self, bare_chan)  # is there a local copy?
         if tmp_data is None:
             method = 'specific'
             try:

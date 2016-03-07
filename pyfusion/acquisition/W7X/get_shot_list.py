@@ -17,8 +17,17 @@ from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 import codecs  # this is a workaround for urlopen/json - requests is supposed to be better
 
+
+_var_defaults="""
 fr_UTC = '20150101 00:00:00'
 to_UTC = '20170101 00:00:00'
+showdate=0
+"""
+
+exec(_var_defaults)
+from pyfusion.utils import process_cmd_line_args
+exec(process_cmd_line_args())
+
 # This %s doens't work under windows, and is not in the docs
 #fr_utc = int(1e9 * int(time.strftime('%s', time.strptime(fr_UTC, '%Y%m%d %H:%M:%S'))))
 fr_utc = int(1e9) * int(calendar.timegm(time.strptime(fr_UTC, '%Y%m%d %H:%M:%S')))
@@ -51,8 +60,10 @@ wL = np.where((shotDA['end_utc']-shotDA['start_utc'])>60e9)[0]
 print('Over {d} days, there were {n} shots, {N} longer than 100ms'
       .format(N=len(wL), d=len(d), n=len(shotDA['date'])))
 
-#for i in range(10): 
-for i in range(-110,-1): 
+if showdate is 0:
+    showdate = max(shotDA['date'])
+
+for i in np.where(showdate == shotDA['date'])[0]:
     print(shotDA['date'][i],shotDA['progId'][i],time.asctime(time.gmtime(shotDA['end_utc'][i]/1e9)),
           1e-9*(shotDA['end_utc'][i]-shotDA['start_utc'][i]),shotDA['comment'][i])
 

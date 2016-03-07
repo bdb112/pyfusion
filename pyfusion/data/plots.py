@@ -109,7 +109,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
     if pyfusion.VERBOSE > 3: print(str(n_rows) + ' ' + str(n_columns))
 
     if labelfmt != None:
-        if len(make_title(labelfmt, input_data, 0, raw_names=raw_names)) > 10: 
+        if len(make_title(labelfmt, input_data, 0, raw_names=raw_names)) > 11: 
             mylabel = pl.xlabel
         else:
             mylabel = pl.ylabel

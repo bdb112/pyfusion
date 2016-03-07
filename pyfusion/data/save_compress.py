@@ -18,6 +18,11 @@ usable before)
 """
 from numpy import max, std, array, min, sort, diff, unique, size, mean, mod,\
     log10, int16, int8, uint16, uint8
+import numpy as np
+
+import pyfusion
+from pyfusion.debug_ import debug_
+  
 try: 
     # now in numpy
     # from pyfusion.hacked_numpy_io import savez
@@ -35,20 +40,29 @@ except:
 
     from numpy import savez_compressed
 
-def discretise_array(arr, eps=0, bits=0, maxcount=0, verbose=0, delta_encode=False):
+def discretise_array(arrin, eps=0, bits=0, maxcount=0, verbose=None, delta_encode=False):
     """
     Return an integer array and scales etc in a dictionary 
     - the dictionary form allows for added functionaility.
     If bits=0, find the natural accuracy.  eps defaults to 3e-6, and 
     is the error relative to the larest element, as is maxerror.
     """
+    verbose = pyfusion.VERBOSE if verbose is None else verbose
     if eps==0: eps=3e-6
     if maxcount==0: maxcount=10
     count=1
+    wnan = np.where(np.isnan(arrin))[0]
+    notwnan = np.where(np.isnan(arrin) == False)[0]
+    if len(wnan) == 0: 
+        arr = arrin
+    else:
+        print('{n} nans out of {l}'.format(n=len(wnan), l=len(arrin)))
+        arr = arrin[notwnan]
+
     ans=try_discretise_array(arr, eps=eps,bits=bits, verbose=verbose, 
                              delta_encode=delta_encode)
     initial_deltar=ans['deltar']
-    # look for timebase, because they have the largest ratio of value to
+    # try to identify the timebase, because they have the largest ratio of value to
     #  step size, and are the hardest to discretise in presence of repn err.
     # better check positive!  Could add code to handle negative later.
     if initial_deltar>0:
@@ -78,6 +92,18 @@ def discretise_array(arr, eps=0, bits=0, maxcount=0, verbose=0, delta_encode=Fal
         
     if verbose>0: print("integers from %d to %d, delta=%.5g" % (\
             min(ans['iarr']), max(ans['iarr']), ans['deltar']) )    
+    if len(wnan)>0:
+        dtyp = ans['iarr'].dtype
+        maxint = np.iinfo(dtyp).max
+        if maxint==ans['iarr'].any():
+            print('******** warning: save_compress already using maxint - now defining it as a nan!')
+
+        orig_iarr =  ans['iarr']  # for debugging
+        full_iarr = np.zeros(len(arrin), dtype=dtyp)
+        full_iarr[notwnan] = ans['iarr']
+        full_iarr[wnan] = maxint
+        ans['iarr'] = full_iarr
+    debug_(pyfusion.DEBUG, 3, key='discretise')
     return(ans)
 #    return(ans.update({'count':count})) # need to add in count
 
@@ -188,7 +214,7 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encod
             iarr=iarr.astype(int8)
             if verbose>1: print('using 8 bit ints')
             
-        elif max(iarr)<8192: 
+        elif max(iarr)<8192:   # why is this so conservative?  I would think 32766
             iarr=iarr.astype(int16)
             if verbose>1: print('using 16 bit ints')
                 
@@ -207,6 +233,7 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
     Probably should eventually separate the file write from making the 
     dictionary.  Intended to be aliased with loadz, args slightly different.
     There is no dependence on pyfusion.  Version 101 adds time_unit_in_seconds
+    version 102 adds utc, raw
     Note: changed to parent_element=array(0) by default - not sure what this is!
     """
     from numpy import remainder, mod, min, max, \
@@ -243,6 +270,11 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
         timebaseexpr=str("timebase=%g+%s*%g" % (tim['minarr'], 
                                                 "cumsum(dic['rawtimebase'])",
                                                 tim['deltar']))
+    # This only works for NON delta encoded.
+    wnan = np.where(np.isnan(timebase))[0]
+    if len(wnan)>0:
+        timebaseexpr = timebaseexpr + ";maxint = np.iinfo(dic['rawtimebase'].dtype).max;wnan = np.where(maxint == dic['rawtimebase'])[0];if len(wnan)>0:;    timebase[wnan]=np.nan".replace(';','\n')
+
     if verbose>4: 
         import pylab as pl
         pl.plot(rawsignal)
@@ -254,12 +286,14 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
 
         savez_compressed(filename, timebaseexpr=timebaseexpr, 
                          signalexpr=signalexpr, params=params,
-              parent_element=parent_element, time_unit_in_seconds=tus,
-              rawsignal=rawsignal, rawtimebase=rawtimebase, version=101)    
+                         parent_element=parent_element, time_unit_in_seconds=tus,
+                         rawsignal=rawsignal, rawtimebase=rawtimebase, version=102)    
 
 
 def newload(filename, verbose=verbose):
     """ Intended to replace load() in numpy
+    This is being used with nan data.  The version in data/base.py is closer to
+    python 3 compatible, but can't deal with the nans yet.
     """
     from numpy import load as loadz
     from numpy import cumsum
@@ -278,7 +312,11 @@ def newload(filename, verbose=verbose):
 # savez saves ARRAYS always, so have to turn array back into scalar    
     exec(signalexpr.tolist())
     exec(timebaseexpr.tolist())
-    return({"signal":signal, "timebase":timebase, "parent_element": dic['parent_element']})
+    retdic = {"signal":signal, "timebase":timebase, "parent_element":
+              dic['parent_element'], "params": dic['params'].tolist()}
+    return(retdic)
+
+    # return({"signal":signal, "timebase":timebase, "parent_element": dic['parent_element']})
 
 def save_compress(timebase=None, signal=None, filename=None, *args, **kwargs):
     """ save a signal and timebase into a compress .npz file.  See arglist

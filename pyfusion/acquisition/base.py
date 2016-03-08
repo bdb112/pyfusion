@@ -259,7 +259,7 @@ class BaseDataFetcher(object):
             gain_units = "1 raw"
 
         sgn *= float(gain_units.split()[0])
-        print('Gain factor', sgn, self.config_name)
+        if pyfusion.VERBOSE > 0: print('Gain factor', sgn, self.config_name)
 
         tmp_data = try_fetch_local(self, bare_chan)  # is there a local copy?
         if tmp_data is None:
@@ -358,7 +358,7 @@ class MultiChannelFetcher(BaseDataFetcher):
  
         ## initially, assume only single channel signals
         # this base debug breakpoint will apply to all flavours of acquisition
-        debug_(pyfusion.DEBUG, level=2, key='base_multi_fetch')
+        debug_(pyfusion.DEBUG, level=3, key='entry_base_multi_fetch')
         ordered_channel_names = self.ordered_channel_names()
         data_list = []
         channels = ChannelList()  # empty I guess
@@ -376,9 +376,6 @@ class MultiChannelFetcher(BaseDataFetcher):
             if len(t_range) == 2:
                 ch_data = ch_data.reduce_time(t_range)
 
-            if hasattr(ch_data,'utc'):
-                group_utc = ch_data.utc
-
             channels.append(ch_data.channels)
             # two tricky things here - tmp.data.channels only gets one channel hhere
             # Config_name for a channel is attached to the multi part -
@@ -392,15 +389,32 @@ class MultiChannelFetcher(BaseDataFetcher):
             else:
                 channels[-1].config_name = 'fix_me'
             meta_dict.update(ch_data.meta)
+            # tack on the data utc
+            ch_data.signal.utc = ch_data.utc
+
+            # Make a common timebase and do some basic checks.
             if common_tb is None:
                 common_tb = ch_data.timebase
+                if hasattr(ch_data,'utc'):
+                    group_utc = ch_data.utc
+                    tb_chan = ch_data.channels
+
+                # for the first, append the whole signal
                 data_list.append(ch_data.signal)
             else:
                 if hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'True':
                     # append regardless, but will have to go back over
                     # later to check length cf common_tb
+                    if pyfusion.VERBOSE > 0: print('utcs: ******',ch_data.utc[0],group_utc[0])
+                    if ch_data.utc[0] != group_utc[0]:
+                        # should pad this channel out with nans - for now report an error.
+                        print('********\n********traces {tbch} and {chcnf} have different start times by {dts:.2g} s'
+                              .format(tbch = tb_chan.config_name, chcnf = ch_data.config_name,
+                                      dts = (ch_data.utc[0] - group_utc[0])/1e9))
+
                     if len(ch_data.signal)<len(common_tb):
                         common_tb = ch_data.timebase
+                        tb_chan = ch_data.channels
                     data_list.append(ch_data.signal[0:len(common_tb)])
                 else:
                     try:
@@ -419,6 +433,7 @@ class MultiChannelFetcher(BaseDataFetcher):
             ltb = len(common_tb)
             for i in range(len(data_list)):
                 if len(data_list[i]) > ltb:
+                    # this is a replacement.
                     data_list.insert(i,data_list.pop(i)[0:ltb])
 
         signal = Signal(data_list)
@@ -432,5 +447,6 @@ class MultiChannelFetcher(BaseDataFetcher):
         #    output_data.utc = None  # probably should try to get it
         #                           # from a channel - but how?
         output_data.utc = group_utc   # should check that all channels have same utc
+        debug_(pyfusion.DEBUG, level=2, key='return_base_multi_fetch')        
         return output_data
 

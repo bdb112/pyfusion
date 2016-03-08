@@ -110,7 +110,7 @@ def discretise_array(arrin, eps=0, bits=0, maxcount=0, verbose=None, delta_encod
 def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encode=False):
     """
     Return an integer array and scales etc in a dictionary 
-    - the dictionary form allows for added functionaility.
+    - the dictionary form allows for added functionality.
     If bits=0, find the natural accuracy.  eps defaults to 1e-6
     """
     if verbose>2: import pylab as pl
@@ -217,6 +217,7 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encod
         elif max(iarr)<8192:   # why is this so conservative?  I would think 32766
             iarr=iarr.astype(int16)
             if verbose>1: print('using 16 bit ints')
+    # if not any of the above, stays as an int32
                 
     return({'iarr':iarr, 'maxerror':maxerr, 'deltar':deltar, 'minarr':min(arr),
             'intmax':max(iarr)})

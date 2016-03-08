@@ -97,14 +97,14 @@ class W7XDataFetcher(BaseDataFetcher):
             f,t = get_shot_utc(*self.shot)
         # A URL STYLE diagnostic - used for a one-off
         if hasattr(self,'url'):
-            fmt = self.url+'_signal.json?from={f}&upto={t}'
-            fmt = self.url+'_signal.json?from={f}&upto={t}&nSamples=200000'
+            fmt = self.url+'_signal.json?from={shot_f}&upto={shot_t}'
+            fmt = self.url+'_signal.json?from={shot_f}&upto={shot_t}&nSamples=200000'
             params = {}
         else:  # a pattern-based one - used for arrays of probes
             fmt = self.acq.fmt
             params = eval('dict('+self.params+')')
 
-        params.update(f=f, t=t)
+        params.update(shot_f=f, shot_t=t)
         url = fmt.format(**params)
         if pyfusion.VERBOSE > 0:
             print('===> fetching url {u}'.format(u=url))
@@ -137,7 +137,9 @@ class W7XDataFetcher(BaseDataFetcher):
                                      signal=Signal(dat['values']), channels=ch)
         output_data.meta.update({'shot': self.shot})
         output_data.utc = [dat['dimensions'][0], dat['dimensions'][-1]]
-
+        # this is a minor duplication
+        params['data_utc'] = output_data.utc
+        params['pyfusion_version'] = pyfusion.version.get_version()
         if pyfusion.VERBOSE > 0:
             print('shot {s}, config name {c}'
                   .format(c=self.config_name, s=self.shot))
@@ -145,8 +147,9 @@ class W7XDataFetcher(BaseDataFetcher):
         output_data.config_name = self.config_name
 
         debug_(pyfusion.DEBUG, 2, key='W7XDataFetcher')
-        # output_data.params = stprms
-        output_data.utc = [f, t]
+        output_data.params = params
+        
+        ###  the total shot utc.  output_data.utc = [f, t]
         return output_data
 
     def setup(self):

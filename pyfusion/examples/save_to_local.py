@@ -1,4 +1,7 @@
-""" Saves a channel or set of channels (diagnostic) diag_name in local files
+""" 
+********   gets wrong utc for multi channel diags!!!  *********
+
+Saves a channel or set of channels (diagnostic) diag_name in local files
 overwrite_local does an "in-place" compress if True
 local_dir puts the result in that local directory. The compress_local option
 doesn't check if the file is already compressed!
@@ -20,6 +23,10 @@ run pyfusion/examples/save_to_local.py shot_list='[[20160225,s] for s in range(1
 
 from the old pyfusion - may need to tidy up
 _PYFUSION_TEST_@@local_dir=/tmp/ overwrite_local=True
+
+# this example works Mar 8 2016 - need shot list and diag list to avoid problems
+run  pyfusion/examples/save_to_local.py diag_name=1 diag_name="['W7X_L53_LP{nnnn}_I'.format(nnnn=nn) for nn in [1,2,3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21,22]]" shot_list="[[20160302,s] for s in range(1,10)]"  overwrite_local=1 dev_name='W7X'  local_dir='/tmp' exception=Exception
+
 """
 import pyfusion
 from pyfusion.data.save_compress import discretise_signal as savez_new
@@ -30,8 +37,7 @@ import os
 from pyfusion.utils import process_cmd_line_args
 
 _var_defaults="""
-diag_name = 'SLOW2k'
-diag_name = "MP1"
+diag_name = 'SLOW2k'  # Use a list - otherwise process_cmd will not accept a list
 dev_name='LHD'
 readback=False
 downsample=None
@@ -45,10 +51,12 @@ prefix=''  #'HeliotronJ_'
 local_dir=''
 exception= Exception
 pyfusion.RAW=1   # save in raw mode by default, so gain is not applied twice.
+diag_name=["MP1"]
 """
 exec(_var_defaults)
 exec(process_cmd_line_args())
 
+bads = []
 if 'W7' in diag_name and 'LP' in diag_name:
     print('override encode time')
     save_kwargs={"delta_encode_time":False}
@@ -125,6 +133,7 @@ for diag in diag_list:
                         else: 
                             signal = data.signal[c]
                     except exception as reason:
+                        bads.append((shot_number,diag))
                         print('failed to read shot {shot_number}, {r} {args}'
                               .format(shot=shot, r=reason, args=r.args))
 
@@ -136,4 +145,6 @@ for diag in diag_list:
                               verbose=pyfusion.VERBOSE, **save_kwargs)
 
         except exception as reason:
+            bads.append((shot_number,'whole thing'))
             print('skipping shot {s} because {r}'.format(r=reason, s=shot_number))
+print('See bads for {l} errors'.format(l=len(bads)))

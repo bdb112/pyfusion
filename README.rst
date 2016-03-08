@@ -5,7 +5,11 @@ python code for data mining plasma fluctuations
 -----------------------------------------------
 
 
-Update: Version 0.61 includes first working version of W7-X archiveDB
+Update: 
+Version 0.62 alpha includes more timebase checks for W7X, corrected
+gains for channels, and saves utc and params woth data.
+
+Version 0.61 includes first working version of W7-X archiveDB
 support, without much care for python3 compability of the new code.
 beginning support for two component shot number e.g. [20160301,5]
 

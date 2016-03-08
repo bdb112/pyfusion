@@ -98,6 +98,10 @@ VERBOSE = int(os.getenv('PYFUSION_VERBOSE',
 RAW = int(os.getenv('PYFUSION_RAW',
                     config.get('global','RAW',vars={'RAW':'0'})))
 
+# restrict the number of samples to speed up access over slow nets (for debugging of course)
+NSAMPLES = int(os.getenv('PYFUSION_NSAMPLES',
+                    config.get('global','NSAMPLES',vars={'NSAMPLES':'0'})))
+
 root_dir = os.path.split(os.path.abspath( __file__ ))[0]
 
 # cache control is likely to be computer dependent

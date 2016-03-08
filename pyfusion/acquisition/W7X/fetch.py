@@ -67,12 +67,12 @@ def regenerate_dim(x):
     # ignore the two end bins - hopefully there will be very few there
     wmin = np.where(cnts[1:-1] < np.max(cnts[1:-1]))[0]
     if len(wmin)>0:
-        print('********** Gap in data > {p:.2f}%'.format(p=100*len(wmin)/float(len(cnts))))
+        print('**********\n*********** Gap in data > {p:.2f}%'.format(p=100*len(wmin)/float(len(cnts))))
     x01111 = np.ones(len(x))  # x01111 will be all 1s except for the first elt.
     x01111[0] = 0
     errcnt = np.sum(bigcounts) + np.sum(np.sort(counts)[::-1][1:])
     if errcnt>0 or (pyfusion.VERBOSE > 0): 
-        print('********** repaired length of {l:,}, dtns={dtns:,}, {e} erroneous utcs'
+        print('** repaired length of {l:,}, dtns={dtns:,}, {e} erroneous utcs'
               .format(l=len(x01111), dtns=dtns, e=errcnt))
 
     fixedx = np.cumsum(x01111)*dtns
@@ -101,8 +101,17 @@ class W7XDataFetcher(BaseDataFetcher):
             fmt = self.url+'_signal.json?from={shot_f}&upto={shot_t}&nSamples=200000'
             params = {}
         else:  # a pattern-based one - used for arrays of probes
-            fmt = self.acq.fmt
+            if hasattr(self,'fmt'):
+                fmt = self.fmt
+            else:
+                fmt = self.acq.fmt
             params = eval('dict('+self.params+')')
+
+        if 'upto' not in fmt:
+            fmt += '_signal.json?from={shot_f}&upto={shot_t}'
+
+        if ('nSamples' not in fmt) and (pyfusion.NSAMPLES != 0):
+            fmt += '&nSamples={ns}'.format(ns=pyfusion.NSAMPLES)
 
         params.update(shot_f=f, shot_t=t)
         url = fmt.format(**params)
@@ -112,9 +121,9 @@ class W7XDataFetcher(BaseDataFetcher):
         # seems to take twice as long as timeout requested.
         # haven't thought about python3 for the json stuff yet
         try:
-            dat = json.load(urlopen(url,timeout=20))
+            dat = json.load(urlopen(url,timeout=60))
         except URLError as reason:
-            print('timeout on {c}: {u} \n{r}'
+            print('*********\n********timeout on {c}: {u} \n{r}'
                   .format(c=self.config_name, u=url, r=reason))
             raise
 

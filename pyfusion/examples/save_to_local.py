@@ -27,6 +27,8 @@ _PYFUSION_TEST_@@local_dir=/tmp/ overwrite_local=True
 # this example works Mar 8 2016 - need shot list and diag list to avoid problems
 run  pyfusion/examples/save_to_local.py diag_name=1 diag_name="['W7X_L53_LP{nnnn}_I'.format(nnnn=nn) for nn in [1,2,3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21,22]]" shot_list="[[20160302,s] for s in range(1,10)]"  overwrite_local=1 dev_name='W7X'  local_dir='/tmp' exception=Exception
 
+# the rest of the stuff
+run  pyfusion/examples/save_to_local.py diag_name=1 diag_name="['W7X_{nnnn}'.format(nnnn=nn) for nn in ['ECE_12','ECE_13','ECE_14','neL','TotECH','L53_LP1_U','L57_LP1_U']]" shot_list="[[20160302,s] for s in range(1,10)]"  overwrite_local=1 dev_name='W7X'  local_dir='/tmp' exception=Exception
 """
 import pyfusion
 from pyfusion.data.save_compress import discretise_signal as savez_new

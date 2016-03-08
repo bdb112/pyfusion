@@ -459,6 +459,10 @@ def make_mask(NA, norm_passband, norm_stopband, input_data, taper):
     # make the transition width an even number, and the larger of the two
     # need to pull this code out and be sure it works.
     twid = 2*(1+max(n_pb_low - n_sb_low,n_sb_hi - n_pb_hi)//2)
+    if (twid > (n_pb_low - n_sb_low)*3) or (twid > (n_sb_hi - n_pb_hi)*3):
+        print('*********** Warning - unbalanced cutoff rate between high and low end'
+              ' will cause the cutoff rates to be equalised widening one and reducing the other'
+              ' difference between stop and pass bands should be similar ar both ends.')
     if (twid < 4):  # or (n_sb_low < 0):  #< not requ since fixed  
         if taper == 2: 
             raise ValueError(

@@ -255,7 +255,7 @@ if len(clinds) > 35:  # if too many to plot, switch to horizontal legend
     pl.legend(ncol=ncol, mode="expand")
 else:
     pl.legend()
-pl.show()
+pl.show(block=0)
 
 
 """

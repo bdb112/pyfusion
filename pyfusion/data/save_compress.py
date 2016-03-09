@@ -239,6 +239,9 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
     """
     from numpy import remainder, mod, min, max, \
         diff, mean, unique, append
+    from pyfusion.debug_ import debug_
+
+    debug_(pyfusion.DEBUG,1, key='discretise_signal')
 
     dat=discretise_array(signal,eps=eps,verbose=verbose, delta_encode=delta_encode_signal)
 #    signalexpr=str("signal=%g+rawsignal*%g" % (dat['minarr'], dat['deltar']))
@@ -308,13 +311,22 @@ def newload(filename, verbose=verbose):
         return(dic)  # quick, minimal return
 
     if verbose>2: print(' contains %s' % dic.files)
-    signalexpr=dic['signalexpr']
-    timebaseexpr=dic['timebaseexpr']
-# savez saves ARRAYS always, so have to turn array back into scalar    
-    exec(signalexpr.tolist())
-    exec(timebaseexpr.tolist())
+    # savez saves ARRAYS always, so have to turn array back into scalar    
+    signalexpr=dic['signalexpr'].tolist()
+    timebaseexpr=dic['timebaseexpr'].tolist()
+    # fixup for files written with np.nan removal and and cumsum
+    if ('cumsum' in timebaseexpr) and ('np.nan' in timebaseexpr):
+        print('!!!!!!!!!!!! fixup of nans with cumsum !!!!!!!!!!!!!!!!!!')
+        timebaseexpr = timebaseexpr.replace("timebase=",
+                             "temp=").replace("*2e-06","\ntimebase=temp*2e-06")
+        timebaseexpr = timebaseexpr.replace("== dic['rawtimebase']","== temp")
+
+    exec(signalexpr)
+    exec(timebaseexpr)
     retdic = {"signal":signal, "timebase":timebase, "parent_element":
-              dic['parent_element'], "params": dic['params'].tolist()}
+              dic['parent_element']}
+
+    if 'params' in dic: retdic.update({"params": dic['params'].tolist()})
     return(retdic)
 
     # return({"signal":signal, "timebase":timebase, "parent_element": dic['parent_element']})

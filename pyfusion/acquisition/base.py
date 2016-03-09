@@ -61,7 +61,7 @@ else:
 def try_fetch_local(input_data, bare_chan):
     """ return data if in the local cache, otherwise None
     doesn't work for single channel HJ data.
-    sgn (incl. gain) should be only be used at the single channel base/fetch level
+    sgn (not gain) be only be used at the single channel base/fetch level
     """
     for each_path in pyfusion.config.get('global', 'localdatapath').split('+'):
         # check for multi value shot, e.g. utc bounds for W7-X data
@@ -92,9 +92,12 @@ def try_fetch_local(input_data, bare_chan):
     output_data.config_name = bare_chan
     # would be nice to get to the gain here - but how - maybe setup will get it
     output_data.meta.update({'shot':input_data.shot})
-    if 'utc' in signal_dict['params']:
-        output_data.utc =  signal_dict['params']['utc']
+    if 'params' in signal_dict: 
+        output_data.params = signal_dict['params']
+        if 'utc' in signal_dict['params']:
+            output_data.utc =  signal_dict['params'].get('utc',None)
     else:
+        # yes, it seems like duplication, but no
         output_data.utc = None
     return(output_data)
 
@@ -246,8 +249,10 @@ class BaseDataFetcher(object):
         else: exception = Exception
         sgn = 1
         chan = self.config_name
-        if chan[0]=='-': sgn = -sgn
-        bare_chan = (chan.split('-'))[-1]
+        if chan[0]=='-': #sgn = -sgn
+            raise ValueError('Channel {chan} should not have sign at this point'
+                             .format(chan=chan))
+        #bare_chan = (chan.split('-'))[-1]
         # use its gain, or if it doesn't have one, its acq gain.
         if pyfusion.RAW == 0:
             gain_units = "1 arb"  # default to gain 1, no units
@@ -261,7 +266,7 @@ class BaseDataFetcher(object):
         sgn *= float(gain_units.split()[0])
         if pyfusion.VERBOSE > 0: print('Gain factor', sgn, self.config_name)
 
-        tmp_data = try_fetch_local(self, bare_chan)  # is there a local copy?
+        tmp_data = try_fetch_local(self, chan)  # is there a local copy?
         if tmp_data is None:
             method = 'specific'
             try:
@@ -311,7 +316,7 @@ class BaseDataFetcher(object):
         if len(gain_units.split()) > 1:
             data.channels.units = gain_units.split()[-1]
         else:
-            data.channels.units = ' '
+            data.channels.units = data.units if hasattr(data,'units') else ' '
         if method == 'specific':  # don't pull down if we didn't setup
             self.pulldown()
         return data
@@ -372,7 +377,10 @@ class MultiChannelFetcher(BaseDataFetcher):
         else:
             t_range = []
         for chan in ordered_channel_names:
-            ch_data = self.acq.getdata(self.shot, chan)
+            sgn = 1
+            if chan[0]=='-': sgn = -sgn
+            bare_chan = (chan.split('-'))[-1]
+            ch_data = self.acq.getdata(self.shot, bare_chan)
             if len(t_range) == 2:
                 ch_data = ch_data.reduce_time(t_range)
 
@@ -400,7 +408,7 @@ class MultiChannelFetcher(BaseDataFetcher):
                     tb_chan = ch_data.channels
 
                 # for the first, append the whole signal
-                data_list.append(ch_data.signal)
+                data_list.append(sgn * ch_data.signal)
             else:
                 if hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'True':
                     # append regardless, but will have to go back over

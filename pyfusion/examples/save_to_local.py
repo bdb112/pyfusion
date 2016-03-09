@@ -35,6 +35,7 @@ from pyfusion.data.save_compress import discretise_signal as savez_new
 import pyfusion.utils
 import numpy as np
 import os
+from pyfusion.debug_ import debug_
 
 from pyfusion.utils import process_cmd_line_args
 
@@ -59,9 +60,6 @@ exec(_var_defaults)
 exec(process_cmd_line_args())
 
 bads = []
-if 'W7' in diag_name and 'LP' in diag_name:
-    print('override encode time')
-    save_kwargs={"delta_encode_time":False}
 
 #s = pyfusion.get_shot(shot_number)
 #s.load_diag(diag_name, savelocal=True, ignorelocal=(compress_local==None), downsample=True)
@@ -90,6 +88,10 @@ else:
     diag_list = diag_name
     
 for diag in diag_list:
+    if 'W7' in diag and 'LP' in diag:
+        print('override encode time')
+        save_kwargs={"delta_encode_time":False}
+
     diag = prefix+diag
     for shot_number in shot_list:
         dev = pyfusion.getDevice(dev_name)
@@ -142,6 +144,7 @@ for diag in diag_list:
                     if os.path.isfile(localfilename) and not overwrite_local:
                         raise IOError('file {f} exists'.format(f=localfilename))
 
+                    debug_(pyfusion.DEBUG,1, key='save_to_local')
                     savez_new(signal=signal, timebase=tb, filename=localfilename, 
                               params = np.array(params),
                               verbose=pyfusion.VERBOSE, **save_kwargs)

@@ -2,6 +2,17 @@
 Example of data reaching over a break in time
 run pyfusion/examples/plot_signals.py  dev_name='W7X' diag_name=W7X_L53_LP1 shot_number=[1457015819400000000,1457015821000000000] hold=1 sharey=2
 best to limit nSamples to ~ 10k - see pyfusion.cfg
+
+Test method: Clumsy
+uncomment file:// in pyfusion.cfg
+from pyfusion.acquisition.W7X import fetch
+ff=fetch.W7XDataFetcher("W7X_L53_LP7_I",[20160302,26])
+ff.fmt='file:///data/databases/W7X/cache/archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.{CDS}/DataModuleDesc.{DMD}_DATASTREAM/{ch}/Channel_{ch}/scaled/_signal.json?from={shot_f}&upto={shot_t}'
+ff.params='CDS=82,DMD=190,ch=2'
+ff.do_fetch()
+ff.repair=1   # or 0,2
+
+Would be better to have an example with non-trivial units
 """
 
 from future.standard_library import install_aliases
@@ -142,11 +153,13 @@ class W7XDataFetcher(BaseDataFetcher):
         else:
             raise ValueError('repair value of {r} not understood'.format(r=self.repair))
 
+        if pyfusion.VERBOSE>2:  print('repair',self.repair)
         output_data = TimeseriesData(timebase=Timebase(1e-9*dim),
                                      signal=Signal(dat['values']), channels=ch)
         output_data.meta.update({'shot': self.shot})
         output_data.utc = [dat['dimensions'][0], dat['dimensions'][-1]]
-        # this is a minor duplication
+        output_data.units = dat['units'] if 'units' in dat else ''
+        # this is a minor duplication - at least it gets saved via params
         params['data_utc'] = output_data.utc
         params['pyfusion_version'] = pyfusion.version.get_version()
         if pyfusion.VERBOSE > 0:
@@ -154,7 +167,6 @@ class W7XDataFetcher(BaseDataFetcher):
                   .format(c=self.config_name, s=self.shot))
 
         output_data.config_name = self.config_name
-
         debug_(pyfusion.DEBUG, 2, key='W7XDataFetcher')
         output_data.params = params
         

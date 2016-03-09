@@ -1,5 +1,5 @@
 """ 
-********   gets wrong utc for multi channel diags!!!  *********
+hopefully we have fixed getting wrong utc for multi channel diags!!!  *********
 
 Saves a channel or set of channels (diagnostic) diag_name in local files
 overwrite_local does an "in-place" compress if True
@@ -29,6 +29,11 @@ run  pyfusion/examples/save_to_local.py diag_name=1 diag_name="['W7X_L53_LP{nnnn
 
 # the rest of the stuff
 run  pyfusion/examples/save_to_local.py diag_name=1 diag_name="['W7X_{nnnn}'.format(nnnn=nn) for nn in ['ECE_12','ECE_13','ECE_14','neL','TotECH','L53_LP1_U','L57_LP1_U']]" shot_list="[[20160302,s] for s in range(1,10)]"  overwrite_local=1 dev_name='W7X'  local_dir='/tmp' exception=Exception
+
+New version
+run pyfusion/examples/save_to_local.py "shot_list=shot_range([20160309,6],[20160309,9])" diag_name='["W7X_L53_LPALL","W7X_L57_LPALL","W7X_TotECH","W7X_neL","W7X_ECE_axis"]'
+run pyfusion/examples/save_to_local.py "shot_list=shot_range([20160309,6],[20160309,9])" diag_name='["W7X_TotECH","W7X_L57_LPALL"]'
+
 """
 import pyfusion
 from pyfusion.data.save_compress import discretise_signal as savez_new
@@ -39,22 +44,53 @@ from pyfusion.debug_ import debug_
 
 from pyfusion.utils import process_cmd_line_args
 
+from pyfusion.acquisition.W7X.get_shot_utc import get_shot_utc
+
+def next_shot(shot):
+    if isinstance(shot,(tuple, list, np.ndarray)):
+        return([shot[0], shot[1] + 1])
+    else:
+        return(shot + 1)
+
+def shot_gte(shot1, shot2):
+    if isinstance(shot1,(tuple, list, np.ndarray)):
+        if shot1[0]>shot2[0]: 
+            return(True)
+        elif shot1[0] == shot2[0]:
+            return(shot1[1] >= shot2[1])
+        else:
+            return(False)
+    else: return(shot1 >= shot2)
+
+def shot_range(shot_from, shot_to):
+    rng = []
+    shot = shot_from
+    while True:
+        if shot_gte(shot, shot_to):
+            return(rng)
+        if get_shot_utc(*shot, quiet=True) is not None:
+            rng.append(shot)
+        shot = next_shot(shot)
+        # this part is a fudge, but only needed for two component shots
+        if shot[1]>150:   # assume max per day
+            shot[0] += 1
+            shot[1] = 1
+
 _var_defaults="""
 diag_name = 'SLOW2k'  # Use a list - otherwise process_cmd will not accept a list
-dev_name='LHD'
+dev_name='W7X'
 readback=False
 downsample=None
 time_range=None
-shot_list=33343  # number or a list
-shot_list=[27233]
+shot_list=[27233]  # make it a list so that process_cmd_line_args is happy
 compress_local=1
-overwrite_local=False
+overwrite_local=True
 save_kwargs = {} 
 prefix=''  #'HeliotronJ_'
-local_dir=''
-exception= Exception
+local_dir='/tmp'
+exception = Exception
 pyfusion.RAW=1   # save in raw mode by default, so gain is not applied twice.
-diag_name=["MP1"]
+diag_name=["W7X_TotECH"]
 """
 exec(_var_defaults)
 exec(process_cmd_line_args())
@@ -87,39 +123,48 @@ if len(np.shape(diag_name)) == 0:
 else:
     diag_list = diag_name
     
-for diag in diag_list:
-    if 'W7' in diag and 'LP' in diag:
-        print('override encode time')
-        save_kwargs={"delta_encode_time":False}
+for shot_number in shot_list:
+    dev = pyfusion.getDevice(dev_name)
+    for diag in diag_list:
+        if 'W7' in diag and 'LP' in diag:
+            print('override encode time')
+            save_kwargs={"delta_encode_time":False}
 
-    diag = prefix+diag
-    for shot_number in shot_list:
-        dev = pyfusion.getDevice(dev_name)
-        try: 
-            data = dev.acq.getdata(shot_number, diag)
-            if downsample is not None:
-                data = data.downsample(downsample)
+        diag = prefix + diag
 
-            if time_range is not None:  # not tested!!
-                data = data.reduce_time(time_range, fftopt=True)
+        try:   # catch on a per diagnostic or multi bases
+            params = pyfusion.conf.utils.get_config_as_dict('Diagnostic',diag)
+            chan_list = []
+            if (params['data_fetcher']
+                == 'pyfusion.acquisition.base.MultiChannelFetcher'):
+                for key in params:
+                    if 'channel_' in key:
+                        chan_list.append(params[key])
+            else:
+                chan_list = [diag]
 
-            # I don't believe this test - always true!
+            for diag_chan in chan_list:
+                data = dev.acq.getdata(shot_number, diag_chan)
+                chan = data.channels
+                if downsample is not None:
+                    data = data.downsample(downsample)
 
-            if readback:
-                srb = pyfusion.get_shot(shot_number)
-                srb.load_diag(diag, savelocal=False, ignorelocal=False)
-                srb==s
+                if time_range is not None:  # not tested!!
+                    data = data.reduce_time(time_range, fftopt=True)
 
-            if (compress_local is not None):
-                from pyfusion.data.save_compress import discretise_signal as savez_new
-                from matplotlib.cbook import is_string_like
+                # I don't believe this test - always true!
 
-                tb = data.timebase
-                singleton =  len(np.shape(data.channels))==0
-                if singleton:  chan_list = [data.channels]
-                else: chan_list = data.channels
+                if readback:
+                    srb = pyfusion.get_shot(shot_number)
+                    srb.load_diag(diag_chan, savelocal=False, ignorelocal=False)
+                    srb==s
 
-                for (c,chan) in enumerate(chan_list):
+                if (compress_local is not None):
+                    from pyfusion.data.save_compress import discretise_signal as savez_new
+                    from matplotlib.cbook import is_string_like
+
+                    tb = data.timebase
+
                     if local_dir !='':
                         #probably should be chan.config_name here (not chan.name)
                         localfilename = getlocalfilename(
@@ -127,19 +172,11 @@ for diag in diag_list:
                     else:
                         localfilename = getlocalfilename(shot_number, chan.config_name)
 
-                    params = dict(name = diag, device = dev_name, utc=data.utc, raw=pyfusion.RAW)
+                    params = dict(name = diag_chan, device = dev_name, utc=data.utc, raw=pyfusion.RAW)
                     if hasattr(data, 'params'):  # add the other params
                         params.update(data.params)
 
-                    try:
-                        if singleton:
-                            signal = data.signal
-                        else: 
-                            signal = data.signal[c]
-                    except exception as reason:
-                        bads.append((shot_number,diag))
-                        print('failed to read shot {shot_number}, {r} {args}'
-                              .format(shot=shot, r=reason, args=r.args))
+                    signal = data.signal
 
                     if os.path.isfile(localfilename) and not overwrite_local:
                         raise IOError('file {f} exists'.format(f=localfilename))

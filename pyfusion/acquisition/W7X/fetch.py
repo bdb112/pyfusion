@@ -21,6 +21,7 @@ install_aliases()
 from urllib.parse import urlparse, urlencode
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
+import socket
 
 import tempfile
 import numpy as np
@@ -132,9 +133,13 @@ class W7XDataFetcher(BaseDataFetcher):
         # seems to take twice as long as timeout requested.
         # haven't thought about python3 for the json stuff yet
         try:
+            dat = json.load(urlopen(url,timeout=30))
+        except socket.timeout:
+            # should check if this is better tested by the URL module
+            print('****** first timeout error *****')
             dat = json.load(urlopen(url,timeout=60))
-        except URLError as reason:
-            print('*********\n********timeout on {c}: {u} \n{r}'
+        except Exception as reason:
+            print('********Exception***** on {c}: {u} \n{r}'
                   .format(c=self.config_name, u=url, r=reason))
             raise
 

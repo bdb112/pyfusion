@@ -6,6 +6,14 @@ python code for data mining plasma fluctuations
 
 
 Update: 
+Version 0.64 beta has improved processing of clipped, swept Langmuir probe data,
+Next version will have multi-channel data extraction system using pyfusion 'Dictionary of Arrays'.
+
+Version 0.63 beta has fixes for multichannel diagnostic local saves,
+and convenient entry for large ranges of data and shots.
+Initial Langmuir analysis in process_swept_Langmuir, and pyfusion.CACHE to
+allow local chaching of json data. (very large!)
+
 Version 0.62 alpha includes more timebase checks for W7X, corrected
 gains for channels, and saves utc and params woth data.
 

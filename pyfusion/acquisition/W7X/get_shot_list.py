@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 """ By extracting all progId, comments and dates, in ProjectDesc,
 create a table to connect shots, dates and times.
+
+Would be nice to have scenId and segId, but the relationship is not 1:1
+To find segment 1 in scenario 2, shot xx need to find the utc range of shot xx,
+find the scenarios in that utc, select 2, then find the segments within the
+UTC range of the scenario, and identify segId 1.   Tricky.
 """
 
 from __future__ import print_function
@@ -44,11 +49,14 @@ if update:
     reader = codecs.getreader("utf-8")
 
     shotinfo = {}
+    # for each of the three variables, get a dictionary of values and times
     for itm in ['comment','ProgramLogLabel/progId','ProgramLogLabel/date']:
         key = itm.split('/')[-1]  # choose the last part of the name
         url = ArchiveDB.format(key=itm,fr_utc=fr_utc,to_utc=to_utc)
         shotinfo.update({key: json.load(reader(urlopen(url)))})
 
+    # There should be a progId, comment and date for each shot.
+    # and the date (or progId) should have two times - start and end - hence::2
     shotDA = {}
     for k in shotinfo:
         shotDA.update({k: shotinfo[k]['values'][::2]})
@@ -56,9 +64,11 @@ if update:
     shotDA.update({'start_utc': shotinfo['date']['dimensions'][::2]})
     shotDA.update({'end_utc': shotinfo['date']['dimensions'][1::2]})
 
+    # change the integer types to numpy int64 arrays for safety
     for k in ['date','progId', 'start_utc', 'end_utc']:
       shotDA.update({k: np.array(shotDA[k], np.int64)})  # make it an array of ints
 
+    # gather a few statistics to print, and a day's comments
     d = np.unique(shotDA['date'])
     wL = np.where((shotDA['end_utc']-shotDA['start_utc'])>60e9)[0]
     print('Over {d} days, there were {n} shots, {N} longer than 100ms'

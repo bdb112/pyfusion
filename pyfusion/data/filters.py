@@ -586,7 +586,7 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
                          .format(pb=passband, sb=stopband))
     norm_passband = input_data.timebase.normalise_freq(np.array(passband))
     norm_stopband = input_data.timebase.normalise_freq(np.array(stopband))
-    NS = len(input_data.signal[0])
+    NS = len(input_data.timebase)
     NA = next_nice_number(NS)
     input_data.history += str(" {fftt} : nice number: {NA} cf {NS}\n"
                               .format(fftt=pyfusion.fft_type, NA=NA, NS=NS))
@@ -625,6 +625,10 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         # example of tuning
         #pyfusion.fftw3_args= {'planning_timelimit': 50.0, 'threads':1, 'flags':['FFTW_MEASURE']}
 
+    singl = not isinstance(output_data.signal, (list, tuple))
+    if singl:
+        output_data.signal = [output_data.signal]
+                        
     for i,s in enumerate(output_data.signal):
         #if len(output_data.signal) == 1: print('bug for a single signal')
 
@@ -684,6 +688,9 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         plt.show()
     debug_(debug, 2, key='filter_fourier')
     if np.max(mask) == 0: raise ValueError('Filter blocks all signals')
+    if singl:
+        output_data.signal = output_data.signal[0]
+
     return output_data
 
 
@@ -814,7 +821,7 @@ if __name__ == "__main__":
 
     class dummysig():
         def __init__(self, tb,sig):
-            """ timebase is given as an array in seoncds
+            """ timebase is given as an array in seconds
             30 (10 lots of three) signals are generated: as scaled copies 1,2,3x
             """
             self.timebase = tb

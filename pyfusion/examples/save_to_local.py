@@ -44,7 +44,7 @@ from pyfusion.debug_ import debug_
 
 from pyfusion.utils import process_cmd_line_args
 
-from pyfusion.acquisition.W7X.get_shot_utc import get_shot_utc
+from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
 
 def next_shot(shot):
     if isinstance(shot,(tuple, list, np.ndarray)):

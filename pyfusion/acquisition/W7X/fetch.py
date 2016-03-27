@@ -35,7 +35,7 @@ import json
 from pyfusion.debug_ import debug_
 import sys
 
-from .get_shot_utc import get_shot_utc
+from .get_shot_info import get_shot_utc
 
 VERBOSE = pyfusion.VERBOSE
 
@@ -108,15 +108,20 @@ class W7XDataFetcher(BaseDataFetcher):
         else:
             f,t = get_shot_utc(*self.shot)
         # A URL STYLE diagnostic - used for a one-off
+        # this could be moved to setup so that the error info is more complete
         if hasattr(self,'url'):
             fmt = self.url+'_signal.json?from={shot_f}&upto={shot_t}'
             fmt = self.url+'_signal.json?from={shot_f}&upto={shot_t}&nSamples=200000'
             params = {}
         else:  # a pattern-based one - used for arrays of probes
-            if hasattr(self,'fmt'):
+            if hasattr(self,'fmt'):  #  does the diagnostic have one?
                 fmt = self.fmt
-            else:
+            elif hasattr(self.acq,'fmt'):  # else use the acq.fmt
                 fmt = self.acq.fmt
+            else:  #  so far we have no quick way to check the server is online
+                raise LookupError('no fmt - perhaps pyfusion.cfg has been '
+                                  'edited because the url is not available')
+
             params = eval('dict('+self.params+')')
 
         if 'upto' not in fmt:
@@ -127,17 +132,25 @@ class W7XDataFetcher(BaseDataFetcher):
 
         params.update(shot_f=f, shot_t=t)
         url = fmt.format(**params)
+        if pyfusion.CACHE:
+            import os
+            print('using wget on {url}'.format(url=url))
+            os.system('wget -x "{url}"'.format(url=url))
+            # now read from the local copy - it is in the wd, so only //
+            # but it seems we need the full path for now
+            url = url.replace('http://','file:///home/bdb112/pyfusion/working/pyfusion/')
+            print('now trying {url}'.format(url=url))
         if pyfusion.VERBOSE > 0:
             print('===> fetching url {u}'.format(u=url))
 
         # seems to take twice as long as timeout requested.
         # haven't thought about python3 for the json stuff yet
         try:
-            dat = json.load(urlopen(url,timeout=30))
+            dat = json.load(urlopen(url,timeout=pyfusion.TIMEOUT))
         except socket.timeout:
             # should check if this is better tested by the URL module
             print('****** first timeout error *****')
-            dat = json.load(urlopen(url,timeout=60))
+            dat = json.load(urlopen(url,timeout=3*pyfusion.TIMEOUT))
         except Exception as reason:
             print('********Exception***** on {c}: {u} \n{r}'
                   .format(c=self.config_name, u=url, r=reason))

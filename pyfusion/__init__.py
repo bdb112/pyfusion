@@ -98,6 +98,15 @@ VERBOSE = int(os.getenv('PYFUSION_VERBOSE',
 RAW = int(os.getenv('PYFUSION_RAW',
                     config.get('global','RAW',vars={'RAW':'0'})))
 
+# if 1, will wget -x first to cache a local copy, then use it
+CACHE = int(os.getenv('PYFUSION_CACHE',
+                    config.get('global','CACHE',vars={'CACHE':'0'})))
+
+# so far implemented for W7X url fetch_mode only
+# will produce warning and try a second time for 3x the timeout value
+TIMEOUT = int(os.getenv('PYFUSION_TIMEOUT',
+                    config.get('global','TIMEOUT',vars={'TIMEOUT':'30'})))
+
 # restrict the number of samples to speed up access over slow nets (for debugging of course)
 NSAMPLES = int(os.getenv('PYFUSION_NSAMPLES',
                     config.get('global','NSAMPLES',vars={'NSAMPLES':'0'})))

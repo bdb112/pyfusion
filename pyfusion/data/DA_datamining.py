@@ -15,10 +15,50 @@ try:
     from pyfusion.debug_ import debug_
 except:
     def debug_(debug, msg='', *args, **kwargs):
-        if debug>0:
-            print('attempt to debug {msg}'.format(msg=msg)+ 
+        if debug > 0:
+            print('attempt to debug {msg}'.format(msg=msg) +
                   " need boyd's debug_.py to debug properly")
 
+
+class Masked_da():
+    """ to be a virtual sub dictionary of a DA, returning applicable (valid_keys) elements, masked by
+    self.mask to have Nans in the positions where mask = True
+
+    Example:
+    from pyfusion.data.DA_datamining import Masked_da, DA
+    da=DA('20160310_9_L57',load=1)
+    da.masked=Masked_da(['Te','I0','Vp'], DA=da)
+    da.da['mask']=-da['resid']/abs(da['I0'])<.35
+    clf();plot(da.masked['Te']);ylim(0,100)
+
+  """
+    def __init__(self, valid_keys = [], DA=None):
+        # nothing much to do
+        self.DA = DA
+        self.valid_keys = valid_keys
+
+
+    def keys(self):
+        if 'mask' not in self.DA :
+            print('no mask set')
+            return([])
+        else:
+            return(self.valid_keys)
+
+    def __getitem__(self, key):
+        if 'mask' not in self.DA:
+            raise KeyError(key, 'no mask set')
+        elif key not in self.valid_keys:
+            raise KeyError(key)
+        elif np.shape(self.DA['mask']) != np.shape(self.DA[key]):
+            ms = np.shape(self.DA['mask'])
+            ds = np.shape(self.DA[key])
+            raise ValueError('mask shape {ms} does not match data shape {ds}'.format(ms=ms, ds=ds))
+        else:
+            tmp = self.DA.da[key].copy()
+            tmp = np.where(self.DA['mask'] == 1, tmp, np.nan)
+            return(tmp)
+            
 def info_to_bytes(inf):
     #for k in inf:  # just do comment for now
     # can't do isinstance(xx, unicode) as unicode is not defined in P3
@@ -566,6 +606,9 @@ class DA():
         # key 'info' should be replaced by the more up-to-date self. copy
         self.da = dd
         self.update({'info': self.infodict}, check=False)
+        if 'mask' in self.da:  # give it the Masked_da property
+            valid_keys = self.infodict.get('valid_keys',[])
+            self.masked = Masked_da(valid_keys, self)
         if self.verbose: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
         report_mem(start_mem)
         return(True)
@@ -640,6 +683,11 @@ class DA():
             print('lengths: {0} -999 indicates dodgy variable'
                    .format([mylen(save_dict[k]) for k in use_keys]))
 
+        if 'mask' in self.da:
+            self.infodict.update({'valid_keys': self.masked.valid_keys})
+            self.da['info'] = np.array(self.infodict)
+            self.update({'info': self.infodict}, check=False)
+
         if self.debug:
             print('saving '+filename, args)
 
@@ -648,12 +696,12 @@ class DA():
 
         if verbose: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
 
-    def extract(self, dictionary = False, varnames=None, inds = None, limit=None,strict=0, debug=0):
+    def extract(self, dictionary=False, varnames=None, inds=None, limit=None, strict=0, masked=1, debug=0):
         """ extract the listed variables into the dictionary (local by default)
         selecting those at indices <inds> (all be default
         variables must be strings, either an array, or separated by commas
-        
-        if the dictionary is False, return them in a tuple instead 
+
+        if the dictionary is False, return them in a tuple instead
         Note: returning a list requires you to make the order consistent
 
         if varnames is None - extract all.
@@ -710,8 +758,13 @@ class DA():
                                 # this is normally OK if you use self.update
                 debug_(debug,key='extract')
                 # used to refer to da[k] twice - two reads if npz
-                dak = self.da[k]  # we know we want it - let's 
-                                  # hope space is not wasted
+                # if masking is enabled and it is a legitimate key for masking, use the masked version
+                if masked and hasattr(self, 'masked') and k in self.masked.keys():
+                    print('extracting masked values for {k} - use masked=0 to get raw values'.format(k=k))
+                    dak = self.masked[k]
+                else:
+                    dak = self.da[k]  # we know we want it - let's 
+                                      # hope space is not wasted
                 if hasattr(dak,'keys'): # used to be self.da[k]
                     allvals = dak
                 else:

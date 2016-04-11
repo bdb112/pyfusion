@@ -9,7 +9,7 @@ import os
 
 
 def join_segments(*args):
-    """ take a list or array of sequences rpepresenting line coordinates, and join them
+    """ take a list or array of sequences representing line coordinates, and join them
     using nans as the separator.  This way plotting will be faster, and rasterization 
     will be more efficient.  Works on one or more lists, typical call is
 

@@ -16,7 +16,7 @@ def analytic_signal(x):
     x = x - np.mean(x)
     return(x+1j*hilbert(x))
 
-def restore_sin(data, t_range=None, method=2, sweep_freq= 500, Vpp=90*2, clip_level_minus=-88, verbose=1):
+def restore_sin(data, t_range=None, chan=None, method=2, sweep_freq= 500, Vpp=90*2, clip_level_minus=-88, verbose=1):
     """ Restore the clipped part of the sinusoid - see
     examples/restore_sin for the old script version
 
@@ -28,7 +28,12 @@ def restore_sin(data, t_range=None, method=2, sweep_freq= 500, Vpp=90*2, clip_le
     if t_range is not None:
         rd = data.reduce_time(t_range)
     else:
-        rd = data
+        rd = data.copy()  # so fudge below will work
+
+    # a big fudge to allow this to work on one channel!!! beware
+    if chan is not None:
+        rd.signal = rd.signal[chan]
+        rd.channels = rd.channels[chan]
 
     if verbose>0:
         rd.plot_signals()
@@ -41,30 +46,31 @@ def restore_sin(data, t_range=None, method=2, sweep_freq= 500, Vpp=90*2, clip_le
     amp = np.abs(analytic_signal(fd.signal))/np.sqrt(2)
     # normalise to one
     amp = amp/np.average(amp)
-    fig, ax1 = plt.subplots(1,1)
-    if verbose>0: 
-        ax1.plot(rd.timebase, rd.signal,'b', label = 'orig',linewidth=.3)
-    if verbose>1:
-        ax1.plot(rd.timebase, fd.signal,'g',label = 'filtered',linewidth=.3)
-    if method==1:
-        ax1.plot(rd.timebase, fd.signal/amp,'m', label='corrected',linewidth=.3)
-        ax1.plot(rd.timebase, 50*(1.3*amp-2.1) + 1.2*fd.signal/amp,'r', label='corrected')
+    if verbose > 0:
+        fig, ax1 = plt.subplots(1, 1)
+    if verbose > 0:
+        ax1.plot(rd.timebase, rd.signal, 'b', label='orig', linewidth=.3)
+    if verbose > 1:
+        ax1.plot(rd.timebase, fd.signal, 'g', label='filtered', linewidth=.3)
+    if method == 1:
+        ax1.plot(rd.timebase, fd.signal/amp, 'm', label='corrected', linewidth=.3)
+        ax1.plot(rd.timebase, 50*(1.3*amp-2.1) + 1.2*fd.signal/amp, 'r', label='corrected')
 
     # not bad, but try making the amplitude constant first, then take the
     # difference , excluding the clipped part, boxcar averaged over a
     # small, whole number of periods
 
     for i in range(2):  # iterate to restore amplitude to a constant
-    # first the reconstructed amplitude
-        reconst = 1.0 * fd.signal # make a copy of the signal
+        # first the reconstructed amplitude
+        reconst = 1.0 * fd.signal  # make a copy of the signal
         amprec = np.abs(analytic_signal(reconst))
         reconst = Vpp/2.0 * reconst/amprec
-    if method==2:
-        if verbose>0:
-            ax1.plot(rd.timebase, reconst,'m', label='reconst before DC adjust')
+    if method == 2:
+        if verbose > 0:
+            ax1.plot(rd.timebase, reconst, 'm', label='reconst before DC adjust')
 
     # should have a very nice constant ampl. sinusoid
-    # now blank out the clipped, use given value because amplifier clipping 
+    # now blank out the clipped, use given value because amplifier clipping
     # is 'soft', so automatic detection of clipping is not simple.
     wc = np.where(rd.signal < clip_level_minus)[0]
     weight = 1 + 0*reconst
@@ -75,14 +81,14 @@ def restore_sin(data, t_range=None, method=2, sweep_freq= 500, Vpp=90*2, clip_le
     for i in range(6):
         err = rd.signal - reconst
         err[wc] = 0
-        if verbose>0:
+        if verbose > 0:
             print('average error {e:.3g}'.format(e=float(np.sum(err)/np.sum(weight))))
         corrn = np.cumsum(err[0:-period]) - np.cumsum(err[period:])
         divisor = np.cumsum(weight[0:-period]) - np.cumsum(weight[period:]) 
         wnef = np.where(divisor <= 100)[0]
         divisor[wnef] = 100
-        if verbose>1:
-            ax1.plot(rd.timebase, reconst, '--', 
+        if verbose > 1:
+            ax1.plot(rd.timebase, reconst, '--',
                      label='reconst, offset {i}'.format(i=i))
         # reconst[period//2:-period//2] = reconst[period//2:-period//2] - corrn/divisor
         reconst[period//2:1-period//2] = reconst[period//2:1-period//2] + smooth(err,period)/smooth(weight,period)

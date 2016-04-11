@@ -6,6 +6,10 @@ python code for data mining plasma fluctuations
 
 
 Update: 
+Version 0.65 has Langmuir processsing separated into two objects (see
+data/process_swept_Langmuir), optimised and saved as dictionary of
+array (DA) files, with a built in mask of dubious data.
+
 Version 0.64 beta has improved processing of clipped, swept Langmuir probe data,
 Next version will have multi-channel data extraction system using pyfusion 'Dictionary of Arrays'.
 

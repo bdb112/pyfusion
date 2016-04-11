@@ -53,6 +53,7 @@ Problem: cif8388608, setup: 72.35 s, time: 204.83 ms, ''mflops'': 4709.6
 """ 
 
 import numpy as np
+
 import math
 
 def primesfrom2to2(n):
@@ -89,37 +90,50 @@ def primefactors(x, limit=2**63):
     """
     # with np.sqrt and % 100, 363us for 2**20-3
     # with math.sqrt and %15  298us for 2**20-3    14.9 for 2*20
-    factorlist=[]
-    loop=2
-    while loop<=min(limit, x):
-        if x%loop==0:
-            x/=loop
+    factorlist = []
+    loop = 2
+    while loop <= min(limit, x):
+        if x % loop == 0:
+            x /= loop
             factorlist.append(loop)
         else:
-            if loop==2:
-                loop+=1
-            else: loop+=2
+            if loop == 2:
+                loop += 1
+            else: loop += 2
         # try to avoid taking sqrt too often
-        if loop>limit or (((loop-1)%15)==0 and loop>math.sqrt(x)):
+        if loop > limit or (((loop-1) % 15) == 0 and loop > math.sqrt(x)):
             factorlist.append(x)
             return(factorlist)
 
     return factorlist
 
-def fft_time_estimate(n, fft_type='numpy'):
-    """ time in sec """
+
+def fft_time_estimate(n, fft_type='numpy', plimit=30):
+    """ time in sec
+    fft_type = 'numpy','fftw3' or 'scipy.hilbert'
+
+    plimit prevents wasting time on large prime factors
+    Saving is typically only a factor of up to 2 or 3 because
+    the only difference is when the second largest PF is gt plimit
+    and there are few of these, so plimit=30 is fine.
+    For example the tests below (near 32768) work fine with 30
+    """
     # FFT is supposed to be N.log N, (FMM) is O(n)
-    if len(np.shape(n))>0:  # n for fastest is int(fft_time_estimate(arange)[0][0])
+    if len(np.shape(n)) > 0:  # n for fastest is int(fft_time_estimate(arange)[0][0])
         ans = [(nn, fft_time_estimate(nn)) for nn in n]
-        return([ans[i] for i in np.argsort(ans,axis=0)[:,1]])
-    facts = primefactors(n)
+        return([ans[i] for i in np.argsort(ans, axis=0)[:, 1]])
+    facts = primefactors(n, limit=plimit)
     if fft_type == 'numpy':
-        time_cal = 2.6e-10 #  ohead-7, oheadlog=1 E4300, float64 complex fft numpy
-        ohead,oheadlog = 34,-.5 
-    elif fft_type=='fftw3':
+        # time_cal = 2.6e-10 #  ohead-7, oheadlog=1 E4300, float64 complex fft numpy
+        time_cal = 6.5e-11  # t440p ohead, oheadlog = 34, -.5
+        ohead, oheadlog = 34, -.5
+    elif fft_type == 'fftw3':
         time_cal = 1.9e-13
-        ohead,oheadlog = 2.3e4,-1
-        print('Warning- this is a lousy fit!')
+        ohead, oheadlog = 2.3e4, -1
+        print('Warning- this is a lousy fit!'),
+    elif fft_type == 'scipy.hilbert':
+        time_cal = 6.5e-11  # t440p
+        ohead, oheadlog = 60, -0.5
 
     else: raise ValueError('fft_type {f} not understood'.format(f=fft_type))
 
@@ -128,27 +142,37 @@ def fft_time_estimate(n, fft_type='numpy'):
     cost = n*np.sum((ohead+np.array(facts)) * np.log((np.array(facts)+oheadlog)))
     return(time_cal * cost)
 
-def nice_FFT_size_above(n,max_iterations=None):
+def nice_FFT_size(n, max_iterations=None, fft_type='numpy'):
     """ 
     Note: Using numpy.fft, it may be better to use the more accurate 
     "fft_time_estimate" above
     assume cost is \Product{N x log(N)} with Ni the factors of n.
     default max_iterations is ln(N)
-
+    Works also for below n:  just use a negative max_iterations (or -1)
+    Not thoroughly tested.
     See also next_nice_number in filters.py - more general and simpler
     """
     if max_iterations is None:
         max_iterations = 10*int(np.log(n))
+    if max_iterations is -1:
+        max_iterations = -10*int(np.log(n))
+
     lowest_cost = 9e99 ; best_n = 0
-    for nn in range(n, n+max_iterations):
-        cost = fft_time_estimate(n)
-        print('cost estimate for {n} = {c:.2f}'.format(n=nn, c=cost))
+    sgn = np.sign(max_iterations)
+    for nn in range(n, n+max_iterations, sgn):
+        cost = fft_time_estimate(nn, fft_type=fft_type)
+        # print('cost estimate for {n} = {c:.2f}'.format(n=nn, c=cost))
         if cost < lowest_cost:
             lowest_cost = cost
             best_n = nn
 
-    print('cost estimate for {n} = {c:.2f}'.format(n=best_n, c=lowest_cost))
+    print('(best) cost estimate for {n} = {c:.2f}, {a} above'
+          .format(n=best_n, c=lowest_cost, a=best_n - n))
     return(best_n)
+
+# for backwards compat.
+nice_FFT_size_above = nice_FFT_size
+
         
 def optimise_fit(atimes):
     from scipy.optimize import leastsq
@@ -202,10 +226,10 @@ def get_fftw3_speed(arr, iters=10, direction=None, dtype=np.float32, **kwargs):
     else:  # do one example
         build_kwargs = dict(flags=['FFTW_ESTIMATE'])
         build_kwargs.update(kwargs)
-        simd_align =  pyfftw.simd_alignment  # 16 at the moment.
+        simd_align = pyfftw.simd_alignment  # 16 at the moment.
         arr = pyfftw.n_byte_align(arr,  simd_align)
-        out =  pyfftw.n_byte_align(np.ones(len(arr)/2+1, dtype=np.complex64), 
-                                   simd_align)
+        out = pyfftw.n_byte_align(np.ones(len(arr)/2+1, dtype=np.complex64),
+                                  simd_align)
         fwd = pyfftw.FFTW(arr, out, **build_kwargs)
         if direction == 'both':
             rev = pyfftw.FFTW(out, arr, direction='FFTW_BACKWARD', **build_kwargs)
@@ -217,7 +241,7 @@ def get_fftw3_speed(arr, iters=10, direction=None, dtype=np.float32, **kwargs):
         return((seconds()-st)/iters)
 
 if __name__ == "__main__":
-    import timeit 
+    import timeit
     import pylab as pl
 
     # test the primefactor code
@@ -237,20 +261,20 @@ if __name__ == "__main__":
                 np.random.randint(1,int(maxprime),1000)))):
 
         # simple_primefactors has is slow for >1e5
-        if i<110 and (simple_primefactors(n) != primefactors(n)):
+        if i < 110 and (simple_primefactors(n) != primefactors(n)):
             raise ValueError('incorrect factorization of {n}: {fbad}, cf {f}'
                              .format(n=n, f=simple_primefactors(n),
-                                     fbad = primefactors(n)))
+                                     fbad=primefactors(n)))
         if np.product(primefactors(n)) != n:
             raise ValueError('incorrect factorization of {n}: product = {p}'
                              .format(n=n,
-                                     p = np.product(primefactors(n))))
+                                     p=np.product(primefactors(n))))
         for f in primefactors(n):
             if f not in primes:
                 raise ValueError(
                     'incorrect factorization of {n}: {f} is not prime'
-                             .format(n=n,f = f))                
-                             
+                    .format(n=n, f=f))
+
     # test the fft_timing code
     times = []
     base_size=8192*4
@@ -266,9 +290,11 @@ if __name__ == "__main__":
               .format(t=int(estimate_total*iters)))
 
     stmt = "y=np.fft.rfft(x)"
+    # stmt = "y = hilbert(x)"
     for i in nvals:
         timer = timeit.Timer(stmt,
-                             "import numpy as np\nx=np.arange({n})".format(n=i))
+                # "import numpy as np\nfrom scipy.fftpack import hilbert\nx=np.arange({n})".format(n=i))
+                "import numpy as np\nx=np.arange({n})".format(n=i))
         times.append([i,1e6*timer.timeit(iters)/iters])
     atimes = np.array(times).T
     pl.semilogy(atimes[0],atimes[1],label='actual times (us)')

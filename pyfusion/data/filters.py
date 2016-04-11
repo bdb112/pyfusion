@@ -90,27 +90,45 @@ def next_nice_number(N):
         if n>=N: return(n)
 
 
-def get_optimum_time_range(input_data, new_time_range):
-    """ This grabs a few more (or a few less, if enough not available)
-    points so that the FFT is more efficient.  For FFTW, it is more
-    efficient to zero pad to a nice number above even if it is a long
-    way away.  This is always true for Fourier filtering, in which
-    case you never see the zeros.  For general applications, the zeros
-    might be confusing if you forget they have been put there.
+def get_optimum_time_range(input_data, new_time_range, try_more=0.0002):
+    """This grabs a few more (or a few less, if enough not available in
+    input_data) points than requested so that the FFT is more
+    efficient.  try_more is the number of samples to increase/decrease
+    as a fraction of the input data.
+
+    Note: For FFTW, it is more efficient to zero pad to a nice
+    number above, even if it is a long way away.  This is always true
+    for Fourier filtering, in which case you never see the zeros.  For
+    general applications, the zeros might be confusing if you forget
+    they have been put there.
+
     """
     from pyfusion.utils.primefactors import fft_time_estimate
 
+    # obtain indices of the beginning and end times - not sure of precision effects.
     nt_args = searchsorted(input_data.timebase, new_time_range)
-    # try for 20 more points
+    # try for try_more more points (as a fraction of the timebase)
+    # extension is in seconds
+    if abs(try_more) == 1:
+        try_more = 0.0002 * try_more
+
+    try_more = int(len(input_data.timebase) * try_more)
     extension = ((new_time_range[1]-new_time_range[0])
-                 * float(20)/(nt_args[1]-nt_args[0]))
+                 * float(try_more)/(nt_args[1]-nt_args[0]))
+
+    if pyfusion.VERBOSE > 0:
+        print('try_more = {tm}, nt_args = {nt}, extension = {ex}'
+              .format(tm=try_more, ex=extension, nt=nt_args))
     (dum, trial_upper) = searchsorted(input_data.timebase,
                                       [new_time_range[0],
                                        new_time_range[1]+extension])
     # if not consider using less than the original request
-    trial_lower = trial_upper - 20
+    trial_lower = trial_upper - try_more
     times = []
-    for num in range(trial_lower, trial_upper):
+    if pyfusion.VERBOSE>0:
+        print('get_optimum_time_range {l} to {u}'.format(l=trial_lower, u=trial_upper))
+
+    for num in range(trial_lower, trial_upper, np.sign(try_more)):
         times.append(fft_time_estimate(num - nt_args[0]))
 
     newupper = trial_lower+np.argmin(times)
@@ -121,14 +139,22 @@ def get_optimum_time_range(input_data, new_time_range):
 
     best_upper_time = input_data.timebase[newupper]
     new_time_range[1] = (best_upper_time
-                         - 0.5*np.average(np.diff(input_data.timebase)))
+                         - 0.5*np.nanmean(np.diff(input_data.timebase)))
+    debug_(pyfusion.DEBUG, 5, key='reduce_time')
     if pyfusion.VERBOSE > 0:
         print('returning new time range={n}'.format(n=new_time_range))
     return(new_time_range)
 
 
 @register("TimeseriesData", "DataSet")
-def reduce_time(input_data, new_time_range, fftopt=False):
+def copy(input_data):
+    """ safe (deep) copy of camplete data """
+    output_data = deepcopy(input_data)
+    output_data.history += '\ncopy'
+    return(output_data)
+
+@register("TimeseriesData", "DataSet")
+def reduce_time(input_data, new_time_range, fftopt=0):
     """ reduce the time range of the input data in place(copy=False)
     or the returned Dataset (copy=True - default at present).
     if fftopt, then extend time if possible, or if not reduce it so that
@@ -141,13 +167,16 @@ def reduce_time(input_data, new_time_range, fftopt=False):
         print('Entering reduce_time, fftopt={0}, isinst={1}'
               .format(fftopt, isinstance(input_data, DataSet)))
         pyfusion.logger.warning("Testing: can I see this?")
-    if (min(input_data.timebase) >= new_time_range[0] and 
-        max(input_data.timebase) <= new_time_range[1]):
+    if (np.min(input_data.timebase) >= new_time_range[0] and 
+        np.max(input_data.timebase) <= new_time_range[1]):
         print('time range is already reduced')
         return(input_data)
 
+    if fftopt > 0: new_time_range = get_optimum_time_range(input_data, new_time_range, fftopt)
+    # the -1 option doesn't really do what I want yet
+    elif fftopt < 0: new_time_range = get_optimum_time_range(input_data, new_time_range, try_more=fftopt)
+
     if isinstance(input_data, DataSet):
-        if fftopt: new_time_range = get_optimum_time_range(input_data, new_time_range)
 
         # output_dataset = input_data.copy()
         # output_dataset.clear()
@@ -162,7 +191,6 @@ def reduce_time(input_data, new_time_range, fftopt=False):
     # else: this is effectively a matching 'else' - omit to save indentation
     # ??? this should not need to be here - should only be called from
     # above when passed as a dataset (more efficient)
-    if fftopt: new_time_range = get_optimum_time_range(input_data, new_time_range)
     new_time_args = searchsorted(input_data.timebase, new_time_range)
     input_data.timebase = input_data.timebase[new_time_args[0]:new_time_args[1]]
     if input_data.signal.ndim == 1:
@@ -625,7 +653,7 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         # example of tuning
         #pyfusion.fftw3_args= {'planning_timelimit': 50.0, 'threads':1, 'flags':['FFTW_MEASURE']}
 
-    singl = not isinstance(output_data.signal, (list, tuple))
+    singl = not isinstance(output_data.channels, (list, tuple, np.ndarray))
     if singl:
         output_data.signal = [output_data.signal]
                         

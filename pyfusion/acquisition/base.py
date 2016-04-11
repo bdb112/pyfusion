@@ -416,7 +416,7 @@ class MultiChannelFetcher(BaseDataFetcher):
                     if pyfusion.VERBOSE > 0: print('utcs: ******',ch_data.utc[0],group_utc[0])
                     if ch_data.utc[0] != group_utc[0]:
                         # should pad this channel out with nans - for now report an error.
-                        print('********\n********traces {tbch} and {chcnf} have different start times by {dts:.2g} s'
+                        print('*** different start times *****\n********trace {chcnf} starts after {tbch} by {dts:.2g} s'
                               .format(tbch = tb_chan.config_name, chcnf = ch_data.config_name,
                                       dts = (ch_data.utc[0] - group_utc[0])/1e9))
 

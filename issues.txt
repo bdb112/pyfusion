@@ -21,6 +21,13 @@ raw_input
 izip
 
 ============  Bugs ===========
+Need to warn about using restore_sin when the sweep is not clipped -
+voltage is increased erroneously.
+
+Partial clipping produces artificially high Te (see odt file)
+
+***** Save_to_local should use (rest of this line lost....)
+
 ****** python3 doesn't like the npz files created since around Mar 1 2016?
  Unpickling a python object failed: UnicodeDecodeError('ascii', b'l\x9f\xb5}i[8\x14', 1, 2, 'ordinal not in range(128)')
 You may need to pass the encoding= option to numpy.load

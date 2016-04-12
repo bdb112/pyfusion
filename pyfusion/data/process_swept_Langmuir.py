@@ -1,11 +1,18 @@
-""" This version assumes that all required sweep data are in a multi-channel diagnostic (dataset)
- - the other version grabs sweepV data as required
+""" Complete processing of swept Langmuir data, using two classes.
+This supersedes the example in examples/process_swept_Langmuir.py
+ 
+This version assumes that all required sweep data are in a multi-channel diagnostic (dataset)
+ - the other version (not in the repo) grabs sweepV data as required
 
     Example:
+    run pyfusion/data/process_swept_Langmuir
+    LP.process_swept_Langmuir()
+    LP.write_DA('20160310_9_L57')
+    # then to tune mask:
     from pyfusion.data.DA_datamining import Masked_da, DA
-    da=DA('20160310_9_L57',load=1)
+    da=DA('20160310_9_L57',load=1)  # just to be sure it is a good DA
     da.masked=Masked_da(['Te','I0','Vp'], DA=da)
-    da.da['mask']=-da['resid']/abs(da['I0'])<.35
+    da.da['mask']=(-da['resid']/abs(da['I0'])<.35) & (da['nits']<100)
     clf();plot(da.masked['Te']);ylim(0,100)
 
 
@@ -175,6 +182,7 @@ class Langmuir_data():
         self.debug = debug
         self.plot = plot
         self.select = None
+        self.t_comp = (0.1,0.2)
 
         self.imeasfull = self.dev.acq.getdata(shot, i_diag)
         self.vmeasfull = self.dev.acq.getdata(shot, v_diag)
@@ -231,20 +239,20 @@ class Langmuir_data():
             self.iprobefull.signal[c][0:comlen] = self.imeasfull.signal[c][0:comlen] \
                                         - sweepV[0:comlen] * leakage[0] - sweepQ[0:comlen] * leakage[1]
 
-    def prepare_sweeps(self, rest_swp=None):
+    def prepare_sweeps(self, rest_swp=None, sweep_freq=500, Vpp=90*2, clip_level_minus=-88):
         """ extracts sweep voltage data for all probes,
         call restore_sin if necessary
         Initially, the voltage data is assumed to be in a dictionary
         """
-        if self.debug>0:
+        if self.debug > 0:
             print('entering prepare_sweeps ', len(self.vmeasfull.signal[0]))
         if rest_swp:
             from pyfusion.data.restore_sin import restore_sin
         self.vcorrfull = self.vmeasfull.copy()
         if rest_swp:
             for (c, sig) in enumerate(self.vmeasfull.signal):
-                self.vcorrfull.signal[c] = restore_sin(self.vmeasfull, chan=c, sweep_freq=500,
-                                                       Vpp=90*2, clip_level_minus=-88, verbose=self.verbose)
+                self.vcorrfull.signal[c] = restore_sin(self.vmeasfull, chan=c, sweep_freq=sweep_freq,
+                                                       Vpp=Vpp, clip_level_minus=clip_level_minus, verbose=self.verbose)
 
     def fit_swept_Langmuir_seg_multi(self, m_seg, i_seg, v_seg, clipfact=5, plot=None):
         res = []
@@ -272,15 +280,18 @@ class Langmuir_data():
 
         good = find_clipped([v, im], clipfact=clipfact)
         wg = np.where(good)[0]
-        if (~good).any():
-            if self.verbose>0 or len(wg) < 0.9 * len(v):
+        if (~good).any():  # if any bad
+            if len(wg) < 0.3 * len(v):  # was (~good).all():
+                print('suppressing all!*** {a}'.format(a=len(good)))
+                return([3*[None],None,None])
+            elif self.verbose>0 or len(wg) < 0.9 * len(v):
                 print('suppress clipped {b}/{a}'
                       .format(b=len(np.where(~good)[0]), a=len(good)))
-        elif (~good).all():
-            print('suppressing all!*** {a}'.format(a=len(good)))
-            return([3*[None],None,None])
 
         # [[Te, Vp, I0], res, its]
+        if plot is None:
+            # plot in detail only if there are 20 figures or less
+            plot=self.plot + 2*((len(self.segs)*len(self.imeasfull.channels))< 8)
         if plot >= 2:
             interval = str('{t}'.format(t=[round(segtb[0],6), round(segtb[-1],6)]))
             fig, axs = plt.subplots(nrows=1 + (plot >= 3), ncols=1, squeeze=0,
@@ -298,9 +309,6 @@ class Langmuir_data():
                          .format(tr=interval, shot=self.shot, d=self.i_diag, c=channame))
 
         #res = LPfit(v, i, plot=(debug > 1),maxits=100)
-        if plot is None:
-            # plot in detail only if there are 20 figures or less
-            plot=self.plot + 2*((len(self.segs)*len(self.imeasfull.channels))< 20)
         self.fitter = LPfitter(i=i[wg], v=v[wg], maxits=100, plot=plot, parent = self)
         return(self.fitter.fit(plot=plot))
 
@@ -324,6 +332,9 @@ class Langmuir_data():
             if key not in dd:
                 dd[key] = np.zeros([nt,nc], dtype=np.float32)
             dd[key][:] = res[:, :, ind]
+
+        # t_mid is not a vector...should fix properly
+        dd['t_mid'] = dd['t_mid'][:,0]
         dd['info'] = dict(channels = self.ichans)
         da = DA(dd)
         da.save(filename)
@@ -331,6 +342,7 @@ class Langmuir_data():
     def process_swept_Langmuir(self, t_range=None, t_comp=[0,0.1], dtseg=4e-3, overlap=1, rest_swp=1, clipfact=5, leakage=None, threshold=0.01, plot=None):
         """ 
         ==> results[time,probe,quantity]
+        plot = 1   : V-I and data if there are not too many.
         plot >= 2  : V-I curves
         plot >= 3  : ditto + time plot
         plot >= 4  : ditto + all I-V iterations
@@ -340,12 +352,13 @@ class Langmuir_data():
         compensate I
         detect plasma
         reduce time
+        segment and process
 
-        Faster order:
-        detect plasma with quick and dirty - method 
+        Faster order - reduces time range earlier: (maybe implement later)
+        detect plasma time range with quick and dirty method 
         restrict time range, but keep pre-shot data accessible for evaluation of success of removal
         """
-        # do the things that are better done on the whole data set.
+        # first do the things that are better done on the whole data set.
 
         self.ichans = [ch.config_name for ch in self.imeasfull.channels]
         for ch in self.ichans:  # only take the current channels, not U
@@ -372,6 +385,7 @@ class Langmuir_data():
         self.get_iprobe(leakage=leakage, t_comp=t_comp)
 
         tb = self.iprobefull.timebase
+        # the 3000 below tries to avoid glitches from Hilbert at both ends
         w_plasma = np.where((np.abs(self.iprobefull.signal[0]) > threshold) & (tb > tb[3000]) &(tb < tb[-3000]))[0]
         
         if t_range is None:
@@ -387,7 +401,7 @@ class Langmuir_data():
             self.iprobe = self.iprobefull
             self.vcorr = self.vcorrfull
 
-        # We need to segment iprobe, i_meas to check clipping, and vsweep
+        # We need to segment iprobe, also i_meas to check clipping, and vsweep
         self.segs = zip(self.imeas.segment(dtseg, overlap),
                         self.iprobe.segment(dtseg, overlap),
                         self.vcorr.segment(dtseg, overlap))
@@ -400,12 +414,13 @@ class Langmuir_data():
 
         return(self.fitdata)
 
-
-
+# quick test code - just 'run' this file
 if __name__ == '__main__':
-    #LP = Langmuir_data([20160310, 9], 'W7X_L57_LP1_4','W7X_L5UALL') 
-    #LP = Langmuir_data([20160310, 9], 'W7X_L53_LPALLI','W7X_L5UALL') 
-    #LP = Langmuir_data([20160309, 7], 'W7X_L57_LPALLI','W7X_L5UALL') 
-    LP = Langmuir_data([20160302, 12], 'W7X_L57_LPALLI','W7X_L5UALL') 
-    #LP = Langmuir_data([20160310, 9], 'W7X_L57_LP1_2','W7X_L5UALL') 
-    results = LP.process_swept_Langmuir(rest_swp=1,t_range=[1.5,1.6],t_comp=[0.8,0.85])
+    #LP = Langmuir_data([20160310, 9], 'W7X_L57_LP1_4','W7X_L5UALL') # 4 chans
+    #LP = Langmuir_data([20160310, 9], 'W7X_L53_LPALLI','W7X_L5UALL') # lower
+    #LP = Langmuir_data([20160309, 7], 'W7X_L57_LPALLI','W7X_L5UALL') # upper
+    #LP = Langmuir_data([20160302, 12], 'W7X_L57_LPALLI','W7X_L5UALL') # bad tb?
+    LP = Langmuir_data([20160310, 9], 'W7X_L57_LP1_2','W7X_L5UALL') #quickest
+    # the following, using ([20160310, 9], 'W7X_L57_LP1_2) gives one nice char
+    # and another char spoilt by a change in i_electron between cycles
+    results = LP.process_swept_Langmuir(rest_swp=1,t_range=[1.6,1.604],t_comp=[0.8,0.85])

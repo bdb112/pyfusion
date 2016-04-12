@@ -99,7 +99,7 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
         
         suptitle by default refers to the shot number
     """
-    print(fun, fun2)
+    if pyfusion.VERBOSE > 0: print(fun, fun2)
     import pylab as pl
     n_rows = input_data.signal.n_channels()
     n_rows = int(round(0.49+(n_rows/float(n_columns))))

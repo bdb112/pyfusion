@@ -788,6 +788,44 @@ class DA():
         if dictionary == False: 
             return(val_tuple)
 
+    def plot(self, key, x='t_mid', sharey=1, select=None, masked=1, marker=''):
+        if sharey == 1:
+            sharey = 'all'
+        if masked and hasattr(self, 'masked') and key in self.masked.keys():
+            print('using masked {k}'.format(k=key))
+            arr = self.masked[key]
+        else:
+            arr = self[key]
+        x = self[x]
+
+        nchans = np.shape(arr)[1]
+        if select is not None:
+            clist = select
+            nvis = len(select)
+        else:
+            nvis = nchans
+            clist = range(nchans)
+
+        if 'channels' in self.infodict:
+            labs = self.infodict['channels']
+        else:
+            labs = [str(ch for ch in range(nchans))]
+        fig, ax = plt.subplots(nvis, 1, squeeze=0, sharey=sharey) #, sharex='col')
+        fig.subplots_adjust(top=0.95, hspace=0.0, bottom=0.05)
+        for c,ch in enumerate(clist):
+            # print(ch)
+            ax[c, 0].set_ylabel(labs[ch], rotation=0, 
+                                horizontalalignment='right')
+            if np.isnan(arr[:, ch]).all():  # all nans confuses sharey
+                ax[c, 0].plot(x, x*0)
+            ax[c, 0].plot(x, arr[:, ch], label=labs[ch])
+
+        #plt.legend((prop=dict(size='small'))
+        plt.suptitle(self.name.replace('.npz',''))
+        debug_(self.debug, 2, key='plot')
+        plt.show(0)
+
+
 def da(filename='300_small.npz',dd=True):
     """ return a da dictionary (used to be called dd - not the DA object)
     mainly for automated tests of example files.

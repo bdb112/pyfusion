@@ -9,6 +9,13 @@ Update:
 Version 0.65 has Langmuir processsing separated into two objects (see
 data/process_swept_Langmuir), optimised and saved as dictionary of
 array (DA) files, with a built in mask of dubious data.
+Clipped sweep voltage can be restored by restore_sin()
+
+issues: 
+1/ applying restore_sin to data that are not clipped produces
+large errors.
+2/ partial clipping produces elevated Te
+3/ fit quality criterion and ne calculation need improvement
 
 Version 0.64 beta has improved processing of clipped, swept Langmuir probe data,
 Next version will have multi-channel data extraction system using pyfusion 'Dictionary of Arrays'.

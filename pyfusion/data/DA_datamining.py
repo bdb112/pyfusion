@@ -20,7 +20,7 @@ except:
                   " need boyd's debug_.py to debug properly")
 
 
-class Masked_da():
+class Masked_DA():
     """ to be a virtual sub dictionary of a DA, returning applicable (valid_keys) elements, masked by
     self.mask to have Nans in the positions where mask = True
 
@@ -606,9 +606,9 @@ class DA():
         # key 'info' should be replaced by the more up-to-date self. copy
         self.da = dd
         self.update({'info': self.infodict}, check=False)
-        if 'mask' in self.da:  # give it the Masked_da property
+        if 'mask' in self.da:  # give it the Masked_DA property
             valid_keys = self.infodict.get('valid_keys',[])
-            self.masked = Masked_da(valid_keys, self)
+            self.masked = Masked_DA(valid_keys, self)
         if self.verbose: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
         report_mem(start_mem)
         return(True)
@@ -763,32 +763,33 @@ class DA():
                     print('extracting masked values for {k} - use masked=0 to get raw values'.format(k=k))
                     dak = self.masked[k]
                 else:
-                    dak = self.da[k]  # we know we want it - let's 
-                                      # hope space is not wasted
-                if hasattr(dak,'keys'): # used to be self.da[k]
+                    dak = self.da[k]      # We know we want it - let's
+                                          #   hope space is not wasted
+                if hasattr(dak, 'keys'):  # used to be self.da[k]
                     allvals = dak
                 else:
                     allvals = np.array(dak)
 
                 if len(np.shape(allvals)) == 0:
                     sel_vals = allvals
-                else: 
+                else:
                     if (len(np.shape(allvals)) > 0) and (len(allvals) < np.max(inds)):
                         print('{k} does not match the size of the other arrays - extracting all'.format(k=k))
                         sel_vals = allvals
                     else:
                         sel_vals = allvals[inds]
-                if dictionary == False: 
+                if dictionary is False:
                     val_tuple += (sel_vals,)
                 else:
                     dictionary.update({k: sel_vals})
             else: print('variable {k} not found in {ks}'.
                         format(k=k, ks = np.sort(self.da.keys())))
         report_mem(start_mem)
-        if dictionary == False: 
+        if dictionary is False:
             return(val_tuple)
 
     def plot(self, key, x='t_mid', sharey=1, select=None, masked=1, marker=''):
+        from matplotlib.ticker import MaxNLocator
         if sharey == 1:
             sharey = 'all'
         if masked and hasattr(self, 'masked') and key in self.masked.keys():
@@ -810,18 +811,23 @@ class DA():
             labs = self.infodict['channels']
         else:
             labs = [str(ch for ch in range(nchans))]
-        fig, ax = plt.subplots(nvis, 1, squeeze=0, sharey=sharey) #, sharex='col')
+        fig, axs = plt.subplots(nvis, 1, squeeze=0, sharey=sharey) #, sharex='col')
+        # 3 bins -> 4 ticks max
+        locator = MaxNLocator(nbins=min(10, max(3,20//nvis)), prune='upper')
         fig.subplots_adjust(top=0.95, hspace=0.0, bottom=0.05)
-        for c,ch in enumerate(clist):
+        for c, (ch, ax) in enumerate(zip(clist, axs[:, 0])):
             # print(ch)
-            ax[c, 0].set_ylabel(labs[ch], rotation=0, 
-                                horizontalalignment='right')
+            ax.set_ylabel(labs[ch], rotation=0,
+                          horizontalalignment='right')
             if np.isnan(arr[:, ch]).all():  # all nans confuses sharey
-                ax[c, 0].plot(x, x*0)
-            ax[c, 0].plot(x, arr[:, ch], label=labs[ch])
+                ax.plot(x, x*0)
+            ax.plot(x, arr[:, ch], label=labs[ch])
+            ax.yaxis.set_major_locator(locator)
+            if (c+1 != nvis):
+                ax.set_xticklabels('')
 
-        #plt.legend((prop=dict(size='small'))
-        plt.suptitle(self.name.replace('.npz',''))
+        # plt.legend((prop=dict(size='small'))
+        plt.suptitle(self.name.replace('.npz', '') + ' ' + key)
         debug_(self.debug, 2, key='plot')
         plt.show(0)
 

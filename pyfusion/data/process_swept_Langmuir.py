@@ -9,9 +9,9 @@ This version assumes that all required sweep data are in a multi-channel diagnos
     LP.process_swept_Langmuir()
     LP.write_DA('20160310_9_L57')
     # then to tune mask:
-    from pyfusion.data.DA_datamining import Masked_da, DA
+    from pyfusion.data.DA_datamining import Masked_DA, DA
     da=DA('20160310_9_L57',load=1)  # just to be sure it is a good DA
-    da.masked=Masked_da(['Te','I0','Vp'], DA=da)
+    da.masked=Masked_DA(['Te','I0','Vp'], DA=da)
     da.da['mask']=(-da['resid']/abs(da['I0'])<.35) & (da['nits']<100)
     clf();plot(da.masked['Te']);ylim(0,100)
 
@@ -313,7 +313,7 @@ class Langmuir_data():
         return(self.fitter.fit(plot=plot))
 
     def write_DA(self, filename):
-        from pyfusion.data.DA_datamining import DA
+        from pyfusion.data.DA_datamining import DA,  Masked_DA
         dd = {}
         res = np.array(self.fitdata, dtype=np.float32)
         nt = len(res)
@@ -328,18 +328,33 @@ class Langmuir_data():
         for key in ['nits']:
             dd[key] = np.zeros([nt,nc], dtype=np.uint16)
 
-        for (ind, key) in [(0,'t_mid'), (1,'Te'), (2,'Vp'), (3,'I0'), (4,'resid'), (5,'nits')]:
+        # make all the f32 arrays - note - ne is just IO for now - fixed below
+        for (ind, key) in [(0,'t_mid'), (1,'Te'), (2,'Vp'), (3,'I0'), (4,'resid'), (5,'nits'), (3, 'ne')]:
             if key not in dd:
-                dd[key] = np.zeros([nt,nc], dtype=np.float32)
-            dd[key][:] = res[:, :, ind]
+                dd[key] = np.zeros([nt, nc], dtype=np.float32)
+            dd[key][:] = res[:, :, ind]            
 
-        # t_mid is not a vector...should fix properly
-        dd['t_mid'] = dd['t_mid'][:,0]
-        dd['info'] = dict(channels = self.ichans)
+        # fudge t_mid is not a vector...should fix properly
+        dd['t_mid'] = dd['t_mid'][:, 0]
+        dd['info'] = dict(channels=[chn.replace(self.dev.name, '')
+                                    .replace('_I', '')
+                                    for chn in self.ichans])
         da = DA(dd)
+        da.masked = Masked_DA(['Te', 'I0', 'Vp', 'ne'], DA=da)
+        #  da.da['mask']=(-da['resid']/abs(da['I0']) < .7) & (da['nits']<100)
+        da.da['mask'] = ((-da['resid']/abs(da['I0']) < .7) & (da['nits'] < 100)
+                         & (np.abs(da['Vp']) < 200) & (np.abs(da['Te']) < 200))
+        q = 1.602e-19
+        mi = 1.67e-27
+        fact = 1/(0.6*q)*np.sqrt(mi/(q))/1e18         # units of 1e18
+        # check if each channel has an area
+        for (c, chn) in enumerate(self.ichans):
+            cd = get_config_as_dict('Diagnostic', chn)
+            A = float(cd.get('area', 1.8e-6))
+            da.da['ne'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
-    def process_swept_Langmuir(self, t_range=None, t_comp=[0,0.1], dtseg=4e-3, overlap=1, rest_swp=1, clipfact=5, leakage=None, threshold=0.01, plot=None):
+    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], dtseg=4e-3, overlap=1, rest_swp=1, clipfact=5, leakage=None, threshold=0.01, plot=None):
         """ 
         ==> results[time,probe,quantity]
         plot = 1   : V-I and data if there are not too many.

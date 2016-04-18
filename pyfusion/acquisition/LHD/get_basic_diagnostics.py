@@ -132,7 +132,7 @@ def get_delay(shot):
     elif shot>=36142: delay = 0.1
     elif shot>=31169: delay = 0.3
     else: delay = 0.1
-    if pyfusion.DEBUG>0: print('delay',delay)
+    if pyfusion.DBG() > 0: print('delay',delay)
     return(delay)
 
 
@@ -189,7 +189,7 @@ def get_basic_diagnostics(diags=None, file_info=file_info, shot=54196, times=Non
                     test=list(lhd_summary.keys())
                 except:    
                     csvfilename = acq_LHD+'/'+info['format']
-                    if pyfusion.DEBUG>1: print('looking for lhd summary in' + csvfilename)
+                    if pyfusion.DBG() > 1: print('looking for lhd summary in' + csvfilename)
                     if not os.path.exists(csvfilename):
                         csvfilename += ".bz2"
                     print('reloading {0}'.format(csvfilename))

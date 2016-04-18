@@ -64,7 +64,7 @@ class LHDIgetfileReader(LHDBaseDataFetcher):
     in the .cfg file soon.
     """
     def do_fetch(self):
-        if pyfusion.DEBUG>2: print('in fetch',self.diag_name, self)
+        if pyfusion.DBG() > 2: print('in fetch',self.diag_name, self)
         debug_(pyfusion.DEBUG, level=3, key='igetfile_fetch')
         diag = self.config_name
         infodict = eval(eval(self.info))
@@ -379,7 +379,7 @@ def retrieve_to_file(diagg_name=None, shot=None, subshot=None,
 
     fileroot = ''
     for lin in resp.split('\n'):
-         if pyfusion.DEBUG>3: print('*******',lin)
+         if pyfusion.DBG() > 3: print('*******',lin)
          if lin.find('parameter file')>=0:
               fileroot = lin.split('[')[1].split('.prm')[0]
     if fileroot == '':

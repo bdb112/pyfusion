@@ -145,7 +145,7 @@ def get_coords_for_channel(channel_name=None, **kwargs):
             transform_class_str = pyfusion.config.pf_get('CoordTransform', config_dict['coord_transform'], transform_name)
             transform_class = import_from_str(transform_class_str)
             coords_instance.load_transform(transform_class)
-
+    debug_(pyfusion.DEBUG,1, key=['coord','device_name'])        
     return coords_instance
 
 class Channel(object):

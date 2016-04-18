@@ -84,7 +84,7 @@ class igetfile():
                                                  verbose=0, plot=plot, hold=hold,debug=debug)
         self.valnames=self.vardict['ValName'] # shortcut
         # get rid of file if we got it from the server
-        if path_to_igetfile != None and pyfusion.DEBUG<3:
+        if path_to_igetfile != None and pyfusion.DBG() < 3:
             os.remove(self.filename)
 
         if plot !=0: 
@@ -113,7 +113,7 @@ class igetfile():
         ax.plot(hold=hold)
         
         linest = ['-',':','--','-.']
-        if pyfusion.DEBUG>0: print('shape is {s}'.format(s=shape(dim)))
+        if pyfusion.DBG() > 0: print('shape is {s}'.format(s=shape(dim)))
         if len(shape(dim))==0:
             for (p,name) in enumerate(self.vardict['ValName']):
                 col, lin = divmod(p, len(linest))

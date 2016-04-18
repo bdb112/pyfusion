@@ -172,8 +172,11 @@ def find_clipped(sigs, clipfact):
 
 class Langmuir_data():
     """ get the fits for a multi (or single) cpt diagnostic using segments
+    if a dictionary params is supplied, use these to process the data, 
+    otherwise just read in the data.
+    If params contains a filename entry, save the result as that name
     """
-    def __init__(self, shot, i_diag, v_diag, dev_name="W7X", debug=debug, plot=1, verbose=0):
+    def __init__(self, shot, i_diag, v_diag, dev_name="W7X", debug=debug, plot=1, verbose=0, params=None):
         self.dev = pyfusion.getDevice(dev_name)
         self.shot = shot
         self.verbose = verbose
@@ -183,6 +186,7 @@ class Langmuir_data():
         self.plot = plot
         self.select = None
         self.t_comp = (0.1,0.2)
+        self.params = params
 
         self.imeasfull = self.dev.acq.getdata(shot, i_diag)
         self.vmeasfull = self.dev.acq.getdata(shot, v_diag)
@@ -192,6 +196,10 @@ class Langmuir_data():
         # e.g. 20160310 9 W7X_L5_LPALLI
         self.imeasfull = self.imeasfull.reduce_time([self.imeasfull.timebase[0], self.imeasfull.timebase[FFT_size]])
         self.vmeasfull = self.vmeasfull.reduce_time([self.vmeasfull.timebase[0], self.vmeasfull.timebase[FFT_size]])
+
+        if self.params is not None:
+            self.process_swept_Langmuir(**self.params)
+        
 
     def get_iprobe(self, leakage=None, t_comp=None):
         """ main purpose is to subtract leakage currents
@@ -329,14 +337,17 @@ class Langmuir_data():
             dd[key] = np.zeros([nt,nc], dtype=np.uint16)
 
         # make all the f32 arrays - note - ne is just IO for now - fixed below
-        for (ind, key) in [(0,'t_mid'), (1,'Te'), (2,'Vp'), (3,'I0'), (4,'resid'), (5,'nits'), (3, 'ne')]:
+        for (ind, key) in [(0, 't_mid'), (1, 'Te'), (2, 'Vp'),
+                           (3, 'I0'), (4, 'resid'), (5, 'nits'), (3, 'ne')]:
             if key not in dd:
                 dd[key] = np.zeros([nt, nc], dtype=np.float32)
-            dd[key][:] = res[:, :, ind]            
+            dd[key][:] = res[:, :, ind]
 
         # fudge t_mid is not a vector...should fix properly
         dd['t_mid'] = dd['t_mid'][:, 0]
-        dd['info'] = dict(channels=[chn.replace(self.dev.name, '')
+        dd['info'] = dict(params=self.actual_params,
+                          coords=self.coords,
+                          channels=[chn.replace(self.dev.name, '')
                                     .replace('_I', '')
                                     for chn in self.ichans])
         da = DA(dd)
@@ -354,13 +365,15 @@ class Langmuir_data():
             da.da['ne'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
-    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], dtseg=4e-3, overlap=1, rest_swp=1, clipfact=5, leakage=None, threshold=0.01, plot=None):
+    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], dtseg=4e-3, overlap=1, rest_swp=1, clipfact=5, leakage=None, threshold=0.01, filename=None, plot=None):
         """ 
         ==> results[time,probe,quantity]
         plot = 1   : V-I and data if there are not too many.
         plot >= 2  : V-I curves
         plot >= 3  : ditto + time plot
         plot >= 4  : ditto + all I-V iterations
+
+        best to send parameters through the init - then they all are recorded
 
         Start by processing in the ideal order: - logical, but processes more data than necessary
         fix up the voltage sweep
@@ -375,11 +388,17 @@ class Langmuir_data():
         """
         # first do the things that are better done on the whole data set.
 
+        self.actual_params = locals().copy()
+        self.actual_params.pop('self')
         self.ichans = [ch.config_name for ch in self.imeasfull.channels]
         for ch in self.ichans:  # only take the current channels, not U
             if ch[-1] != 'I':
-                print("Warning - removal of V chans doesn't work!!!")
+                raise ValueError("Warning - removal of V chans doesn't work!!!")
+                # hopefully we can ignore _U channels eventually, but not yet
                 self.ichans.remove(ch)
+
+        self.coords = [ch.coords.w7_x_koord for ch in self.imeasfull.channels]
+
 
         self.vchans = [ch.config_name for ch in self.vmeasfull.channels]
         # want to say self.vmeas[ch].signal where ch is the imeas channel name
@@ -426,6 +445,8 @@ class Langmuir_data():
         debug_(self.debug, 3, key='process_loop')
         for mseg, iseg, vseg in self.segs:
             self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, plot=plot))
+        if filename is not None:
+            self.write_DA(filename)
 
         return(self.fitdata)
 

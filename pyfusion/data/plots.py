@@ -268,7 +268,7 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
 
     # look in the config file section Plots for a string like 
     # FT_Axis = [0,0.08,0,500e3]   don't quote
-    exceptions_to_hide = Exception if pyfusion.DEBUG<3 else None
+    exceptions_to_hide = Exception if pyfusion.DBG() < 3 else None
     try:
         #pl.axis(eval(pyfusion.config.get('Plots','FT_Axis')))
         # this is clumsier now we need to consider freq units.
@@ -449,7 +449,8 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, block=False
     dp = modtwopi(dp, offset=offset)
 
     if hold == 0: ax.clear()
-    
+
+    # This is a kludgy way to read coordinates.  Should be through acquisition.base or acquisition.'device'
     Phi = np.array([2*np.pi/360*float(pyfusion.config.get
                                       ('Diagnostic:{cn}'.
                                        format(cn=c.name), 

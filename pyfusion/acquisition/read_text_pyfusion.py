@@ -160,7 +160,7 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
                 ds_list.append(ds)
                 count += 1
                 # npz reads in python 2 can't cope with unicode - don't report errors unless really debugging
-                comment_list.append(filename.encode(errors=['ignore','strict'][pyfusion.DEBUG>5]))
+                comment_list.append(filename.encode(errors=['ignore','strict'][pyfusion.DBG() > 5]))
             else:
                 print('no data in {f}'.format(f=filename))
 

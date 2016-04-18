@@ -8,7 +8,7 @@ from numpy import ndarray, shape
 from pyfusion.conf.utils import import_setting, kwarg_config_handler, \
      get_config_as_dict, import_from_str
 from pyfusion.data.timeseries import Signal, Timebase, TimeseriesData
-from pyfusion.data.base import Coords, Channel, ChannelList
+from pyfusion.data.base import Coords, Channel, ChannelList, get_coords_for_channel
 from pyfusion.debug_ import debug_
 import traceback
 import sys, os
@@ -82,8 +82,9 @@ def try_fetch_local(input_data, bare_chan):
 
     signal_dict = newload(input_data.localname)
     
-#    coords = get_coords_for_channel(**input_data.__dict__)
-    ch = Channel(bare_chan,  Coords('dummy', (0,0,0)))
+    coords = get_coords_for_channel(**input_data.__dict__)
+    #ch = Channel(bare_chan,  Coords('dummy', (0,0,0)))
+    ch = Channel(bare_chan,  coords)
     output_data = TimeseriesData(timebase=Timebase(signal_dict['timebase']),
                              signal=Signal(signal_dict['signal']), channels=ch)
     # bdb - used "fetcher" instead of "self" in the "direct from LHD data" version
@@ -244,7 +245,7 @@ class BaseDataFetcher(object):
         :py:class:`~pyfusion.data.base.BaseDataSet` returned by \
         :py:meth:`do_fetch`
         """        
-        if pyfusion.DEBUG>2:
+        if pyfusion.DBG() > 2:
             exception = ()  # defeat the try/except
         else: exception = Exception
         sgn = 1
@@ -296,8 +297,12 @@ class BaseDataFetcher(object):
                     (extype, ex, tb) = sys.exc_info()
                     for tbk in traceback.extract_tb(tb):
                         print("Line {0}: {1}, {2}".format(tbk[1],tbk[0],tbk[2:]))
-
-                raise LookupError("{inf}\n{details}{CLASS}".format(inf=self.error_info(step='setup'),
+                #  get what info possible
+                extra = str('shot={s}, diag={d}'
+                            .format(s=self.__dict__.get('shot','?'), 
+                                    d=self.__dict__.get('config_name','?')))
+                raise LookupError("{ex}: {inf}\n{details}{CLASS}"
+                                  .format(ex=extra, inf=self.error_info(step='setup'),
                                                             details=details,CLASS=details.__class__))
         else:
             data = tmp_data
@@ -308,8 +313,8 @@ class BaseDataFetcher(object):
         if not hasattr(data,'utc'):
             data.utc = None
         # Coords shouldn't be fetched for BaseData (they are required
-        # for TimeSeries)
-        #data.coords.load_from_config(**self.__dict__)
+        # for TimeSeries) - who said this?
+        # data.coords.load_from_config(**self.__dict__)
         if pyfusion.VERBOSE>0: 
             print("base.py: data.config_name", data.config_name)
         data.channels.config_name=data.config_name

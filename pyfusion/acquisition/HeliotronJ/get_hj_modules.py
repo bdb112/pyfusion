@@ -14,7 +14,7 @@ import pyfusion
 
 # this is the right way, but I can't load mod as name this way
 #    from importlib import import_module
-if pyfusion.DEBUG>0: 
+if pyfusion.DBG() > 0: 
     print("Can't load via official import_module, trying a workaround using exec()")
 
 def import_module(modstr, alt_name=None, dict1=None):
@@ -55,7 +55,7 @@ def get_hj_modules(force_recompile=False):
         os.mkdir(exe_path)
 
     try:
-        if pyfusion.DEBUG>0: print('try import')
+        if pyfusion.DBG() > 0: print('try import')
         import_module(hj_module,dict1=locals())
     except Exception as reason:
         print("Can't import {m} as get_hjdata at first attempt:  reason - {r}, {args}"

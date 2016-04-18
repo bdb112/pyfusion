@@ -218,7 +218,7 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                     test=HJ_summary.keys()
                 except:    
                     csvfilename = acq_HJ+'/'+infofmt
-                    if pyfusion.DEBUG>1: print('looking for HeliotronJ summary in' + csvfilename)
+                    if pyfusion.DBG() > 1: print('looking for HeliotronJ summary in' + csvfilename)
                     print('reloading {0}'.format(csvfilename))
                     HJ_summary = np.load(csvfilename)
 

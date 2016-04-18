@@ -21,6 +21,8 @@ raw_input
 izip
 
 ============  Bugs ===========
+LHD access is broken due to Error in LHDConvenience fn  (output_coords)
+
 Need to warn about using restore_sin when the sweep is not clipped -
 voltage is increased erroneously.
 

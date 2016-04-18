@@ -64,6 +64,21 @@ try:   # if it looks like an int, make it one.
     DEBUG=int(DEBUG)
 except:
     pass
+
+
+def DBG():
+    """ A function that returns pyfusion.DEBUG if it is and initeger else 0
+    the hasattr function is faster than is_numlike
+    143 ns per loop if int
+    306 ns if string
+    Can still use   if pyfusion.DBG() >  if speed is critical - problem is only 
+    that any string in pyfusion.DEBUG will stop at that point too.
+    """ 
+    if hasattr(DEBUG, 'real'):
+        return(DEBUG)
+    else:
+        return(0)
+
 # VERBOSE is likely to be used as an env var for debugging and as a config
 # var, depending on taste.
 VERBOSE = int(os.getenv('PYFUSION_VERBOSE','0'))  # allows config info to be debugged

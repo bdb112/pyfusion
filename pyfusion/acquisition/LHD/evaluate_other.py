@@ -12,7 +12,7 @@ However get_basic_diagnostics gets diag just for the given times. (which si the 
                     test=lhd_summary.keys()
                 except:    
                     csvfilename = acq_LHD+'/'+info['format']
-                    if pyfusion.DEBUG>1: print('looking for lhd summary in' + csvfilename)
+                    if pyfusion.DBG() > 1: print('looking for lhd summary in' + csvfilename)
                     if not os.path.exists(csvfilename):
                         csvfilename += ".bz2"
                     print('reloading {0}'.format(csvfilename))

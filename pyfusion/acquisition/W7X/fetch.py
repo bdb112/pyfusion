@@ -74,7 +74,7 @@ def regenerate_dim(x):
 
     dtns = 1 + np.argmax(counts[1:])  # skip the first position - it is 0
     # wgt0 = np.where(sorted_diffs > 0)[0]  # we are in ns, so no worry about rounding
-    histo = plt.hist if pyfusion.DEBUG>1 else np.histogram
+    histo = plt.hist if pyfusion.DBG() > 1 else np.histogram
     cnts, vals = histo(x, bins=200)[0:2]
     # ignore the two end bins - hopefully there will be very few there
     wmin = np.where(cnts[1:-1] < np.max(cnts[1:-1]))[0]

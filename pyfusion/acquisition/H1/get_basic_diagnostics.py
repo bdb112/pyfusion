@@ -110,7 +110,7 @@ def get_flat_top(shot=54196, times=None, smooth_dt = None, maxddw = None, hold=0
         pl.ylim(np.array([-1.1,1.1])*max(abs(dwsm)))
         pl.title(shot)
         pl.legend()
-    debug_(max(pyfusion.DEBUG, debug),2, key='flat_top')
+    debug_(max(pyfusion.DBG(), debug),2, key='flat_top')
     #return(times[wb], times[we],(wb,we,wbf,wef,icent)) # used to ignore wbf,wef
     return(times[wbf], times[wef],(wb,we,wbf,wef,icent))
 
@@ -172,7 +172,7 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                     test=lhd_summary.keys()
                 except:    
                     csvfilename = acq_LHD+'/'+info['format']
-                    if pyfusion.DEBUG>1: print('looking for lhd summary in' + csvfilename)
+                    if pyfusion.DBG() > 1: print('looking for lhd summary in' + csvfilename)
                     if not os.path.exists(csvfilename):
                         csvfilename += ".bz2"
                     print('reloading {0}'.format(csvfilename))
@@ -187,7 +187,7 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                 val = lhd_summary[varname][shot]    
                 valarr = np.double(val)+(times*0)
             else:    
-                debug_(max(pyfusion.DEBUG, debug), level=4, key='find_data')
+                debug_(max(pyfusion.DBG(), debug), level=4, key='find_data')
                 try:
 
                     dg = igetfile(filepath, shot=shot, debug=debug-1)
@@ -259,7 +259,7 @@ def get_basic_diagnostics(diags=None, shot=54196, times=None, delay=None, except
                     valarr[w] = np.nan
 
             if valarr != None: vals.update({diag: valarr})
-    debug_(max(pyfusion.DEBUG, debug), level=5, key='interp')
+    debug_(max(pyfusion.DBG(), debug), level=5, key='interp')
     return(vals)                
 
 if not(os.path.exists(localigetfilepath)):

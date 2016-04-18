@@ -6,6 +6,14 @@ python code for data mining plasma fluctuations
 
 
 Update: 
+* Version 0.66 restores coordinates coding (incl W7X), but LHD access is broken due to Error in LHDConvenience fn  (output_coords)
+* process_swept_Langmuir is more convenient to use (incl auto load and save)
+* examples/modify_cfg.py is a script to add/modify pyfusion.cfg
+  (presently coordinates)
+* pyfusion.DBG() instead of pyfusion.DEBUG if a purely numeric value is
+  needed (e.g. in > or < tests).  This avoids unwanted debugger breaks when a
+  text key is used.
+
 Version 0.65 has Langmuir processsing separated into two objects (see
 data/process_swept_Langmuir), optimised and saved as dictionary of
 array (DA) files, with a built in mask of dubious data.

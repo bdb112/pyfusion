@@ -281,10 +281,18 @@ class DA():
             self.sel = np.where(np.random.random(self.len)
                                 < float(abs(limit))/self.len)[0]
 
-        if load == 0:
+        if 'mask' in self.da:  # need to load first, regardless
+            load = 1
+            print('Autoloading as data has a mask enabled')
+
+        if load == 0:  
             self.loaded = False
         else:
             self.loaded = self.load()
+
+        if 'mask' in self.da:  # give it the Masked_DA property
+            valid_keys = self.infodict.get('valid_keys',[])
+            self.masked = Masked_DA(valid_keys, self)
 
         # add an index if there is not one already.  If there is one, 
         # warn if it is not sequential from 0 to len of mainkey entry
@@ -606,9 +614,6 @@ class DA():
         # key 'info' should be replaced by the more up-to-date self. copy
         self.da = dd
         self.update({'info': self.infodict}, check=False)
-        if 'mask' in self.da:  # give it the Masked_DA property
-            valid_keys = self.infodict.get('valid_keys',[])
-            self.masked = Masked_DA(valid_keys, self)
         if self.verbose: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
         report_mem(start_mem)
         return(True)

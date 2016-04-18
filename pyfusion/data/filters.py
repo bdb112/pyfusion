@@ -261,7 +261,7 @@ def normalise(input_data, method=None, separate=False):
     from pyfusion.data.base import DataSet
     # this allows method='0'(or 0) to prevent normalisation for cleaner code
     # elsewhere
-    if pyfusion.DEBUG>3: print('separate = %d' % (separate))
+    if pyfusion.DBG() > 3: print('separate = %d' % (separate))
     if (method == 0) or (method == '0'): return(input_data)
     if (method is None) or (method.lower() == "none"): method='rms'
     if isinstance(input_data, DataSet):
@@ -309,7 +309,7 @@ def svd(input_data):
     svddata = SVDData(input_data.timebase, input_data.channels, linalg.svd(input_data.signal, 0))
     svddata.history = input_data.history
     svddata.scales = input_data.scales # need to pass it on to caller
-    if pyfusion.DEBUG>4: print("input_data.scales",input_data.scales)
+    if pyfusion.DBG() > 4: print("input_data.scales",input_data.scales)
     debug_(pyfusion.DEBUG, level=2, key='svd',msg='about to return from svd')
     return svddata
 
@@ -557,7 +557,7 @@ def make_mask(NA, norm_passband, norm_stopband, input_data, taper):
         # the fftshifts were necessary to avoid weirdness if the
         # stopband went below zero freq.
         mask = np.fft.ifftshift(np.cumsum(np.fft.fftshift(mask))) # integrate
-        if pyfusion.DEBUG>1:
+        if pyfusion.DBG() > 1:
             nonr = 0.5/dt
             fig = plt.figure()
             ax1 = fig.add_subplot(111)
@@ -607,7 +607,7 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     # very sharp shoulders
     fopsharp = filter_fourier_bandpass(dat,[9.1,10.9],[9,11],debug=1)
     """
-    if debug is None: debug = pyfusion.DEBUG
+    if debug is None: debug = pyfusion.DBG()
 # normalising makes it easier to think about - also for But'w'h 
     if (passband[0]<stopband[0]) or (passband[1]>stopband[1]):
         raise ValueError('passband {pb} outside stopband {sb}'

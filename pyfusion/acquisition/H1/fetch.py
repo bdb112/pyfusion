@@ -55,7 +55,7 @@ class H1DataFetcher(MDSPlusDataFetcher):
                 isec2 = self.tree.getNode(isec2_path)
                 return float(isec2/imain2)
             except:
-                if pyfusion.DEBUG>0: 
+                if pyfusion.DBG() > 0: 
                     traceback.print_exc()
                 return None
         

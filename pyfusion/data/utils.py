@@ -241,7 +241,7 @@ def make_title(formatstr, input_data, channum=None, at_dict = {}, min_length=3, 
 
     """
 ##    at_dict.update({'shot': input_data.meta['shot']})
-    exception = () if pyfusion.DEBUG > 3 else Exception
+    exception = () if pyfusion.DBG() > 3 else Exception
     try:
         at_dict.update(input_data.meta)  # this gets all of it!
 

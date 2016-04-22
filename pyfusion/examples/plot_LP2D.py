@@ -1,3 +1,6 @@
+""" Script to animate Te and ne - first attempt - needs generalising
+"""
+#_PYFUSION_TEST_@@Skip
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
@@ -19,9 +22,13 @@ da = DA('20160302_12_L57')
 Te_range = [10, 100]  # 20160302_12
 ne_range = [0, 2]
 
-da = DA('20160310_9_L53')
-Te_range = [20, 100]  # 20160310_9
-ne_range = [0, 10]
+da = DA('20160302_12_L57')
+Te_range = [10, 100]  # 20160302_12
+ne_range = [0, 2]
+
+da = DA('20160309_42_L53')
+Te_range = [20, 100]  # 
+ne_range = [0, 4]
 
 sc_kwargs = dict(vmin=Te_range[0], vmax=Te_range[1]) if Te_range is not None else {}
 ne_kwargs = dict(vmin=ne_range[0], vmax=ne_range[1]) if ne_range is not None else {}
@@ -31,14 +38,15 @@ if ne_range is not None:
 
 srange = range(100, 200)
 srange = range(180, 185)
+srange = range(67, 70)   # 20160309_42_L53
 #srange = range(110, 111)
 #srange = range(len(da['t_mid']))
-step = 0  # 3  # use every (step) time slice but skip unsuitable ones
+step = 3  # 3  # use every (step) time slice but skip unsuitable ones
 
 st = 0
 skipped = []
 for s in srange:
-    fig = plt.figure(100, figsize=(12, 8))
+    #fig = plt.figure(100, figsize=(12, 8))
     fig = plt.figure(100, figsize=(8, 6))
     ne_raw = da.masked['ne'][s]
     wg = np.where(~np.isnan(ne_raw))[0]
@@ -89,3 +97,4 @@ for s in srange:
         plt.close(fig)
     else:
         plt.show()
+

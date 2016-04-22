@@ -6,8 +6,9 @@ _PYFUSION_TEST_@@diag_name="DIA135"
 
 from __future__ import print_function
 import subprocess, glob, pickle, sys
-from time import localtime
+from time import localtime, ctime
 import tempfile, os
+import pyfusion
 from time import time as seconds
 
 _var_defaults="""
@@ -34,6 +35,7 @@ tm = localtime()
 out_list = []
 filelist = glob.glob(filewild)
 n_errs, total = 0, 0
+      
 try:
     for filename in filelist:  # [1:3] for test
         prerun, tmpfil = '', ''
@@ -92,12 +94,13 @@ dumpname = str('test_output_V{V}_{yy:02d}{mm:02d}{dd:02d}_{hh:02d}:{mn:02d}.pick
 pickle.dump(out_list, open(dumpname, 'wb'))
 
 print()
+print('Python {pv}, Pyfusion {pfv} {date}'.format(pv=sys.version[0:20], pfv=pyfusion.VERSION, date=ctime()))
 for i, ll in enumerate(out_list):
     print('{i:2d} {dt} {fn:30s}: {msg}'
           .format(i=i, dt=ll[3], fn='/'.join(ll[0].split('/')[-2:]),
                   msg=[ll[1][-57:].replace(b'\n', b' '), b'OK!'][ll[1] == b'']))
 
-print('{e} errors out of {t}'.format(e=n_errs, t=total))
+print('{g} good, {e} errors out of {t}'.format(e=n_errs, t=total, g=total-n_errs))
 
 if '-3' in python_exe:
     print('python 3 warnings coming from my files')

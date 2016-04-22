@@ -37,13 +37,13 @@ device = pf.getDevice(dev_name)
 
 if dev_name == 'LHD':
     if shot_number is None: shot_number = 27233
-    if diag_name is None: diag_name= 'MP'
+    if diag_name is "": diag_name= 'MP'
 elif dev_name[0:1] == "H1":
     if shot_number is None: shot_number = 69270
-    if diag_name is None: diag_name = "H1DTacqAxial"
+    if diag_name is "": diag_name = "H1DTacqAxial"
 elif dev_name == "HeliotronJ":
     if shot_number is None: shot_number = 27633
-    if diag_name is None: diag_name = "HeliotronJ_MP2"
+    if diag_name is "": diag_name = "HeliotronJ_MP2"
 
 exec(pf.utils.process_cmd_line_args())
 

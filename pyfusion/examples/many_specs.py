@@ -4,7 +4,7 @@ import MDSplus as MDS
 import numpy as np
 try: # this code doesn't need pyfusion - try the standalone version
     # actually, the standalone version is the only one worht running.....
-    #_PYFUSION_TEST_@Skip
+    #_PYFUSION_TEST_@@Skip
     from signal_processing import smooth_n
     from subplots import subplots
     from bdb_utils import process_cmd_line_args

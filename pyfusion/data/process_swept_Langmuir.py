@@ -12,7 +12,7 @@ This version assumes that all required sweep data are in a multi-channel diagnos
     from pyfusion.data.DA_datamining import Masked_DA, DA
     da=DA('20160310_9_L57',load=1)  # just to be sure it is a good DA
     da.masked=Masked_DA(['Te','I0','Vp'], DA=da)
-    da.da['mask']=(-da['resid']/abs(da['I0'])<.35) & (da['nits']<100)
+    da.da['mask']=(da['resid']/abs(da['I0'])<.35) & (da['nits']<100)
     clf();plot(da.masked['Te']);ylim(0,100)
 
 
@@ -92,17 +92,19 @@ class LPfitter():
 
         var = [Te, Vp, I0]
         scale = np.array([Te, Te/3, I0])
-        fit_results = amoeba.amoeba(var, scale, self.error_fun, itmax=maxits,
-                                    data=dict(v=self.v, i=self.i))
+        fit_results = list(amoeba.amoeba(var, scale, self.error_fun, itmax=maxits,
+                                    data=dict(v=self.v, i=self.i)))
         Te, Vp, I0 = fit_results[0]
+        fit_results[1] = -fit_results[1]  # change residual back to positive
         residual, mits = fit_results[1:3]
+        fit_results.append(maxits)
         if plot > 1:
             plt.scatter(self.v, self.i, c='r', s=80,
                         alpha=min(1, 4/np.sqrt(len(self.v))))
 
             self.plotchar(self.v, Te, Vp, I0, linewidth=4)
             plt.title('Te = {Te:.1f}eV, Vp = {Vp:.1f}, Isat = {I0:.3g}, resid = {r:.2e} {mits} its '
-                      .format(Te=Te, Vp=Vp, I0=I0, r=-residual, mits=mits))
+                      .format(Te=Te, Vp=Vp, I0=I0, r=residual, mits=mits))
             plt.show(block=0)
 
         return(fit_results)
@@ -270,12 +272,12 @@ class Langmuir_data():
             v = v_seg.signal[self.vlookup[self.vassoc[c]]]
             i = i_seg.signal[c]
             im = m_seg.signal[c]
-            [Te, ne, I0], resid, nits = self.fit_swept_Langmuir_seg_chan(im, i, v, i_seg, channame=chan.config_name, clipfact=clipfact, plot=plot)
+            [Te, ne, I0], resid, nits, maxits = self.fit_swept_Langmuir_seg_chan(im, i, v, i_seg, channame=chan.config_name, clipfact=clipfact, plot=plot)
             t_mid = np.average(i_seg.timebase)
-            res.append([t_mid, Te, ne, I0, resid, nits])
+            res.append([t_mid, Te, ne, I0, resid, nits, maxits])
         return(res)
     
-    def fit_swept_Langmuir_seg_chan(self, m_sig, i_sig, v_sig, i_segds, channame, clipfact=5, plot=None):
+    def fit_swept_Langmuir_seg_chan(self, m_sig, i_sig, v_sig, i_segds, channame, maxits=100, clipfact=5, plot=None):
         """Lowish level routine - takes care of i clipping and but not
         leakage or restoring sweep.
 
@@ -284,24 +286,24 @@ class Langmuir_data():
         # Note that we check the RAW current for clipping
         segtb = i_segds.timebase
         v, i, im = v_sig.copy(), i_sig.copy(), m_sig.copy()     # for fit
-        #v_n, i_n, im_n = v * np.nan, i * np.nan, im * np.nan,   # for nan plots
+        # v_n, i_n, im_n = v * np.nan, i * np.nan, im * np.nan,   # for nan plots
 
         good = find_clipped([v, im], clipfact=clipfact)
         wg = np.where(good)[0]
         if (~good).any():  # if any bad
             if len(wg) < 0.3 * len(v):  # was (~good).all():
                 print('suppressing all!*** {a}'.format(a=len(good)))
-                return([3*[None],None,None])
-            elif self.verbose>0 or len(wg) < 0.9 * len(v):
+                return([3*[None], None, None, None])
+            elif self.verbose > 0 or len(wg) < 0.9 * len(v):
                 print('suppress clipped {b}/{a}'
                       .format(b=len(np.where(~good)[0]), a=len(good)))
 
         # [[Te, Vp, I0], res, its]
         if plot is None:
             # plot in detail only if there are 20 figures or less
-            plot=self.plot + 2*((len(self.segs)*len(self.imeasfull.channels))< 8)
+            plot = self.plot + 2*((len(self.segs)*len(self.imeasfull.channels)) < 8)
         if plot >= 2:
-            interval = str('{t}'.format(t=[round(segtb[0],6), round(segtb[-1],6)]))
+            interval = str('{t}'.format(t=[round(segtb[0], 6), round(segtb[-1], 6)]))
             fig, axs = plt.subplots(nrows=1 + (plot >= 3), ncols=1, squeeze=0,
                                     num='{i} {c}'.format(i=interval, c=channame))
             if plot >= 3:
@@ -317,7 +319,7 @@ class Langmuir_data():
                          .format(tr=interval, shot=self.shot, d=self.i_diag, c=channame))
 
         #res = LPfit(v, i, plot=(debug > 1),maxits=100)
-        self.fitter = LPfitter(i=i[wg], v=v[wg], maxits=100, plot=plot, parent = self)
+        self.fitter = LPfitter(i=i[wg], v=v[wg], maxits=maxits, plot=plot, parent = self)
         return(self.fitter.fit(plot=plot))
 
     def write_DA(self, filename):
@@ -333,12 +335,12 @@ class Langmuir_data():
         dd['progId'][:] = self.shot[1]
         dd['shot'][:] = self.shot[1] + 1000*self.shot[0]
 
-        for key in ['nits']:
+        for key in ['nits','maxits']:
             dd[key] = np.zeros([nt,nc], dtype=np.uint16)
 
         # make all the f32 arrays - note - ne is just IO for now - fixed below
-        for (ind, key) in [(0, 't_mid'), (1, 'Te'), (2, 'Vp'),
-                           (3, 'I0'), (4, 'resid'), (5, 'nits'), (3, 'ne')]:
+        for (ind, key) in [(0, 't_mid'), (1, 'Te'), (2, 'Vp'), (3, 'I0'), 
+                           (4, 'resid'), (5, 'nits'), (6, 'maxits'), (3, 'ne')]:
             if key not in dd:
                 dd[key] = np.zeros([nt, nc], dtype=np.float32)
             dd[key][:] = res[:, :, ind]
@@ -347,13 +349,14 @@ class Langmuir_data():
         dd['t_mid'] = dd['t_mid'][:, 0]
         dd['info'] = dict(params=self.actual_params,
                           coords=self.coords,
+                          shotdata=dict(shot=[self.shot], utc_ns=[self.imeas.utc[0]]),
                           channels=[chn.replace(self.dev.name, '')
                                     .replace('_I', '')
                                     for chn in self.ichans])
         da = DA(dd)
         da.masked = Masked_DA(['Te', 'I0', 'Vp', 'ne'], DA=da)
-        #  da.da['mask']=(-da['resid']/abs(da['I0']) < .7) & (da['nits']<100)
-        da.da['mask'] = ((-da['resid']/abs(da['I0']) < .7) & (da['nits'] < 100)
+        #  da.da['mask']=(da['resid']/abs(da['I0']) < .7) & (da['nits']<100)
+        da.da['mask'] = ((da['resid']/abs(da['I0']) < .7) & (da['nits'] < da['maxits'])
                          & (np.abs(da['Vp']) < 200) & (np.abs(da['Te']) < 200))
         q = 1.602e-19
         mi = 1.67e-27

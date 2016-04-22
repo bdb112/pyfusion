@@ -4,26 +4,31 @@ pyfusion
 python code for data mining plasma fluctuations
 -----------------------------------------------
 
-
 Update: 
-* Version 0.66 restores coordinates coding (incl W7X), but LHD access is broken due to Error in LHDConvenience fn  (output_coords)
+Version 0.6.6:
+ 
+* restores coordinates coding (incl W7X), transforms not properly implemented yet
 * process_swept_Langmuir is more convenient to use (incl auto load and save)
+* plot_LP2D - animate Te and ne (into pngs)  
 * examples/modify_cfg.py is a script to add/modify pyfusion.cfg
   (presently coordinates)
+* Some gas controls in pyfusion.cfg
 * pyfusion.DBG() instead of pyfusion.DEBUG if a purely numeric value is
   needed (e.g. in > or < tests).  This avoids unwanted debugger breaks when a
   text key is used.
+* fixed problem in LHD data access due to exception in LHDConvenience function.  (output_coords)
 
-Version 0.65 has Langmuir processsing separated into two objects (see
+Version 0.65: Langmuir processsing is separated into two classes/objects (see
 data/process_swept_Langmuir), optimised and saved as dictionary of
 array (DA) files, with a built in mask of dubious data.
 Clipped sweep voltage can be restored by restore_sin()
 
-issues: 
-1/ applying restore_sin to data that are not clipped produces
-large errors.
-2/ partial clipping produces elevated Te
-3/ fit quality criterion and ne calculation need improvement
+Issues: 
+
+1. applying restore_sin to data that are not clipped produces
+   large errors.
+2. partial clipping produces elevated Te
+3. fit quality criterion and ne calculation need improvement
 
 Version 0.64 beta has improved processing of clipped, swept Langmuir probe data,
 Next version will have multi-channel data extraction system using pyfusion 'Dictionary of Arrays'.
@@ -138,10 +143,12 @@ or suppressed. ### What are the objectives?
 
    <pre>
 
- 1/ Identify the physical nature of plasma modes - oscillations or
-fluctuations 2/ Distill large data sets describing these into a data
-base of a manageable size. 3/ With this knowledge, develop means of
-automatically classifying and identifying these modes.
+1. Identify the physical nature of plasma modes - oscillations or
+   fluctuations 
+2. Distill large data sets describing these into a data
+   base of a manageable size. 
+3. With this knowledge, develop means of
+   automatically classifying and identifying these modes.
 
 .. raw:: html
 
@@ -151,8 +158,11 @@ Datamining helps with all these aims, especially in automating the
 process. This enables the use of large datasets from the entire
 operational life of many plasma confinement devices, well beyond the
 capability of analysis by hand. Ultimately this will enable near
-real-time identification of modes for control and feedback. ### What are
-the modes of interest? By plasma modes we mean plasma oscillations which
+real-time identification of modes for control and feedback. 
+
+### What are the modes of interest? 
+
+By plasma modes we mean plasma oscillations which
 will usually be incoherent to some extent , because plasma parameters
 such as density vary in time and in space. If we can measure the
 frequency, and its dependence on plasma parameters, we can have some
@@ -191,8 +201,9 @@ directory, which happens by default if you clone the repository.
 
    <pre>
 
- \`\`\`python git clone /home/bdb112/pyfusion/mon121210/pyfusion/ cd
-pyfusion
+    python git clone /home/bdb112/pyfusion/mon121210/pyfusion/
+    cd pyfusion
+    
 
 .. raw:: html
 

@@ -142,8 +142,14 @@ def get_coords_for_channel(channel_name=None, **kwargs):
     if 'coord_transform' in config_dict:
         transform_list = pyfusion.config.pf_options('CoordTransform', config_dict['coord_transform'])
         for transform_name in transform_list:
+            # this seems to return all the globals too
             transform_class_str = pyfusion.config.pf_get('CoordTransform', config_dict['coord_transform'], transform_name)
+            # so tyr to exclude the globals
+            if pyfusion.config.has_option('global',transform_name):
+                continue
             transform_class = import_from_str(transform_class_str)
+            #if not hasattr(transform_class, 'output_coord'):
+            #    raise Exception('??')
             coords_instance.load_transform(transform_class)
     debug_(pyfusion.DEBUG,1, key=['coord','device_name'])        
     return coords_instance

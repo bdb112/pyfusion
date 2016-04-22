@@ -60,6 +60,7 @@ def myhist(X):
 
 def regenerate_dim(x):
     """ assume x in ns since epoch from the current time """
+    msg = None  # msg allows us to see which shot/diag was at fault
     diffs = np.diff(x)
     # bincount needs a positive input and needs an array with N elts where N is the largest number input
     small = (diffs > 0) & (diffs < 1000000)
@@ -84,14 +85,14 @@ def regenerate_dim(x):
     x01111[0] = 0
     errcnt = np.sum(bigcounts) + np.sum(np.sort(counts)[::-1][1:])
     if errcnt>0 or (pyfusion.VERBOSE > 0): 
-        print('** repaired length of {l:,}, dtns={dtns:,}, {e} erroneous utcs'
+        msg = str('** repaired length of {l:,}, dtns={dtns:,}, {e} erroneous utcs'
               .format(l=len(x01111), dtns=dtns, e=errcnt))
 
     fixedx = np.cumsum(x01111)*dtns
     wbad = np.where((x - fixedx)>1e8)[0]
     fixedx[wbad] = np.nan
     debug_(pyfusion.DEBUG, 3, key="repair", msg="repair of W7-X scrambled Langmuir timebase") 
-    return(fixedx)
+    return(fixedx, msg)
     
 
 class W7XDataFetcher(BaseDataFetcher):
@@ -167,7 +168,10 @@ class W7XDataFetcher(BaseDataFetcher):
         elif self.repair == 1:
             dim = np.clip(dim, 0, 1e99)
         elif self.repair == 2:
-            dim = regenerate_dim(dim)
+            dim, msg = regenerate_dim(dim)
+            if msg is not None:
+                print('shot {s}, {c}: {m}'
+                      .format(s=self.shot, c=self.config_name, m=msg))
         else:
             raise ValueError('repair value of {r} not understood'.format(r=self.repair))
 

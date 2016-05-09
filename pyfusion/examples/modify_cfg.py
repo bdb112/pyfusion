@@ -1,8 +1,24 @@
 import numpy as np
 debug=0  # 1 will stop at error
 
+""" Orig
 dat = np.loadtxt('LP_coords.txt', dtype=[('seg', 'i'), ('name', 'S24'), ('X', 'f'), ('Y', 'f'), ('Z', 'f')],
                  delimiter='\t')
+"""
+attr_filename = 'LP_coords.txt'
+attr_dtype = [('seg', 'i'), ('name', 'S24'), ('X', 'f'), ('Y', 'f'), ('Z', 'f')]
+attr_fmt = 'coords_w7-x-koord = {x:.5f}, {y:.5f}, {z:.5f}\n'
+def attr_dict(dat):
+    return(dict(x=dat['X']/1e3, y=dat['Y']/1e3, z=dat['Z']/1e3))
+
+"""
+attr_filename = '/data/databases/W7X/LP/merge_in_probe_area.txt'
+attr_dtype = [('name', 'S24'), ('A', 'f')]
+attr_fmt = 'area = {a:.3f}e-06\n'  # fake it so result always has power -6
+def attr_dict(dat):
+    return(dict(a=dat['A'])) # mm2 here, m2 in file (see -6 above)
+"""
+dat = np.loadtxt(attr_filename, dtype=attr_dtype, delimiter='\t')
 with open('pyfusion/pyfusion.cfg') as cf:
     clines=cf.readlines()
 
@@ -21,7 +37,11 @@ while i < len(clines)-1:
         seg = int(toks[1][-1])
         probe = int(toks[2][2:])
         print(i, seg, probe)
-        l = np.where((dat['seg'] == seg) & (dat['name'] == 'Sonde_{p}.1 (Spitze)'.format(p=probe)))[0]
+        if 'coord' in attr_filename:
+            l = np.where((dat['seg'] == seg) & (dat['name'] == 'Sonde_{p}.1 (Spitze)'.format(p=probe)))[0]
+        else:
+            l = np.where(dat['name'] == clines[i].split(':')[1].split(']')[0])[0]
+
         if len(l) != 1:
             msg = str('finding segment {s}, probe {p}'.format(s=seg, p=probe))
             if debug: 
@@ -32,8 +52,12 @@ while i < len(clines)-1:
                 continue
         else:
             l = l[0]
-        line = str('W7-X-Koord = {x:.5f}, {y:.5f}, {z:.5f}\n'
+
+        """ simple, old way
+        line = str('coords_w7-x-koord = {x:.5f}, {y:.5f}, {z:.5f}\n'
                    .format(x=dat['X'][l]/1e3, y=dat['Y'][l]/1e3, z=dat['Z'][l]/1e3))
+        """
+        line = str(attr_fmt.format(**attr_dict(dat[l])))
         clines.insert(i+1, line)
         i += 1
 

@@ -33,7 +33,8 @@ from pyfusion.data.base import Coords, ChannelList, Channel
 import json
 
 from pyfusion.debug_ import debug_
-import sys
+import sys, os
+import time as tm
 
 from .get_shot_info import get_shot_utc
 
@@ -103,7 +104,7 @@ class W7XDataFetcher(BaseDataFetcher):
         #  or date (8dig) and shot (progId)
         # the format is in the acquisition properties, to avoid
         # repetition in each individual diagnostic
-        ch = Channel(self.config_name,  Coords('dummy', (0,0,0)))
+
         if self.shot[1]>1e9:  # we have start and end in UTC
             f,t = self.shot
         else:
@@ -134,7 +135,6 @@ class W7XDataFetcher(BaseDataFetcher):
         params.update(shot_f=f, shot_t=t)
         url = fmt.format(**params)
         if pyfusion.CACHE:
-            import os
             print('using wget on {url}'.format(url=url))
             os.system('wget -x "{url}"'.format(url=url))
             # now read from the local copy - it is in the wd, so only //
@@ -176,6 +176,10 @@ class W7XDataFetcher(BaseDataFetcher):
             raise ValueError('repair value of {r} not understood'.format(r=self.repair))
 
         if pyfusion.VERBOSE>2:  print('repair',self.repair)
+        #ch = Channel(self.config_name,  Coords('dummy', (0,0,0)))
+        # this probably should be in base.py
+        coords = get_coords_for_channel(**self.__dict__)
+        ch = Channel(bare_chan,  coords)
         output_data = TimeseriesData(timebase=Timebase(1e-9*dim),
                                      signal=Signal(dat['values']), channels=ch)
         output_data.meta.update({'shot': self.shot})
@@ -204,4 +208,63 @@ class W7XDataFetcher(BaseDataFetcher):
         setup, do_fetch, pulldown
         """
         self.fetch_mode = 'http'
-                    
+
+        # A kludge to warn user if there is no access to the URL data
+        # this can be used by H-1 URL also, if so, needs to be at a higher level
+        # In the current nameserver list, presence of sv indicates IPP internal
+        #  very dodgy test - any better ideas?
+        if ((pyfusion.LAST_DNS_TEST < 0) 
+            or ((tm.time() - pyfusion.LAST_DNS_TEST < 10)
+                and (hasattr(self.acq, 'access')))):
+            if pyfusion.VERBOSE>0:
+                print('Skipping URL access check - see pyfusion.LAST_DNS_TEST')
+            return
+        # no else - the return (above) does the job
+
+        pyfusion.LAST_DNS_TEST = tm.time()
+        self.acq.access = False
+        dominfo = dict(dom=self.acq.domain, look=self.acq.lookfor)
+        try:
+            # this is the clean way
+            import dns.resolver
+            domain = self.acq.domain
+            answers = dns.resolver.query(domain,'NS')
+            for server in answers:
+                if self.acq.lookfor in server.to_text():
+                    self.acq.access = True 
+                if pyfusion.VERBOSE>0: 
+                    print(server.to_text())
+                    print('dns.resolver test for nameserver {domain} indicates access is {access}'
+                          .format(**dominfo))
+        except ImportError:
+            # this alternative may work, especially if cygwin is installed, but is noisier
+            # note - not set up for cygwin yet - need to call bash so we have access to grep
+            try:
+                #os.system('nslookup '+self.acq.domain)
+                self.acq.access = (
+                    # should really check for 0 (found) 1W/256Lin (not found) 
+                    #  or 256W >>256 Lin  (error)
+                    (0 == os.system('nslookup {dom}|find "{look}" 2> /tmp/winjunk'.format(**dominfo))) or
+                    (0 == os.system('nslookup {dom}|grep {look} 2> /tmp/linjunk'.format(**dominfo))))
+
+                if pyfusion.VERBOSE>0: 
+                    print('nslookup test on nameserver {domain} indicates access is {access}'
+                          .format(**dominfo))
+            except ():
+                print('*******************************************************************************')
+                print('Warning- assuming we have archive network access in the absence of any real information')
+                print('*******************************************************************************')
+                self.acq.access = None
+        #the lines below probably should be in W7X/fetch
+        if self.acq.access is False:
+            raise LookupError('URL for {u} is probably not accessible or the\n '\
+                              'necessary software (dnspython or nslookup/grep) is not installed.\n'\
+                              'Set pyfusion.LAST_DNS_TEST=-1 to skip test'
+                              .format(u=self.config_name))
+
+
+
+
+
+
+

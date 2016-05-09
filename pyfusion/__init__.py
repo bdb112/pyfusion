@@ -121,6 +121,10 @@ CACHE = int(os.getenv('PYFUSION_CACHE',
 # will produce warning and try a second time for 3x the timeout value
 TIMEOUT = int(os.getenv('PYFUSION_TIMEOUT',
                     config.get('global','TIMEOUT',vars={'TIMEOUT':'30'})))
+# This is set to the time of the last DNS test - relevant to W7X 
+#  and H-1 or others using URL access.  Set to -1 to skip
+LAST_DNS_TEST = int(os.getenv('PYFUSION_LAST_DNS_TEST',
+                    config.get('global','LAST_DNS_TEST',vars={'LAST_DNS_TEST':'0'})))
 
 # restrict the number of samples to speed up access over slow nets (for debugging of course)
 NSAMPLES = int(os.getenv('PYFUSION_NSAMPLES',

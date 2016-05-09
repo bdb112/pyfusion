@@ -147,7 +147,7 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encod
             first_large_diff_diffs_ind = large_diff_diffs_ind[0][0]
             last_small_diff_diffs_ind = first_large_diff_diffs_ind-1
             
-        # When the step size is within a few orders of represeantaion
+        # When the step size is within a few orders of representation
         # accuracy, problems appear if there a systematic component in
         # the representational noise.
 
@@ -166,11 +166,18 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encod
         # Apr 2010 - fixed bug for len(diff_sort) ==  1  +1 in four places
         # like [0:last_small_diff_diffs_ind+1] - actually a bug for all, only
         # obvious for len(diff_sort) ==  1
-        deltar=mean(diff_sort[0:last_small_diff_diffs_ind+1])
-
-        peaknoise = max(abs(diff_sort[0:last_small_diff_diffs_ind+1] -
+        if pyfusion.DBG(): 
+            print('last_small_diff_diffs_ind', last_small_diff_diffs_ind)
+        debug_(pyfusion.DEBUG, 2, key='last_small')
+        if last_small_diff_diffs_ind < 0:
+            print('last_small_diff_diffs_ind = {lsdd} - error?  continuing...'
+                  .format(lsdd=last_small_diff_diffs_ind))
+            deltar, peaknoise, rmsnoise = 0, 0, 0
+        else:
+            deltar=mean(diff_sort[0:last_small_diff_diffs_ind+1])
+            peaknoise = max(abs(diff_sort[0:last_small_diff_diffs_ind+1] -
                                 deltar))
-        rmsnoise = std(diff_sort[0:last_small_diff_diffs_ind+1] -
+            rmsnoise = std(diff_sort[0:last_small_diff_diffs_ind+1] -
                                 deltar)
         pktopk=max(arr)-min(arr)
         if (verbose>0) or (peaknoise/pktopk>1e-7): 
@@ -234,14 +241,14 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
     Probably should eventually separate the file write from making the 
     dictionary.  Intended to be aliased with loadz, args slightly different.
     There is no dependence on pyfusion.  Version 101 adds time_unit_in_seconds
-    version 102 adds utc, raw
+    version 102 adds utc, raw, 103 after correction of probes 11-20
     Note: changed to parent_element=array(0) by default - not sure what this is!
     """
     from numpy import remainder, mod, min, max, \
         diff, mean, unique, append
     from pyfusion.debug_ import debug_
 
-    debug_(pyfusion.DEBUG,1, key='discretise_signal')
+    debug_(pyfusion.DEBUG, 2, key='discretise_signal')
 
     dat=discretise_array(signal,eps=eps,verbose=verbose, delta_encode=delta_encode_signal)
 #    signalexpr=str("signal=%g+rawsignal*%g" % (dat['minarr'], dat['deltar']))
@@ -291,7 +298,7 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
         savez_compressed(filename, timebaseexpr=timebaseexpr, 
                          signalexpr=signalexpr, params=params,
                          parent_element=parent_element, time_unit_in_seconds=tus,
-                         rawsignal=rawsignal, rawtimebase=rawtimebase, version=102)    
+                         rawsignal=rawsignal, rawtimebase=rawtimebase, version=103)    
 
 
 def newload(filename, verbose=verbose):

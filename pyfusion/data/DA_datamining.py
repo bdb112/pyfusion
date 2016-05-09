@@ -10,7 +10,8 @@ if it is not loaded - typically, if you plan to test it thne use it,
 save to a var first, then test, then use it.  see "dak" below
 """
 
-# first, arrange a debug one way or another
+# Want to avoid depending on pyfusion, but use it if it is there
+# First, arrange a debug one way or another
 try: 
     from pyfusion.debug_ import debug_
 except:
@@ -251,6 +252,11 @@ class DA():
         else:
             self.infodict = {}
 
+        try:  # silent attempt to get host info - avoids pyfusion dependence
+            import pyfusion
+            self.infodict['host'] = pyfusion.utils.host()
+        except:
+            pass
         self.__doc__ += 'foo\n'  # this isn't accessible to the ? or help function
 
         self.mainkey = mainkey  # may be None!
@@ -793,7 +799,7 @@ class DA():
         if dictionary is False:
             return(val_tuple)
 
-    def plot(self, key, x='t_mid', sharey=1, select=None, masked=1, marker=''):
+    def plot(self, key, x='t_mid', sharey=1, select=None, sharex='col', masked=1, marker=''):
         from matplotlib.ticker import MaxNLocator
         if sharey == 1:
             sharey = 'all'
@@ -816,24 +822,33 @@ class DA():
             labs = self.infodict['channels']
         else:
             labs = [str(ch for ch in range(nchans))]
-        fig, axs = plt.subplots(nvis, 1, squeeze=0, sharey=sharey) #, sharex='col')
+        fig, axs = plt.subplots(nvis, 1, squeeze=0, sharey=sharey, sharex=sharex)
         # 3 bins -> 4 ticks max
-        locator = MaxNLocator(nbins=min(10, max(3,20//nvis)), prune='upper')
-        fig.subplots_adjust(top=0.95, hspace=0.0, bottom=0.05)
+        locator = MaxNLocator(nbins=min(10, max(3, 20//nvis)), prune='upper')
+        #  Allow default room (not much!) for x ticks if x-axis is not shared
+        hspace = 0 if sharex == 'col' else None
+        fig.subplots_adjust(top=0.95, hspace=hspace, bottom=0.05)
         for c, (ch, ax) in enumerate(zip(clist, axs[:, 0])):
             # print(ch)
-            ax.set_ylabel(labs[ch], rotation=0,
-                          horizontalalignment='right')
+            (rot,ali) = ('vertical','center') if nvis < 6 else ('horizontal','right')
+            ax.set_ylabel(labs[ch], rotation=rot,
+                          horizontalalignment=ali)
             if np.isnan(arr[:, ch]).all():  # all nans confuses sharey
                 ax.plot(x, x*0)
             ax.plot(x, arr[:, ch], label=labs[ch])
             ax.yaxis.set_major_locator(locator)
+            # this worked in data/plots.py - but warning in DA_datamining
+            # ax.locator_params(prune='both', axis=x)
+            # but the plot doesnt overwite axis labels for sharex='col' anyway
+            """  This suppresses all if sharex='col'
+            print(c+1, nvis)
             if (c+1 != nvis):
                 ax.set_xticklabels('')
+            """
 
         # plt.legend((prop=dict(size='small'))
         plt.suptitle(self.name.replace('.npz', '') + ' ' + key)
-        debug_(self.debug, 2, key='plot')
+        debug_(self.debug, 2, key='DA_plot')
         plt.show(0)
 
 

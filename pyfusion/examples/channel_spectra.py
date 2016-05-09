@@ -23,15 +23,20 @@ exec(process_cmd_line_args())
 dev = pyfusion.getDevice(dev_name)
 data = dev.acq.getdata(shot_number,diag_name)
 
+fig, (ampax, phax) = plt.subplots(nrows=2, ncols=1, sharex='all')
+
 for i,(sig,chan) in enumerate(zip(data.signal,data.channels)):
     if sel is None or i in sel:
-        plt.plot(np.fft.fftshift(np.fft.fftfreq(len(data.timebase),np.average(np.diff(data.timebase)))),
+        ampax.plot(np.fft.fftshift(np.fft.fftfreq(len(data.timebase),np.average(np.diff(data.timebase)))),
                  np.fft.fftshift(np.abs(np.fft.ifft(sig-np.average(sig)))),
+                 label=str(i)+': '+chan.config_name, linestyle=['-','--','-.',':'][i//7])
+        phax.plot(np.fft.fftshift(np.fft.fftfreq(len(data.timebase),np.average(np.diff(data.timebase)))),
+                 np.fft.fftshift(np.angle(np.fft.ifft(sig-np.average(sig)))),
                  label=str(i)+': '+chan.config_name, linestyle=['-','--','-.',':'][i//7])
 
 plt.title('{s}: {d}'.format(s=shot_number, d=diag_name))
-plt.yscale('log')
-plt.ylim(1e-5, 1e1)
+ampax.set_yscale('log')
+ampax.set_ylim(1e-5, 1e1)
 plt.xlim(freq-delta, freq+delta)
-plt.legend(prop={'size':'x-small'})
+ampax.legend(prop={'size':'x-small'})
 plt.show(block=0)

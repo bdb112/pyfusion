@@ -64,7 +64,7 @@ def debug_(debug,level=1,key=None,msg=''):
                 reason = str('debug_ string "{deb}" found in "{key}"'
                              .format(deb=deb, key=key))
     
-        elif deb>=level: 
+        elif hasattr(deb, 'real') and deb>=level: # hasattr real is true for nums
             reason = str('debug_ parameter {deb} >= {level}, key = {k}'
                          .format(deb=deb, level=level, k=key))
 

@@ -172,7 +172,7 @@ for shot_number in shot_list:
                     else:
                         localfilename = getlocalfilename(shot_number, chan.config_name)
 
-                    params = dict(name = diag_chan, device = dev_name, utc=data.utc, raw=pyfusion.RAW)
+                    params = dict(name = diag_chan, device = dev_name, utc=data.utc, raw=pyfusion.RAW, host = pyfusion.utils.host())
                     if hasattr(data, 'params'):  # add the other params
                         params.update(data.params)
 

@@ -3,6 +3,7 @@ base classes  in this module will  not be called  explicitly, but rather
 inherited by subclasses in the acquisition sub-packages.
 
 """
+from __future__ import print_function
 from numpy.testing import assert_array_almost_equal
 from numpy import ndarray, shape
 from pyfusion.conf.utils import import_setting, kwarg_config_handler, \
@@ -25,9 +26,9 @@ def newloadv3(filename, verbose=1):
 #    if dic['version'] != None:
 #    if len((dic.files=='version').nonzero())>0:
     if len(dic.files)>3:
-        if verbose>2: print ("local v%d " % (dic['version'])),
+        if verbose>2: print ("local v%d " % (dic['version']),end='')
     else: 
-        if verbose>2: print("local v0: simple "),
+        if verbose>2: print("local v0: simple ", end='')
         return(dic)  # quick, minimal return
 
     if verbose>2: print(' contains %s' % dic.files)
@@ -75,7 +76,10 @@ def try_fetch_local(input_data, bare_chan):
         # original - data_filename %filename_dict)
         files_exist = os.path.exists(input_data.localname)
         debug_(pyfusion.DEBUG, 3, key='try_local_fetch')
-        if files_exist: break
+        if files_exist: 
+            if pyfusion.VERBOSE>0:
+                print('found local data in {f}'. format(f=input_data.localname))
+            break
 
     if not files_exist:
         return None
@@ -208,8 +212,13 @@ class BaseDataFetcher(object):
 #        print('BaseDFinit',config_name,self.__dict__.keys())
 
     def setup(self):
-        """Called by :py:meth:`fetch` before retrieving the data."""
-        pass
+        """Called by :py:meth:`fetch` before retrieving the data.
+        setup() ideally does sufficient of the preliminaries for fetch
+        so that their is enough information in self. for a useful error 
+        report if fetch fails, while avoiding exceptions wherever 
+        possible (during setup()).
+        """
+        pass  # base:setup should always be overridden
 
     def do_fetch(self):
         """Actually fetches  the data, using  the environment set  up by
@@ -357,6 +366,8 @@ class MultiChannelFetcher(BaseDataFetcher):
                     [int(k.split('channel_')[1]), self.__dict__[k]]
                     )
         channel_list.sort()
+        if len(channel_list) == 0:
+            print('********* warning!! empty channel list - are there ay channel_N attributes? ')
         return [i[1] for i in channel_list]
     
     def fetch(self):

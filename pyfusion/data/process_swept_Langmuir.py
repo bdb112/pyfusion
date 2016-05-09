@@ -176,6 +176,13 @@ class Langmuir_data():
     """ get the fits for a multi (or single) cpt diagnostic using segments
     if a dictionary params is supplied, use these to process the data, 
     otherwise just read in the data.
+
+    Eternal question: Should I pass parameters or set them in the object?
+    Ansewr for now - if you want them in the record of analysis, passthem through process_swept_Langmuir
+
+    obvious candidates for object: debug, plot, select
+    obvious candidates for args: pnorm, initial_TeVpI0, clipfact, rest_swp
+
     If params contains a filename entry, save the result as that name
     """
     def __init__(self, shot, i_diag, v_diag, dev_name="W7X", debug=debug, plot=1, verbose=0, params=None):
@@ -249,13 +256,17 @@ class Langmuir_data():
             self.iprobefull.signal[c][0:comlen] = self.imeasfull.signal[c][0:comlen] \
                                         - sweepV[0:comlen] * leakage[0] - sweepQ[0:comlen] * leakage[1]
 
-    def prepare_sweeps(self, rest_swp=None, sweep_freq=500, Vpp=90*2, clip_level_minus=-88):
+    def prepare_sweeps(self, rest_swp='auto', sweep_freq=500, Vpp=90*2, clip_level_minus=-88):
         """ extracts sweep voltage data for all probes,
         call restore_sin if necessary
         Initially, the voltage data is assumed to be in a dictionary
         """
         if self.debug > 0:
             print('entering prepare_sweeps ', len(self.vmeasfull.signal[0]))
+        if str(rest_swp).lower() == 'auto':
+            rest_swp = self.shot[0]>20160309
+            print ('* Automatically setting rest_swp to {r} *'.format(r=rest_swp))
+
         if rest_swp:
             from pyfusion.data.restore_sin import restore_sin
         self.vcorrfull = self.vmeasfull.copy()
@@ -264,7 +275,7 @@ class Langmuir_data():
                 self.vcorrfull.signal[c] = restore_sin(self.vmeasfull, chan=c, sweep_freq=sweep_freq,
                                                        Vpp=Vpp, clip_level_minus=clip_level_minus, verbose=self.verbose)
 
-    def fit_swept_Langmuir_seg_multi(self, m_seg, i_seg, v_seg, clipfact=5, plot=None):
+    def fit_swept_Langmuir_seg_multi(self, m_seg, i_seg, v_seg, clipfact=5,  initial_TeVpI0=None, plot=None):
         res = []
         for (c, chan) in enumerate(i_seg.channels):
             if self.select is not None and c not in self.select:
@@ -272,12 +283,12 @@ class Langmuir_data():
             v = v_seg.signal[self.vlookup[self.vassoc[c]]]
             i = i_seg.signal[c]
             im = m_seg.signal[c]
-            [Te, ne, I0], resid, nits, maxits = self.fit_swept_Langmuir_seg_chan(im, i, v, i_seg, channame=chan.config_name, clipfact=clipfact, plot=plot)
+            [Te, ne, I0], resid, nits, maxits = self.fit_swept_Langmuir_seg_chan(im, i, v, i_seg, channame=chan.config_name, clipfact=clipfact,  initial_TeVpI0=initial_TeVpI0, plot=plot)
             t_mid = np.average(i_seg.timebase)
             res.append([t_mid, Te, ne, I0, resid, nits, maxits])
         return(res)
     
-    def fit_swept_Langmuir_seg_chan(self, m_sig, i_sig, v_sig, i_segds, channame, maxits=100, clipfact=5, plot=None):
+    def fit_swept_Langmuir_seg_chan(self, m_sig, i_sig, v_sig, i_segds, channame, maxits=100, clipfact=5,  initial_TeVpI0=None, plot=None):
         """Lowish level routine - takes care of i clipping and but not
         leakage or restoring sweep.
 
@@ -295,8 +306,8 @@ class Langmuir_data():
                 print('suppressing all!*** {a}'.format(a=len(good)))
                 return([3*[None], None, None, None])
             elif self.verbose > 0 or len(wg) < 0.9 * len(v):
-                print('suppress clipped {b}/{a}'
-                      .format(b=len(np.where(~good)[0]), a=len(good)))
+                print('{t:.3f}s suppress clipped {b}/{a}'
+                      .format(b=len(np.where(~good)[0]), a=len(good), t=np.average(segtb)))
 
         # [[Te, Vp, I0], res, its]
         if plot is None:
@@ -320,7 +331,7 @@ class Langmuir_data():
 
         #res = LPfit(v, i, plot=(debug > 1),maxits=100)
         self.fitter = LPfitter(i=i[wg], v=v[wg], maxits=maxits, plot=plot, parent = self)
-        return(self.fitter.fit(plot=plot))
+        return(self.fitter.fit(init=initial_TeVpI0, plot=plot))
 
     def write_DA(self, filename):
         from pyfusion.data.DA_datamining import DA,  Masked_DA
@@ -338,9 +349,9 @@ class Langmuir_data():
         for key in ['nits','maxits']:
             dd[key] = np.zeros([nt,nc], dtype=np.uint16)
 
-        # make all the f32 arrays - note - ne is just IO for now - fixed below
+        # make all the f32 arrays - note - ne is just I0 for now - fixed below
         for (ind, key) in [(0, 't_mid'), (1, 'Te'), (2, 'Vp'), (3, 'I0'), 
-                           (4, 'resid'), (5, 'nits'), (6, 'maxits'), (3, 'ne')]:
+                           (4, 'resid'), (5, 'nits'), (6, 'maxits'), (3, 'ne18')]:
             if key not in dd:
                 dd[key] = np.zeros([nt, nc], dtype=np.float32)
             dd[key][:] = res[:, :, ind]
@@ -354,21 +365,21 @@ class Langmuir_data():
                                     .replace('_I', '')
                                     for chn in self.ichans])
         da = DA(dd)
-        da.masked = Masked_DA(['Te', 'I0', 'Vp', 'ne'], DA=da)
+        da.masked = Masked_DA(['Te', 'I0', 'Vp', 'ne18'], DA=da)
         #  da.da['mask']=(da['resid']/abs(da['I0']) < .7) & (da['nits']<100)
         da.da['mask'] = ((da['resid']/abs(da['I0']) < .7) & (da['nits'] < da['maxits'])
                          & (np.abs(da['Vp']) < 200) & (np.abs(da['Te']) < 200))
-        q = 1.602e-19
-        mi = 1.67e-27
-        fact = 1/(0.6*q)*np.sqrt(mi/(q))/1e18         # units of 1e18
+        qe = 1.602e-19
+        mp = 1.67e-27
+        fact = 1/(0.6*qe)*np.sqrt(self.amu*mp/(qe))/1e18         # units of 1e18
         # check if each channel has an area
         for (c, chn) in enumerate(self.ichans):
             cd = get_config_as_dict('Diagnostic', chn)
             A = float(cd.get('area', 1.8e-6))
-            da.da['ne'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
+            da.da['ne18'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
-    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], dtseg=4e-3, overlap=1, rest_swp=1, clipfact=5, leakage=None, threshold=0.01, filename=None, plot=None):
+    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], initial_TeVpI0=dict(Te=50, Vp=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, leakage=None, threshold=0.01, filename=None, amu=1, plot=None):
         """ 
         ==> results[time,probe,quantity]
         plot = 1   : V-I and data if there are not too many.
@@ -376,7 +387,8 @@ class Langmuir_data():
         plot >= 3  : ditto + time plot
         plot >= 4  : ditto + all I-V iterations
 
-        best to send parameters through the init - then they all are recorded
+        can send parameters through the init or process - either way
+         they all are recorded in actual_params
 
         Start by processing in the ideal order: - logical, but processes more data than necessary
         fix up the voltage sweep
@@ -393,6 +405,9 @@ class Langmuir_data():
 
         self.actual_params = locals().copy()
         self.actual_params.pop('self')
+        self.actual_params.update(dict(i_diag=self.i_diag, v_diag=self.v_diag))
+        self.actual_params.update(dict(i_diag_utc=self.imeasfull.utc, pyfusion_version=pyfusion.VERSION))
+        self.amu = amu
         self.ichans = [ch.config_name for ch in self.imeasfull.channels]
         for ch in self.ichans:  # only take the current channels, not U
             if ch[-1] != 'I':
@@ -447,7 +462,7 @@ class Langmuir_data():
         self.fitdata = []
         debug_(self.debug, 3, key='process_loop')
         for mseg, iseg, vseg in self.segs:
-            self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, plot=plot))
+            self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, initial_TeVpI0=initial_TeVpI0, plot=plot))
         if filename is not None:
             self.write_DA(filename)
 

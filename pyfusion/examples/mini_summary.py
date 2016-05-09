@@ -34,7 +34,7 @@ from sqlalchemy import Table, Column, Integer, String, Float, MetaData#, Foreign
 
 # simple method - use a fixed interval : typical H-1 [0.01, 0.05]
 # here 
-initial_interval = [0,10] 
+initial_interval = [0.01, 0.05] # [0,10] 
 
 ############
 ## Utilities
@@ -124,7 +124,7 @@ errs = dict(shot=[])  # error list for the shot overall (i.e. if tree is not fou
 for diag in diags.keys():
     errs.update({diag:[]})  # error list for each diagnostic
 
-for s in range(86451,89155):#(36363,88891): #81399,81402):  #(81600,84084):
+for s in range(83808,86450): # FY14-15 (86451,89155):#(36363,88891): #81399,81402):  #(81600,84084):
     datdic = dict(shot=s)
     shots += 1
     try:

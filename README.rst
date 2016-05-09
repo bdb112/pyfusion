@@ -5,10 +5,21 @@ python code for data mining plasma fluctuations
 -----------------------------------------------
 
 Update: 
+
+Version 0.6.7: alpha
+
+* Corrected Langmuir probe coordinates 11-20, added areas from Tipflachen_boyd.xlsx, added host and incremented npz version to 103 to indicate correct coords.
+* examples/N2_puff_correlation.py uses ECH start as time zero
+* Add gas controllers, currents including MainCoils, TrimCoils
+* Many improvements to process_swept_Langmuir, including actual_params
+* Simple test to warn if process is unable to access ipp-hgw, to avoid
+  waiting for timeout accessing URL
+
 Version 0.6.6:
  
 * restores coordinates coding (incl W7X), transforms not properly implemented yet
 * process_swept_Langmuir is more convenient to use (incl auto load and save)
+  rest_swp='auto' choose to restore the sweep according to shot number.
 * plot_LP2D - animate Te and ne (into pngs)  
 * examples/modify_cfg.py is a script to add/modify pyfusion.cfg
   (presently coordinates)
@@ -38,8 +49,10 @@ and convenient entry for large ranges of data and shots.
 Initial Langmuir analysis in process_swept_Langmuir, and pyfusion.CACHE to
 allow local chaching of json data. (very large!)
 
+pyfusion.reload() to reload configuration - git 5aed of 3-Mar
+
 Version 0.62 alpha includes more timebase checks for W7X, corrected
-gains for channels, and saves utc and params woth data.
+gains for channels, and saves utc and params with data.
 
 Version 0.61 includes first working version of W7-X archiveDB
 support, without much care for python3 compability of the new code.

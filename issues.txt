@@ -1,3 +1,8 @@
+on IPP server, Langmuir_data can't find Koords on 20160309,42 L53_LP11
+      fixed: due to missing coord call in W7X/fetch
+20160309,42 channel 13 doesn't look like old channel 15 *~2?? (but
+11,12 look like old 13,14
+
 Requests:
 add pyfusion.TSTART pyfusion.TSTOP  which can be set by env vars, and
 may be seconds or samples (if integers).  Error warning if integers

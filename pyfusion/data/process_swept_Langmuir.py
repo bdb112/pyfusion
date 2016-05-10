@@ -426,7 +426,7 @@ class Langmuir_data():
 
         self.vassoc = []  # list of associated sweepVs - one per i channel
         default_sweep = 'NO SWEEP'
-        default_sweep = 'W7X_L57_LP1_U'
+        default_sweep = 'W7X_L57_LP01_U'
 
         for ch in self.ichans:
             cd = get_config_as_dict('Diagnostic', ch)
@@ -470,11 +470,11 @@ class Langmuir_data():
 
 # quick test code - just 'run' this file
 if __name__ == '__main__':
-    #LP = Langmuir_data([20160310, 9], 'W7X_L57_LP1_4','W7X_L5UALL') # 4 chans
+    #LP = Langmuir_data([20160310, 9], 'W7X_L57_LP01_04','W7X_L5UALL') # 4 chans
     #LP = Langmuir_data([20160310, 9], 'W7X_L53_LPALLI','W7X_L5UALL') # lower
     #LP = Langmuir_data([20160309, 7], 'W7X_L57_LPALLI','W7X_L5UALL') # upper
     #LP = Langmuir_data([20160302, 12], 'W7X_L57_LPALLI','W7X_L5UALL') # bad tb?
-    LP = Langmuir_data([20160310, 9], 'W7X_L57_LP1_2','W7X_L5UALL') #quickest
-    # the following, using ([20160310, 9], 'W7X_L57_LP1_2) gives one nice char
+    LP = Langmuir_data([20160310, 9], 'W7X_L57_LP01_02','W7X_L5UALL') #quickest
+    # the following, using ([20160310, 9], 'W7X_L57_LP01_02) gives one nice char
     # and another char spoilt by a change in i_electron between cycles
     results = LP.process_swept_Langmuir(rest_swp=1,t_range=[1.6,1.604],t_comp=[0.8,0.85])

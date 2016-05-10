@@ -149,7 +149,7 @@ def LPfit(v,i,init=dict(Te=50, Vp=15, I0=None), plot=None, maxits=None):
 
 _var_defaults = """
 dev_name = "W7X"
-diag_name = "W7X_L57_LP3_I"
+diag_name = "W7X_L57_LP03_I"
 shot_number = [20160308,25]
 sharey=2
 plotkws={}
@@ -165,7 +165,7 @@ t_comp = [0.1,0.2] #  range for subtraction of leakage signal
 threshold = 0.001  # current in Amps above which the plasma is assumed to be
 pnorm=1  #  pnorm = 2 is like RMS, pnorm is like avg(abs()), seems best     
 maxits=100
-sweep_default="W7X_L57_LP1_U"
+sweep_default="W7X_L57_LP01_U"
 restore_sweep = -88  # if not 0, try to restore clipped sin for values below this
 fact = 5
 """

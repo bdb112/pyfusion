@@ -109,7 +109,7 @@ if __name__ == '__main__':
     _var_defaults = """
 verbose=1
 dev_name = "W7X"
-sweepV_name = "W7X_L57_LP1_U"
+sweepV_name = "W7X_L57_LP01_U"
 shot_number = [20160310,9] 
 t_range=[1.2,1.4]
 method = 2

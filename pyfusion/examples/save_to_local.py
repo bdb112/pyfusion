@@ -19,7 +19,7 @@ run examples/save_to_local.py shot_number=18993 'local_dir="c:/cygwin/tmp"' diag
 run pyfusion/examples/save_to_local.py shot_list=86507 dev_name='H1Local' diag_name='ElectronDensity15'
 
 # example with a two component shot number
-run pyfusion/examples/save_to_local.py shot_list='[[20160225,s] for s in range(1,50)]'  overwrite_local=1 dev_name='W7X' diag_name='W7X_L57_LP1_8'  local_dir='/data/datamining/local_data/' exception=Exception
+run pyfusion/examples/save_to_local.py shot_list='[[20160225,s] for s in range(1,50)]'  overwrite_local=1 dev_name='W7X' diag_name='W7X_L57_LP01_08'  local_dir='/data/datamining/local_data/' exception=Exception
 
 from the old pyfusion - may need to tidy up
 _PYFUSION_TEST_@@local_dir=/tmp/ overwrite_local=True
@@ -28,7 +28,7 @@ _PYFUSION_TEST_@@local_dir=/tmp/ overwrite_local=True
 run  pyfusion/examples/save_to_local.py diag_name=1 diag_name="['W7X_L53_LP{nnnn}_I'.format(nnnn=nn) for nn in [1,2,3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21,22]]" shot_list="[[20160302,s] for s in range(1,10)]"  overwrite_local=1 dev_name='W7X'  local_dir='/tmp' exception=Exception
 
 # the rest of the stuff
-run  pyfusion/examples/save_to_local.py diag_name=1 diag_name="['W7X_{nnnn}'.format(nnnn=nn) for nn in ['ECE_12','ECE_13','ECE_14','neL','TotECH','L53_LP1_U','L57_LP1_U']]" shot_list="[[20160302,s] for s in range(1,10)]"  overwrite_local=1 dev_name='W7X'  local_dir='/tmp' exception=Exception
+run  pyfusion/examples/save_to_local.py diag_name=1 diag_name="['W7X_{nnnn}'.format(nnnn=nn) for nn in ['ECE_12','ECE_13','ECE_14','neL','TotECH','L53_LP01_U','L57_LP01_U']]" shot_list="[[20160302,s] for s in range(1,10)]"  overwrite_local=1 dev_name='W7X'  local_dir='/tmp' exception=Exception
 
 New version
 run pyfusion/examples/save_to_local.py "shot_list=shot_range([20160309,6],[20160309,9])" diag_name='["W7X_L53_LPALL","W7X_L57_LPALL","W7X_TotECH","W7X_neL","W7X_ECE_axis"]'
@@ -87,7 +87,7 @@ compress_local=1
 overwrite_local=True
 save_kwargs = {} 
 prefix=''  #'HeliotronJ_'
-local_dir='/tmp'
+local_dir='/tmp'  # save for linux and windows
 exception = Exception
 pyfusion.RAW=1   # save in raw mode by default, so gain is not applied twice.
 diag_name=["W7X_TotECH"]

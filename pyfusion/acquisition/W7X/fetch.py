@@ -29,7 +29,9 @@ import matplotlib.pyplot as plt
 import pyfusion
 from pyfusion.acquisition.base import BaseDataFetcher
 from pyfusion.data.timeseries import TimeseriesData, Signal, Timebase
-from pyfusion.data.base import Coords, ChannelList, Channel
+from pyfusion.data.base import Coords, Channel, ChannelList, \
+    get_coords_for_channel
+
 import json
 
 from pyfusion.debug_ import debug_
@@ -179,7 +181,8 @@ class W7XDataFetcher(BaseDataFetcher):
         #ch = Channel(self.config_name,  Coords('dummy', (0,0,0)))
         # this probably should be in base.py
         coords = get_coords_for_channel(**self.__dict__)
-        ch = Channel(bare_chan,  coords)
+        # used to be bare_chan? should we include - signs?
+        ch = Channel(self.config_name,  coords)
         output_data = TimeseriesData(timebase=Timebase(1e-9*dim),
                                      signal=Signal(dat['values']), channels=ch)
         output_data.meta.update({'shot': self.shot})

@@ -714,7 +714,7 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         fplot.legend(loc=4)   # bottom right
         tplot.legend(loc=0)
         plt.show()
-    debug_(debug, 2, key='filter_fourier')
+    debug_(debug, 3, key='filter_fourier')
     if np.max(mask) == 0: raise ValueError('Filter blocks all signals')
     if singl:
         output_data.signal = output_data.signal[0]
@@ -834,6 +834,16 @@ def correlate(input_data, index_1, index_2, **kwargs):
     return numpy_correlate(input_data.signal[index_1],
                            input_data.signal[index_2], **kwargs)
 
+class dummysig():
+    def __init__(self, tb,sig):
+        """ timebase is given as an array in seconds
+        30 (10 lots of three) signals are generated: as scaled copies 1,2,3x
+        """
+        self.timebase = tb
+        self.signal = 10 * [sig, 2*sig, 3*sig]
+        self.history = ''
+        self.channels = 10 * ['c1', 'c2', 'c3']
+
 if __name__ == "__main__":
 # this is a pain - I can see the benefit of unit tests/nose tests. bdb
 # make a class that looks like a timebase
@@ -847,15 +857,6 @@ if __name__ == "__main__":
         
 
 
-    class dummysig():
-        def __init__(self, tb,sig):
-            """ timebase is given as an array in seconds
-            30 (10 lots of three) signals are generated: as scaled copies 1,2,3x
-            """
-            self.timebase = tb
-            self.signal = 10*[sig, 2*sig, 3*sig]
-            self.history = ''
-
     import doctest
     from mpl_toolkits.axes_grid1 import host_subplot
     import matplotlib.pyplot as plt
@@ -867,9 +868,9 @@ if __name__ == "__main__":
     dat = dummysig(tb,np.sin(w*tb) + np.sin(wL*tb)*(tb<np.max(tb)/3))
     # below is 680us/loop fftw3, 3x2k signals. 1.2ms with numpy
     #         1.84us                           8.5ms for 10*3 signals
-    fop = filter_fourier_bandpass(dat,[9,11],[8,12],debug=1,taper=2).signal[0]
+    fop = filter_fourier_bandpass(dat,[9,11],[8,12],debug=2,taper=2).signal[0]
     plt.title('test 2 - 10Hz, +/- 1Hz'); plt.show()
-    fopwide = filter_fourier_bandpass(dat,[8,12], [0,30],debug=1).signal[0]
+    fopwide = filter_fourier_bandpass(dat,[8,12], [0,30],debug=2).signal[0]
     plt.title('test 2 - 10Hz wide'); plt.show()
 
     doctest.testmod()

@@ -6,6 +6,11 @@ python code for data mining plasma fluctuations
 
 Update: 
 
+Version 0.6.8: beta
+* Corrected limiter swap (3 and 7 interchanged) and several typos.
+* Added time plot of diagnostics to plot_LP2D.py
+* moved dummysig into data.filters module
+
 Version 0.6.7: alpha
 
 * Corrected Langmuir probe coordinates 11-20, added areas from Tipflachen_boyd.xlsx, added host and incremented npz version to 103 to indicate correct coords.

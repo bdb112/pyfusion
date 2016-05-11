@@ -5,6 +5,8 @@ debug=0  # 1 will stop at error
 dat = np.loadtxt('LP_coords.txt', dtype=[('seg', 'i'), ('name', 'S24'), ('X', 'f'), ('Y', 'f'), ('Z', 'f')],
                  delimiter='\t')
 """
+# uncomment one of these
+"""
 attr_filename = 'LP_coords.txt'
 attr_dtype = [('seg', 'i'), ('name', 'S24'), ('X', 'f'), ('Y', 'f'), ('Z', 'f')]
 attr_fmt = 'coords_w7-x-koord = {x:.5f}, {y:.5f}, {z:.5f}\n'
@@ -12,17 +14,19 @@ def attr_dict(dat):
     return(dict(x=dat['X']/1e3, y=dat['Y']/1e3, z=dat['Z']/1e3))
 
 """
+
 attr_filename = '/data/databases/W7X/LP/merge_in_probe_area.txt'
 attr_dtype = [('name', 'S24'), ('A', 'f')]
 attr_fmt = 'area = {a:.3f}e-06\n'  # fake it so result always has power -6
 def attr_dict(dat):
     return(dict(a=dat['A'])) # mm2 here, m2 in file (see -6 above)
-"""
+
 dat = np.loadtxt(attr_filename, dtype=attr_dtype, delimiter='\t')
 with open('pyfusion/pyfusion.cfg') as cf:
     clines=cf.readlines()
 
-print('clines initially {l} lines'.format(l=len(clines)))
+initial = len(clines)
+print('clines initially {l} lines'.format(l=initial))
 
 i = 0
 while i < len(clines)-1:
@@ -61,7 +65,7 @@ while i < len(clines)-1:
         clines.insert(i+1, line)
         i += 1
 
-print('final length {l}'.format(l=len(clines)))
+print('final length {l}, {e} extra'.format(l=len(clines),e=len(clines)-initial))
 
 with open('pyfusion.cfg.new','wb') as outfile:
     outfile.writelines(clines)

@@ -126,7 +126,8 @@ for s in srange:
     locator = MaxNLocator(prune='upper')
     ax.xaxis.set_major_locator(locator)
     for (c, ch) in enumerate(np.array(da.infodict['channels'])[wg]):
-        plt.text(x[c]+[.004,-0.018][x[c]<0], z[c], ch[2:], fontsize='x-small')
+        plt.text(x[c]+[.004,-0.004][x[c]<0], z[c], ch[2:], fontsize='x-small',
+                 horizontalalignment=['left','right'][x[c]<0])
     
     cbarTe = plt. colorbar(fraction=0.08, pad=0.02)
     #  cbarTe.set_label(r'$T_e (eV)$', rotation=270, fontsize='large')

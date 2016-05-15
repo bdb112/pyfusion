@@ -49,8 +49,14 @@ dafile = '20160308_41_L57' # also 44
 Te_range = [10, 100]  # 
 ne_range = [0, 6]
 
-"""
+
 dafile = '20160309_42_L57'
+Te_range = [10, 100]  # 53 [10,70]
+ne_range = [0, 10]   # 53 [0,10]
+minpts=18
+"""
+
+dafile = '20160224_25_L57'
 Te_range = [10, 100]  # 53 [10,70]
 ne_range = [0, 10]   # 53 [0,10]
 minpts=18
@@ -74,7 +80,7 @@ srange = range(100, 200)
 srange = range(180, 185)
 srange = range(67, 75)   # 20160309_42_L53
 srange = range(110, 111)
-#srange = range(len(da['t_mid']))
+srange = range(len(da['t_mid']))
 step = 3  # 3  # use every (step) time slice but skip unsuitable ones
 
 st = 0

@@ -6,6 +6,10 @@ python code for data mining plasma fluctuations
 
 Update: 
 
+* add correct_LP_data.py
+* improve auto filename generation in process_swept_Langmuir
+* pyfusion.cfg corrections (delete LP21..)
+
 Version 0.6.8: beta
 * Corrected limiter swap (3 and 7 interchanged) and several typos.
 * Added time plot of diagnostics to plot_LP2D.py

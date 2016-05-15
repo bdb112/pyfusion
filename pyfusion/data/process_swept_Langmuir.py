@@ -230,7 +230,8 @@ class Langmuir_data():
             sweepV = self.vcorrfull.signal[self.vlookup[self.vassoc[c]]][0:FFT_size]
             sweepQ = hilbert(sweepV)
 
-            imeas = self.imeasfull.signal[c]
+            # these attempts to make it accept a single channel are only partial
+            imeas = self.imeasfull.signal[c] # len(self.imeasfull.channels) >1 else self.imeasfull.signal
             tb = self.imeasfull.timebase
 
             w_comp = np.where((tb>=t_comp[0]) & (tb<=t_comp[1]))[0]
@@ -313,10 +314,12 @@ class Langmuir_data():
         if plot is None:
             # plot in detail only if there are 20 figures or less
             plot = self.plot + 2*((len(self.segs)*len(self.imeasfull.channels)) < 8)
-        if plot >= 2:
+        figs = []
+        if (plot >= 2) and len(figs) < 20:
             interval = str('{t}'.format(t=[round(segtb[0], 6), round(segtb[-1], 6)]))
-            fig, axs = plt.subplots(nrows=1 + (plot >= 3), ncols=1, squeeze=0,
+            fig, axs = plt.subplots(nrows=1 + (plot >= 3), ncols=1, squeeze=0,\
                                     num='{i} {c}'.format(i=interval, c=channame))
+            figs.append(fig)
             if plot >= 3:
                 axs[1, 0].plot(segtb, i, 'b', lw=.2)
                 axs[1, 0].plot(segtb[wg], i[wg], 'b.')
@@ -363,7 +366,7 @@ class Langmuir_data():
                           shotdata=dict(shot=[self.shot], utc_ns=[self.imeas.utc[0]]),
                           channels=[chn.replace(self.dev.name, '')
                                     .replace('_I', '')
-                                    for chn in self.ichans])
+                                    for chn in self.i_chans])
         da = DA(dd)
         da.masked = Masked_DA(['Te', 'I0', 'Vp', 'ne18'], DA=da)
         #  da.da['mask']=(da['resid']/abs(da['I0']) < .7) & (da['nits']<100)
@@ -373,7 +376,7 @@ class Langmuir_data():
         mp = 1.67e-27
         fact = 1/(0.6*qe)*np.sqrt(self.amu*mp/(qe))/1e18         # units of 1e18
         # check if each channel has an area
-        for (c, chn) in enumerate(self.ichans):
+        for (c, chn) in enumerate(self.i_chans):
             cd = get_config_as_dict('Diagnostic', chn)
             A = float(cd.get('area', 1.8e-6))
             da.da['ne18'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
@@ -398,7 +401,7 @@ class Langmuir_data():
         segment and process
 
         Faster order - reduces time range earlier: (maybe implement later)
-        detect plasma time range with quick and dirty method 
+        detect plasma time range with quick and dirty method
         restrict time range, but keep pre-shot data accessible for evaluation of success of removal
         """
         # first do the things that are better done on the whole data set.
@@ -408,27 +411,29 @@ class Langmuir_data():
         self.actual_params.update(dict(i_diag=self.i_diag, v_diag=self.v_diag))
         self.actual_params.update(dict(i_diag_utc=self.imeasfull.utc, pyfusion_version=pyfusion.VERSION))
         self.amu = amu
-        self.ichans = [ch.config_name for ch in self.imeasfull.channels]
-        for ch in self.ichans:  # only take the current channels, not U
+        if not isinstance(self.imeasfull.channels, (list, tuple, np.ndarray)):
+            self.imeasfull.channels = [self.imeasfull.channels]
+
+        self.i_chans = [ch.config_name for ch in self.imeasfull.channels]
+        for ch in self.i_chans:  # only take the current channels, not U
             if ch[-1] != 'I':
                 raise ValueError("Warning - removal of V chans doesn't work!!!")
                 # hopefully we can ignore _U channels eventually, but not yet
-                self.ichans.remove(ch)
+                self.i_chans.remove(ch)
 
         self.coords = [ch.coords.w7_x_koord for ch in self.imeasfull.channels]
 
-
-        self.vchans = [ch.config_name for ch in self.vmeasfull.channels]
+        self.v_chans = [ch.config_name for ch in self.vmeasfull.channels]
         # want to say self.vmeas[ch].signal where ch is the imeas channel name
         self.vlookup = {}
-        for (c,vch) in  enumerate(self.vchans):
+        for (c, vch) in  enumerate(self.v_chans):
             self.vlookup[vch] = c
 
         self.vassoc = []  # list of associated sweepVs - one per i channel
         default_sweep = 'NO SWEEP'
         default_sweep = 'W7X_L57_LP01_U'
 
-        for ch in self.ichans:
+        for ch in self.i_chans:
             cd = get_config_as_dict('Diagnostic', ch)
             self.vassoc.append(cd.get('sweepv', default_sweep))
 
@@ -464,6 +469,12 @@ class Langmuir_data():
         for mseg, iseg, vseg in self.segs:
             self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, initial_TeVpI0=initial_TeVpI0, plot=plot))
         if filename is not None:
+            if filename == '*':
+                filename = 'LP{s0}_{s1}_'
+                if 'L5' in self.i_diag:
+                    filename += 'L5' + self.i_diag.split('L5')[1][0]
+            if '{' in filename:
+                filename = filename.format(s0=self.shot[0], s1=self.shot[1], i_diag=self.i_diag)
             self.write_DA(filename)
 
         return(self.fitdata)

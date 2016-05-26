@@ -69,7 +69,7 @@ def myiden2(t,y):
     return(t,y)
 
 @register("TimeseriesData")
-def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=0.3,linestyle=True,labelfmt="{short_name} {units}", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', fun=myiden, fun2=None):
+def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=2,linestyle=True,labelfmt="{short_name} {units}", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', fun=myiden, fun2=None):
     """ 
     Plot a figure full of signals using n_columns[1], 
         sharey [=1]  "gangs" y axes  - sim for sharex - sharex=None stops this

@@ -26,40 +26,44 @@ dafile = '20160302_12_L57'
 Te_range = [10, 100]  # 20160302_12
 ne_range = [0, 2]
 
-dafile = '20160302_12_L57'
+dafile = 'LP20160302_12_L57'
 Te_range = [10, 100]  # 20160302_12
 ne_range = [0, 2]
 
-dafile = '20160310_9_L57'
+dafile = 'LP20160310_9_L57'
 Te_range = [20, 100]  # 
 ne_range = [0, 10]
 
-dafile = '20160310_9_L53'
+
+dafile = 'LP20160310_9_L53'
 Te_range = [20, 100]  # 
 ne_range = [0, 20]
 minpts=18
 
-"""
-dafile = '20160310_39_L57'
+
+dafile = 'LP20160310_39_L57'
 Te_range = [10, 100]  # 
 ne_range = [0, 4]
 
 
-dafile = '20160308_41_L57' # also 44
+dafile = 'LP20160308_41_L57' # also 44
 Te_range = [10, 100]  # 
 ne_range = [0, 6]
 
 
-dafile = '20160309_42_L57'
-Te_range = [10, 100]  # 53 [10,70]
+dafile = 'LP20160309_42_L53'
+Te_range = [10, 50]  # 53 [10,70]
 ne_range = [0, 10]   # 53 [0,10]
+srange = range(60, 72)   # 20160309_42_L53
+minpts=18
+
+"""
+dafile = 'LP20160224_25_L53'
+Te_range = [10, 50] #both  # 53 [10,70]    57 [10,100]
+ne_range = [0, 10]  #both  # 53 [0,12]      57 [0,10] 
+srange = range(85, 95)   # 20160224_25_L53
 minpts=18
 """
-
-dafile = '20160224_25_L57'
-Te_range = [10, 100]  # 53 [10,70]
-ne_range = [0, 10]   # 53 [0,10]
-minpts=18
 
 da = DA('LP/' + dafile)
 areas = 'uncalibrated'
@@ -67,8 +71,10 @@ try:
     if 'params' in da['info']:
         if  da['info']['params']['pyfusion_version'] > '0.6.7b':
             areas = 'approximate'
+        else:
+            print('*** Warning - incorrect limiter numbers? ***')
 except:
-    print('Old data file??')
+    print('******* Really Old data file??***********')
 
 sc_kwargs = dict(vmin=Te_range[0], vmax=Te_range[1]) if Te_range is not None else {}
 ne_kwargs = dict(vmin=ne_range[0], vmax=ne_range[1]) if ne_range is not None else {}
@@ -76,19 +82,23 @@ ne_kwargs = dict(vmin=ne_range[0], vmax=ne_range[1]) if ne_range is not None els
 if ne_range is not None:
     ne_scl = 500./ne_range[1]
 
-srange = range(100, 200)
-srange = range(180, 185)
-srange = range(67, 75)   # 20160309_42_L53
-srange = range(110, 111)
-srange = range(len(da['t_mid']))
+
+#srange = range(110, 120)
+#srange = range(len(da['t_mid']))
 step = 3  # 3  # use every (step) time slice but skip unsuitable ones
 
 st = 0
 skipped = []
 figs= []
 num = None  # None auto numbers figures
+
+ne = 'ne18' if 'ne18' in da.da else 'ne'
+# ne_max is used to offset the labels according to the size of the dots - (don't want them shifting in time)
+ne_max = np.nanmax(da.masked[ne],0)
+wnan = np.where(np.isnan(ne_max))[0]
+ne_max[wnan] = 0
+
 for s in srange:
-    ne = 'ne18' if 'ne18' in da.da else 'ne'
     ne_raw = da.masked[ne][s]
     wg = np.where(~np.isnan(ne_raw))[0]
     st += 1
@@ -119,9 +129,9 @@ for s in srange:
     sgn = int(np.sign(np.nanmean(z)))
     grid_x, grid_z = np.mgrid[-.06:.06:NGX, .16*sgn:.25*sgn:NGY]
     # 'nearest', 'linear', 'cubic'
-    ne = griddata(coords2D, ne_raw, (grid_x, grid_z), method='cubic')
+    negr = griddata(coords2D, ne_raw, (grid_x, grid_z), method='cubic')
     org = 'lower' if (sgn > 0) else 'upper'
-    axim = plt.imshow(ne.T, origin=org, extent=(np.min(grid_x), np.max(grid_x), np.min(grid_z), np.max(grid_z)),
+    axim = plt.imshow(negr.T, origin=org, extent=(np.min(grid_x), np.max(grid_x), np.min(grid_z), np.max(grid_z)),
                       **ne_kwargs)
     ax = axim.get_axes()
     cbarne = plt.colorbar(fraction=0.08, pad=0.01)
@@ -132,14 +142,14 @@ for s in srange:
     locator = MaxNLocator(prune='upper')
     ax.xaxis.set_major_locator(locator)
     for (c, ch) in enumerate(np.array(da.infodict['channels'])[wg]):
-        plt.text(x[c]+[.004,-0.004][x[c]<0], z[c], ch[2:], fontsize='x-small',
-                 horizontalalignment=['left','right'][x[c]<0])
+        plt.text(x[c] + (2e-4*np.sqrt(ne_scl*ne_max[c]) + .001)*np.array([1,-1])[x[c]<0], z[c], ch[2:],
+                 fontsize='x-small', horizontalalignment=['left','right'][x[c]<0])
     
     cbarTe = plt. colorbar(fraction=0.08, pad=0.02)
     #  cbarTe.set_label(r'$T_e (eV)$', rotation=270, fontsize='large')
     cbarTe.ax.set_xlabel(r'$T_e (eV)$', fontsize='large')
     figs[-1].suptitle('W7-X limiter sect 5 seg {seg} amu {amu} (point size is ne, shade is Te: {areas} probe areas)'
-                      .format(areas=areas, seg=[0,7,3][sgn],amu=da.infodict['params'].get('amu','?')))
+                      .format(areas=areas, seg=[0,3,7][sgn],amu=da.infodict['params'].get('amu','?')))
     strip_h = 0.12
     plt.subplots_adjust(bottom=.1 + strip_h, left=0.05, right=1)
     axstr = figs[-1].add_axes([0.145,0.05,0.68,strip_h])
@@ -151,8 +161,9 @@ for s in srange:
     chan = da['info']['channels'][0]
     #probedata = dev.acq.getdata(shot,'W7X'+chan + '_I')
     from pyfusion.data.filters import dummysig
-    probedata = dummysig(da['t_mid'],da['ne18'][0])
-    probedata.signal = da.masked['ne18'][:,0]  # kludge 
+    prch = 1
+    probedata = dummysig(da['t_mid'],da['ne18'][prch])
+    probedata.signal = da.masked['ne18'][:,prch]  # kludge 
     probedata.utc = da['info']['params']['i_diag_utc']
     
     echdata = dev.acq.getdata(shot,'W7X_TotECH')
@@ -160,7 +171,8 @@ for s in srange:
     tech = echdata.timebase[wech[0]]
     t0_utc = int(tech * 1e9) + echdata.utc[0]
     dtprobe = (probedata.utc[0] - t0_utc)/1e9
-    axstr.plot(probedata.timebase + dtprobe, probedata.signal)
+    axstr.plot(probedata.timebase + dtprobe, probedata.signal,
+               label='ne18 s'+ da['info']['channels'][prch][3:])
     axstr.plot(echdata.timebase - tech, echdata.signal/1000)
 
     gasdata = dev.acq.getdata(shot,'W7X_GasCtlV_23')
@@ -173,8 +185,9 @@ for s in srange:
     tslice = da['t_mid'][s] + dtprobe
     axstr.plot([tslice,tslice],axstr.get_ylim(),'k',lw=2)
     ax.set_title('{fn}, time={t:.4f}'.format(fn=da.name, t=tslice))
+    plt.legend(prop={'size':'x-small'}, loc='upper left')
 
-    if len(srange) > 4:
+    if len(srange)/float(step) > 4:
         root, ext = os.path.splitext(da.name)
         path, name = os.path.split(root)
         folder = os.path.join(path,'movie')

@@ -15,6 +15,7 @@ effected by calling discretise_signal() with a filename argument.
 July 2009 - long-standing error in delta_encode_signal fixed (had not been 
 usable before)
 
+may 2016 - version 104 works around an error caused by W7X corrupted timebases (all 0s and nans)
 """
 from numpy import max, std, array, min, sort, diff, unique, size, mean, mod,\
     log10, int16, int8, uint16, uint8
@@ -278,7 +279,7 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
     if delta_encode_time: 
 #        need to maintain the first element and the length
         rawtimebase=append(rawtimebase[0],diff(rawtimebase))
-        timebaseexpr=str("timebase=%g+%s*%g" % (tim['minarr'], 
+        timebaseexpr=str("timebase=%g+%s*%g" % (float(tim['minarr']),  # bdb103
                                                 "cumsum(dic['rawtimebase'])",
                                                 tim['deltar']))
     # This only works for NON delta encoded.
@@ -298,7 +299,7 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
         savez_compressed(filename, timebaseexpr=timebaseexpr, 
                          signalexpr=signalexpr, params=params,
                          parent_element=parent_element, time_unit_in_seconds=tus,
-                         rawsignal=rawsignal, rawtimebase=rawtimebase, version=103)    
+                         rawsignal=rawsignal, rawtimebase=rawtimebase, version=104)
 
 
 def newload(filename, verbose=verbose):
@@ -323,12 +324,15 @@ def newload(filename, verbose=verbose):
     timebaseexpr=dic['timebaseexpr'].tolist()
     # fixup for files written with np.nan removal and and cumsum
     if ('cumsum' in timebaseexpr) and ('np.nan' in timebaseexpr):
-        print('!!!!!!!!!!!! fixup of nans with cumsum !!!!!!!!!!!!!!!!!!')
+        print('!!!!!!!!!!!! faking a fixup of nans with cumsum !!!!!!!!!!!!!!!!!!')
         timebaseexpr = timebaseexpr.replace("timebase=",
                              "temp=").replace("*2e-06","\ntimebase=temp*2e-06")
         timebaseexpr = timebaseexpr.replace("== dic['rawtimebase']","== temp")
 
     exec(signalexpr)
+    if dic['version'] <= 103 and timebaseexpr.startswith('timebase=0+'):  # bdb103
+        timebaseexpr = timebaseexpr.replace('timebase=0+','timebase=0.+')
+
     exec(timebaseexpr)
     retdic = {"signal":signal, "timebase":timebase, "parent_element":
               dic['parent_element']}

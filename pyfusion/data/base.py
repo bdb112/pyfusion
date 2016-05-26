@@ -72,6 +72,7 @@ class MetaMethods(type):
             reg_methods = reg.get(name, [])
             attrs.update((rm.__name__,history_reg_method(rm))
                          for rm in reg_methods)
+        debug_(pyfusion.DEBUG, 9, key='MetaMethods')
         return super(MetaMethods, cls).__new__(cls, name, bases, attrs)
 
 

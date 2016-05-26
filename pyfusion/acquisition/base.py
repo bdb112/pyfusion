@@ -4,6 +4,7 @@ inherited by subclasses in the acquisition sub-packages.
 
 """
 from __future__ import print_function
+import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy import ndarray, shape
 from pyfusion.conf.utils import import_setting, kwarg_config_handler, \
@@ -65,8 +66,25 @@ def try_fetch_local(input_data, bare_chan):
     sgn (not gain) be only be used at the single channel base/fetch level
     """
     for each_path in pyfusion.config.get('global', 'localdatapath').split('+'):
-        # check for multi value shot, e.g. utc bounds for W7-X data
+        # check for multi value shot number, e.g. utc bounds for W7-X data
         shot = input_data.shot
+        # MDSplus style path to access sorted files into folders by shot
+        path, patt = os.path.split(each_path)
+        #  print(patt)
+        if len(patt) == 2*len(patt.replace('~','')):  # a subdir code based on date
+            subdir = ''
+            # reverse the order of both the pattern and the shot so a posn is 0th char
+            revshot = str(shot[0])[::-1]
+            for i,ch in enumerate(patt):
+                if (i%2) == 0: 
+                    if ch != '~':
+                        raise LookupError("Can't parse {d} as a MDS style subdir"
+                                          .format(d=patt))
+                    continue
+                subdir += revshot[ord(ch) - ord('a')]
+
+        debug_(pyfusion.DEBUG, 3, key='MDS style subdir', msg=each_path)
+        each_path = os.path.join(path, subdir)
         if isinstance(shot, (tuple, list, ndarray)):
             shot_str = '{s0}_{s1}'.format(s0=shot[0], s1=shot[1])
         else:
@@ -85,7 +103,15 @@ def try_fetch_local(input_data, bare_chan):
         return None
 
     signal_dict = newload(input_data.localname)
-    
+    if 'name' in signal_dict['params'] and 'W7X_L5' in signal_dict['params']['name']:
+        if  signal_dict['params']['pyfusion_version'] < '0.6.8b':
+            raise ValueError('probe assignments in error LP11-22 in {fn}'
+                             .format(fn=input_data.localname))
+        if np.nanmax(signal_dict['timebase']) == 0:
+            pyfusion.logging.warning('making a fake timebase for {fn}'
+                                     .format(fn=input_data.localname))
+            signal_dict['timebase'] = 2e-6*np.cumsum(1.0 + 0*signal_dict['signal'])
+
     coords = get_coords_for_channel(**input_data.__dict__)
     #ch = Channel(bare_chan,  Coords('dummy', (0,0,0)))
     ch = Channel(bare_chan,  coords)

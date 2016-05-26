@@ -655,8 +655,9 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
 
     singl = not isinstance(output_data.channels, (list, tuple, np.ndarray))
     if singl:
+        ## this is a fudge - need to set the value part to a list.
         output_data.signal = [output_data.signal]
-                        
+        #output_data.signal.n_channels = 1  #bdb fudge for single channel diag - doesn't work
     for i,s in enumerate(output_data.signal):
         #if len(output_data.signal) == 1: print('bug for a single signal')
 

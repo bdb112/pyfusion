@@ -44,37 +44,7 @@ from pyfusion.debug_ import debug_
 
 from pyfusion.utils import process_cmd_line_args
 
-from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
-
-def next_shot(shot):
-    if isinstance(shot,(tuple, list, np.ndarray)):
-        return([shot[0], shot[1] + 1])
-    else:
-        return(shot + 1)
-
-def shot_gte(shot1, shot2):
-    if isinstance(shot1,(tuple, list, np.ndarray)):
-        if shot1[0]>shot2[0]: 
-            return(True)
-        elif shot1[0] == shot2[0]:
-            return(shot1[1] >= shot2[1])
-        else:
-            return(False)
-    else: return(shot1 >= shot2)
-
-def shot_range(shot_from, shot_to):
-    rng = []
-    shot = shot_from
-    while True:
-        if shot_gte(shot, shot_to):
-            return(rng)
-        if get_shot_utc(*shot, quiet=True) is not None:
-            rng.append(shot)
-        shot = next_shot(shot)
-        # this part is a fudge, but only needed for two component shots
-        if shot[1]>150:   # assume max per day
-            shot[0] += 1
-            shot[1] = 1
+from pyfusion.data.shot_range import shot_range
 
 _var_defaults="""
 diag_name = 'SLOW2k'  # Use a list - otherwise process_cmd will not accept a list
@@ -96,6 +66,7 @@ exec(_var_defaults)
 exec(process_cmd_line_args())
 
 bads = []
+goods = []
 
 #s = pyfusion.get_shot(shot_number)
 #s.load_diag(diag_name, savelocal=True, ignorelocal=(compress_local==None), downsample=True)
@@ -185,8 +156,8 @@ for shot_number in shot_list:
                     savez_new(signal=signal, timebase=tb, filename=localfilename, 
                               params = np.array(params),
                               verbose=pyfusion.VERBOSE, **save_kwargs)
-
+            goods.append((shot_number,'whole thing'))
         except exception as reason:
             bads.append((shot_number,'whole thing'))
             print('skipping shot {s} because {r}'.format(r=reason, s=shot_number))
-print('See bads for {l} errors'.format(l=len(bads)))
+print('See bads for {l} errors (also goods)'.format(l=len(bads)))

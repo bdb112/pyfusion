@@ -225,8 +225,16 @@ class W7XDataFetcher(BaseDataFetcher):
         # no else - the return (above) does the job
 
         pyfusion.LAST_DNS_TEST = tm.time()
+        if not hasattr(self.acq, 'access'):
+            self.acq.access = False
+
+        dominfo = dict(dom=self.acq.domain, look=self.acq.lookfor, 
+                       access=self.acq.access)
+
         self.acq.access = False
-        dominfo = dict(dom=self.acq.domain, look=self.acq.lookfor)
+        if pyfusion.VERBOSE>0:
+            print('Doing URL access check - see pyfusion.LAST_DNS_TEST')
+
         try:
             # this is the clean way
             import dns.resolver
@@ -245,13 +253,13 @@ class W7XDataFetcher(BaseDataFetcher):
             try:
                 #os.system('nslookup '+self.acq.domain)
                 self.acq.access = (
-                    # should really check for 0 (found) 1W/256Lin (not found) 
+                    # should really check for 0 (found) 1Win/256Linux (not found) 
                     #  or 256W >>256 Lin  (error)
                     (0 == os.system('nslookup {dom}|find "{look}" 2> /tmp/winjunk'.format(**dominfo))) or
                     (0 == os.system('nslookup {dom}|grep {look} 2> /tmp/linjunk'.format(**dominfo))))
 
                 if pyfusion.VERBOSE>0: 
-                    print('nslookup test on nameserver {domain} indicates access is {access}'
+                    print('nslookup test on nameserver {dom} indicates access is {access}'
                           .format(**dominfo))
             except ():
                 print('*******************************************************************************')

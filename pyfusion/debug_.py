@@ -106,7 +106,7 @@ def debug_(debug,level=1,key=None,msg=''):
         if msg =='' and key is not None: 
             if np.isscalar(key): msg = ' found DEBUG key = ' + key # use key if no msg
             else: msg = 'found DEBUG key in [' + ','.join(key) + ']'
-        print('debugging, '+ msg)
+        print('debugging, msg is **<<{m}>>**'.format(m=msg))
         set_trace(_getframe().f_back)
         ' use up to get to frame, or c to continue '
     except ImportError:

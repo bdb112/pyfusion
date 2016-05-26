@@ -1,3 +1,12 @@
+save_to_local writes timebase in unusually compressed form if reading
+ local cache data and if given a multi diagnostic - e.g. the out files
+ are hald size (but are complete!) and the warning !!!!!!!!!!!! fixup
+ of nans with cumsum !!!!!!!!!!!!!!!!!! us given
+This means it is erroneously replaceing cumsum/nans with a fake 2us
+ timebase. Normally this is OK, but...
+ run -i pyfusion/examples/save_to_local.py  dev_name='W7X' diag_name="['W7X_L5UALL']" shot_list="[[20160310,9]]"  local_dir=/tmp
+
+
 on IPP server, Langmuir_data can't find Koords on 20160309,42 L53_LP11
       fixed: due to missing coord call in W7X/fetch
 20160309,42 channel 13 doesn't look like old channel 15 *~2?? (but

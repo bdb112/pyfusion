@@ -3,6 +3,10 @@
 This version is even more robust - an error looking up
 one diagnostic won't prevent data from being gathered for the others.
 5/sec h1svr 2016
+8/sec 19 diags to SSD file (/tmp) t440p 2016
+12/sec 19 diags to memory or to file using no Journaling
+10/sec using WAL only, 12.5? sec using WAL and large cache and synch off
+
 In this example, the table is defined first
 
 Example:  result = conn.execute('select shot, im3 from summ where im3>2000')
@@ -21,11 +25,27 @@ scatter(*(np.transpose(conn.execute('select shot, is2/im2 as kh from summ where 
 duds 36362
 """
 from pyfusion.data.signal_processing import smooth_n
+from time import time as seconds
 
 from sqlalchemy import create_engine 
 engine=create_engine('sqlite:///:memory:', echo=False)
 #engine=create_engine('sqlite:///testmds.sqlite', echo=False)
 #engine = create_engine('mysql://127.0.0.1/bdb112', echo=False)
+"""
+from sqlalchemy.interfaces import PoolListener
+
+from sqlalchemy import create_engine 
+
+class MyListener(PoolListener):
+    def connect(self, dbapi_con, con_record):
+        #dbapi_con.execute('pragma journal_mode=WAL')  # newer form  
+        dbapi_con.execute('pragma journal_mode=OFF')
+        dbapi_con.execute('PRAGMA synchronous=OFF')
+        dbapi_con.execute('PRAGMA cache_size=100000')
+
+basefile = '/tmp/sqltest'
+"""
+engine = create_engine('sqlite:///' + basefile,echo=False, listeners= [MyListener()])
 conn = engine.connect()
 import numpy as np
 
@@ -35,6 +55,7 @@ from sqlalchemy import Table, Column, Integer, String, Float, MetaData#, Foreign
 # simple method - use a fixed interval : typical H-1 [0.01, 0.05]
 # here 
 initial_interval = [0.01, 0.05] # [0,10] 
+interval = initial_interval
 
 ############
 ## Utilities
@@ -117,6 +138,7 @@ import MDSplus as MDS
 
 shots = 0
 
+# set these both to () to stop on errors
 shot_exception = Exception # () to see message - catches and displays all errors
 node_exception = Exception # ()  ditto for nodes.
 
@@ -124,7 +146,8 @@ errs = dict(shot=[])  # error list for the shot overall (i.e. if tree is not fou
 for diag in diags.keys():
     errs.update({diag:[]})  # error list for each diagnostic
 
-for s in range(83808,86450): # FY14-15 (86451,89155):#(36363,88891): #81399,81402):  #(81600,84084):
+start = seconds()
+for s in range(88600,88732): # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,88891): #81399,81402):  #(81600,84084):
     datdic = dict(shot=s)
     shots += 1
     try:
@@ -140,7 +163,11 @@ for s in range(83808,86450): # FY14-15 (86451,89155):#(36363,88891): #81399,8140
             try:
                 typ, node, valfun = diags[diag]
                 nd = tree.getNode(node)
-                val = valfun(nd.data(),nd.dim_of().data())
+                try:
+                    dim = nd.dim_of().data()
+                except MDS.TdiException:
+                    dim = None
+                val = valfun(nd.data(), dim)
                 datdic.update({diag:val})
             except node_exception, reason:
                 #print s,node,reason
@@ -177,6 +204,7 @@ for diag in errs.keys():
 print('{t} problems in {s} of {all} shots'.format(t=len(all_bad), s=len(np.unique(all_bad)),all=shots))
 
 result.close()  # get rid of any leftover results
+print('took {s:.1f} sec'.format(s=seconds()-start))
 
 """
 Examples:

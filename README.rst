@@ -6,9 +6,21 @@ python code for data mining plasma fluctuations
 
 Update: 
 
-* add correct_LP_data.py
+Version 0.6.9: beta
+
+* add write_LP_as_CSV.py (also JSON)
+* add examples/correct_LP_data.py, file_sorter and file_finder_db which allows
+  local_data cache to be rationalised
+* fix bug in save_compress brought on by corrupted W7X timebase
+* Raise Error if data is pre 0.68b
 * improve auto filename generation in process_swept_Langmuir
 * pyfusion.cfg corrections (delete LP21..)
+* fix domain checker to retain result in self.acq
+* add mdsplus style path extra_data/to organise shots into folders 
+* calc correlation in examples/N2_puff_correlation.py, also lukas probe info including distance to LCFS
+* minor fixes to fourier in data/filters.py
+* mini_summary.py try speeding up sqlite file form, make less MDSplus dependent
+* improvements for plot_LP2D.py
 
 Version 0.6.8: beta
 * Corrected limiter swap (3 and 7 interchanged) and several typos.

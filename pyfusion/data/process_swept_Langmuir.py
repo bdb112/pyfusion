@@ -468,11 +468,12 @@ class Langmuir_data():
         debug_(self.debug, 3, key='process_loop')
         for mseg, iseg, vseg in self.segs:
             self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, initial_TeVpI0=initial_TeVpI0, plot=plot))
-        if filename is not None:
-            if filename == '*':
-                filename = 'LP{s0}_{s1}_'
+        if filename is not None:            
+            if  '*' in filename:
+                fmt = 'LP{s0}_{s1}_'
                 if 'L5' in self.i_diag:
-                    filename += 'L5' + self.i_diag.split('L5')[1][0]
+                    fmt += 'L5' + self.i_diag.split('L5')[1][0]
+                filename = filename.replace('*',fmt+'_')
             if '{' in filename:
                 filename = filename.format(s0=self.shot[0], s1=self.shot[1], i_diag=self.i_diag)
             self.write_DA(filename)

@@ -8,6 +8,15 @@ Update:
 
 Version 0.6.9: beta
 
+* temporary update to avoid too many changes at once
+* process_swept_Langmuir includes scipy.optimise.leastsq and some more
+  parameters, also tracks the root finder, fixed figure count limiter
+  and imporved flexibility of saved filename.
+* get_LP_data.py pulls the v,i data from a characteristic plot and
+  plays with it for algorithm development.
+* N2_puff_correlation: add correlation  (coefficient and physical
+  units) and Lukas's distance routine.
+
 * add write_LP_as_CSV.py (also JSON)
 * add examples/correct_LP_data.py, file_sorter and file_finder_db which allows
   local_data cache to be rationalised

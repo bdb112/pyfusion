@@ -84,5 +84,6 @@ correctly_name(fn)
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/tmp/0309/2016*_*LP*')):
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0303/2016*_*LP*')):
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0302/2016*_*LP*')):
-for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0301/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0301/2016*_*LP*')):
+for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0223/2016*_*LP*')):
     correctly_name(fn)

@@ -1,4 +1,5 @@
 """ Complete processing of swept Langmuir data, using two classes.
+New version allows choice of algorithm - version after this will allow more params
 This supersedes the example in examples/process_swept_Langmuir.py
  
 This version assumes that all required sweep data are in a multi-channel diagnostic (dataset)
@@ -25,6 +26,7 @@ from numpy import exp, cos, sin
 import pyfusion.conf as conf
 from scipy.fftpack import hilbert
 from pyfusion.data import amoeba
+from scipy.optimize import leastsq
 import time
 from pyfusion.debug_ import debug_
 from pyfusion.utils.primefactors import nice_FFT_size
@@ -37,17 +39,28 @@ def AC(x):
     ns = len(x)
     return(x - np.average(x * np.blackman(ns))/np.average(np.blackman(ns)))
 
+# Nasty! in order to make leastsq work we need these OUT of a class
+def LPchar(v, Te, Vp, I0):
+    # hard to add a series resistance here as fun returns I as a fn of V
+    return(I0 * (1 - exp((v-Vp)/Te)))
+
+def residuals(params, y, x):
+    Te, Vp, I0 = params
+    err = LPchar(x, Te, Vp, I0) - y
+    # return np.sqrt(np.abs(err))
+    return err
 
 class LPfitter():
-    def __init__(self, i, v, pnorm=1, maxits=100, plot=1, verbose=1, parent=None, debug=1):
+    def __init__(self, i, v, pnorm=1, maxits=None, plot=1, verbose=1, parent=None, debug=1):
         self.i = i
         self.v = v
         self.debug = debug
         self.verbose = verbose
         self.plot = plot
         self.pnorm = pnorm
-        self.maxits = maxits
+        self.maxits = 100 if maxits is None else maxits
         self.parent = parent
+        self.trace = []
 
     def LPchar(self, v, Te, Vp, I0):
         # hard to add a series resistance here as fun returns I as a fn of V
@@ -72,12 +85,21 @@ class LPfitter():
         if self.debug > 4:
             print(', '.join(['{k} = {v:.3g}'.format(k=var, v=val)
                              for (var, val) in dict(Te=Te, Vp=Vp, I0=I0, resid=err).iteritems()]))
+        self.trace.append([vars, -err])
         return(-err)  # amoeba is a maximiser
 
-    def fit(self, init=dict(Te=50, Vp=15, I0=None), plot=None, maxits=None):
+    """
+    def residuals(params, y, x):
+        Te, Vp, I0 = params
+        err = self.LPchar(x, Te, Vp, I0) - y
+        # return np.sqrt(np.abs(err))
+        return err
+    """       
+    def fit(self, init=dict(Te=50, Vp=15, I0=None), plot=None, maxits=None, alg='leastsq'):
         # Takes about 2ms/it for 2500 points, and halving this only saves 10%
         # if maxits is None:  # this trickiness makes it work, but not pythonic.
         #    maxits = globals()['maxits']
+        self.trace = []
         if plot is None:
             plot = self.plot
 
@@ -92,10 +114,19 @@ class LPfitter():
 
         var = [Te, Vp, I0]
         scale = np.array([Te, Te/3, I0])
-        fit_results = list(amoeba.amoeba(var, scale, self.error_fun, itmax=maxits,
-                                    data=dict(v=self.v, i=self.i)))
+        if alg == 'leastsq':
+            fit_results, cov, infodict, msg, ier = \
+                leastsq(residuals, var, args=(self.i, self.v), maxfev=maxits, full_output=1)
+            resid = np.power(np.mean(np.abs(infodict['fvec']**self.pnorm)),1/self.pnorm)
+            fit_results = [fit_results, resid, infodict['nfev']]
+        elif alg == 'amoeba':
+            fit_results = list(amoeba.amoeba(var, scale, self.error_fun, 
+                                             itmax=maxits, ftolerance=I0*1e-4,
+                                             xtolerance=1e-4,
+                                             data=dict(v=self.v, i=self.i)))
+            fit_results[1] = -fit_results[1]  # change residual back to positive
+
         Te, Vp, I0 = fit_results[0]
-        fit_results[1] = -fit_results[1]  # change residual back to positive
         residual, mits = fit_results[1:3]
         fit_results.append(maxits)
         if plot > 1:
@@ -196,6 +227,7 @@ class Langmuir_data():
         self.select = None
         self.t_comp = (0.1,0.2)
         self.params = params
+        self.figs = []
 
         self.imeasfull = self.dev.acq.getdata(shot, i_diag)
         self.vmeasfull = self.dev.acq.getdata(shot, v_diag)
@@ -276,7 +308,7 @@ class Langmuir_data():
                 self.vcorrfull.signal[c] = restore_sin(self.vmeasfull, chan=c, sweep_freq=sweep_freq,
                                                        Vpp=Vpp, clip_level_minus=clip_level_minus, verbose=self.verbose)
 
-    def fit_swept_Langmuir_seg_multi(self, m_seg, i_seg, v_seg, clipfact=5,  initial_TeVpI0=None, plot=None):
+    def fit_swept_Langmuir_seg_multi(self, m_seg, i_seg, v_seg, clipfact=5,  initial_TeVpI0=None, maxits=None, plot=None):
         res = []
         for (c, chan) in enumerate(i_seg.channels):
             if self.select is not None and c not in self.select:
@@ -284,12 +316,12 @@ class Langmuir_data():
             v = v_seg.signal[self.vlookup[self.vassoc[c]]]
             i = i_seg.signal[c]
             im = m_seg.signal[c]
-            [Te, ne, I0], resid, nits, maxits = self.fit_swept_Langmuir_seg_chan(im, i, v, i_seg, channame=chan.config_name, clipfact=clipfact,  initial_TeVpI0=initial_TeVpI0, plot=plot)
+            [Te, ne, I0], resid, nits, maxits = self.fit_swept_Langmuir_seg_chan(im, i, v, i_seg, channame=chan.config_name, clipfact=clipfact,  initial_TeVpI0=initial_TeVpI0, maxits=maxits, plot=plot)
             t_mid = np.average(i_seg.timebase)
             res.append([t_mid, Te, ne, I0, resid, nits, maxits])
         return(res)
     
-    def fit_swept_Langmuir_seg_chan(self, m_sig, i_sig, v_sig, i_segds, channame, maxits=100, clipfact=5,  initial_TeVpI0=None, plot=None):
+    def fit_swept_Langmuir_seg_chan(self, m_sig, i_sig, v_sig, i_segds, channame, maxits=None, clipfact=5,  initial_TeVpI0=None, plot=None):
         """Lowish level routine - takes care of i clipping and but not
         leakage or restoring sweep.
 
@@ -304,7 +336,8 @@ class Langmuir_data():
         wg = np.where(good)[0]
         if (~good).any():  # if any bad
             if len(wg) < 0.3 * len(v):  # was (~good).all():
-                print('suppressing all!*** {a}'.format(a=len(good)))
+                print('{t:.3f}s suppressing all!*** {a}'
+                      .format(a=len(good),t=np.average(segtb)))
                 return([3*[None], None, None, None])
             elif self.verbose > 0 or len(wg) < 0.9 * len(v):
                 print('{t:.3f}s suppress clipped {b}/{a}'
@@ -314,18 +347,19 @@ class Langmuir_data():
         if plot is None:
             # plot in detail only if there are 20 figures or less
             plot = self.plot + 2*((len(self.segs)*len(self.imeasfull.channels)) < 8)
-        figs = []
-        if (plot >= 2) and len(figs) < 20:
+        if (plot >= 2) and len(self.figs) < 10:  # 20 really slows down
+            # best to open in another session.
             interval = str('{t}'.format(t=[round(segtb[0], 6), round(segtb[-1], 6)]))
             fig, axs = plt.subplots(nrows=1 + (plot >= 3), ncols=1, squeeze=0,\
                                     num='{i} {c}'.format(i=interval, c=channame))
-            figs.append(fig)
+            self.figs.append(fig)
             if plot >= 3:
-                axs[1, 0].plot(segtb, i, 'b', lw=.2)
+                # these labels help find the data
+                axs[1, 0].plot(segtb, i, 'b', lw=.2, label='i_probe')
                 axs[1, 0].plot(segtb[wg], i[wg], 'b.')
                 axv = axs[1, 0].twinx()
                 axv.set_ylabel('sweep V')
-                axv.plot(segtb, v, 'r', lw=.2)
+                axv.plot(segtb, v, 'r', lw=.2, label='v')
                 axv.plot(segtb[wg], v[wg], 'r.')
             plt.sca(axs[0, 0])  # ready for VI curve
 
@@ -382,7 +416,7 @@ class Langmuir_data():
             da.da['ne18'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
-    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], initial_TeVpI0=dict(Te=50, Vp=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, leakage=None, threshold=0.01, filename=None, amu=1, plot=None):
+    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], maxits=200, initial_TeVpI0=dict(Te=50, Vp=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, leakage=None, threshold=0.01, filename=None, amu=1, plot=None):
         """ 
         ==> results[time,probe,quantity]
         plot = 1   : V-I and data if there are not too many.
@@ -406,6 +440,7 @@ class Langmuir_data():
         """
         # first do the things that are better done on the whole data set.
 
+        self.figs = []  # reset the count of figures used to stop too many plots
         self.actual_params = locals().copy()
         self.actual_params.pop('self')
         self.actual_params.update(dict(i_diag=self.i_diag, v_diag=self.v_diag))
@@ -467,17 +502,20 @@ class Langmuir_data():
         self.fitdata = []
         debug_(self.debug, 3, key='process_loop')
         for mseg, iseg, vseg in self.segs:
-            self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, initial_TeVpI0=initial_TeVpI0, plot=plot))
+            self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, initial_TeVpI0=initial_TeVpI0, maxits=maxits, plot=plot))
         if filename is not None:            
             if  '*' in filename:
                 fmt = 'LP{s0}_{s1}_'
                 if 'L5' in self.i_diag:
                     fmt += 'L5' + self.i_diag.split('L5')[1][0]
                 filename = filename.replace('*',fmt+'_')
+                if filename.endswith('_'):  # remove ending _
+                    filename = filename[0:-1]
             if '{' in filename:
                 filename = filename.format(s0=self.shot[0], s1=self.shot[1], i_diag=self.i_diag)
+            print('writing {fn}'.format(fn=filename))
             self.write_DA(filename)
-
+            
         return(self.fitdata)
 
 # quick test code - just 'run' this file

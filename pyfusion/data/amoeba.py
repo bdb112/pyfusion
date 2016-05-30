@@ -114,6 +114,7 @@ def amoeba(var,scale,func,ftolerance=1.e-4,xtolerance=1.e-4,itmax=500,data=None)
             frange = 0.0  # all the fvalues are zero in this case
             
         # have we converged?
+        # print(iteration, frange, simscale)
         if (((ftolerance <= 0.0 or frange < ftolerance) and    # converged to maximum
              (xtolerance <= 0.0 or simscale < xtolerance)) or  # simplex contracted enough
             (itmax and iteration >= itmax)):             # ran out of iterations

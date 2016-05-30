@@ -3,16 +3,22 @@ import matplotlib.pyplot as plt
 from pyfusion.data.DA_datamining import Masked_DA, DA
 from pyfusion.data.process_swept_Langmuir import Langmuir_data
 import pyfusion
+from lukas.PickledAssistant import lookupPosition
 
-def correlation(x,y,AC=True):
+def correlation(x,y,AC=True,coefft=True):
+    """  AC => remove means first
+         coefft: True is dimensionless - else return the amplitude
+    """
     import numpy as np
     clate = np.correlate
     mean = np.mean
     if AC:
-        return(clate(x-mean(x),y-mean(y))/
-               np.sqrt(clate(x-mean(x), x-mean(x)) * clate(y-mean(y), y-mean(y))))
+        x = x - mean(x)
+        y = y - mean(y)
+    if coefft:
+        return(clate(x,y)/np.sqrt(clate(x,x) * clate(y,y)))
     else:
-               return(clate(x,y)/np.sqrt(clate(x,x) * clate(y,y)))
+        return(clate(x,y)/np.sqrt(clate(x,x) * clate(x,x)))
         
 
 
@@ -57,7 +63,7 @@ for ch in range(len(da['info']['channels'])):
     for toffs in t_range:
         grid_ne = griddata(dt-toffs+da['t_mid'], da['ne18'][:,ch], (grid_t), method='linear')
         # plt.plot(grid_t,grid_ne,'.')
-        corr.append(correlation(grid_gas[w], grid_ne[w])[0])
+        corr.append(correlation(grid_gas[w], grid_ne[w],coefft=0)[0])
     corrs.append(corr)
 for (c, corr) in enumerate(corrs):
     axcorr.plot(t_range,corr,label=chans[c][1:],linestyle=['-','--'][c>10])
@@ -103,6 +109,17 @@ axcorr.set_xlabel('time delay (s)')
 fig.subplots_adjust(left=0.1, right=0.95,top=0.96,bottom=0.07, hspace=.15)
 plt.show()
 
+figLC, axLC = plt.subplots(1,1)
+distLC = []
+for (c,ch) in enumerate(chans):
+    LPnum = int(ch[-2:])
+    lim = 'lower' if 'L57' in ch else 'upper'
+    X,Y,Z,dLC = lookupPosition(LPnum, lim)
+    distLC.append(dLC)
+axLC.plot(np.sign(x)*distLC, avg_corr_coeff,'o')
+figLC.show()
+
+"""
 """
 plt.figure()
 ch1=0
@@ -129,7 +146,7 @@ plt.legend()
 plt.title(da53.name)
 plt.xlim(0,0.4)
 plt.show()
-
+"""
 """
 """
 gas=np.interp(da532['t_mid'], 0.92+np.array(time_g), gas_g)

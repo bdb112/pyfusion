@@ -450,7 +450,7 @@ class Langmuir_data():
 
         #res = LPfit(v, i, plot=(debug > 1),maxits=100)
         if lpf is not None:
-            i = lpfilter(segtb, i, v, lpf=lpf, debug=self.debug)
+            i = lpfilter(segtb, i, v, lpf=lpf, debug=self.debug, plot=self.plot)
             # check if i has been truncated to an even number by real fft - 
             if wg[-1] >= len(i):  # if so, truncate the other pieces
                 wg = wg[0:-1]

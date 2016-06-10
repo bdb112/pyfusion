@@ -42,7 +42,7 @@ def estimate_error(self, result, debug=1):
     return(est_errs)
 
 
-def lpfilter(t, i, v, lpf, debug=1):
+def lpfilter(t, i, v, lpf, debug=1, plot=0):
     """ Remove
     v is used only to determine the number of cycles
     """
@@ -85,7 +85,7 @@ def lpfilter(t, i, v, lpf, debug=1):
     i_filt = np.fft.irfft(f_filt)
     if np.shape(t) != np.shape(i_filt):
         raise ValueError('lpfilter - mismatched plot args')
-    if self.plot > 2: plt.plot(t, i_filt)
+    if plot > 2: plt.plot(t, i_filt)
     goodRMS = np.sqrt(np.sum(np.abs(ft)[goodharm]**2))
     contam = np.sqrt(np.sum(np.abs(ft)[badharm]**2))/goodRMS
     harms = unicode(',  '.join(['{n}{f}:{m:.0f}%'.decode('latin1')

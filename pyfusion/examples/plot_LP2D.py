@@ -57,6 +57,13 @@ ne_range = [0, 10]   # 53 [0,10]
 srange = range(60, 72)   # 20160309_42_L53
 minpts=18
 
+dafile = 'LP20160309_10_L57__amoeba21_1.2_2k.npz'
+Te_range = [10, 70]  
+ne_range = [0, 3]   
+srange = range(60, 72)   # early High power region
+srange = range(200, 212)   # mid lower power
+minpts=18
+
 """
 dafile = 'LP20160224_25_L53'
 Te_range = [10, 50] #both  # 53 [10,70]    57 [10,100]
@@ -173,7 +180,7 @@ for s in srange:
     dtprobe = (probedata.utc[0] - t0_utc)/1e9
     axstr.plot(probedata.timebase + dtprobe, probedata.signal,
                label='ne18 s'+ da['info']['channels'][prch][3:])
-    axstr.plot(echdata.timebase - tech, echdata.signal/1000)
+    axstr.plot(echdata.timebase - tech, echdata.signal/1000, label='ECH')
 
     gasdata = dev.acq.getdata(shot,'W7X_GasCtlV_23')
     dtgas = (gasdata.utc[0] - t0_utc)/1e9
@@ -185,7 +192,7 @@ for s in srange:
     tslice = da['t_mid'][s] + dtprobe
     axstr.plot([tslice,tslice],axstr.get_ylim(),'k',lw=2)
     ax.set_title('{fn}, time={t:.4f}'.format(fn=da.name, t=tslice))
-    plt.legend(prop={'size':'x-small'}, loc='upper left')
+    plt.legend(prop={'size':'x-small'})
 
     if len(srange)/float(step) > 4:
         root, ext = os.path.splitext(da.name)

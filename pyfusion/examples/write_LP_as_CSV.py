@@ -84,8 +84,8 @@ for ch in channels:
         dev_name = 'W7X'
         shot_number = [dat['date'][0], dat['progId'][0]]
         dev = pyfusion.getDevice(dev_name)
-        cdata = dev.acq.getdata(shot_number, ch)
-        opts = dat.params
+        cdata = dev.acq.getdata(shot_number, 'W7X_'+ch+'_I')
+        opts = cdata.params
     except:
         opts = pyfusion.conf.utils.get_config_as_dict('Diagnostic', ch)
         for k in list(opts):

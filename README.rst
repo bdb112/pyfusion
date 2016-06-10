@@ -6,6 +6,14 @@ python code for data mining plasma fluctuations
 
 Update: 
 
+Version 0.7.0: alpha
+* fixes to leastsq, add error estimates through covariance (leastsq only) and by
+  tracking the convergence in time (both amoeba and leastsq)
+* also fit has LP filter option and removal of unrelated harmonics
+* LP_extra has pre-fit filtering and error estimation
+* get_LP_data improvements, filtering etc.
+* add hist() function to DA_datamining
+
 Version 0.6.9: beta
 
 * temporary update to avoid too many changes at once

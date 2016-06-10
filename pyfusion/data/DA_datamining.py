@@ -799,7 +799,40 @@ class DA():
         if dictionary is False:
             return(val_tuple)
 
-    def plot(self, key, x='t_mid', sharey=1, select=None, sharex='col', masked=1, marker=''):
+    def hist(self, key, bins=50, nanval=-0.01, percentile=99, label=None):
+        """ plot a histogram of Te or resid etc, replacing Nans or infs
+        with nanval, and considering only up to the <percentile>th percentile
+        DA('LP20160310_9_L57__amoeba21_1.2_2k.npz').hist('resid')
+        Examples:
+          da.hist('resid',percentile=97,label='{k}: {fn}')
+          da.hist('resid',percentile=97,label='{k}: {actual_fit_params}')
+          da.hist('resid',percentile=97,label='{k}: {i_diag} {actual_fit_params}')
+       """
+        dat = self.da[key]
+        wn = np.where(np.isinf(dat) | np.isnan(dat))
+        dat[wn] = nanval
+        print('{n} inf or NaNs excluded'.format(n=len(wn[0])))
+        biginds = np.argsort(np.abs(dat).flatten())[::-1]
+        # go for 99th percentile
+        useinds = biginds[int((1-percentile/100.0)*len(biginds)):]
+        if label is None:
+            label = key
+        elif '{' in label:
+            try:
+                label = label.format(k=key, fn=self.name, **self['info']['params'])
+            except Exception as reason:
+                print('hist label failed because {r}'.format(r=reason))
+        plt.hist(dat.flatten()[useinds], bins=bins, label=label)
+        sz = ['small','x-small'][len(label)>150]
+        plt.legend(prop=dict(size=sz))
+        plt.show()
+
+    def plot(self, key, x='t_mid', sharey=1, select=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, **kwargs):
+        """ 
+        Plot the member 'key' of the Dictionary of Arrays 
+          masked [1] 1 show only 'unmasked' points
+          ebar [1]  the number of points per errorbar - None will suppress
+        """
         from matplotlib.ticker import MaxNLocator
         if sharey == 1:
             sharey = 'all'
@@ -822,20 +855,30 @@ class DA():
             labs = self.infodict['channels']
         else:
             labs = [str(ch for ch in range(nchans))]
-        fig, axs = plt.subplots(nvis, 1, squeeze=0, sharey=sharey, sharex=sharex)
+        fig, axs = plt.subplots(nvis, 1, squeeze=1, sharey=sharey, sharex=sharex)
+        if nvis == 1:
+            axs = [axs]
         # 3 bins -> 4 ticks max
         locator = MaxNLocator(nbins=min(10, max(3, 20//nvis)), prune='upper')
         #  Allow default room (not much!) for x ticks if x-axis is not shared
         hspace = 0 if sharex == 'col' else None
         fig.subplots_adjust(top=0.95, hspace=hspace, bottom=0.05)
-        for c, (ch, ax) in enumerate(zip(clist, axs[:, 0])):
+        for c, (ch, ax) in enumerate(zip(clist, axs)):
             # print(ch)
             (rot,ali) = ('vertical','center') if nvis < 6 else ('horizontal','right')
             ax.set_ylabel(labs[ch], rotation=rot,
                           horizontalalignment=ali)
             if np.isnan(arr[:, ch]).all():  # all nans confuses sharey
                 ax.plot(x, x*0)
-            ax.plot(x, arr[:, ch], label=labs[ch])
+            # grab the common features to both plots in a dict to simplify
+            kwargs.update(dict(marker=marker, label=labs[ch]))
+            if ebar is not None and 'e'+key in self.da:
+                yerr = self.da['e'+key]
+                kwargs.update(dict(errorevery=ebar, elinewidth=elinewidth, mew=elinewidth))
+                ax.errorbar(x, arr[:, ch], yerr=yerr[:, ch], **kwargs)
+            else:
+                ax.plot(x, arr[:, ch], **kwargs)
+
             ax.yaxis.set_major_locator(locator)
             # this worked in data/plots.py - but warning in DA_datamining
             # ax.locator_params(prune='both', axis=x)
@@ -850,7 +893,7 @@ class DA():
         plt.suptitle(self.name.replace('.npz', '') + ' ' + key)
         debug_(self.debug, 2, key='DA_plot')
         plt.show(0)
-
+        return(axs)   # the returned array allows overplotting on each axis
 
 def da(filename='300_small.npz',dd=True):
     """ return a da dictionary (used to be called dd - not the DA object)

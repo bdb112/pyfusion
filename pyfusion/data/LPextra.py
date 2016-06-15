@@ -51,7 +51,7 @@ def lpfilter(t, i, v, lpf, debug=1, plot=0):
         t=t[0:-1]
     ftv = np.fft.rfft(v)
     absftvlow = np.abs(ftv[1:20])  # exclude DC
-    wothers = np.where(absftvlow > np.max(absftvlow)/100.)[0]
+    wothers = np.where(absftvlow > np.max(absftvlow)/70.)[0]  # /100 is fooled by 2ndH 0309.52 L57
     if len(wothers) == 1:
         ncycles = wothers[0] + 1  # we excluded DC - so 0 is fundamental
     else:

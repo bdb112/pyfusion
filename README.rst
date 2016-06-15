@@ -6,7 +6,18 @@ python code for data mining plasma fluctuations
 
 Update: 
 
+Version 0.7.0: beta
+
+* process_swept Langmuir 
+  threshchan is used to determine start and end of plasma
+  residual DC offset removed in get_iprobe
+  IO too small used in mask criterion
+* plot_LP2D - general improvements
+* N2_ puff_correlation - choice of physical units or coefficient
+* write_LP_as_CSV also writes JSON
+
 Version 0.7.0: alpha
+
 * fixes to leastsq, add error estimates through covariance (leastsq only) and by
   tracking the convergence in time (both amoeba and leastsq)
 * also fit has LP filter option and removal of unrelated harmonics

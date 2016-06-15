@@ -331,8 +331,10 @@ class Langmuir_data():
 
             w_comp = np.where((tb>=t_comp[0]) & (tb<=t_comp[1]))[0]
             ns = len(w_comp)
-            sweepVFT = np.fft.fft(AC(sweepV[w_comp]) * np.blackman(ns))
-            imeasFT = np.fft.fft(AC(imeas[w_comp]) * np.blackman(ns))
+            wind = np.blackman(ns)
+            offset = np.mean(wind * imeas[w_comp])/np.mean(wind)
+            sweepVFT = np.fft.fft(AC(sweepV[w_comp]) * wind)
+            imeasFT = np.fft.fft(AC(imeas[w_comp]) * wind)
             ipk = np.argmax(np.abs(sweepVFT)[0:ns//2])  # avoid the upper one
             comp = imeasFT[ipk]/sweepVFT[ipk]
 
@@ -349,8 +351,12 @@ class Langmuir_data():
             # put signals back into rdata (original was copied by reduce_time)
             # overwrite - is this OK?
             self.iprobefull.signal[c] = self.iprobefull.signal[c]*0.  # clear it
-            self.iprobefull.signal[c][0:comlen] = self.imeasfull.signal[c][0:comlen] \
+            # sweepV has a DC component! beware
+            self.iprobefull.signal[c][0:comlen] = self.imeasfull.signal[c][0:comlen]-offset \
                                         - sweepV[0:comlen] * leakage[0] - sweepQ[0:comlen] * leakage[1]
+            # remove DC cpt (including that from the compensation sweepV)
+            offset = np.mean(wind * self.iprobefull.signal[c][w_comp])/np.mean(wind)
+            self.iprobefull.signal[c][0:comlen] -= offset
 
     def prepare_sweeps(self, rest_swp='auto', sweep_freq=500, Vpp=90*2, clip_level_minus=-88):
         """ extracts sweep voltage data for all probes,
@@ -516,7 +522,8 @@ class Langmuir_data():
             rthr = rthr * np.sqrt(lpf/100.0)
 
         da.da['mask'] = ((da['resid'] < rthr) & (da['nits'] < da['maxits'])
-                         & (np.abs(da['Vp']) < 200) & (np.abs(da['Te']) < 200))
+                         & (np.abs(da['Vp']) < 200) & (np.abs(da['Te']) < 200) 
+                         & (da['I0']>0.0004))
         if 'eTe' in da.da:  # want error not too big and smaller than temp
             da.da['mask'] &= ((np.abs(da['eTe']) < 100)
                               & (np.abs(da['eTe']) < np.abs(da['Te'])))
@@ -532,7 +539,7 @@ class Langmuir_data():
             da.da['ne18'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
-    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq'), initial_TeVpI0=dict(Te=50, Vp=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, leakage=None, threshold=0.01, filename=None, amu=1, plot=None, return_data=False, suffix=''):
+    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq'), initial_TeVpI0=dict(Te=50, Vp=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, suffix=''):
         """ 
         ==> results[time,probe,quantity]
         plot = 1   : V-I and data if there are not too many.
@@ -564,7 +571,7 @@ class Langmuir_data():
         self.actual_params.pop('self')
         self.actual_params.update(dict(i_diag=self.i_diag, v_diag=self.v_diag))
         for k in self.actual_params:
-            if k not in 'amu,clipfact,dtseg,filename,initial_TeVpI0,leakage,overlap,plot,rest_swp,suffix,t_comp,t_range,threshold,fit_params,v_diag,i_diag,return_data'.split(','):
+            if k not in 'amu,clipfact,dtseg,filename,initial_TeVpI0,leakage,overlap,plot,rest_swp,suffix,t_comp,t_range,threshold,threshchan,fit_params,v_diag,i_diag,return_data'.split(','):
                 raise ValueError('Unknown actual_params key ' + k)
 
         self.actual_params.update(dict(i_diag_utc=self.imeasfull.utc, pyfusion_version=pyfusion.VERSION))
@@ -601,7 +608,9 @@ class Langmuir_data():
 
         tb = self.iprobefull.timebase
         # the 3000 below tries to avoid glitches from Hilbert at both ends
-        w_plasma = np.where((np.abs(self.iprobefull.signal[0]) > threshold) & (tb > tb[3000]) &(tb < tb[-3000]))[0]
+        #w_plasma = np.where((np.abs(self.iprobefull.signal[threshchan]) > threshold) & (tb > tb[3000]) &(tb < tb[-3000]))[0]
+        # only look at electron current - bigger (shot 0309.52 LP53 has a positive spike at 2s)
+        w_plasma = np.where((-self.iprobefull.signal[threshchan] > threshold) & (tb > tb[3000]) &(tb < tb[-3000]))[0]
         
         if t_range is None:
             t_range = [tb[w_plasma[0]], tb[w_plasma[-1]]]

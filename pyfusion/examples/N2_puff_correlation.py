@@ -41,29 +41,30 @@ time_g = np.array([0, 0.099, 0.1, 0.149, 0.150, 0.160, 0.161, 0.191, 0.191, 0.21
 gas_g = np.array([3.1, 3.1, 3.7, 3.7, 3.1, 3.1, 3.7, 3.7, 3.1, 3.1, 3.7, 3.7, 3.1, 3.1, 3.7, 3.7, 3.1, 3.1, 3.7, 3.7, 3.1, 3.1])
 # LP5342.process_swept_Langmuir(t_range=[0.9,1.4],dtseg=.002,initial_TeVpI0=dict(Te=20,Vp=0,I0=None),filename='20160309_42_L532_short')
 #da532=DA('20160309_42_L532_short.npz')
-da532=DA('LP/LP20160309_42_L532.npz')
+da532=DA('LP/LP20160309_42_L53_2k2.npz')
 #da532=DA('LP/LP20160309_44_L53.npz')
-da572=DA('LP/LP20160309_42_L572.npz')
+da572=DA('LP/LP20160309_42_L57_2k2.npz')
 
 
 # offsets for medium text, not including dot size, second element is the probe number to avoid
 voffs = dict(LP17=[.002,20], LP10=[.002, 6], LP09=[0.001,5], LP06=[-.001,1], LP12=[.002,14])
 
 fig,(axcorr,axmap) = plt.subplots(2,1) 
-da = da572
+da = da532
 chans = np.array(da['info']['channels'])
 from scipy.interpolate import griddata
 grid_t = np.mgrid[0:1:3000j]
 grid_gas = griddata(time_g, gas_g, (grid_t), method='linear')
 w = np.where((grid_t<0.356) & (grid_t>0.18))[0]
 corrs = []
+coefft = 0  # 1 for dimensionless, 0 for phys units
 for ch in range(len(da['info']['channels'])):
     corr = []
     t_range = np.linspace(-.04,0.04,50)
     for toffs in t_range:
         grid_ne = griddata(dt-toffs+da['t_mid'], da['ne18'][:,ch], (grid_t), method='linear')
         # plt.plot(grid_t,grid_ne,'.')
-        corr.append(correlation(grid_gas[w], grid_ne[w],coefft=0)[0])
+        corr.append(correlation(grid_gas[w], grid_ne[w],coefft=coefft)[0])
     corrs.append(corr)
 for (c, corr) in enumerate(corrs):
     axcorr.plot(t_range,corr,label=chans[c][1:],linestyle=['-','--'][c>10])
@@ -102,7 +103,8 @@ for (c, ch) in enumerate(chans):
 plt.xlim(-0.08,0.08)
 #plt.ylim(0.16,0.25)
 axmap.set_aspect('equal')
-axcorr.set_ylabel('correlation coefft')
+ylab = 'correlation {typ}'.format(typ = [' (phys units)',' coefft'][coefft])
+axcorr.set_ylabel(ylab)
 axmap.set_ylabel('Z(m)')
 fig.suptitle(title)
 axcorr.set_xlabel('time delay (s)')
@@ -117,6 +119,8 @@ for (c,ch) in enumerate(chans):
     X,Y,Z,dLC = lookupPosition(LPnum, lim)
     distLC.append(dLC)
 axLC.plot(np.sign(x)*distLC, avg_corr_coeff,'o')
+axLC.set_xlabel('distance to LCFS (-ve for left side)')
+axLC.set_ylabel(ylab)
 figLC.show()
 
 """
@@ -135,12 +139,12 @@ plt.show()
 
 
 plt.figure()
-da57=DA('LP/LP20160309_42_L57.npz')
-da53=DA('LP/LP20160309_42_L53.npz')
+da57=DA('LP/LP20160309_42_L57_2k2.npz')
+da53=DA('LP/LP20160309_42_L53_2k2.npz')
 ch3=2
-plt.plot(dt+da53['t_mid'],da53['Te'][:,ch3], label='Te s'+da53['info']['channels'][ch3][3:])
+plt.plot(dt+da53['t_mid'],da53.masked['Te'][:,ch3], label='Te s'+da53['info']['channels'][ch3][3:])
 ch4=1
-plt.plot(dt+da53['t_mid'],da53['Te'][:,ch4], label='Te s'+da53['info']['channels'][ch4][3:])
+plt.plot(dt+da53['t_mid'],da53.masked['Te'][:,ch4], label='Te s'+da53['info']['channels'][ch4][3:])
 plt.plot(np.array(time_g), 10*(np.array(gas_g)-3),label='gas valve')
 plt.legend()
 plt.title(da53.name)

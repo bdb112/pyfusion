@@ -11,12 +11,16 @@ import pyfusion
 
 from matplotlib.ticker import MaxNLocator
 
-
 dummy = 0  # True will generate dummy data
 NGX = 300j  # number of points in image grid
 NGY = 2*NGX
 #rc('font', **{'size':18})
 minpts = 17
+probe_chans = [1]
+loc = 'best'
+srange = range(110, 120)
+#srange = range(len(da['t_mid']))
+step = 3  # 3  # use every (step) time slice but skip unsuitable ones
 
 dafile = '20160302_12_L57'
 Te_range = None
@@ -50,18 +54,28 @@ dafile = 'LP20160308_41_L57' # also 44
 Te_range = [10, 100]  # 
 ne_range = [0, 6]
 
-
 dafile = 'LP20160309_42_L53'
 Te_range = [10, 50]  # 53 [10,70]
 ne_range = [0, 10]   # 53 [0,10]
 srange = range(60, 72)   # 20160309_42_L53
 minpts=18
 
-dafile = 'LP20160309_10_L57__amoeba21_1.2_2k.npz'
+
+dafile = 'LP20160309_10_L57_amoeba21_1.2_2k.npz'
 Te_range = [10, 70]  
 ne_range = [0, 3]   
 srange = range(60, 72)   # early High power region
 srange = range(200, 212)   # mid lower power
+minpts=18
+probe_chans = [1,6]
+
+dafile = 'LP20160309_52_L57_amoeba21_1.2_2k.npz'
+Te_range = [0, 50]  
+ne_range = [0, 15]
+probe_chans = [1,6]
+srange = range(60, 72)   # 
+#srange = range(200, 212)   # towards end before rise (2000,2)
+#srange = range(240, 252)   # towards end during rise (2000,2)
 minpts=18
 
 """
@@ -90,9 +104,6 @@ if ne_range is not None:
     ne_scl = 500./ne_range[1]
 
 
-#srange = range(110, 120)
-#srange = range(len(da['t_mid']))
-step = 3  # 3  # use every (step) time slice but skip unsuitable ones
 
 st = 0
 skipped = []
@@ -104,6 +115,8 @@ ne = 'ne18' if 'ne18' in da.da else 'ne'
 ne_max = np.nanmax(da.masked[ne],0)
 wnan = np.where(np.isnan(ne_max))[0]
 ne_max[wnan] = 0
+lowerz = 0.16
+upperz = 0.25
 
 for s in srange:
     ne_raw = da.masked[ne][s]
@@ -134,32 +147,34 @@ for s in srange:
 
     coords2D = np.array(zip(x, z))
     sgn = int(np.sign(np.nanmean(z)))
-    grid_x, grid_z = np.mgrid[-.06:.06:NGX, .16*sgn:.25*sgn:NGY]
+    grid_x, grid_z = np.mgrid[-.06:.06:NGX, lowerz*sgn:upperz*sgn:NGY]
     # 'nearest', 'linear', 'cubic'
     negr = griddata(coords2D, ne_raw, (grid_x, grid_z), method='cubic')
     org = 'lower' if (sgn > 0) else 'upper'
-    axim = plt.imshow(negr.T, origin=org, extent=(np.min(grid_x), np.max(grid_x), np.min(grid_z), np.max(grid_z)),
-                      **ne_kwargs)
+    axim = plt.imshow(negr.T, origin=org, aspect='equal',
+                      extent=(np.min(grid_x), np.max(grid_x), np.min(grid_z), np.max(grid_z)), **ne_kwargs)
     ax = axim.get_axes()
     cbarne = plt.colorbar(fraction=0.08, pad=0.01)
     # cbarne.set_label(r'$n_e/10^{18}$', rotation=270, labelpad=15, fontsize='large')
     cbarne.ax.set_xlabel(r'$n_e/10^{18}$', fontsize='large')
-    plt.scatter(x, z, ne_scl*ne_raw, Te_raw, **sc_kwargs)
-    plt.plot([0, 0], ax.get_ylim(), linewidth=.3)
+    sp = ax.scatter(x, z, ne_scl*ne_raw, Te_raw, **sc_kwargs)
+    ax.plot([0, 0], ax.get_ylim(), linewidth=.3)
+    ax.set_ylim(sgn*(lowerz-.005), sgn*(upperz+.005))
+
     locator = MaxNLocator(prune='upper')
     ax.xaxis.set_major_locator(locator)
     for (c, ch) in enumerate(np.array(da.infodict['channels'])[wg]):
         plt.text(x[c] + (2e-4*np.sqrt(ne_scl*ne_max[c]) + .001)*np.array([1,-1])[x[c]<0], z[c], ch[2:],
                  fontsize='x-small', horizontalalignment=['left','right'][x[c]<0])
     
-    cbarTe = plt. colorbar(fraction=0.08, pad=0.02)
+    cbarTe = plt.colorbar(sp, fraction=0.08, pad=0.02)
     #  cbarTe.set_label(r'$T_e (eV)$', rotation=270, fontsize='large')
     cbarTe.ax.set_xlabel(r'$T_e (eV)$', fontsize='large')
     figs[-1].suptitle('W7-X limiter sect 5 seg {seg} amu {amu} (point size is ne, shade is Te: {areas} probe areas)'
                       .format(areas=areas, seg=[0,3,7][sgn],amu=da.infodict['params'].get('amu','?')))
-    strip_h = 0.12
+    strip_h = 0.2
     plt.subplots_adjust(bottom=.1 + strip_h, left=0.05, right=1)
-    axstr = figs[-1].add_axes([0.145,0.05,0.68,strip_h])
+    axtime = figs[-1].add_axes([0.105,0.05,0.72,strip_h])
     locator = MaxNLocator(nbins=3)  # , prune='upper')
 
     dev_name = 'W7X'
@@ -168,31 +183,34 @@ for s in srange:
     chan = da['info']['channels'][0]
     #probedata = dev.acq.getdata(shot,'W7X'+chan + '_I')
     from pyfusion.data.filters import dummysig
-    prch = 1
-    probedata = dummysig(da['t_mid'],da['ne18'][prch])
-    probedata.signal = da.masked['ne18'][:,prch]  # kludge 
-    probedata.utc = da['info']['params']['i_diag_utc']
-    
     echdata = dev.acq.getdata(shot,'W7X_TotECH')
     wech = np.where(echdata.signal > 100)[0]
     tech = echdata.timebase[wech[0]]
     t0_utc = int(tech * 1e9) + echdata.utc[0]
-    dtprobe = (probedata.utc[0] - t0_utc)/1e9
-    axstr.plot(probedata.timebase + dtprobe, probedata.signal,
-               label='ne18 s'+ da['info']['channels'][prch][3:])
-    axstr.plot(echdata.timebase - tech, echdata.signal/1000, label='ECH')
+    axtime.plot(echdata.timebase - tech, echdata.signal/1000, label='ECH')
+    for prch in probe_chans:
+        probedata = dummysig(da['t_mid'],da['ne18'][prch])
+        probedata.signal = da.masked['ne18'][:,prch]  # kludge 
+        probedata.utc = da['info']['params']['i_diag_utc']
+        dtprobe = (probedata.utc[0] - t0_utc)/1e9
+        axtime.plot(probedata.timebase + dtprobe, probedata.signal,
+               label='ne18 '+ da['info']['channels'][prch][4:])
 
     gasdata = dev.acq.getdata(shot,'W7X_GasCtlV_23')
     dtgas = (gasdata.utc[0] - t0_utc)/1e9
-    axstr.plot(gasdata.timebase + dtgas, gasdata.signal)
-    axstr.yaxis.set_major_locator(locator)
-    axstr.set_xlim(-0.01,max(probedata.timebase + dtprobe))
-    axstr.set_ylim(0,2*np.nanmean(probedata.signal))
+    wplasmagas = np.where((gasdata.timebase+dtgas > np.min(probedata.timebase+dtprobe)) 
+                          & (gasdata.timebase+dtgas < np.max(probedata.timebase+dtprobe)))[0]
+    if np.max(gasdata.signal[wplasmagas]) > 0.1:
+        axtime.plot(gasdata.timebase + dtgas, gasdata.signal,label=gasdata.config_name[4:])
+    axtime.yaxis.set_major_locator(locator)
+    axtime.set_xlim(-0.01,max(probedata.timebase + dtprobe))
+    #axtime.set_ylim(0,2*np.nanmean(probedata.signal))
+    axtime.set_ylim(ne_range)
 
     tslice = da['t_mid'][s] + dtprobe
-    axstr.plot([tslice,tslice],axstr.get_ylim(),'k',lw=2)
+    axtime.plot([tslice,tslice],axtime.get_ylim(),'k',lw=2)
     ax.set_title('{fn}, time={t:.4f}'.format(fn=da.name, t=tslice))
-    plt.legend(prop={'size':'x-small'})
+    plt.legend(prop={'size':'x-small'},loc=loc)
 
     if len(srange)/float(step) > 4:
         root, ext = os.path.splitext(da.name)

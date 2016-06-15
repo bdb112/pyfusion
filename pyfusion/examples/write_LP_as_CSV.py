@@ -20,6 +20,7 @@ if ofilename is None:
     path, nameext = os.path.split(LPfile)
     (name, ext) = os.path.splitext(nameext)
     ofilename = os.path.join(path, name + '.csv')
+    jfilename = os.path.join(path, name + '.json')
 
 try:
     from pyfusion.data.DA_datamining import DA
@@ -127,3 +128,7 @@ for s in range(samples):
     ofile.write(nl)
 
 ofile.close()
+# now the json file
+mdat.update(dict(info=dat['info']))
+import json
+json.dump(mdat, file(jfilename, 'wt'))

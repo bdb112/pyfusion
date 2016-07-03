@@ -329,10 +329,20 @@ class DA():
 ## emulate a dictionary for convenience. See https://docs.python.org/3/reference/datamodel.html?emulating-container-types#emulating-container-types
 # implement __getitem__ and __iter__ so that 'shot' in DAHJ  works.
     def __getitem__(self,k):
-        return(self.da[k])
+        if k.lower() == 't':  # the corrected time - only at top level.
+            t_zero = self.da['info'].get('t_zero', None)
+            if t_zero is None:
+                print('*** Warning - no time correction found! - returning raw time ***')
+                t_zero = 0
+            return(self.da['t_mid'] -  t_zero)
+        else:
+            return(self.da[k])
 
     def __iter__(self):   # surprised I needed iter() here
-        return(iter(list(self.da.keys())))
+        keys = list(self.da.keys())
+        if 't_zero' in self.da['info'] and 't_mid' in self.da:
+            keys.append('t')
+        return(iter(keys))
 
     def update(self, new_dict, check=True):
         """ Add a new variable to the dictionary.  Better than simply updating
@@ -827,7 +837,7 @@ class DA():
         plt.legend(prop=dict(size=sz))
         plt.show()
 
-    def plot(self, key, x='t_mid', sharey=1, select=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, **kwargs):
+    def plot(self, key, x='t', sharey=1, select=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, **kwargs):
         """ 
         Plot the member 'key' of the Dictionary of Arrays 
           masked [1] 1 show only 'unmasked' points
@@ -836,6 +846,10 @@ class DA():
         from matplotlib.ticker import MaxNLocator
         if sharey == 1:
             sharey = 'all'
+        if key not in self and 't_mid' in self:
+            print("no 't' available - defaulting to 't_mid'")
+            key = 't_mid'
+
         if masked and hasattr(self, 'masked') and key in self.masked.keys():
             print('using masked {k}'.format(k=key))
             arr = self.masked[key]

@@ -42,8 +42,10 @@ gas_g = np.array([3.1, 3.1, 3.7, 3.7, 3.1, 3.1, 3.7, 3.7, 3.1, 3.1, 3.7, 3.7, 3.
 # LP5342.process_swept_Langmuir(t_range=[0.9,1.4],dtseg=.002,initial_TeVpI0=dict(Te=20,Vp=0,I0=None),filename='20160309_42_L532_short')
 #da532=DA('20160309_42_L532_short.npz')
 da532=DA('LP/LP20160309_42_L53_2k2.npz')
+#da532=DA('LP/LP20160309_52_L53_2k2.npz')
 #da532=DA('LP/LP20160309_44_L53.npz')
 da572=DA('LP/LP20160309_42_L57_2k2.npz')
+#da572=DA('LP/LP20160309_52_L57_2k2.npz')
 
 
 # offsets for medium text, not including dot size, second element is the probe number to avoid
@@ -57,12 +59,16 @@ grid_t = np.mgrid[0:1:3000j]
 grid_gas = griddata(time_g, gas_g, (grid_t), method='linear')
 w = np.where((grid_t<0.356) & (grid_t>0.18))[0]
 corrs = []
-coefft = 0  # 1 for dimensionless, 0 for phys units
+corr_diag = 'ne18'
+coefft = 1  # 1 for dimensionless, 0 for phys units
+
+# scan over a range of delays
 for ch in range(len(da['info']['channels'])):
     corr = []
-    t_range = np.linspace(-.04,0.04,50)
+    # t_range = np.linspace(-.04,0.04,50) # too big - leads to incoherence
+    t_range = np.linspace(-.01,0.035,50)
     for toffs in t_range:
-        grid_ne = griddata(dt-toffs+da['t_mid'], da['ne18'][:,ch], (grid_t), method='linear')
+        grid_ne = griddata(dt-toffs+da['t_mid'], da[corr_diag][:,ch], (grid_t), method='linear')
         # plt.plot(grid_t,grid_ne,'.')
         corr.append(correlation(grid_gas[w], grid_ne[w],coefft=coefft)[0])
     corrs.append(corr)
@@ -75,7 +81,7 @@ avg_ne= np.mean(grid_ne[w])
 avg_gas= np.mean(grid_gas[w])
 
 corr = np.correlate(grid_gas[w]-avg_gas, grid_ne[w]-avg_ne)/np.sqrt(np.correlate(grid_gas[w]-avg_gas, grid_gas[w]-avg_gas)*np.correlate(grid_ne[w]-avg_ne, grid_ne[w]-avg_ne))
-avg_corr_coeff = np.array([np.sum(corrs[i]*np.sign(t_range))/(2*len(corrs)/np.pi) for i in range(len(corrs))])
+avg_corr_coeff = np.array([np.sum(corrs[i]*np.sign(t_range-.012))/(2*len(corrs)/np.pi) for i in range(len(corrs))])
 X, Y, Z = np.array(da['info']['coords']).T
 th = np.deg2rad(-18)
 x = X * np.cos(th) - Y*np.sin(th)
@@ -103,9 +109,11 @@ for (c, ch) in enumerate(chans):
 plt.xlim(-0.08,0.08)
 #plt.ylim(0.16,0.25)
 axmap.set_aspect('equal')
-ylab = 'correlation {typ}'.format(typ = [' (phys units)',' coefft'][coefft])
+ylab = str('correlation with {corr_diag} {typ}'
+           .format(corr_diag=corr_diag, typ = [' (phys units)',' coefft'][coefft]))
 axcorr.set_ylabel(ylab)
 axmap.set_ylabel('Z(m)')
+axmap.set_xlabel('horizontal distance from limiter midplane (m)')
 fig.suptitle(title)
 axcorr.set_xlabel('time delay (s)')
 fig.subplots_adjust(left=0.1, right=0.95,top=0.96,bottom=0.07, hspace=.15)
@@ -127,14 +135,15 @@ figLC.show()
 """
 plt.figure()
 ch1=0
-plt.plot(da572['t_mid']+dt, da572['ne18'][:,ch1],hold=0,label='ne18 s'+ da572['info']['channels'][ch1][3:])
+plt.plot(da572['t_mid']+dt, da572['ne18'][:,ch1],hold=0,label='ne18 s'+ da572['info']['channels'][ch1][2:])
 ch2=1
-plt.plot(da532['t_mid']+dt, da532['ne18'][:,ch2],label='ne18 s'+ da532['info']['channels'][ch2][3:])
+plt.plot(da532['t_mid']+dt, da532['ne18'][:,ch2],label='ne18 s'+ da532['info']['channels'][ch2][2:])
 plt.plot(np.array(time_g), 0.8+(np.array(gas_g)-3),label='gas valve')
 plt.plot(echdata.timebase - tech, echdata.signal/1000,label='ECH (MW)',color='magenta', lw=0.3)
 plt.legend()
 plt.title(da572.name)
 plt.xlim(0,0.4)
+plt.xlabel('time after ECH start')
 plt.show()
 
 
@@ -142,13 +151,14 @@ plt.figure()
 da57=DA('LP/LP20160309_42_L57_2k2.npz')
 da53=DA('LP/LP20160309_42_L53_2k2.npz')
 ch3=2
-plt.plot(dt+da53['t_mid'],da53.masked['Te'][:,ch3], label='Te s'+da53['info']['channels'][ch3][3:])
+plt.plot(dt+da53['t_mid'],da53.masked['Te'][:,ch3], label='Te s'+da53['info']['channels'][ch3][2:])
 ch4=1
-plt.plot(dt+da53['t_mid'],da53.masked['Te'][:,ch4], label='Te s'+da53['info']['channels'][ch4][3:])
+plt.plot(dt+da53['t_mid'],da53.masked['Te'][:,ch4], label='Te s'+da53['info']['channels'][ch4][2:])
 plt.plot(np.array(time_g), 10*(np.array(gas_g)-3),label='gas valve')
 plt.legend()
 plt.title(da53.name)
 plt.xlim(0,0.4)
+plt.xlabel('time after ECH start')
 plt.show()
 """
 """

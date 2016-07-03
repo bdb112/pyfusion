@@ -6,6 +6,19 @@ python code for data mining plasma fluctuations
 
 Update: 
 
+Version 0.7.1: beta
+
+ * make 't' the default time variable (if t_zero is given) in Langmuir
+   DA files.  't' is derived from t_mid:  t = t_mid - t_zero
+ * filters.py: now segment() accepts floats for the number of samples,
+   allowing the segments to be phase locked to a signal.
+ * process_swept_Langmuir also.
+ * N2 puff correlation - generalise and tidy, labelling
+ * W7X_neTe_profile - fix sign error in 'x' coord
+ * plot_LP2D  - add acquisition/W7X/puff_db, suppress dodgy ne in
+   image, get seg 7 axes right way up.
+
+
 Version 0.7.0: beta
 
 * process_swept Langmuir 

@@ -209,6 +209,10 @@ def segment(input_data, n_samples, overlap=DEFAULT_SEGMENT_OVERLAP):
     Overlap of 2.0 starts a new segment halfway into previous, overlap=1 is
     no overlap.  overlap should divide into n_samples.  Probably should
     consider a nicer definition such as in pyfusion 0
+
+    n_samples < 1 implies a time interval, which is adjusted to suit fft 
+    otherwise n_samples is taken literally and not adjusted.
+    fractional n_samples>1 allows the step size to be fine-tuned.
     """
     from .base import DataSet
     from .timeseries import TimeseriesData
@@ -227,15 +231,19 @@ def segment(input_data, n_samples, overlap=DEFAULT_SEGMENT_OVERLAP):
         return output_dataset
     output_data = DataSet('segmented_%s, %d samples, %.3f overlap' %(datetime.now(), n_samples, overlap))
     # python3 check this
-    for el in range(0,len(input_data.timebase), int(n_samples/overlap)):
-##  was  for el in arange(0,len(input_data.timebase), n_samples/overlap):
+##  for el in range(0,len(input_data.timebase), int(n_samples/overlap)):
+##      prior to python3 was for el in arange(0,len(input_data.timebase), n_samples/overlap):
+#  this FP version allows locking to a precise frequency by use of a non-integral number of samples
+    for el in arange(0, len(input_data.timebase), n_samples/float(overlap)):
+        nsint = int(n_samples)
+        el = int(el + 0.5)
         if input_data.signal.ndim == 1:
-            tmp_data = TimeseriesData(timebase=input_data.timebase[el:el+n_samples],
-                                      signal=input_data.signal[el:el+n_samples],
+            tmp_data = TimeseriesData(timebase=input_data.timebase[el:el+nsint],
+                                      signal=input_data.signal[el:el+nsint],
                                       channels=input_data.channels, bypass_length_check=True)
         else:
-            tmp_data = TimeseriesData(timebase=input_data.timebase[el:el+n_samples],
-                                      signal=input_data.signal[:,el:el+n_samples],
+            tmp_data = TimeseriesData(timebase=input_data.timebase[el:el+nsint],
+                                      signal=input_data.signal[:,el:el+nsint],
                                       channels=input_data.channels, bypass_length_check=True)
             
         tmp_data.meta = input_data.meta.copy()

@@ -103,6 +103,9 @@ svars = ['t_mid','shot','date','progId','indx']
 for v in svars:
     vars.remove(v)
 
+if 't' in da:
+    svars.insert(0,'t')
+
 for k in ['ne18']:
     vars.remove(k)
     vars.insert(3, k)
@@ -119,7 +122,7 @@ for k in vars + svars:
     if k in  dat['info']['valid_keys']:
         mdat[k] = masked[k].tolist()
     else:
-        mdat[k] = dat[k].tolist()
+        mdat[k] = da[k].tolist()
 
 for s in range(samples):
     ofile.write(sep.join(['{val}'.format(val=mdat[k][s]) for k in svars]))

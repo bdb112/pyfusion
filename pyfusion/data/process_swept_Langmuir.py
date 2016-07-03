@@ -303,7 +303,7 @@ class Langmuir_data():
 
         if self.params is not None:
             self.process_swept_Langmuir(**self.params)
-        
+
 
     def get_iprobe(self, leakage=None, t_comp=None):
         """ main purpose is to subtract leakage currents
@@ -316,6 +316,7 @@ class Langmuir_data():
             t_comp = self.t_comp
         FFT_size = nice_FFT_size(len(self.imeasfull.timebase), -1)
         self.iprobefull = self.imeasfull.copy()
+        self.sweepQ = []  # will keep these for synchronous sampling
         input_leakage = leakage
         for (c, chan) in enumerate(self.imeasfull.channels):
             if self.select is not None and c not in self.select:
@@ -324,6 +325,7 @@ class Langmuir_data():
             cname = chan.config_name
             sweepV = self.vcorrfull.signal[self.vlookup[self.vassoc[c]]][0:FFT_size]
             sweepQ = hilbert(sweepV)
+            self.sweepQ.append(sweepQ)  # save for synchronising segments (it is smoothed)
 
             # these attempts to make it accept a single channel are only partial
             imeas = self.imeasfull.signal[c] # len(self.imeasfull.channels) >1 else self.imeasfull.signal
@@ -535,7 +537,11 @@ class Langmuir_data():
 
         for (c, chn) in enumerate([self.i_chans[ic] for ic in self.select]):
             cd = get_config_as_dict('Diagnostic', chn)
-            A = float(cd.get('area', 1.8e-6))
+            A = cd.get('area', None)
+            if A is None:
+                A = 1.0e-6
+                pyfusion.logging.warn('Defaulting area for {chn} to {A}'.format(chn=chn, A=A))
+            A = float(A)
             da.da['ne18'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
@@ -665,3 +671,11 @@ if __name__ == '__main__':
     # the following, using ([20160310, 9], 'W7X_L57_LP01_02) gives one nice char
     # and another char spoilt by a change in i_electron between cycles
     results = LP.process_swept_Langmuir(rest_swp=1,t_range=[1.6,1.604],t_comp=[0.8,0.85])
+
+"""
+Testing synchronisation using dead reckoning.
+LP952.process_swept_Langmuir(overlap=1,dtseg=5e5/500.402/2,initial_TeVpI0=dict(Te=30,Vp=5,I0=None),fit_params=dict(alg='amoeba',maxits=300,lpf=21,esterr=1,track_ratio=1.2),filename='*2k2',threshold=0.001,threshchan=0)
+# these overlap well about 20 samples difference beginning to end - could be the drift
+plot(LP952.segs[-11][2].signal[1])
+plot(LP952.segs[1][2].signal[1])
+"""

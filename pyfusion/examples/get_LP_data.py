@@ -1,8 +1,13 @@
 """
+Pull the Langmuir probe characteristic data out of a graph for further 
+plotting, processing
+
 Testing:
+# with the current figure containing a Langmuir characteristic and time plot,
+
 run pyfusion/examples/get_LP_data.py "init=dict(Te=4,Vp=15,I0=None)" test=1
 
-Getting data from a plot produced by process_swept_Langmuir(plot=3_
+# Getting data from a plot produced by process_swept_Langmuir(plot=3_
 run pyfusion/examples/get_LP_data.py
 run pyfusion/examples/get_LP_data.py "init=dict(Te=4,Vp=15,I0=None)"
 

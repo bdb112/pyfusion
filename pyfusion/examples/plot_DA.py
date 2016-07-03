@@ -7,12 +7,15 @@
 import matplotlib.pyplot as plt
 import sys
 sys.path.append('/home/bdb112/pyfusion/working/pyfusion/')
-from pyfusion.data.save_compress import newload
+from pyfusion.data.DA_datamining import DA 
 
 if len(sys.argv) < 2:
-    print('plot_npz_data "filename"')
+    print('plot_npz_data "filename" key')
 else:
     filename = sys.argv[1]
-    dat = newload(filename)
-    plt.plot(dat['timebase'], dat['signal'])
-    plt.show(0)
+    if len(sys.argv) > 2:
+        key = sys.argv[2]
+
+    da = DA(filename,load=1)
+    da.plot(key)
+    plt.show(1)

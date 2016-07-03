@@ -8,8 +8,9 @@ from matplotlib.ticker import MaxNLocator
 from scipy.interpolate import griddata
 from pyfusion.data.DA_datamining import DA
 import pyfusion
-
+from pyfusion.acquisition.W7X.puff_db import puff_db
 from matplotlib.ticker import MaxNLocator
+from pyfusion.acquisition.W7X.puff_db import get_puff
 
 dummy = 0  # True will generate dummy data
 NGX = 300j  # number of points in image grid
@@ -21,6 +22,10 @@ loc = 'best'
 srange = range(110, 120)
 #srange = range(len(da['t_mid']))
 step = 3  # 3  # use every (step) time slice but skip unsuitable ones
+
+# Soren says seg 7,  9 and 19 are dmamaged, and seg 3 10 and 12
+suppress_ne = '3_LP10::3_LP11::7_LP09::7_LP11::7_LP12::7_LP19'.split('::')
+
 
 dafile = '20160302_12_L57'
 Te_range = None
@@ -60,31 +65,50 @@ ne_range = [0, 10]   # 53 [0,10]
 srange = range(60, 72)   # 20160309_42_L53
 minpts=18
 
+dafile = 'LP20160218_4_L57_2k2'
+Te_range = [5, 15]  # 53 [10,70]
+ne_range = [0, 20]   # 53 [0,10]
+srange = range(60, 72)   # very low Te
+srange = range(40, 52)   #  lowish Te  puff?
+probe_chans = [0,1]
+minpts=18
 
-dafile = 'LP20160309_10_L57_amoeba21_1.2_2k.npz'
-Te_range = [10, 70]  
-ne_range = [0, 3]   
+
+dafile = 'LP20160309_10_L53_amoeba21_1.2_2k.npz'
+dafile = 'LP20160309_10_L53_2k2.npz'
+Te_range = [10, 80]  
+ne_range = [0, 4]   
 srange = range(60, 72)   # early High power region
 srange = range(200, 212)   # mid lower power
+srange = range(430, 442)   # 920ms
+#t_range = [0.92, 0.93]
 minpts=18
 probe_chans = [1,6]
 
-dafile = 'LP20160309_52_L57_amoeba21_1.2_2k.npz'
+dafile = 'LP20160309_52_L53_2k2.npz'
+#dafile = 'LP20160309_52_L57_2k2.npz'
+#dafile = 'LP20160309_51_L57_2k2.npz'
+#dafile = 'LP20160309_51_L53_2k2.npz'
 Te_range = [0, 50]  
 ne_range = [0, 15]
-probe_chans = [1,6]
-srange = range(60, 72)   # 
-#srange = range(200, 212)   # towards end before rise (2000,2)
+probe_chans = [1,4,5,6,7]
+average = False  #  in future, make this an option
+srange = range(60, 72)   # range over which to create frames (or to average)
+srange = range(200, 212)   # towards end before rise (2000,2)
 #srange = range(240, 252)   # towards end during rise (2000,2)
 minpts=18
 
-"""
-dafile = 'LP20160224_25_L53'
-Te_range = [10, 50] #both  # 53 [10,70]    57 [10,100]
-ne_range = [0, 10]  #both  # 53 [0,12]      57 [0,10] 
-srange = range(85, 95)   # 20160224_25_L53
+
+# dafile = 'LP20160224_25_L53'
+dafile = 'LP20160224_25_L53_2k2.npz'
+dafile = 'LP20160224_25_L57_2k2.npz'
+Te_range = [10, 50]  # both  # 53 [10,70]    57 [10,100]
+ne_range = [0, 10]   # both  # 53 [0,12]      57 [0,10]
+srange = range(85, 95)   # 20160224_25_L53  0.22 (0.4)
+srange = range(145, 155)   # 20160224_25_L53  0.33
+srange = range(185, 195)   # 20160224_25_L53  0.4
 minpts=18
-"""
+
 
 da = DA('LP/' + dafile)
 areas = 'uncalibrated'
@@ -103,38 +127,46 @@ ne_kwargs = dict(vmin=ne_range[0], vmax=ne_range[1]) if ne_range is not None els
 if ne_range is not None:
     ne_scl = 500./ne_range[1]
 
-
-
 st = 0
 skipped = []
 figs= []
 num = None  # None auto numbers figures
 
 ne = 'ne18' if 'ne18' in da.da else 'ne'
-# ne_max is used to offset the labels according to the size of the dots - (don't want them shifting in time)
+# ne_max is used to offset the labels according to the size of the dots - (don't want them shifting from frame to frame)
 ne_max = np.nanmax(da.masked[ne],0)
 wnan = np.where(np.isnan(ne_max))[0]
 ne_max[wnan] = 0
 lowerz = 0.16
 upperz = 0.25
 
+# see N2_puff_correlation for the vertical offsets of text point labels
+
 for s in srange:
     ne_raw = da.masked[ne][s]
+    Te_raw = da.masked['Te'][s]
+    #  ne_cleaned has the suspect channels removed (see suppress_ne)
+    ne_cleaned = ne_raw.copy()
+    for (c, ch) in enumerate(da.infodict['channels']):
+        if np.any([sup in ch for sup in suppress_ne]):
+            ne_cleaned[c] = np.nan
     wg = np.where(~np.isnan(ne_raw))[0]
     st += 1
-    if (step>0 and st > 1) or len(wg) < minpts:
+    if (step > 0 and st > 1) or len(wg) < minpts:
         if st <= 1:
             skipped.append(s)
             st -= 1
         if st >= step: st=0  # reset
         continue
-    #fig = plt.figure(100, figsize=(12, 8))
-    if len(figs)>5: # if more than 5, reuse figure 100 
+    # fig = plt.figure(100, figsize=(12, 8))
+    if len(figs) > 5:  # if more than 5, reuse figure 100
         num = 100
-    figs.append (plt.figure(num, figsize=(8, 6)))
-    ne_raw = ne_raw[wg]
-    Te_raw = da.masked['Te'][s][wg]
-    coords = np.array(da.infodict['coords'])[wg]
+    figs.append(plt.figure(num, figsize=(8, 6)))
+    wg_sup = np.where(~np.isnan(ne_cleaned))[0]
+    wg_dodgy = np.lib.arraysetops.setdiff1d(wg,wg_sup)
+    ne_cleaned = ne_cleaned[wg_sup]
+    Te_raw = da.masked['Te'][s]
+    coords = np.array(da.infodict['coords'])
     X, Y, Z = np.array(coords).T
     th = np.deg2rad(-18)
     x = X * np.cos(th) - Y*np.sin(th)
@@ -149,7 +181,7 @@ for s in srange:
     sgn = int(np.sign(np.nanmean(z)))
     grid_x, grid_z = np.mgrid[-.06:.06:NGX, lowerz*sgn:upperz*sgn:NGY]
     # 'nearest', 'linear', 'cubic'
-    negr = griddata(coords2D, ne_raw, (grid_x, grid_z), method='cubic')
+    negr = griddata(coords2D[wg_sup], ne_cleaned, (grid_x, grid_z), method='cubic')
     org = 'lower' if (sgn > 0) else 'upper'
     axim = plt.imshow(negr.T, origin=org, aspect='equal',
                       extent=(np.min(grid_x), np.max(grid_x), np.min(grid_z), np.max(grid_z)), **ne_kwargs)
@@ -157,20 +189,34 @@ for s in srange:
     cbarne = plt.colorbar(fraction=0.08, pad=0.01)
     # cbarne.set_label(r'$n_e/10^{18}$', rotation=270, labelpad=15, fontsize='large')
     cbarne.ax.set_xlabel(r'$n_e/10^{18}$', fontsize='large')
-    sp = ax.scatter(x, z, ne_scl*ne_raw, Te_raw, **sc_kwargs)
+    w = wg_dodgy  # dodgy first
+    dodgy_kwargs = sc_kwargs.copy()
+    dodgy_kwargs.update(dict(linestyle=':',lw=10,edgecolor='gray'))
+    sp = ax.scatter(x[w], z[w], ne_scl*ne_raw[w], Te_raw[w], **dodgy_kwargs)
+    # now better ones
+    w = wg_sup
+    sp = ax.scatter(x[w], z[w], ne_scl*ne_raw[w], Te_raw[w], **sc_kwargs)
+    # from here on wg is selected
+    ne_OK = ne_raw[wg]
+    Te_neOK = Te_raw[wg]
+    x = x[wg]
+    z = z[wg]
     ax.plot([0, 0], ax.get_ylim(), linewidth=.3)
-    ax.set_ylim(sgn*(lowerz-.005), sgn*(upperz+.005))
+    ax.set_ylim(np.sort([sgn*(lowerz-.005), sgn*(upperz+.005)]))
 
     locator = MaxNLocator(prune='upper')
     ax.xaxis.set_major_locator(locator)
     for (c, ch) in enumerate(np.array(da.infodict['channels'])[wg]):
-        plt.text(x[c] + (2e-4*np.sqrt(ne_scl*ne_max[c]) + .001)*np.array([1,-1])[x[c]<0], z[c], ch[2:],
-                 fontsize='x-small', horizontalalignment=['left','right'][x[c]<0])
+        lab = ch[2:]
+        lab = ch[4:]+'$^'+ch[2]+'$'
+        plt.text(x[c] + (2e-4*np.sqrt(ne_scl*ne_max[c]) + .001)*np.array([1,-1])[x[c]<0], z[c],
+                  lab, fontsize='x-small', horizontalalignment=['left','right'][x[c]<0])
+                  #  ch[2:], fontsize='x-small', horizontalalignment=['left','right'][x[c]<0])
     
     cbarTe = plt.colorbar(sp, fraction=0.08, pad=0.02)
     #  cbarTe.set_label(r'$T_e (eV)$', rotation=270, fontsize='large')
     cbarTe.ax.set_xlabel(r'$T_e (eV)$', fontsize='large')
-    figs[-1].suptitle('W7-X limiter sect 5 seg {seg} amu {amu} (point size is ne, shade is Te: {areas} probe areas)'
+    figs[-1].suptitle('W7-X limiter 5 seg {seg} amu {amu} (point color is Te, size is ne: {areas} probe areas)'
                       .format(areas=areas, seg=[0,3,7][sgn],amu=da.infodict['params'].get('amu','?')))
     strip_h = 0.2
     plt.subplots_adjust(bottom=.1 + strip_h, left=0.05, right=1)
@@ -187,30 +233,50 @@ for s in srange:
     wech = np.where(echdata.signal > 100)[0]
     tech = echdata.timebase[wech[0]]
     t0_utc = int(tech * 1e9) + echdata.utc[0]
-    axtime.plot(echdata.timebase - tech, echdata.signal/1000, label='ECH')
-    for prch in probe_chans:
-        probedata = dummysig(da['t_mid'],da['ne18'][prch])
-        probedata.signal = da.masked['ne18'][:,prch]  # kludge 
-        probedata.utc = da['info']['params']['i_diag_utc']
-        dtprobe = (probedata.utc[0] - t0_utc)/1e9
-        axtime.plot(probedata.timebase + dtprobe, probedata.signal,
-               label='ne18 '+ da['info']['channels'][prch][4:])
+    # plot ECH til after probes so colours match up
+    diags = ['ne18','Te']
+    axtwin = axtime.twinx()
+    for (i, diag) in enumerate(diags):
+        for (pp, prch) in enumerate(probe_chans):
+            probedata = dummysig(da['t_mid'],da[diag][prch])
+            probedata.signal = da.masked[diag][:,prch]  # kludge 
+            probedata.utc = da['info']['params']['i_diag_utc']
+            dtprobe = (probedata.utc[0] - t0_utc)/1e9
+            axx = axtime if i == 0 else axtwin 
+            axx.plot(probedata.timebase + dtprobe, probedata.signal, 
+                     ls=['-',':'][i], lw=[1,2][i],
+                     label=diag +' s' + da['info']['channels'][prch][2:])
 
-    gasdata = dev.acq.getdata(shot,'W7X_GasCtlV_23')
+    axtime.plot(echdata.timebase - tech, echdata.signal/1000, label='ECH')
+    gasdata = dev.acq.getdata(shot, 'W7X_GasCtlV_23')
     dtgas = (gasdata.utc[0] - t0_utc)/1e9
     wplasmagas = np.where((gasdata.timebase+dtgas > np.min(probedata.timebase+dtprobe)) 
                           & (gasdata.timebase+dtgas < np.max(probedata.timebase+dtprobe)))[0]
     if np.max(gasdata.signal[wplasmagas]) > 0.1:
         axtime.plot(gasdata.timebase + dtgas, gasdata.signal,label=gasdata.config_name[4:])
-    axtime.yaxis.set_major_locator(locator)
     axtime.set_xlim(-0.01,max(probedata.timebase + dtprobe))
     #axtime.set_ylim(0,2*np.nanmean(probedata.signal))
     axtime.set_ylim(ne_range)
 
+    gaspuff = get_puff(shot, t_range = axtime.get_xlim())
+    if gaspuff is not None:
+        useax = axtwin if np.max(gaspuff[1]) > axtime.get_ylim()[1] else axtime
+        useax.plot(gaspuff[0], gaspuff[1], label=gaspuff[2])
+    axtime.yaxis.set_major_locator(locator)
+
     tslice = da['t_mid'][s] + dtprobe
     axtime.plot([tslice,tslice],axtime.get_ylim(),'k',lw=2)
     ax.set_title('{fn}, time={t:.4f}'.format(fn=da.name, t=tslice))
-    plt.legend(prop={'size':'x-small'},loc=loc)
+    twlocator = MaxNLocator(nbins=3, prune='upper') # reduce clutter on twin
+    axtwin.yaxis.set_major_locator(twlocator)
+    legt = axtime.legend(prop={'size':'x-small'},loc=loc)
+    if legt: 
+        legt.draggable()
+
+    if len(diags) > 1:
+        leg = axtwin.legend(prop={'size':'x-small'},loc=loc)
+        if leg:  # this is not draggable (at least when they are on top of each other)
+            leg.draggable()
 
     if len(srange)/float(step) > 4:
         root, ext = os.path.splitext(da.name)

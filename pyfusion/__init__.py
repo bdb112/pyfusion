@@ -9,9 +9,6 @@ from pyfusion.version import get_version
 # This grabs the directory of the pyfusion module.
 PYFUSION_ROOT_DIR = os.path.dirname(__file__)
 
-# Location of the logging configuration file.
-LOGGING_CONFIG_FILE = os.path.join(PYFUSION_ROOT_DIR, 'conf', 'logging.cfg')
-
 # Grab the pyfusion version
 VERSION = get_version()
 
@@ -27,6 +24,14 @@ config = PyfusionConfigParser()
 # users who don't want the database backend. 
 orm_manager = ORMManager()
 
+# define this now - it holds the user's custom conf and logging.cfg
+USER_PYFUSION_DIR = os.path.join(os.path.expanduser('~'), '.pyfusion')
+
+# Location of the logging configuration file.
+LOGGING_CONFIG_FILE = os.path.join(USER_PYFUSION_DIR, 'logging.cfg')
+if not os.path.exists(LOGGING_CONFIG_FILE):
+    LOGGING_CONFIG_FILE = os.path.join(PYFUSION_ROOT_DIR, 'conf', 'logging.cfg')
+
 # This sets up an instance of logger from the python standard library.
 logging.config.fileConfig(LOGGING_CONFIG_FILE)
 logger = logging.getLogger("pyfusion")
@@ -36,7 +41,7 @@ DEFAULT_CONFIG_FILE = os.path.join(PYFUSION_ROOT_DIR, 'pyfusion.cfg')
 
 # ... and the user's custom configuration file. First, if they don't
 # already have a folder for pyfusion stuff then let's make one
-USER_PYFUSION_DIR = os.path.join(os.path.expanduser('~'), '.pyfusion')
+
 if not os.path.exists(USER_PYFUSION_DIR):
     os.mkdir(USER_PYFUSION_DIR)
 # and here is the custom user configuration file

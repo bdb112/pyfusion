@@ -35,10 +35,11 @@ exec(_var_defaults)
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
-if shot_number == 0:
+if shot_number in  [0,1]:
     import MDSplus as MDS
-    tr = MDS.Tree('h1data',0)
-    shot_number = tr.getCurrent('h1data')
+    tr = MDS.Tree('h1data', 0)
+    # get the current (0) or the next shot (1)
+    shot_number = tr.getCurrent('h1data') + shot_number
 
 dev = pyfusion.getDevice(dev_name)
 data1 = dev.acq.getdata(shot_number,diag1)

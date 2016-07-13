@@ -21,7 +21,7 @@ probe_chans = [1]
 loc = 'best'
 srange = range(110, 120)
 #srange = range(len(da['t_mid']))
-step = 3  # 3  # use every (step) time slice but skip unsuitable ones
+step = 14  # 3  # use every (step) time slice but skip unsuitable ones
 
 # Soren says seg 7,  9 and 19 are dmamaged, and seg 3 10 and 12
 suppress_ne = '3_LP10::3_LP11::7_LP09::7_LP11::7_LP12::7_LP19'.split('::')
@@ -105,8 +105,9 @@ dafile = 'LP20160224_25_L57_2k2.npz'
 Te_range = [10, 50]  # both  # 53 [10,70]    57 [10,100]
 ne_range = [0, 10]   # both  # 53 [0,12]      57 [0,10]
 srange = range(85, 95)   # 20160224_25_L53  0.22 (0.4)
-srange = range(145, 155)   # 20160224_25_L53  0.33
-srange = range(185, 195)   # 20160224_25_L53  0.4
+srange = range(145, 175)   # 20160224_25_L53  0.33
+srange = range(155, 205)   # 20160224_25_L53  0.4
+#srange = range(175, 225)   # 20160224_25_L53  0.4
 minpts=18
 
 
@@ -145,19 +146,36 @@ upperz = 0.25
 for s in srange:
     ne_raw = da.masked[ne][s]
     Te_raw = da.masked['Te'][s]
+    eTe_raw = da['eTe'][s]
     #  ne_cleaned has the suspect channels removed (see suppress_ne)
     ne_cleaned = ne_raw.copy()
     for (c, ch) in enumerate(da.infodict['channels']):
         if np.any([sup in ch for sup in suppress_ne]):
             ne_cleaned[c] = np.nan
     wg = np.where(~np.isnan(ne_raw))[0]
-    st += 1
-    if (step > 0 and st > 1) or len(wg) < minpts:
-        if st <= 1:
-            skipped.append(s)
-            st -= 1
-        if st >= step: st=0  # reset
+    if len(wg) < minpts: #  Too few - get next
         continue
+    if (step > 0):
+        if st == 0:
+            print(s),
+            ne_list = []
+            Te_list = []
+            eTe_list = []
+        st += 1
+        if st <= step:
+            #    skipped.append(s)
+            ne_list.append(ne_raw)
+            Te_list.append(Te_raw)
+            eTe_list.append(eTe_raw)
+        if st < step: 
+            continue
+        else:
+            div = np.sum([1/err for err in eTe_list],0)
+            ne_raw = np.sum([n/err for n,err in zip(ne_list, eTe_list)],0)/div
+            Te_raw = np.sum([Te/err for Te,err in zip(Te_list, eTe_list)],0)/div
+            st=0  # reset
+            ccc=13
+            print(da['info']['channels'][wg[ccc]], Te_raw[ccc])
     # fig = plt.figure(100, figsize=(12, 8))
     if len(figs) > 5:  # if more than 5, reuse figure 100
         num = 100
@@ -264,7 +282,7 @@ for s in srange:
         useax.plot(gaspuff[0], gaspuff[1], label=gaspuff[2])
     axtime.yaxis.set_major_locator(locator)
 
-    tslice = da['t_mid'][s] + dtprobe
+    tslice = da['t_mid'][s-step//2] + dtprobe
     axtime.plot([tslice,tslice],axtime.get_ylim(),'k',lw=2)
     ax.set_title('{fn}, time={t:.4f}'.format(fn=da.name, t=tslice))
     twlocator = MaxNLocator(nbins=3, prune='upper') # reduce clutter on twin

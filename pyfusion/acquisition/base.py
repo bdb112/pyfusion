@@ -74,7 +74,8 @@ def try_fetch_local(input_data, bare_chan):
         if len(patt) == 2*len(patt.replace('~','')):  # a subdir code based on date
             subdir = ''
             # reverse the order of both the pattern and the shot so a posn is 0th char
-            revshot = str(shot[0])[::-1]
+            strshot = str(shot[0]) if len(np.shape(shot))>0 else str(shot)
+            revshot = strshot[::-1]
             for i,ch in enumerate(patt):
                 if (i%2) == 0: 
                     if ch != '~':

@@ -69,7 +69,7 @@ def myiden2(t,y):
     return(t,y)
 
 @register("TimeseriesData")
-def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=2,linestyle=True,labelfmt="{short_name} {units}", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', fun=myiden, fun2=None):
+def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', markersize=2,linestyle=True,labelfmt="{short_name} {units}", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', fun=myiden, fun2=None, **kwargs):
     """ 
     Plot a figure full of signals using n_columns[1], 
         sharey [=1]  "gangs" y axes  - sim for sharex - sharex=None stops this
@@ -159,16 +159,18 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
             else:
                 lab = labeleg
 
-            kwargs = dict(marker=marker, markersize=markersize, 
+            KWargs = dict(marker=marker, markersize=markersize, 
                           linestyle=linestyle, label = lab, color=color)
+            KWargs.update(kwargs)
+
             if fun2 is not None:
                 pl.plot(*fun2(input_data.timebase[::downsamplefactor], 
                               input_data.signal.get_channel(
-                                  chan_num)[::downsamplefactor]),**kwargs)
+                                  chan_num)[::downsamplefactor]),**KWargs)
             else:
                 pl.plot(input_data.timebase[::downsamplefactor], 
                         fun(input_data.signal.get_channel(
-                            chan_num)[::downsamplefactor]),**kwargs)
+                            chan_num)[::downsamplefactor]),**KWargs)
 
 # this old code was no faster
 #           #   if downsamplefactor==1:

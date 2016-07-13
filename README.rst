@@ -6,6 +6,11 @@ python code for data mining plasma fluctuations
 
 Update: 
 
+Version 0.7.2: beta
+
+minor fixes to get working on H-1 data again (shot, config_name, config_boyd)
+implement averaging through lists in plotLP2D
+
 Version 0.7.1: beta
 
  * make 't' the default time variable (if t_zero is given) in Langmuir

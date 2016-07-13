@@ -15,6 +15,7 @@ class H1DataFetcher(MDSPlusDataFetcher):
         coords = get_coords_for_channel(**self.__dict__)
         ch = Channel(self.mds_path, coords)
         output_data.channels = ch
+        output_data.config_name = self.config_name
         output_data.meta.update({'shot':self.shot, 'kh':self.get_kh()})
         return output_data
 

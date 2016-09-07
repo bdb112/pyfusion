@@ -1,3 +1,6 @@
+"""
+_PYFUSION_TEST_@@shot_number=92902 dev_name='H1Local'
+"""
 import pyfusion
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,6 +47,10 @@ if shot_number in  [0,1]:
 dev = pyfusion.getDevice(dev_name)
 data1 = dev.acq.getdata(shot_number,diag1)
 data2 = dev.acq.getdata(shot_number,diag2)
+try:
+    datap = dev.acq.getdata(shot_number,'H1Puff')
+except:
+    datap = None
 
 fd1 = data1.filter_fourier_bandpass(passband=passband, stopband=stopband)
 fd2 = data2.filter_fourier_bandpass(passband=passband, stopband=stopband)
@@ -59,7 +66,6 @@ if plotit:
     if hold == 0:
         plt.figure()
     data2.plot_signals(lw=.1, color='c')
-
 for (i,per) in enumerate(period):
     t_coh, corr = runavg(t, fd1.signal * fd2.signal, per, return_time=1)
     coh = corr/np.sqrt(runavg(t, fd1.signal**2, per) * 
@@ -68,5 +74,11 @@ for (i,per) in enumerate(period):
         plt.plot(t_coh, -coh, color=['c','b'][i])  #  why minus??
 
 if plotit:    
+
+    plt.plot(plt.xlim(), [1,1], lw=0.3)
     plt.ylim(ylims)
+    if datap is not None:
+        axp = plt.twinx()
+        axp.plot(datap.timebase, datap.signal, color='r')
+
     plt.show(0)

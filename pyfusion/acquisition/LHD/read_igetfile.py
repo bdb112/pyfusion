@@ -20,7 +20,8 @@ colorset = ('b,g,r,c,m,y,k,orange,purple,lightgreen,gray,brown,teal,tan'.split('
 def call_igetfile(path_to_igetfile, filename):
     """ run the igetfile program, returning the filename, which can be
     used for later deleting.
-    assume filename looks like somedir/wp@90000.dat
+    2017 - separate into folders per diag.
+    Assume filename looks like somedir/wp/wp@90000.dat
     """
     
     filepart = filename.split('/')[-1]
@@ -73,6 +74,9 @@ class igetfile():
             self.shot = int(shot)
             if "{" in filename: self.filename = filename.format(self.shot)
             else: self.filename = fileformat.format(self.shot)
+            # prepend the diag name ahead
+            folder = self.filename.split('@')[0]
+            self.filename = os.path.join(folder, self.filename)
         else:
             self.filename = filename
 

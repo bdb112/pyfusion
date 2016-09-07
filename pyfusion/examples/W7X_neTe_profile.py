@@ -48,7 +48,7 @@ def LCFS_plot(da, diag, t0_utc, t_range, ax=None, labelpoints=0):#False):
     ax.set_ylim(0, 1.2*np.nanmax(sig))
 
 
-def infostamp(txt, fig=None, default_kwargs=dict(horizontalalignment='right', verticalalignment='bottom', fontsize=6, x=0.99, y=0.008), **kwargs):
+def infostamp(txt, fig=None, default_kwargs=dict(horizontalalignment='right', verticalalignment='bottom', fontsize=7, x=0.99, y=0.008), **kwargs):
     import os, sys, pyfusion
 
     fig = plt.gcf() if fig is None else fig
@@ -62,16 +62,16 @@ da53 = DA('LP/LP20160309_10_L53_2k2.npz')
 da57 = DA('LP/LP20160309_10_L57_2k2.npz')
 t_range = [0.91, 0.93]
 t_range = [0.51, 0.53]
-"""
+
 # t_range = [0.61, 0.63]
 # t_range = [1.15, 1.18]
 da53 = DA('LP/LP20160309_52_L53_2k2.npz')
 da57 = DA('LP/LP20160309_52_L57_2k2.npz')
 t_range = [0.5, 0.52]
-t_range = [0.45, 0.47]
-t_range = [0.48, 0.5]
+#t_range = [0.45, 0.47]
+#t_range = [0.48, 0.5]
 #t_range = [0.3, 0.32]
-"""
+
 
 shot_number = [da53['date'][0], da53['progId'][0]]
 dev = pyfusion.getDevice(dev_name)

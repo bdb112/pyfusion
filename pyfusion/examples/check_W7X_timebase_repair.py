@@ -12,7 +12,7 @@ from pyfusion.utils import fix2pi_skips, modtwopi
 
 _var_defaults = """
 dev_name = "W7X"
-diag_name = "W7X_L57_LP1_8"
+diag_name = "W7X_L57_LP01_08"
 shot_number = [20160224,3] 
 sharey=True
 plotkws={}

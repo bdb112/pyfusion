@@ -28,6 +28,14 @@ plt.plot(x,y,z,'.',label=fname)
 
 plt.legend(prop={'size':'small'})
 ## use this to force aspect equal
-from threed import set_axes_equal
+from threed_aspect import set_axes_equal
 set_axes_equal(ax)
+
+
+
+
+
+
+
+
 

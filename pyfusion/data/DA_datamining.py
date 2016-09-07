@@ -22,22 +22,32 @@ except:
 
 
 class Masked_DA():
-    """ to be a virtual sub dictionary of a DA, returning applicable (valid_keys) elements, masked by
-    self.mask to have Nans in the positions where mask = True
+    """  a virtual sub dictionary of a DA, contained in the 'masked' attribute
+    and returning applicable (valid_keys) elements, masked by DA.da['mask']
+    to have Nans in the positions where mask = False or 0
+
+    An important side effect is to add the mask array to the main dictionary
+    Probably should NOT be a subclass - we don't want to do unnecessary copying.
 
     Example:
-    from pyfusion.data.DA_datamining import Masked_da, DA
-    da=DA('20160310_9_L57',load=1)
-    da.masked=Masked_da(['Te','I0','Vp'], DA=da)
-    da.da['mask']=-da['resid']/abs(da['I0'])<.35
-    clf();plot(da.masked['Te']);ylim(0,100)
+    from pyfusion.data.DA_datamining import Masked_DA, DA
+    mydDA=DA('20160310_9_L57',load=1)  # needs to be loaded for this operation
+    da.masked=Masked_DA(valid_keys=['Te','I0','Vp'], baseDA=myDA)
+    myDA.da['mask']=-myDA['resid']/abs(myDA['I0'])<.35
+    clf();plot(myDA.masked['Te']);ylim(0,100)
 
-  """
-    def __init__(self, valid_keys = [], DA=None):
+    """
+    def __init__(self, valid_keys=[], baseDA=None, mask=None):
+        if baseDA is None:
+            #raise ValueError('Need an existing DA or dict as DA arg')
+            print('Need an existing DA or dict as DA arg - should fix!~~')
         # nothing much to do
-        self.DA = DA
+        self.DA = baseDA  # this doesn't copy - just a convenience 
+        if mask is not None:
+            if len(np.shape(mask)) == 0:
+                mask = mask + np.zeros(shape=np.shape(self.DA.da[valid_keys[0]]))
+            self.DA.da['mask'] = mask
         self.valid_keys = valid_keys
-
 
     def keys(self):
         if 'mask' not in self.DA :
@@ -214,7 +224,9 @@ class DA():
         self.loaded = False
         
         start_mem = report_mem(msg='init')
-        if (type(fileordict) == dict) or hasattr(fileordict,'zip'): 
+        # not sure if it is a good idea to accept a DA - don't allow for now.
+        # why would you want to make a DA from a DA?
+        if (type(fileordict) == dict) or hasattr(fileordict,'zip'): #  or (hasattr(fileordict, 'da')): 
             # look for illegal chars in keys (ideally should be legal names)
             baddies = '*-()[]'   # e.g. shaun uses sqrt(ne)
             bads = [ch in '_'.join(fileordict.keys())for ch in baddies]
@@ -293,8 +305,9 @@ class DA():
 
         if load == 0:  
             self.loaded = False
-        else:
-            self.loaded = self.load()
+        else:  # load must be True
+            if self.loaded == 0:
+                self.loaded = self.load()
 
         if 'mask' in self.da:  # give it the Masked_DA property
             valid_keys = self.infodict.get('valid_keys',[])
@@ -837,7 +850,7 @@ class DA():
         plt.legend(prop=dict(size=sz))
         plt.show()
 
-    def plot(self, key, x='t', sharey=1, select=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, **kwargs):
+    def plot(self, key, xkey='t', sharey=1, select=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, **kwargs):
         """ 
         Plot the member 'key' of the Dictionary of Arrays 
           masked [1] 1 show only 'unmasked' points
@@ -846,18 +859,21 @@ class DA():
         from matplotlib.ticker import MaxNLocator
         if sharey == 1:
             sharey = 'all'
-        if key not in self and 't_mid' in self:
+        if xkey not in self and 't_mid' in self:
             print("no 't' available - defaulting to 't_mid'")
-            key = 't_mid'
+            xkey = 't_mid'
 
         if masked and hasattr(self, 'masked') and key in self.masked.keys():
             print('using masked {k}'.format(k=key))
             arr = self.masked[key]
         else:
             arr = self[key]
-        x = self[x]
 
+        x = np.array(self[xkey])
         nchans = np.shape(arr)[1]
+        if nchans > 20: 
+            print('warning- very many channels {c} - ^C to kill'
+                  .format(c=nchans)) 
         if select is not None:
             clist = select
             nvis = len(select)

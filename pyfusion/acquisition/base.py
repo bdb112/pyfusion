@@ -84,6 +84,8 @@ def try_fetch_local(input_data, bare_chan):
                     continue
                 subdir += revshot[ord(ch) - ord('a')]
 
+        else:
+            subdir = patt
         debug_(pyfusion.DEBUG, 3, key='MDS style subdir', msg=each_path)
         each_path = os.path.join(path, subdir)
         if isinstance(shot, (tuple, list, ndarray)):
@@ -104,7 +106,7 @@ def try_fetch_local(input_data, bare_chan):
         return None
 
     signal_dict = newload(input_data.localname)
-    if 'name' in signal_dict['params'] and 'W7X_L5' in signal_dict['params']['name']:
+    if 'params' in signal_dict and 'name' in signal_dict['params'] and 'W7X_L5' in signal_dict['params']['name']:
         if  signal_dict['params']['pyfusion_version'] < '0.6.8b':
             raise ValueError('probe assignments in error LP11-22 in {fn}'
                              .format(fn=input_data.localname))
@@ -345,6 +347,10 @@ class BaseDataFetcher(object):
             method = 'local_npz'
 
         data.meta.update({'shot':self.shot})
+        if hasattr(data,'comment'):  # extract comment if there
+            print('!data item {cn} already has comment {c}'
+                  .format(cn=data.config_name, c=data.comment))
+        data.comment = self.comment if hasattr(self, 'comment') else ''
         data.signal = sgn * data.signal
         if not hasattr(data,'utc'):
             data.utc = None
@@ -458,10 +464,25 @@ class MultiChannelFetcher(BaseDataFetcher):
                     # later to check length cf common_tb
                     if pyfusion.VERBOSE > 0: print('utcs: ******',ch_data.utc[0],group_utc[0])
                     if ch_data.utc[0] != group_utc[0]:
-                        # should pad this channel out with nans - for now report an error.
+                        dts = (ch_data.utc[0] - group_utc[0])/1e9
                         print('*** different start times *****\n********trace {chcnf} starts after {tbch} by {dts:.2g} s'
-                              .format(tbch = tb_chan.config_name, chcnf = ch_data.config_name,
-                                      dts = (ch_data.utc[0] - group_utc[0])/1e9))
+                              .format(tbch = tb_chan.config_name, chcnf = ch_data.config_name, dts=dts))
+                        # should pad this channel out with nans - for now report an error.
+                        # this won't work if combining signals on a common_tb
+                        # ch_data.timebase += -dts  # not sure if + or -?
+                        # print(ch_data.timebase[0])
+                        """ kind of works for L53_LP0701 309 13, but time error
+                        dtclock = 2e-6
+                        nsampsdiff = int(round(dts/dtclock,0))
+                        newlen = len(ch_data.timebase) + nsampsdiff
+                        newsig = np.array(newlen * [np.nan])
+                        newtb = np.array(newlen * [np.nan])
+                        newsig[nsampsdiff:] = ch_data.signal
+                        newtb[nsampsdiff:] = ch_data.timebase
+                        ch_data.signal = newsig
+                        ch_data.timebase = newtb
+                        ch_data.timebase += -dts  # not sure if + or -?
+                        """
 
                     if len(ch_data.signal)<len(common_tb):
                         common_tb = ch_data.timebase
@@ -494,6 +515,8 @@ class MultiChannelFetcher(BaseDataFetcher):
                                      channels=channels)
         #output_data.meta.update({'shot':self.shot})
         output_data.meta.update(meta_dict)
+        output_data.comment = self.comment if hasattr(self, 'comment') else ''
+        print(output_data.comment)
         #if not hasattr(output_data,'utc'):
         #    output_data.utc = None  # probably should try to get it
         #                           # from a channel - but how?

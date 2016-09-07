@@ -60,7 +60,7 @@ grid_gas = griddata(time_g, gas_g, (grid_t), method='linear')
 w = np.where((grid_t<0.356) & (grid_t>0.18))[0]
 corrs = []
 corr_diag = 'ne18'
-coefft = 1  # 1 for dimensionless, 0 for phys units
+coefft = 0  # 1 for dimensionless, 0 for phys units
 
 # scan over a range of delays
 for ch in range(len(da['info']['channels'])):
@@ -81,17 +81,32 @@ avg_ne= np.mean(grid_ne[w])
 avg_gas= np.mean(grid_gas[w])
 
 corr = np.correlate(grid_gas[w]-avg_gas, grid_ne[w]-avg_ne)/np.sqrt(np.correlate(grid_gas[w]-avg_gas, grid_gas[w]-avg_gas)*np.correlate(grid_ne[w]-avg_ne, grid_ne[w]-avg_ne))
-avg_corr_coeff = np.array([np.sum(corrs[i]*np.sign(t_range-.012))/(2*len(corrs)/np.pi) for i in range(len(corrs))])
+# THe commented out code was misguided - I initially assumed the correlation 
+# function would cosine like cos, and integrated that, 
+# but it depends too much on the limits of integration, and the signal is not
+# an exact square wave
+#avg_corr_coeff = np.array([np.sum(corrs[i]*np.sign(t_range-.012))/(2*len(corrs)/np.pi) for i in range(len(corrs))])
+
+# pkinds = [nanargmax(corr for corr in corrs)]  # can't cope with all nana
+pkinds = []
+for corr in corrs:
+    if np.isnan(corr).all():
+        pkinds.append(0)
+    else:
+        pkinds.append(np.nanargmax(corr))
+biggestind = np.nanargmax([corrs[p][pk] for (p,pk) in enumerate(pkinds)])
+pktime = pkinds[biggestind]
+corr_coeff = [corr[pktime] for corr in corrs]
 X, Y, Z = np.array(da['info']['coords']).T
 th = np.deg2rad(-18)
 x = X * np.cos(th) - Y*np.sin(th)
 y = X * np.sin(th) + Y*np.cos(th)
 z = Z
 title = str('{n}: {seg} segment'.format(n=da.name, seg=['upper','lower'][z[0]<0]))
-scl = 1000
-wnan = np.where(np.isnan(avg_corr_coeff))[0]
-avg_corr_coeff[wnan] = 0
-sp = axmap.scatter(x,z,scl*np.abs(avg_corr_coeff),avg_corr_coeff,cmap='bwr',vmin=-.7,vmax=.7)
+scl = 500
+wnan = np.where(np.isnan(corr_coeff))[0]
+corr_coeff[wnan] = 0
+sp = axmap.scatter(x,z,scl*np.abs(corr_coeff),corr_coeff,cmap='bwr',vmin=-.7,vmax=.7)
 fig.colorbar(sp)
 axmap.plot([0, 0], axmap.get_ylim(), linewidth=.3)
 dot_radius = 2e-4 * np.sqrt(sp.get_sizes())
@@ -109,15 +124,16 @@ for (c, ch) in enumerate(chans):
 plt.xlim(-0.08,0.08)
 #plt.ylim(0.16,0.25)
 axmap.set_aspect('equal')
-ylab = str('correlation with {corr_diag} {typ}'
+ylab = str('correlation {typ} with {corr_diag}'
            .format(corr_diag=corr_diag, typ = [' (phys units)',' coefft'][coefft]))
 axcorr.set_ylabel(ylab)
 axmap.set_ylabel('Z(m)')
 axmap.set_xlabel('horizontal distance from limiter midplane (m)')
 fig.suptitle(title)
 axcorr.set_xlabel('time delay (s)')
+axcorr.set_xlim(min(t_range), 1.3*max(t_range))  # make room for legend
 fig.subplots_adjust(left=0.1, right=0.95,top=0.96,bottom=0.07, hspace=.15)
-plt.show()
+plt.show(0)
 
 figLC, axLC = plt.subplots(1,1)
 distLC = []
@@ -126,10 +142,10 @@ for (c,ch) in enumerate(chans):
     lim = 'lower' if 'L57' in ch else 'upper'
     X,Y,Z,dLC = lookupPosition(LPnum, lim)
     distLC.append(dLC)
-axLC.plot(np.sign(x)*distLC, avg_corr_coeff,'o')
+axLC.plot(np.sign(x)*distLC, corr_coeff,'o')
 axLC.set_xlabel('distance to LCFS (-ve for left side)')
 axLC.set_ylabel(ylab)
-figLC.show()
+figLC.show(0)
 
 """
 """
@@ -144,10 +160,10 @@ plt.legend()
 plt.title(da572.name)
 plt.xlim(0,0.4)
 plt.xlabel('time after ECH start')
-plt.show()
+plt.show(0)
 
 
-plt.figure()
+plt.figure(0)
 da57=DA('LP/LP20160309_42_L57_2k2.npz')
 da53=DA('LP/LP20160309_42_L53_2k2.npz')
 ch3=2
@@ -159,7 +175,7 @@ plt.legend()
 plt.title(da53.name)
 plt.xlim(0,0.4)
 plt.xlabel('time after ECH start')
-plt.show()
+plt.show(0)
 """
 """
 """

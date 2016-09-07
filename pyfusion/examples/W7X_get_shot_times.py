@@ -1,3 +1,11 @@
+""" start to compare times between the progiD, Scenario DB and diagnostics
+So far this works on cached files, but when it is developed it will need to
+access the archiveDB
+
+_PYFUSION_TEST_@@Skip@@  only works on W7X net
+"""
+
+
 import pyfusion
 from pyfusion.acquisition.W7X.get_shot_utc  import get_shot_utc
 from pyfusion.utils.time_utils import utc_ns

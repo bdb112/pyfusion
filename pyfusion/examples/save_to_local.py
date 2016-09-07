@@ -1,4 +1,6 @@
 """ 
+****  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.
+
 hopefully we have fixed getting wrong utc for multi channel diags!!!  *********
 
 Saves a channel or set of channels (diagnostic) diag_name in local files

@@ -14,6 +14,7 @@ run pyfusion/examples/get_LP_data.py "init=dict(Te=4,Vp=15,I0=None)"
 lpf    7      9     15     21    51   101     201
 <res> 5e-4   3e-4  1e-4  6e-5   1e-5  3e-6    6e-7  
 Te err  2%    1%
+#_PYFUSION_TEST_@@Skip
 """
 from __future__ import print_function
 from six.moves import input

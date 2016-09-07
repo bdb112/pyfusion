@@ -46,7 +46,7 @@ def get_tsd_from_node(fetcher, node):
 
 # Don't import in the header, so that .npz files can be used - e.g. JSPF_tutorial example1
 try:
-     import MDSplus
+     import MDSplusx
 except ImportError:
      warn(' No MIT MDSplus software found - will only work on local .npz data'
           '   Try easy_install mdsplus, or see the ubuntu/redhat... mdsplus distros '

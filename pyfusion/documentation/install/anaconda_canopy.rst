@@ -49,7 +49,12 @@ Installing pyfusion
 Old instructions follow - need updating.
 ---------------------------------
 
-At present, the recommended method of installing pyfusion is from the code repository. You'll need a directory in your PYTHONPATH to install to, eg::
+At present, the recommended method of installing pyfusion is from the
+code repository. There is no need to run setup.py.  The small number
+of non-python files (mainly for specific fusion device libraries)
+are meant to compile 'on the fly'.
+
+You'll need a directory in your PYTHONPATH to install to, eg::
    
    mkdir -p $HOME/code/python
    echo "export PYTHONPATH=\$PYTHONPATH:\$HOME/code/python" >> $HOME/.bashrc
@@ -62,7 +67,8 @@ Install the `git <http://git-scm.com/>`_ distributed version control system::
 Make a clone of the pyfusion repository in your python path::
 
      cd $HOME/code/python
-     git clone http://github.com/dpretty/pyfusion.git
+     git clone https://github.com/bdb112/pyfusion
+     # obsolete version http://github.com/dpretty/pyfusion.git
 
 Until version 1.0 of the code, we'll be using the dev branch, so you need to check it out::
 

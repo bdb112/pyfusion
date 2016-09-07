@@ -55,6 +55,70 @@ with the following properties
      Note the case distinction (Exception is a researved word,
      exception is not)
 
+Examples from W7-X
+=================
+
+The following examples use command line keyword arguments, see above for
+special consideration such as quotes, avoiding spaces within arguments::
+
+
+  # Clone the repository, then from the shell
+  source pyfusion/run_tutorial
+
+  # You will land in ipython. Try example1.py and others as indicated above
+
+  # run_tutorial sets a few env vars and finds the right directory
+  # run_pyfusion is an example of a more specialised starting script, 
+
+  # string (--exe) which has some bdb_utils args inside it (in the quotes)  
+  # but will need adpatation to your enviroment
+
+  # Then move out of JSPF_examples to a convenient working directory
+  cd ../../..
+
+  # make the shot database (shotDA.pickle) , which allows us to obtain
+  # cached utc info from shot and date
+  run pyfusion/acquisition/W7X/get_shot_list update=1
+ 
+  # run a simple plot script - these data are compact, no need for caching
+  run pyfusion/examples/plot_signals.py  dev_name='W7X' diag_name='W7X_TotECH'  shot_number=[20160308,40]
+
+  # A pickle file for OP1.1 (acquisition/W7-X/shotDA.pickle) is included
+  # if the 'update' above doesn't work (there are still some unicode/py3 issues).
+
+  # If this does work (or not!) you could try reading and plotting a
+  # (trivially short) file of processed data - assumed to be in the top directory
+  # (containing pyfusion and .git folders)
+
+  from pyfusion.data.DA_datamining import DA, Masked_DA
+  da = DA('LP20160309_52_L57_2k2short.npz')
+  da.plot('ne18')  # all channels (with dubious data masked out with Nan's
+  da.plot('ne18',select=[1,6]) # selected - LP02 and LP07
+  da.keys()  # see data available
+  plot(da.masked['Te']) # many dubiuos values masked out
+  plot(da['Te'])  # all, including dubious values
+
+  # processing Langmuir data:
+  # this should be done with cached data, otherwise the URL access is
+  # too slow to be interesting.  Some smaller cached files are included
+  # These only have the first few ms of data - see ... for larger files.
+  from pyfusion.data.process_swept_Langmuir import Langmuir_data, fixup
+  LP30952 = Langmuir_data([20160309,52], 'W7X_L53_LP0107','W7X_L5UALL')
+  LP30952.process_swept_Langmuir(threshchan=0,t_comp=[0.85,0.86],filename='*2k2short')
+  # the following is a temporary fix, which doesn't work with the
+  # small examples - need a full sized data set - almost all 20
+  # probes, and the full time interval
+  run pyfusion/examples/plot_LP2D LP20160309_52_L53_2k2.npz
+  fixup(da,locals(),suppress_ne=suppress_ne) # set t=0 to ECH start, mask out ne for damaged probes
+
+  # Save to local cache
+  run pyfusion/examples/save_to_local.py  dev_name='W7X' diag_name="['W7X_L53_LP0107']" shot_list="[[20160309,52]]"
+  # make a much smaller version - limited time, every 4th sample 
+  run pyfusion/examples/save_to_local.py  dev_name='W7X' diag_name="['W7X_L53_LP0107']" shot_list="[[20160309,52]]" local_dir=/tmp time_range=[0.85,1.45] downsample=4
+  # A range of shots - note quotes
+  run pyfusion/examples/save_to_local.py "shot_list=shot_range([20160309,6],[20160309,9])" diag_name='["W7X_TotECH","W7X_L57_LPALL"]'
+  # add exception=() to the arg list to stop on error (for debugging)
+
 Example from Heliotron-J in four steps
 ======================================================
 There are a lot of parameters here, but it is only necessary to

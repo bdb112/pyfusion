@@ -1,6 +1,7 @@
 #bands=2
 # paste below the line (only works with mouse middle - not %paste)
 #Also, gen_fs_bands needs outfile=0 in the defaults, until process_cmd_line_args is fixed.
+#_PYFUSION_TEST_@@Skip
 figure()
 fn='PF2_160221_50136_{n}b'.format(n=bands)
 run -i pyfusion/examples/gen_fs_bands.py n_samples=None df=2 exception=() max_bands=bands dev_name="HeliotronJ" 'time_range="default"' seg_dt=1 overlap=2.5  diag_name='HeliotronJ_MP_array' shot_range=[50136] info=0 "outfile=fn" exception=()

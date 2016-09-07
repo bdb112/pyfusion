@@ -52,7 +52,7 @@ plt.plot(echdata.timebase - tech, echdata.signal/1000,label='ECH (MW)',color='ma
 plt.legend()
 plt.title(da572.name)
 plt.xlim(-0.01,1)
-plt.show()
+plt.show(0)
 
 
 plt.figure()
@@ -66,7 +66,7 @@ plt.plot(dt+da53['t_mid'],da53['Te'][:,ch4], label='Te s'+da53['info']['channels
 plt.legend()
 plt.title(da53.name)
 plt.xlim(-0.01,1)
-plt.show()
+plt.show(0)
 
 
 
@@ -77,7 +77,3 @@ da532.plot('ne18',select=[0,1,2,3,4,1],sharex='none')
 plt.ylim(0,3)
 plt.plot(da532['t_mid'], gas-3)
 """
-
-
-
-

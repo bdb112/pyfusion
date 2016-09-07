@@ -207,7 +207,7 @@ def call_spec():
 #        else: windowfn=pl.window_hanning
         elif _window==local_hanning: windowfn=pl.window_hanning
         else: windowfn=_window(arange(NFFT))
-        clim=(-60,20)   # eventually make this adjustable
+        clim=(-70,0)   # eventually make this adjustable
         if hold==0:  pl.clf()
 # colorbar commented out because it keeps adding itself
         data.plot_spectrogram(NFFT=NFFT, windowfn=windowfn, noverlap=foverlap*NFFT, 
@@ -247,7 +247,7 @@ bw=0.12  # width (for most)
 axcolor = 'lightgoldenrodyellow'
 
 #define the box where the buttons live
-rax = pl.axes([bxl, 0.87, bxl+bw, 0.11], axisbg=axcolor)
+rax = pl.axes([bxl, 0.89, bxl+bw, 0.10], axisbg=axcolor)
 mark_buts = RadioButtons(rax, ('no marker',  '40', '80', '120'),active=0)
 def msfunc(label):
     global y,NFFT,Fsamp,Fcentre,foverlap,detrend,_window, _type, fmod, marker_size
@@ -259,12 +259,12 @@ def msfunc(label):
 mark_buts.on_clicked(msfunc)
 
 
-rax = pl.axes([bxl, 0.68, bxl+bw, 0.18], axisbg=axcolor)
-win_buts = RadioButtons(rax, ('win 128', '256', '512', '1024','2048','4096'),active=2)
+rax = pl.axes([bxl, 0.68, bxl+bw, 0.20], axisbg=axcolor)
+win_buts = RadioButtons(rax, ('win 128', '256', '512', '1024','2048','4096','8192','16384'),active=2)
 def hzfunc(label):
     global y,NFFT,Fsamp,Fcentre,foverlap,detrend,_window, _type, fmod
     hzdict = {'win 128':128, '256':256, '512':512, '1024':1024,
-              '2048':2048, '4096':4096}
+              '2048':2048, '4096':4096, '8192':8192, '16384':16384}
     NFFT = hzdict[label]
     call_spec()
 

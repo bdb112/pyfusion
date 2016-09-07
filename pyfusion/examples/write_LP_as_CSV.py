@@ -120,9 +120,17 @@ ofile.write(nl)
 mdat = {}  #make a new dict with masked variables where they exist and ordinary if not.
 for k in vars + svars:
     if k in  dat['info']['valid_keys']:
-        mdat[k] = masked[k].tolist()
+        md = masked[k]
     else:
-        mdat[k] = da[k].tolist()
+        md = da[k]
+    # some matlab doesn't recognize inf?  loadjson.m (mathworks, qianqian fang 2011/09/09 seems to want to
+    winf = np.where(np.isinf(md))
+    if len(winf[0]) > 0:
+        print('replacing {n} "infinity" values per channel with np.nans'
+              .format(n=np.product([len(dim) for dim in winf])))
+    
+        md[winf] = np.nan
+    mdat[k] = md.tolist()
 
 for s in range(samples):
     ofile.write(sep.join(['{val}'.format(val=mdat[k][s]) for k in svars]))

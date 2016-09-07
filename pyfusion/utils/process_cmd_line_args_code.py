@@ -21,7 +21,7 @@ Note that by putting thisdoc= at the top, this doens't overwrite the
 caller's __doc__ string, and muck up help etc
 
 Note: if your mistype _var_defaults, it will work until there is an error reading the args
-for example, many rotines use _ver_default mistakenly
+for example, many routines use _var_default mistakenly
 
 Note that the ipython run command simulates a "fresh " run, unless -i 
 is used,  so the locals and globals in ipython will not available for use. 
@@ -62,7 +62,7 @@ from pylab import is_string_like
 def list_vars(locdict, Stop, tail_msg=''):
     if '_var_defaults' in locdict:
         print('\n===== Input variables, and their default values '
-              '(from _var_default) ======')
+              '(from _var_defaults) ======')
         print(locdict['_var_defaults'])
     # check the global namespace too - can't see _var_defaults when
     # running with "run -i" (but it hasn't helped).    

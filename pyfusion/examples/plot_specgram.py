@@ -6,6 +6,7 @@
     channel_number
     shot_number
     diag_name
+_PYFUSION_TEST_@@NotSkip
 """
 
 from __future__ import division

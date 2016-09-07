@@ -1,4 +1,4 @@
-""" walk through the exmaples folder and run them according to comments contained - if any
+""" walk through the examples folder and run them according to comments contained - if any
 e.g.
 _PYFUSION_TEST_@@diag_name="DIA135"
 """ 
@@ -6,20 +6,26 @@ _PYFUSION_TEST_@@diag_name="DIA135"
 
 from __future__ import print_function
 import subprocess, glob, pickle, sys
+import numpy as np
 from time import localtime, ctime
 import tempfile, os
 import pyfusion
 from time import time as seconds
 
 _var_defaults="""
-filewild = 'pyfusion/examples/*.py'
+filewild = 'pyfusion/examples/*.py'  # an explict filewild (but gets non repo)
 python_exe = 'python' # -3'
+start = 0  # allow a restart part-way through - always early, as it ignores @@Skip
+pfdebug=0 # normally set pyfsion.DEBUG to 0 regardless
+newest_first=1 # if True, order the files so the last edited is first.
 """
 
 exec(_var_defaults)
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
+###  THIS Needs to happen through the env! 
+os.environ['PYFUSION_DEBUG'] = str(pfdebug)
 
 def look_for_flags(filename):
     with open(filename) as f:
@@ -31,31 +37,65 @@ def look_for_flags(filename):
 
     return(toks)
 
-tm = localtime()
-out_list = []
-filelist = glob.glob(filewild)
-n_errs, total = 0, 0
-      
 try:
-    for filename in filelist:  # [1:3] for test
+    cmd = 'git ls-files'
+    sub_pipe = subprocess.Popen(cmd, shell=True,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (gitresp, giterrout) = sub_pipe.communicate()
+    print(giterrout)
+    if sub_pipe.returncode == 0:
+        #gitlist = [os.path.join(os.getcwd(), pth) for pth in gitresp.split()]
+        gitlist = gitresp.split()
+        gitshort = [os.path.join(os.path.split(gf)[-1]) for gf in gitlist]
+    else:
+        gitlist = None    
+except Exception as reason:
+    print(reason)
+    gitlist = None
+
+tm = localtime()
+wildlist = glob.glob(filewild)
+
+if start  == 0:
+    out_list = []
+    n_errs, total = 0, 0
+
+if gitlist is not None:
+    filelist = [wf for wf in wildlist if os.path.join(os.path.split(wf)[-1]) in gitshort]
+    if (len(filelist) == 0) and len(wildlist)>0:
+        print('******** no matching files in the git repo ******* \n{f} etc'
+              .format(f=wildlist[0:5]))
+else:
+    filelist = wildlist
+
+orig_order = np.arange(0, len(filelist))
+if newest_first:
+    order = np.argsort([os.path.getmtime(f) for f in filelist])
+    filelist = np.array(filelist)[order[::-1]]
+    orig_order = orig_order[order[::-1]]
+
+try:  # this try is to catch ^C
+    for filename in filelist[start:]:  # [1:3] for test
         prerun, tmpfil = '', ''
         flags = look_for_flags(filename)
         args = ''
+        print(flags)
         if flags != []:
             if 'skip' in [flag.lower() for flag in flags]:
-                continue  # this stops it from futher consideration (and from being run)
+                continue  # this stops it from further consideration (and from being run)
             else:
                 for flag in flags:
                     if "PRE@" in flag:
                         prerun = flag.split('PRE@')[1]
                     elif '=' in flag:
                         args += ' '+flag
+                print('run with', args)
 
 # need to cd for the JSPF examples:
         if '/JSPF_tut' in filename:
             prerun = '\n'.join([prerun, 'import os', 'os.chdir("pyfusion/examples/JSPF_tutorial/")'])
 
-        if prerun != '':
+        if prerun != '':  # if we need to do somthing special - e.g. env vars
             runfile = tempfile.mktemp()
             env = os.environ
             # env.update({'PYTHONSTARTUP':tmpfil}) only works in interactive
@@ -74,14 +114,15 @@ try:
         st = seconds()
         sub_pipe = subprocess.Popen(cmd,  env=env, shell=True, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
-        (resp, err) = sub_pipe.communicate()
-        if (err != b'') or (sub_pipe.returncode != 0):
-            print(resp, err, '.')
+        (resp, errout) = sub_pipe.communicate()
+        print(errout)
+        if ((errout != b'') and (not 'warn' in errout.lower())) or (sub_pipe.returncode != 0):
+            print(resp, errout, '.')
             n_errs += 1
 
         print(resp[-10000:])
         dt = round(seconds() - st, 3)
-        out_list.append([filename, err, resp, dt])
+        out_list.append([filename, errout, resp, dt])
         total += 1
 except KeyboardInterrupt:
     pass
@@ -96,8 +137,8 @@ pickle.dump(out_list, open(dumpname, 'wb'))
 print()
 print('Python {pv}, Pyfusion {pfv} {date}'.format(pv=sys.version[0:20], pfv=pyfusion.VERSION, date=ctime()))
 for i, ll in enumerate(out_list):
-    print('{i:2d} {dt} {fn:30s}: {msg}'
-          .format(i=i, dt=ll[3], fn='/'.join(ll[0].split('/')[-2:]),
+    print('{o:3d} {dt:5.2f} {fn:30s}: {msg}'
+          .format(o=orig_order[i], dt=ll[3], fn='/'.join(ll[0].split('/')[-2:]),
                   msg=[ll[1][-57:].replace(b'\n', b' '), b'OK!'][ll[1] == b'']))
 
 print('{g} good, {e} errors out of {t}'.format(e=n_errs, t=total, g=total-n_errs))

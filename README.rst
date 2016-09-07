@@ -6,6 +6,27 @@ python code for data mining plasma fluctuations
 
 Update: 
 
+***  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.***
+
+ maybe use functools.wraps so that the __doc__ of plot_signals can be seen
+
+Version 0.7.3 alpha
+
+ * comment fields now included and recognised in pyfusion.cfg files
+ * pyfusion.cfg space chars in URLS changed from %20 to %%20 for py3
+ * W7X examples added, including some very short data files for practice/debug
+ * Add Ie/Ii ratio to dataset (Ie_Ii)
+ * Adapt DA_datamining to use on h1
+ * fix bug in mdsplus style paths
+ * explore alternative corrections to corrupted timebase - but leave suppressed
+ * centralise access to shotDA.pickle/json
+ * Test routine (test_examples.py) now only tries file in the git
+   repo, optionally newest first
+ * edit several new example routines to run under test.
+ * replace inf in JSON write_LP_as_CSV.py some matlab doesn't
+   recognize inf?  loadjson.m (mathworks, qianqian fang 2011/09/09
+   seems to want to read Inf.
+
 Version 0.7.2: beta
 
 minor fixes to get working on H-1 data again (shot, config_name, config_boyd)

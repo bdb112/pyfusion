@@ -18,7 +18,7 @@ def analytic_signal(x):
 _var_defaults = """
 verbose=1
 dev_name = "W7X"
-diag_name = "W7X_L57_LP1"
+diag_name = "W7X_L57_LP01"
 shot_number = [20160310,9] 
 sharey=True
 t_range=[1.2,1.4]

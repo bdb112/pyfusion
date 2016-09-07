@@ -12,6 +12,7 @@ egdiags = 'wp,ip'
 shot=105396
 diag_names='VSL0011'
 diag_names='VSL_SMALL'
+diag_names='ti_crystal'
 dev_name='LHD'
 offset = 0    # -3  # for VSL signals before implementing pretrig
 hold = 0  # -1 for figure()

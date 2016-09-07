@@ -47,6 +47,6 @@ plt.xlim(0.5,2.2)
 ax2.legend()
 ax.legend(loc='upper left')
 plt.title('{c} {s}'.format(c=get_shot_info(*shot_number).strip(),s=shot_number))
-plt.show()
+plt.show(0)
 
 

@@ -1,5 +1,5 @@
 import pyfusion as pf
-
+#_PYFUSION_TEST_@@Skip
 pf.config.get('global','database')  #  'sqlite:///sqlite.txt'
 pf.read_config('shaun_feb_2010.cfg')
 

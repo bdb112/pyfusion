@@ -29,6 +29,24 @@ Documentation
 * use sphinx
 * built docs not stored in repository
 
+Decorators/Metaclasses
+----------------------
+
+Used to populate objects such as <data> with functions such as <fetch> that knows the details of the particular plasma device.  see "register"
+
+MetaClasses
+
+https://jakevdp.github.io/blog/2012/12/01/a-primer-on-python-metaclasses/
+
+Intro to decorators
+
+https://realpython.com/blog/python/primer-on-python-decorators/
+
+Use as function factory
+
+https://jeffknupp.com/blog/2013/11/29/improve-your-python-decorators-explained/
+
+
 Tests
 -----
 * use nosetests
@@ -52,4 +70,17 @@ The available attributes are:
 ``plot``  test requires matplotlib module 
 ``daq``   test connects to a data system (superset of ``lhd``, ``tjii`` and ``h1``)
 ========  =========================================================================
+
+
+Python 3 Issues
+===============
+
+pickling and unicode
+--------------------
+
+Hard to find settings that allow a python 2 picklw to be read by python 3.
+http://stackoverflow.com/questions/28218466/unpickling-a-python-2-object-with-python-3
+
+Perhaps it better to use json if possible.
+
 

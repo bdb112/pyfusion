@@ -219,7 +219,8 @@ def segment(input_data, n_samples, overlap=DEFAULT_SEGMENT_OVERLAP):
     if n_samples<1:
         dt = np.average(np.diff(input_data.timebase))
         n_samples = next_nice_number(n_samples/dt)
-        print('used {n} sample segments'.format(n=n_samples))
+        if pyfusion.VERBOSE>0:
+            print('used {n} sample segments'.format(n=n_samples))
 
     if isinstance(input_data, DataSet):
         output_dataset = DataSet()
@@ -760,6 +761,8 @@ def downsample(input_data, skip=10, chan=None, copy=False):
 
     tmp_data.meta = input_data.meta.copy()
     tmp_data.history = input_data.history  # bdb - may be redundant now meta is copied
+    if hasattr(input_data,'utc'):
+        tmp_data.utc = input_data.utc
     return tmp_data
 
 @register("TimeseriesData")
@@ -829,7 +832,8 @@ def remove_baseline(input_data, baseline=None, chan=None, copy=False):
 
         time_st = np.average(tb[wst])
         time_end = np.average(tb[wend])
-        print(bl_st, bl_end, time_st, time_end)
+        if pyfusion.VERBOSE>0:
+            print('baseline removal start, end, indicies', bl_st, bl_end, time_st, time_end)
 
         input_data.signal = signal - (bl_st  * (time_end - tb)/(time_end - time_st)
                                       - bl_end * (time_st - tb)/(time_end - time_st))

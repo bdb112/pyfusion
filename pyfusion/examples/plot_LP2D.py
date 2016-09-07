@@ -1,7 +1,7 @@
 """ Script to animate Te and ne - first attempt - needs generalising
 """
 #_PYFUSION_TEST_@@Skip
-import os
+import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -75,29 +75,30 @@ minpts=18
 
 
 dafile = 'LP20160309_10_L53_amoeba21_1.2_2k.npz'
-dafile = 'LP20160309_10_L53_2k2.npz'
+dafile = 'LP20160309_10_L57_2k2.npz'
 Te_range = [10, 80]  
-ne_range = [0, 4]   
-srange = range(60, 72)   # early High power region
-srange = range(200, 212)   # mid lower power
-srange = range(430, 442)   # 920ms
+ne_range = [0, 3.5]   
+srange = range(60, 92)   # early High power region
+#srange = range(200, 232)   # mid lower power
+# srange = range(430, 442)   # 920ms
 #t_range = [0.92, 0.93]
 minpts=18
 probe_chans = [1,6]
 
 dafile = 'LP20160309_52_L53_2k2.npz'
 #dafile = 'LP20160309_52_L57_2k2.npz'
-#dafile = 'LP20160309_51_L57_2k2.npz'
-#dafile = 'LP20160309_51_L53_2k2.npz'
-Te_range = [0, 50]  
+dafile = 'LP20160309_51_L53_2k2.npz'
+dafile = 'LP20160309_51_L57_2k2.npz'
+
+Te_range = [8, 60]  # [8, 60] for 51
 ne_range = [0, 15]
 probe_chans = [1,4,5,6,7]
 average = False  #  in future, make this an option
-srange = range(60, 72)   # range over which to create frames (or to average)
-srange = range(200, 212)   # towards end before rise (2000,2)
-#srange = range(240, 252)   # towards end during rise (2000,2)
+srange = range(60, 92)   # range over which to create frames (or to average)
+srange = range(200, 222)   # towards end before rise (2000,2)
+srange = range(230, 262)   # towards end during rise (2000,2)
 minpts=18
-
+"""
 
 # dafile = 'LP20160224_25_L53'
 dafile = 'LP20160224_25_L53_2k2.npz'
@@ -111,8 +112,27 @@ srange = range(155, 205)   # 20160224_25_L53  0.4
 minpts=18
 
 
-da = DA('LP/' + dafile)
+dafile = 'LP20160309_41_L57_2k2.npz'
+Te_range = [10, 80]  # 
+ne_range = [0, 6]   # 
+srange = range(145, 175)   # 20160308_38_L53  0.33
+srange = range(105, 135)   # 20160224_25_L53  0.33
+
+minpts=18
+"""
+if len(sys.argv)>1:
+    dafile=sys.argv[1]
+
+if not(os.path.exists(dafile)):
+    dafile = 'LP/' + dafile
+
+da = DA(dafile)
 areas = 'uncalibrated'
+
+if (len(da['Te'][0])<minpts):
+    raise LookupError('fewer channels ({nc}) than minpts'.
+                      format(nc = len(da['Te'][0])))
+
 try:
     if 'params' in da['info']:
         if  da['info']['params']['pyfusion_version'] > '0.6.7b':
@@ -154,6 +174,7 @@ for s in srange:
             ne_cleaned[c] = np.nan
     wg = np.where(~np.isnan(ne_raw))[0]
     if len(wg) < minpts: #  Too few - get next
+        print('{n} is too few '.format(n=len(wg)))
         continue
     if (step > 0):
         if st == 0:
@@ -180,6 +201,8 @@ for s in srange:
     if len(figs) > 5:  # if more than 5, reuse figure 100
         num = 100
     figs.append(plt.figure(num, figsize=(8, 6)))
+    print('{nf} figs, last index is {l}'
+          .format(nf=len(figs), l=len(da['t_mid'])))
     wg_sup = np.where(~np.isnan(ne_cleaned))[0]
     wg_dodgy = np.lib.arraysetops.setdiff1d(wg,wg_sup)
     ne_cleaned = ne_cleaned[wg_sup]
@@ -260,10 +283,10 @@ for s in srange:
             probedata.signal = da.masked[diag][:,prch]  # kludge 
             probedata.utc = da['info']['params']['i_diag_utc']
             dtprobe = (probedata.utc[0] - t0_utc)/1e9
-            axx = axtime if i == 0 else axtwin 
-            axx.plot(probedata.timebase + dtprobe, probedata.signal, 
-                     ls=['-',':'][i], lw=[1,2][i],
-                     label=diag +' s' + da['info']['channels'][prch][2:])
+            axx = axtime if i == 0 else axtwin
+            axx.plot(probedata.timebase + dtprobe, probedata.signal,
+                     ls=['-', ':'][i], lw=[1, 2][i],
+                     label=diag + ' s' + da['info']['channels'][prch][2:])
 
     axtime.plot(echdata.timebase - tech, echdata.signal/1000, label='ECH')
     gasdata = dev.acq.getdata(shot, 'W7X_GasCtlV_23')
@@ -283,9 +306,12 @@ for s in srange:
     axtime.yaxis.set_major_locator(locator)
 
     tslice = da['t_mid'][s-step//2] + dtprobe
+    dtaverage = da['t_mid'][s] - da['t_mid'][s-step]
+    dtstr = '{dt:.2f}s avg'.format(dt=dtaverage)
     axtime.plot([tslice,tslice],axtime.get_ylim(),'k',lw=2)
-    ax.set_title('{fn}, time={t:.4f}'.format(fn=da.name, t=tslice))
+    ax.set_title('{fn}, time={t:.4f} {dt}'.format(fn=da.name, t=tslice, dt=dtstr))
     twlocator = MaxNLocator(nbins=3, prune='upper') # reduce clutter on twin
+    axtwin.set_ylim(0,50)
     axtwin.yaxis.set_major_locator(twlocator)
     legt = axtime.legend(prop={'size':'x-small'},loc=loc)
     if legt: 

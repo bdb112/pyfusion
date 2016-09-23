@@ -1,5 +1,14 @@
 import numpy as np
 from time import time as seconds
+#_PYFUSION_TEST_@@DAfilename='pyfusion/examples/JSPF_tutorial/H1_766_new.npz'
+
+_var_defaults="""
+DAfilename='/data/datamining/DA/DA300_384_rms1_b5a_f16_diags.npz'
+"""
+
+exec(_var_defaults)
+from pyfusion.utils import process_cmd_line_args
+exec(process_cmd_line_args())
 
 def check_time_order(dd, allow_equal = True):
     shot = dd['shot']
@@ -16,11 +25,12 @@ def check_time_order(dd, allow_equal = True):
 
 
 from pyfusion.data.DA_datamining import DA, report_mem
-DA_test = DA('/data/datamining/old/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz')
-DA_test = DA('/data/datamining/DA300_384_rms1_b5a_f16_diags.npz')
+#DA_test = DA('/data/datamining/old/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz')
+DA_test = DA(DAfilename)
+
 
 dd = DA_test.da
-dd=ddd
+#dd=ddd
 
 if 'phorig' not in dd.keys():
     print('*** phorig not present')

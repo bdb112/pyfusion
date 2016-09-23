@@ -7,7 +7,7 @@ _PYFUSION_TEST_@@diag_name="DIA135"
 from __future__ import print_function
 import subprocess, glob, pickle, sys
 import numpy as np
-from time import localtime, ctime
+from time import localtime, ctime, sleep
 import tempfile, os
 import pyfusion
 from time import time as seconds
@@ -18,6 +18,7 @@ python_exe = 'python' # -3'
 start = 0  # allow a restart part-way through - always early, as it ignores @@Skip
 pfdebug=0 # normally set pyfsion.DEBUG to 0 regardless
 newest_first=1 # if True, order the files so the last edited is first.
+max_sec=2
 """
 
 exec(_var_defaults)
@@ -50,7 +51,7 @@ try:
     else:
         gitlist = None    
 except Exception as reason:
-    print(reason)
+    print('exception in git call', reason)
     gitlist = None
 
 tm = localtime()
@@ -114,6 +115,16 @@ try:  # this try is to catch ^C
         st = seconds()
         sub_pipe = subprocess.Popen(cmd,  env=env, shell=True, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
+        """ Doesn't workthis way - seems to wait.
+        for t in range(max_sec):
+            print(t)
+            sleep(1)
+            if sub_pipe.poll():
+                break
+            if t == max_sec - 1:
+                print('terminate')
+                sub_pipe.kill()
+        """
         (resp, errout) = sub_pipe.communicate()
         print(errout)
         if ((errout != b'') and (not 'warn' in errout.lower())) or (sub_pipe.returncode != 0):
@@ -124,8 +135,11 @@ try:  # this try is to catch ^C
         dt = round(seconds() - st, 3)
         out_list.append([filename, errout, resp, dt])
         total += 1
-except KeyboardInterrupt:
-    pass
+except KeyboardInterrupt as reason:
+    print('KeyboardInterrupt', reason)
+
+except Exception as reason:
+    print('exception during execution ', reason)
 
 dumpname = str('test_output_V{V}_{yy:02d}{mm:02d}{dd:02d}_{hh:02d}:{mn:02d}.pickle'
                .format(yy=tm.tm_year-2000, mm=tm.tm_mon, dd=tm.tm_mday,

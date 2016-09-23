@@ -154,7 +154,7 @@ ch1=0
 plt.plot(da572['t_mid']+dt, da572['ne18'][:,ch1],hold=0,label='ne18 s'+ da572['info']['channels'][ch1][2:])
 ch2=1
 plt.plot(da532['t_mid']+dt, da532['ne18'][:,ch2],label='ne18 s'+ da532['info']['channels'][ch2][2:])
-plt.plot(np.array(time_g), 0.8+(np.array(gas_g)-3),label='gas valve')
+plt.plot(np.array(time_g), 0.8+(np.array(gas_g)-3),label='N2 valve')
 plt.plot(echdata.timebase - tech, echdata.signal/1000,label='ECH (MW)',color='magenta', lw=0.3)
 plt.legend()
 plt.title(da572.name)

@@ -689,6 +689,9 @@ class Langmuir_data():
         self.fitdata = []
         debug_(self.debug, 3, key='process_loop')
         for mseg, iseg, vseg in self.segs:
+            # print('len vseg', len(vseg.signal[0]))
+            if len(vseg.signal[0]) < dtseg//5:  # skip short segments
+                continue
             print(round(np.mean(mseg.timebase),4),end='s: ')
             self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, initial_TeVpI0=initial_TeVpI0, fit_params=fit_params, plot=plot))
         # note: fitter.actual_fparams only records the most recent!

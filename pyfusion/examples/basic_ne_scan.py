@@ -1,6 +1,6 @@
 """ from Example 1, JSPF tutorial: simple density profile scan 
 
-_PYFUSION_TEST_@@shot_range=range(92902,92905+1) dev_name = 'H1Local' diag='ElectronDensity15' dt=0.005
+_PYFUSION_TEST_@@shot_range='range(92902,92905+1)' dev_name='H1Local' diag='ElectronDensity15' dt=0.005
 """
 from __future__ import print_function
 import pyfusion as pf
@@ -14,7 +14,7 @@ _var_defaults="""
 bads = []
 verbose = 0
 exclude = ['NE_14', 'NE_5']  # these are masked
-dev_name = 'H1'
+dev_name = 'H1Local'
 diag = 'ElectronDensity15'
 shot_range=range(92763,92810+1)
 shot_range=range(92902,92905+1)
@@ -49,7 +49,7 @@ for shot_number in shot_range:  # the +1 ensures 86517 is the last shot
 #myDA = pf.data.DA_datamining.Masked_DA(
 #    DAordict = dict(shot=shot, ne_profile=np.array(ne_profile), t_mid=t_mid), valid_keys=['ne_profile'], mask=0)
 myDA = DA(dict(shot=shot, ne_profile=np.array(ne_profile), t_mid=t_mid))
-myDA.masked = Masked_DA(valid_keys=['ne_profile'], DA=myDA)
+myDA.masked = Masked_DA(valid_keys=['ne_profile'], baseDA=myDA)
 myDA.da['mask'] = np.ones(shape=np.shape(myDA[myDA.masked.valid_keys[0]])).astype(np.uint8)
 channels = [ch.name.split(':')[-1] for ch in seg.channels]
 myDA.infodict.update(dict(channels = channels))

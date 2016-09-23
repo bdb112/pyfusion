@@ -123,6 +123,9 @@ minpts=18
 if len(sys.argv)>1:
     dafile=sys.argv[1]
 
+if len(sys.argv)>2:
+    minpts=int(sys.argv[2])
+
 if not(os.path.exists(dafile)):
     dafile = 'LP/' + dafile
 

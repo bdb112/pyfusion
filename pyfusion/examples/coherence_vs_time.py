@@ -21,7 +21,6 @@ def runavg(t, y, period=1e-3, return_time=False):
     else:
         return(csum[0:-nsamp] - csum[nsamp:])
 
-
 _var_defaults = """
 diag1 = 'H1ISat'
 diag2 = 'H1CameraTrig'
@@ -31,7 +30,7 @@ hold=0
 ylims=[-.1,1.1]
 passband = [3e3,8e3]
 stopband = [2e3,9e3]
-period = [2e-4,1e-3]  #  interval (or list of intervals) over which coherence is averaged (top hat)
+period = [2e-4,1e-3]  #  interval (or list of intervals) over which coherence is   averaged (top hat)
 plotit = 1
 """
 exec(_var_defaults)

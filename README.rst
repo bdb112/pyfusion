@@ -10,6 +10,13 @@ Update:
 
  maybe use functools.wraps so that the __doc__ of plot_signals can be seen
 
+
+Version 0.7.4 beta
+ * delayed MDSplus import to avoid import error for JSPS example1
+ * several small improvements, incl minpts arg to plot_LP2D.py, generalise run_process_LP,
+ * tune tests to make more test_examples work, failed attempt to implement timeout in test-examples
+ * add branch lukas
+
 Version 0.7.3 alpha
 
  * comment fields now included and recognised in pyfusion.cfg files

@@ -95,8 +95,8 @@ ne_range = [0, 15]
 probe_chans = [1,4,5,6,7]
 average = False  #  in future, make this an option
 srange = range(60, 92)   # range over which to create frames (or to average)
-srange = range(200, 222)   # towards end before rise (2000,2)
-srange = range(230, 262)   # towards end during rise (2000,2)
+#srange = range(200, 222)   # towards end before rise (2000,2)
+#srange = range(230, 262)   # towards end during rise (2000,2)
 minpts=18
 """
 

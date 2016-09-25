@@ -6,7 +6,7 @@ import sys
 from warnings import warn
 
 """ Note: in programming, be careful not to refer to .da[k] unnecessarily
-if it is not loaded - typically, if you plan to test it thne use it,
+if it is not loaded - typically, if you plan to test it then use it,
 save to a var first, then test, then use it.  see "dak" below
 """
 
@@ -200,22 +200,41 @@ def append_to_DA_file(filename, new_dict, force=False):
     zf.close()
 
 class DA():
-    """ class to handle and save data in a dictionary of arrays
-    can deal with databases larger than memory, by using load = 0
-    faster to use if load=1, but if you subselect by using extract
-    you get the speed for large data sets (once extract is done.
-    Extract can be used over and over to get different data sets.
+    """ Class to handle and save data in a special dictionary of arrays 
+    referred to hereafter as a "DA".
+    * Can deal with databases larger than memory, by using load=0
+    * Faster to use if load=1, but if you subselect by using extract
+      you get the speed for large data sets (once extract is done).
+    * Extract can be used over and over to get different data set selections.
 
-    mainkey is not necessarily a unique identifier - e.g it can be shot.
-    decimate (via limit=) here applies at the load into memory stage (in self.da) - it 
-    is the most effective space saver, but you need to reload if more data
-    is needed.  The alternative is to decimate at the extract stage (but this
-    applies only to the variables extracted into namespace (e.g. locals())
-    Filename is processed for env vars ~/ etc, but sometimes this seems to substitute 
-    the path of the DA module? (bug)
+Args:
+    fileordict: An .npz file containing a DA object or a dictionary of arrays 
+    sharing common first dimension, including the result of a 
+    loadtxt(dtype=...) command. The filename is processed for env vars ~/ etc,
+    but sometimes this seems to substitute the path of the DA module? (bug)
 
-    *Experimental* new feature allows use of the DA object itself as a dictionary (e.g. DA59['shot'])
+    mainkey: The main key, not necessarily a unique identifier - e.g it 
+    can be shot.
+
+    limit: Decimates the data when loaded into memory (via load=1). It is 
+    the most effective space saver, but you need to reload if more (or a 
+    different subselection of data) is needed.  The alternative is to 
+    downselect by using 'extract=' (but this applies only to the variables 
+    extracted into namespace (e.g. locals())
+
+Returns:
+    A DA object as described above
+
+Raises:
+    KeyError, ValueError, LookupError
+
+    *Experimental* new feature allows use of the DA object itself as a 
+    dictionary (e.g. DA59['shot']).
     For more info type help(DA)
+
+Note: This is my prototype of google style python sphinx docstrings - based on 
+    http://www.sphinx-doc.org/en/stable/ext/example_google.html
+      but I had to put newlines between args to get each arg on a separate line.
     """
     def __init__(self, fileordict, debug=0, verbose=0, load=0, limit=None, mainkey=None):
         # may want to make into arrays here...
@@ -383,11 +402,11 @@ class DA():
         """
         for k in self.da.keys():
             if k not in dd.keys():
-                raise LookupError('key {k} not in dd keys: {keys}'
+                raise KeyError('key {k} not in dd keys: {keys}'
                                   .format(k=k, keys=dd.keys()))
         for k in dd.keys():
             if k not in self.da.keys():
-                raise LookupError('key {k} not in DA keys: {keys}'
+                raise KeyError('key {k} not in DA keys: {keys}'
                                   .format(k=k, keys=self.da.keys()))
         for k in self.da.keys():
             if hasattr(dd[k],'keys'):  # check if the dd entry [k] is itself a dict

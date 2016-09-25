@@ -1,6 +1,7 @@
 # pyfusion
 ## python code for data mining plasma fluctuations
 
+#include "README.rst"
 Update: Version 0.58 now supports the full set of examples in the JSPF tutorial article, and includes the data files (in downsampled form).  All will run in the download package, apart from two marked (*) requiring access to full databases.
 
 <pre>

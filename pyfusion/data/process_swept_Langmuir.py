@@ -35,7 +35,7 @@ from pyfusion.debug_ import debug_
 from pyfusion.utils.primefactors import nice_FFT_size
 from pyfusion.conf.utils import get_config_as_dict
 
-debug = 1
+debug = 0
 
 
 def AC(x):
@@ -443,7 +443,7 @@ class Langmuir_data():
     """
         # Note that we check the RAW current for clipping
         try:  # this relative import doesn't work when process is run (for test)
-            from .LPextra import lpfilter, estimate_error
+            from pyfusion.data.LPextra import lpfilter, estimate_error
         except ValueError:
             from pyfusion.data.LPextra import lpfilter, estimate_error
 
@@ -471,7 +471,7 @@ class Langmuir_data():
         # [[Te, Vp, I0], res, its]
         if plot is None:
             # plot in detail only if there are 20 figures or less
-            plot = self.plot + 2*((len(self.segs)*len(self.imeasfull.channels)) < 8)
+            plot = self.plot + 2*((len(list(self.segs))*len(self.imeasfull.channels)) < 8)
         if (plot >= 2) and len(self.figs) < 8:  # 20 really slows down
             # best to open in another session.
             interval = str('{t}'.format(t=[round(segtb[0], 6), round(segtb[-1], 6)]))
@@ -692,7 +692,7 @@ class Langmuir_data():
             # print('len vseg', len(vseg.signal[0]))
             if len(vseg.signal[0]) < dtseg//5:  # skip short segments
                 continue
-            print(round(np.mean(mseg.timebase),4),end='s: ')
+            print(np.mean(mseg.timebase),4,end='s: ')
             self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, initial_TeVpI0=initial_TeVpI0, fit_params=fit_params, plot=plot))
         # note: fitter.actual_fparams only records the most recent!
         self.actual_params.pop('fit_params') # only want the ACTUAL ones.

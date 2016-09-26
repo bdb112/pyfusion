@@ -149,7 +149,7 @@ class W7XDataFetcher(BaseDataFetcher):
         # seems to take twice as long as timeout requested.
         # haven't thought about python3 for the json stuff yet
         try:
-            dat = json.load(urlopen(url,timeout=pyfusion.TIMEOUT))
+            dat = json.loads(urlopen(url,timeout=pyfusion.TIMEOUT).read().decode())
         except socket.timeout:
             # should check if this is better tested by the URL module
             print('****** first timeout error *****')

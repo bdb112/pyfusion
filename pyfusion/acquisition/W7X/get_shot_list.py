@@ -61,7 +61,7 @@ def _get_shotDA(fname):
         return None
 
     if ext == '.json':
-        jd = json.load(open(fname,'rt'))
+        jd = json.loads(open(fname,'rt'))
         shotDA = {}
         for k in jd:
             if isinstance(jd[k][0], str):

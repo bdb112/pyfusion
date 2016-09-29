@@ -27,7 +27,7 @@ class TJIIDataFetcher(BaseDataFetcher):
          ch = Channel(self.senal,
                       Coords('dummy', (0,0,0)))
          
-         if self.invert == 'true': #yuk - TODO: use boolean type from config
+         if self.invert == 'true': #yuk - # TODO: use boolean type from config
              s = Signal(-np.array(data_dict['y']))
          else:
              s = Signal(np.array(data_dict['y']))

@@ -328,7 +328,7 @@ def fs_group_geometric(input_data, max_energy = 1.0):
     """
     no filtering implemented yet
     we don't register this as a filter, because it doesn't return a Data or DataSet subclass
-    TODO: write docs for how to use max_energy - not obvious if using flucstruc() filter...
+    # TODO: write docs for how to use max_energy - not obvious if using flucstruc() filter...
     """
     from .timeseries import SVDData
     #from base import OrderedDataSet

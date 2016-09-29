@@ -22,19 +22,27 @@ except:
 
 
 class Masked_DA():
-    """  a virtual sub dictionary of a DA, contained in the 'masked' attribute
-    and returning applicable (valid_keys) elements, masked by DA.da['mask']
-    to have Nans in the positions where mask = False or 0
+    """  A virtual sub dictionary of a DA, contained in the 'masked' attribute
+         and returning applicable (valid_keys) elements, masked by DA.da['mask']
+         to have Nans in the positions where mask = False or 0
 
     An important side effect is to add the mask array to the main dictionary
     Probably should NOT be a subclass - we don't want to do unnecessary copying.
+    
+Parameters:
+  valid_keys: keys to which mask should be applied.
+  mask: An array (usualy 2D) of the same shape as the data, 
+    is usually set at a later stage, when the quality or error criteria
+    are evaluated.
+  baseDA: not sure why this is required, because this object is usually
+    attached to an existing DA - needs some thought.
 
-    Example:
-    from pyfusion.data.DA_datamining import Masked_DA, DA
-    mydDA=DA('20160310_9_L57',load=1)  # needs to be loaded for this operation
-    da.masked=Masked_DA(valid_keys=['Te','I0','Vp'], baseDA=myDA)
-    myDA.da['mask']=-myDA['resid']/abs(myDA['I0'])<.35
-    clf();plot(myDA.masked['Te']);ylim(0,100)
+Example:
+  >>> from pyfusion.data.DA_datamining import Masked_DA, DA
+  >>> mydDA=DA('20160310_9_L57',load=1)  # needs to be loaded for this operation
+  >>> da.masked=Masked_DA(valid_keys=['Te','I0','Vp'], baseDA=myDA)
+  >>> myDA.da['mask']=-myDA['resid']/abs(myDA['I0'])<.35
+  >>> clf();plot(myDA.masked['Te']);ylim(0,100)
 
     """
     def __init__(self, valid_keys=[], baseDA=None, mask=None):
@@ -50,6 +58,7 @@ class Masked_DA():
         self.valid_keys = valid_keys
 
     def keys(self):
+        """  return the keys for masked elements only """
         if 'mask' not in self.DA :
             print('no mask set')
             return([])
@@ -71,6 +80,7 @@ class Masked_DA():
             return(tmp)
             
 def info_to_bytes(inf):
+    """ Eventually this should deal with bytes/unicode compatibility"""
     #for k in inf:  # just do comment for now
     # can't do isinstance(xx, unicode) as unicode is not defined in P3
     if sys.version > '3,':
@@ -133,7 +143,8 @@ except ImportError:
 
 
 def process_file_name(filename):
-    # not tested in windows
+    """ Allow shell shortcuts such as ~/ and env var expansion 
+-   Note: not tested in windows """
     if '$DAPATH' in os.path.split(filename):
         try:
             import pyfusion
@@ -151,20 +162,32 @@ def process_file_name(filename):
 def append_to_DA_file(filename, new_dict, force=False):
     """ 
     Adds a new variable to the file - more like 'update' than append
-    open filename with mode=a, after checking if the indx variables align
-    force=1 ignores checks for consistent length c.f. the var shot
 
-    e.g.
-    append_to_DA_file('DAX.npz',dict(N=dd['N'])
-    append_to_DA_file('foo.npz',dict((k, mydict[k]) for k in ['N','M']))
+    Opens filename with mode=a, after checking if the indx variables align
+    force=1 ignores checks for consistent length c.f. the var shot.
+
+    Works with a DA file, in contrast to DA.append() which extends a DA
+
+Parameters:
+    filename: file to append to
+    new_dict: dictionary with new data to append
+    force: try to continue if there is a mismatch error
+Returns:
+    no return - side effect is to add a new variable to a DA file
+Raises:
+    ValueError: if new arrays don't match old.
+
+Example:
+    >>> append_to_DA_file('DAX.npz',dict(N=dd['N'])     # simple
+    >>> append_to_DA_file('foo.npz',dict((k, mydict[k]) for k in ['N','M']))
 
     Not a member of the class DA, because the class has memory copies of the
     file, so it would be confusing.
     """
     import zipfile, os
 
-    # the file is loaded into dd, and the new dictionary is new_dict
-    # add .npz if the name given does not exist, and it is not already
+    # The file is loaded into dd, and the new dictionary is new_dict
+    # Add .npz if the name given does not exist, and it is not already
     dd = np.load(process_file_name(filename))
     error = None
     if 'indx' in dd.keys() and 'indx' in new_dict.keys():
@@ -200,23 +223,24 @@ def append_to_DA_file(filename, new_dict, force=False):
     zf.close()
 
 class DA():
-    """ Class to handle and save data in a special dictionary of arrays 
-    referred to hereafter as a "DA".
-    * Can deal with databases larger than memory, by using load=0
-    * Faster to use if load=1, but if you subselect by using extract
-      you get the speed for large data sets (once extract is done).
-    * Extract can be used over and over to get different data set selections.
+    """ 
+Class to handle and save data in a special dictionary of arrays 
+referred to hereafter as a "DA".
+ * Can deal with databases larger than memory, by using load=0
+ * Faster to use if load=1, but if you subselect by using extract
+   you get the speed for large data sets (once extract is done).
+ * Extract can be used over and over to get different data set selections.
 
 Args:
-    fileordict: An .npz file containing a DA object or a dictionary of arrays 
+  fileordict: An .npz file containing a DA object or a dictionary of arrays 
     sharing common first dimension, including the result of a 
     loadtxt(dtype=...) command. The filename is processed for env vars ~/ etc,
     but sometimes this seems to substitute the path of the DA module? (bug)
-
-    mainkey: The main key, not necessarily a unique identifier - e.g it 
+  load: 1 will immediately load into memory, 0 will defer load allowing 
+    some operations (but slowly) without ocnsuming memory.
+  mainkey: The main key, not necessarily a unique identifier - e.g it 
     can be shot.
-
-    limit: Decimates the data when loaded into memory (via load=1). It is 
+  limit: Decimates the data when loaded into memory (via load=1). It is 
     the most effective space saver, but you need to reload if more (or a 
     different subselection of data) is needed.  The alternative is to 
     downselect by using 'extract=' (but this applies only to the variables 
@@ -226,11 +250,11 @@ Returns:
     A DA object as described above
 
 Raises:
-    KeyError, ValueError, LookupError
+    KeyError, ValueError, LookupError:
 
-    *Experimental* new feature allows use of the DA object itself as a 
-    dictionary (e.g. DA59['shot']).
-    For more info type help(DA)
+*Experimental* new feature allows use of the DA object itself as a 
+  dictionary (e.g. DA59['shot']).
+For more info type help(DA)
 
 Note: This is my prototype of google style python sphinx docstrings - based on 
     http://www.sphinx-doc.org/en/stable/ext/example_google.html
@@ -397,8 +421,9 @@ Note: This is my prototype of google style python sphinx docstrings - based on
 
     def append(self, dd):
         """ append the data arrays in dd to the data arrays in self - i.e.
-        extend the existing arrays.  See also append_to_DA_file to add
-        an extra variable
+        extend the existing arrays.  Typical use is in serial processing of
+        a range od shots. 
+      See also append_to_DA_file to add an extra variable
         """
         for k in self.da.keys():
             if k not in dd.keys():
@@ -953,11 +978,13 @@ def da(filename='300_small.npz',dd=True):
 
 if __name__ == "__main__":
 
+    print('Running a few small tests')
     d=dict(shot= [1,2,3], val=[1.,2.,3])
     da = DA(d)
     da.extract(locals(),'shot,val')
     print(shot, val)
 
+    # ???? gives error when run a second time??? bug?
     tfile = '/tmp/junk'
     da.save(tfile)
     append_to_DA_file(tfile, dict(A=[3,4,5]))

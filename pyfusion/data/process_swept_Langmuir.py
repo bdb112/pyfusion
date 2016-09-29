@@ -649,12 +649,17 @@ class Langmuir_data():
         for (c, vch) in  enumerate(self.v_chans):
             self.vlookup[vch] = c
 
-        self.vassoc = []  # list of associated sweepVs - one per i channel
+        self.vassoc = []  # list of sweepVs associated with each i channel
+                          # one per i channel - these refer to their 
+                          # respective self.v_chans
+                          # for OP1.1, only a few V chans were recorded and 
+                          # in practice only two channels are necessary.  
         default_sweep = 'NO SWEEP'
         default_sweep = 'W7X_L57_LP01_U'
 
         for ch in self.i_chans:
             cd = get_config_as_dict('Diagnostic', ch)
+            # TODO(bdb): use of default_sweep should generate a warning
             self.vassoc.append(cd.get('sweepv', default_sweep))
 
         # prepare_sweeps will populate self.vcorrfull

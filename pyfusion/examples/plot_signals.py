@@ -19,6 +19,7 @@ _var_defaults = """
 dev_name = "W7X"
 diag_name = "W7X_TotECH"
 shot_number = [20160308,39]
+# dev_name = "LHD"; diag_name = "MP1" ; shot_number = 27233
 sharey=2
 fun=myiden
 fun2=myiden2

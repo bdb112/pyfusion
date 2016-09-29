@@ -51,6 +51,7 @@ def json_save_shot_list(shotDA, new_name='/tmp/shotDA.json'):
 
 
 def _get_shotDA(fname):
+    # TODO(boyd.blackwell@anu.edu.au): remove pickle option, use json only.
     ext = os.path.splitext(fname)[-1].lower()
     print('==> Trying ' +  fname)
     try:
@@ -61,7 +62,10 @@ def _get_shotDA(fname):
         return None
 
     if ext == '.json':
-        jd = json.loads(open(fname,'rt'))
+        # json.load() works here, but will follow example in 
+        # http://webservices.ipp-hgw.mpg.de/docs/howtoREST.html#python, 
+        # json file written by >>> json.dump(shotDA, file('shotDA.json', 'wt'))
+        jd = json.loads(open(fname,'rt').read())
         shotDA = {}
         for k in jd:
             if isinstance(jd[k][0], str):

@@ -11,7 +11,7 @@ def rot(x, y, t):
     from numpy import cos, sin
     return(x*cos(t)+y*sin(t), -x*sin(t)+y*cos(t))
 
-def LCFS_plot(da, diag, t0_utc, t_range, ax=None, labelpoints=0):#False):
+def LCFS_plot(da, diag, t0_utc, t_range, ax=None, labelpoints=1):#False):
     ax = plt.gca() if ax is None else ax
     chans = np.array(da['info']['channels'])
     dt = (t0_utc - da['info']['params']['i_diag_utc'][0])/1e9

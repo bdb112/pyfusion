@@ -166,6 +166,9 @@ update=0
         selected = np.where(seldate == shotDA['date'])[0]
 
     for i in selected:
-        print(shotDA['date'][i],shotDA['progId'][i],time.asctime(time.gmtime(shotDA['end_utc'][i]/1e9)),
-              1e-9*(shotDA['end_utc'][i]-shotDA['start_utc'][i]),shotDA['comment'][i])
+        print('<<< {dtm}, {progId}, {tm} {dt}\n{cmt} >>>' 
+              .format(dtm=shotDA['date'][i],progId=shotDA['progId'][i],
+                      tm=time.asctime(time.gmtime(shotDA['end_utc'][i]/1e9)),
+                      dt=1e-9*(shotDA['end_utc'][i]-shotDA['start_utc'][i]),
+                      cmt=shotDA['comment'][i].replace('\n',' ')))
 

@@ -24,8 +24,10 @@ scatter(*(np.transpose(conn.execute('select shot, is2/im2 as kh from summ where 
 
 duds 36362
 """
+import sys
 from pyfusion.data.signal_processing import smooth_n
 from time import time as seconds
+
 
 from sqlalchemy import create_engine 
 engine=create_engine('sqlite:///:memory:', echo=False)
@@ -44,8 +46,10 @@ class MyListener(PoolListener):
         dbapi_con.execute('PRAGMA cache_size=100000')
 
 basefile = '/tmp/sqltest'
-"""
+basefile = ':memory:'
+
 engine = create_engine('sqlite:///' + basefile,echo=False, listeners= [MyListener()])
+"""
 conn = engine.connect()
 import numpy as np
 
@@ -101,6 +105,16 @@ def Value(x,t):
 
 metadata = MetaData()
 
+if len(sys.argv)>1:
+    try:
+        srange = eval(sys.argv[1])
+    except:
+        raise ValueError("Input was\n{inp}\nProbably need quotes:\n  Example:\n  run pyfusion/examples/mini_summary 'range(88600,88732)'"
+                         .format(inp=sys.argv))
+else:
+    srange = range(88600,88732)
+
+
 diags = dict(im1 = [Float, '.operations.magnetsupply.lcu.setup_main.i1', Value],
              im2 = [Float, '.operations.magnetsupply.lcu.setup_main.i2', Value],
              im3 = [Float, '.operations.magnetsupply.lcu.setup_main.i3', Value],
@@ -112,6 +126,8 @@ diags = dict(im1 = [Float, '.operations.magnetsupply.lcu.setup_main.i1', Value],
              rf_freq = [Float, '.log.heating.rf_freq', Value],
              llrf_mode = [Integer, '.log.heating.snmp.t1.operational.llrf.stallrfopm', Value],
              llrf_power = [Float, '.log.heating.snmp.t1.operational.llrf.stallrfppw', Value],
+             llrf2_mode = [Integer, '.log.heating.snmp.t2.operational.llrf.stallrfopm', Value],
+             llrf2_power = [Float, '.log.heating.snmp.t2.operational.llrf.stallrfppw', Value],
              v_main =  [Float, '.operations:v_main', Peak],
              int_v_main =  [Float, '.operations:v_main', Integral],
              v_sec =  [Float, '.operations:v_sec', Peak],
@@ -147,7 +163,7 @@ for diag in diags.keys():
     errs.update({diag:[]})  # error list for each diagnostic
 
 start = seconds()
-for s in range(88600,88732): # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,88891): #81399,81402):  #(81600,84084):
+for s in srange: # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,88891): #81399,81402):  #(81600,84084):
     datdic = dict(shot=s)
     shots += 1
     try:
@@ -196,7 +212,8 @@ from sqlalchemy import select
 s = select([summ.c.shot, summ.c.im1]) 
 result = conn.execute(s)  
 row = result.fetchone()
-print('\nsample row = {r}, {b} bad/missing shots'.format(r=row, b=len(errs['shot'])))
+print('\nsample row = {r},\n  as items {it}\n  as dict {d}\n{b} bad/missing shots'
+      .format(r=row, it=row.items(), d=dict(row), b=len(errs['shot'])))
 all_bad = []
 for diag in errs.keys():
     all_bad.extend(errs[diag])
@@ -226,7 +243,7 @@ mirnov and probe 635
 select count(*) from test.summ where shot> 83808 and (i_sweep>2 or i_sat_1>0.2 or i_sat_2>0.2 or (mirnov_coh>0.02 and im2>2000));
 
 
-probe no minov 452
+probe no mirnov 452
  select count(*) from test.summ where shot> 83808 and (i_sweep>2 or i_sat_1>0.2 or i_sat_2>0.2 or (mirnov_coh>10000000000.00 and im2>2000)); 
 
 """

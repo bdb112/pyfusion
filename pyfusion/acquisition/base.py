@@ -95,10 +95,16 @@ def try_fetch_local(input_data, bare_chan):
         input_data.localname = os.path.join(each_path, '{shot}_{bc}.npz'
                                           .format(shot=shot_str, bc=bare_chan))
         # original - data_filename %filename_dict)
+        if pyfusion.VERBOSE>2: print(each_path,input_data.localname)
         files_exist = os.path.exists(input_data.localname)
         debug_(pyfusion.DEBUG, 3, key='try_local_fetch')
         if files_exist: 
-            if pyfusion.VERBOSE>0:
+            intmp = np.any([st in input_data.localname.lower() for st in 
+                            ['tmp', 'temp']])  # add anything you wish to warn about
+            if pyfusion.VERBOSE>0 or intmp:
+                if intmp: 
+                    pyfusion.logging.warning('Using {f} in temporary directory!'
+                                  .format(f=input_data.localname))
                 print('found local data in {f}'. format(f=input_data.localname))
             break
 

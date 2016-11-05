@@ -22,7 +22,9 @@ replace_kw={}
 #replace_kw=dict(t_range=[1.0,1.01])   # selectively override proc_kwargs
 select=None                            # e.g. select=[0,1]
 exception=Exception
-proc_kwargs = dict(overlap=2,dtseg=2000,initial_TeVpI0=dict(Te=30,Vp=5,I0=None),fit_params=dict(alg='amoeba',maxits=300,lpf=21,esterr=1,track_ratio=1.2),filename='/tmp/*2k2',threshold=0.001,t_comp=[.85,.88]) # debug ,t_range=[0.5,0.51])
+#  t_comp was [0.85,0.88] for a while (to work with tiny files), but it fails on 0309_22
+# shot really have this default to closer to 0 - e.g. [0,0.1]
+proc_kwargs = dict(overlap=2,dtseg=2000,initial_TeVpI0=dict(Te=30,Vp=5,I0=None),fit_params=dict(alg='amoeba',maxits=300,lpf=21,esterr=1,track_ratio=1.2),filename='/tmp/*2k2',threshold=0.001,t_comp=[.81,.84]) # debug ,t_range=[0.5,0.51])
 #select=1
 lpdiag='W7X_L5{s}_LPALLI'
 """

@@ -1,5 +1,6 @@
 """ By looking at the params, rename the .npz file to the correct name
-If done in-place, then the filenames must be sorted to avoid overwriting LP13
+If done in-place, then the filenames must be sorted in the glob argument 
+to avoid overwriting LP13.
 
 Note that the reading (and consistency check) of the pyfusion.cfg file is through 
 the pyfusion interface.
@@ -85,5 +86,10 @@ correctly_name(fn)
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0303/2016*_*LP*')):
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0302/2016*_*LP*')):
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0301/2016*_*LP*')):
-for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0223/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0223/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0210/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0217/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0204/x/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0203/2016*_*LP*')):
+for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0202/2016*_*LP*')):
     correctly_name(fn)

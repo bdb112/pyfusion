@@ -566,19 +566,22 @@ class Langmuir_data():
         #  da.da['mask']=(da['resid']/abs(da['I0']) < .7) & (da['nits']<100)
         #  da.da['mask'] = ((da['resid']/abs(da['I0']) < .7) & (da['nits'] < da['maxits'])
         # from version 0.7.0 onwards, resid is already normed to I0
+        lpf = self.fitter.actual_fparams['lpf']
+        # Note: these multilines ('down to here') can be applied to a DA by 
+        #       pasting to reset mask AFTER uncommenting the following # line
+        # lpf = da['info']['params']['actual_fit_params']['lpf']
         rthr = 0.7  # LP20160309_29_L53__amoebaNone1.2N_2k.npz is < .12  others 
                     # None 0310_9 up to 0.7-0.8
-        lpf = self.fitter.actual_fparams['lpf']
         if lpf is not None:
             rthr = rthr * np.sqrt(lpf/100.0)
-
         da.da['mask'] = ((da['resid'] < rthr) & (da['nits'] < da['maxits'])
                          & (np.abs(da['Vp']) < 200) & (np.abs(da['Te']) < 200) 
                          & (da['I0']>0.0004))
+        # additional restriction applied if the error estimate is available
         if 'eTe' in da.da:  # want error not too big and smaller than temp
             da.da['mask'] &= ((np.abs(da['eTe']) < 100)
                               & (np.abs(da['eTe']) < np.abs(da['Te'])))
-
+        #   down to here
         qe = 1.602e-19
         mp = 1.67e-27
         fact = 1/(0.6*qe)*np.sqrt(self.amu*mp/(qe))/1e18         # units of 1e18
@@ -642,8 +645,10 @@ class Langmuir_data():
                 self.i_chans.remove(ch)
 
         self.coords = [ch.coords.w7_x_koord for ch in self.imeasfull.channels]
-
+        # if you want just one voltage channel, at the moment, you still
+        # need it to be a multi-channel diag. (to simplify this code).
         self.v_chans = [ch.config_name for ch in self.vmeasfull.channels]
+
         # want to say self.vmeas[ch].signal where ch is the imeas channel name
         self.vlookup = {}
         for (c, vch) in  enumerate(self.v_chans):

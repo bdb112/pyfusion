@@ -20,7 +20,10 @@ run examples/save_to_local.py shot_number=18993 'local_dir="c:/cygwin/tmp"' diag
 # A multi-channel diag: 
 run pyfusion/examples/save_to_local.py shot_list=86507 dev_name='H1Local' diag_name='ElectronDensity15'
 
-# example with a two component shot number
+# simple example with a two component shot number
+run pyfusion/examples/save_to_local.py shot_list='[[20160225,20]]' overwrite_local=1 dev_name='W7X' diag_name='W7X_L57_LP01_08'  local_dir='/tmp' exception=Exception
+
+# realistic example with a two component shot number
 run pyfusion/examples/save_to_local.py shot_list='[[20160225,s] for s in range(1,50)]'  overwrite_local=1 dev_name='W7X' diag_name='W7X_L57_LP01_08'  local_dir='/data/datamining/local_data/' exception=Exception
 
 from the old pyfusion - may need to tidy up
@@ -41,7 +44,8 @@ import pyfusion
 from pyfusion.data.save_compress import discretise_signal as savez_new
 import pyfusion.utils
 import numpy as np
-import os
+import os, pickle
+import time as tm
 from pyfusion.debug_ import debug_
 
 from pyfusion.utils import process_cmd_line_args
@@ -54,7 +58,7 @@ dev_name='W7X'
 readback=False
 downsample=None
 time_range=None
-shot_list=[27233]  # make it a list so that process_cmd_line_args is happy
+shot_list=[[20160310,9]]  # make it a list so that process_cmd_line_args is happy
 compress_local=1
 overwrite_local=True
 save_kwargs = {} 
@@ -160,6 +164,9 @@ for shot_number in shot_list:
                               verbose=pyfusion.VERBOSE, **save_kwargs)
             goods.append((shot_number,'whole thing'))
         except exception as reason:
-            bads.append((shot_number,'whole thing'))
+            bads.append((shot_number,'whole thing',reason))
             print('skipping shot {s} because {r}'.format(r=reason, s=shot_number))
-print('See bads for {l} errors (also goods)'.format(l=len(bads)))
+pfile = tm.strftime('%Y%m%d%H%M%S_save_local_log.pickle')
+print('See bads for {l} errors, also goods, and in {pfile}'.format(l=len(bads), pfile=pfile))
+pk = open(pfile,'w')
+pickle.dump([bads,goods], pk)

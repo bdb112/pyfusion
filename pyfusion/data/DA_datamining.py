@@ -258,7 +258,8 @@ For more info type help(DA)
 
 Note: This is my prototype of google style python sphinx docstrings - based on 
     http://www.sphinx-doc.org/en/stable/ext/example_google.html
-      but I had to put newlines between args to get each arg on a separate line.
+    Had to include 'sphinx.ext.napoleon' in documentation.conf.py to get the
+    parameters on separate lines.
     """
     def __init__(self, fileordict, debug=0, verbose=0, load=0, limit=None, mainkey=None):
         # may want to make into arrays here...
@@ -320,7 +321,9 @@ Note: This is my prototype of google style python sphinx docstrings - based on
             if 'mainkey' in self.infodict.keys():
                 self.mainkey = self.infodict['mainkey']
             else:
-                if 'shot' in self.da:
+                if 'params' in self.keys():
+                    raise ValueError('This is probably a pyfusion cached data file')
+                elif 'shot' in self.da:
                     self.mainkey = 'shot'
                 else:
                     self.mainkey = self.da.keys()[0]

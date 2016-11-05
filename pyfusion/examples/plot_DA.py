@@ -15,6 +15,8 @@ else:
     filename = sys.argv[1]
     if len(sys.argv) > 2:
         key = sys.argv[2]
+    else:
+        key = 'ne18'
 
     da = DA(filename,load=1)
     da.plot(key)

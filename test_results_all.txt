@@ -1,5 +1,105 @@
 Use emacs sort-columns after defining column wuth the region to put in order
 
+Python 2.7.6 (default, Jun , Pyfusion 0.7.5b (631eb33) Sat Nov  5 14:17:21 2016
+  0  2.04 examples/plot_specgram.py     : t_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
+  1  0.51 examples/get_basic_params.py  : se ValueError('no good shots') ValueError: no good shots 
+  2  1.15 examples/tables_extract.py    : OK!
+  3  0.33 examples/slider_f_t.py        : ror: [Errno 2] No such file or directory: 'MP512all.npz' 
+  4  1.67 examples/check_HD_histogram.py: OK!
+  5  1.29 examples/extract_limiter_coords.py: OK!
+  6  0.41 examples/merge_h1_diagnostics.py:  t_mid = dd['t_mid'] NameError: name 'dd' is not defined 
+  7  0.65 examples/barber_pole.py       : OK!
+  8  0.54 examples/mode_identify_script.py:  mode = mode_list[0] IndexError: list index out of range 
+  9  0.91 examples/coherence_vs_time.py : OK!
+ 10  0.35 examples/test_lasso_fs.py     : or key in dd.keys(): NameError: name 'dd' is not defined 
+ 11  1.58 examples/medium_300.py        : OK!
+ 12  0.01 examples/mode_identify_example_from_ICPP_2010.py: ll.txt' skip=4             ^ SyntaxError: invalid syntax 
+ 13  7.36 examples/prepfs_range.py      : OK!
+ 14  4.50 examples/gen_fs_local.py      : OK!
+ 15  0.20 examples/bug_report.py        : OK!
+ 16  2.37 examples/plot_svd.py          : OK!
+ 17  0.92 examples/DP14_mode_plot.py    : OK!
+ 18  2.65 examples/run_process_LP.py    : OK!
+ 19  0.02 examples/W7X_analysis_Fri_11Mar.py: sharey=2                   ^ SyntaxError: invalid syntax 
+ 20  0.22 examples/correct_LP_data.py   : ra_data/may22/0202/20160202_10_W7X_L53_LP05_I.npz exists 
+ 21  0.06 examples/W7X_OP1.1_LCFS.py    : ,Y,Z], 2), dLC=dLC)) NameError: name 'np' is not defined 
+ 22  0.85 examples/plot_signals.py      : OK!
+ 23  0.40 examples/copy_DA.py           : ./datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' 
+ 24  6.51 examples/process_swept_Langmuir.py: OK!
+ 25  7.54 examples/h1_mode_lists.py     : OK!
+ 26  2.29 examples/cluster_info.py      : OK!
+ 27  6.88 examples/gen_fs_bands.py      : :  ########shot 27233: 230/1428 fs finished in 5.14/6.01 
+ 28  2.57 examples/phase_histogram.py   : OK!
+ 29  0.50 examples/find_last_data.py    : .format(l=low))  ValueError: low limit of None not there 
+ 30  0.43 examples/find_close_shot.py   : OK!
+ 31  0.58 examples/realtime_mode.py     : e also cm.gray_r etc NameError: name 'cm' is not defined 
+ 32  0.34 examples/process_chirps.py    :  dfdtunit=dfdtunit)  NameError: name 'dd' is not defined 
+ 33  1.61 examples/cross_phase.py       : OK!
+ 34  1.00 examples/W7X_neTe_profile.py  : e   warnings.warn("Mean of empty slice", RuntimeWarning) 
+ 35  0.42 examples/check_DA.py          : OK!
+ 36  0.07 examples/prepfs_time_mp.py    :  output_path prepfs_time_mp.py: error: too few arguments 
+ 37  2.43 examples/plot_svd_simple.py   : OK!
+ 38  0.35 examples/plot_many.py         : NOT AVAILABLE!!!!!') ValueError: SCAN NOT AVAILABLE!!!!! 
+ 39  0.21 examples/query_h1ds.py        : soup import SqlSoup ImportError: No module named sqlsoup 
+ 40  2.38 examples/plot_basic.py        : OK!
+ 41  5.62 examples/cluster_phases_three_colour.py: to [10 11 12 13 14 15] - i.e. cldata has different sel,  
+ 42  0.38 examples/new_mode_identify_script.py: ue') ValueError: Need to choose doN=True and/or doM=True 
+ 43  0.57 examples/write_LP_as_CSV.py   : OK!
+ 44  3.54 examples/clean_up_pyfusion_text.py: OK!
+ 45  0.52 examples/check_other_data.py  : OK!
+ 46  0.36 examples/plot_npz_data.py     : OK!
+ 47  4.60 examples/check_W7X_timebase_repair.py: OK!
+ 48  0.02 examples/find_VSL_locking.py  : ist=mmm                    ^ SyntaxError: invalid syntax 
+ 49  0.36 examples/plot_text_fft.py     : r: [Errno 2] No such file or directory: 'g:fft26_50.dat' 
+ 50  0.63 examples/merge_text_pyfusion.py: OK!
+ 51  2.29 examples/N2_puff_correlation.py: OK!
+ 52  0.66 examples/multi_plot.py        : rser.NoSectionError: No section: 'Diagnostic:ti_crystal' 
+ 53  2.73 examples/channel_spectra.py   : OK!
+ 54  0.22 examples/plot_json_timeseries.py: OK!
+ 55  0.02 examples/good_ones_density_cluster.py: _f32_diags.npz'            ^ SyntaxError: invalid syntax 
+ 56  0.35 examples/plot_shot.py         : OK!
+ 57  0.20 examples/check_dw_pdt.py      : OK!
+ 58  1.35 examples/wid_specgram.py      : al_data/extra_data/temp/'])<type 'exceptions.Exception'> 
+ 59  8.36 examples/cluster_DA.py        : OK!
+ 60  1.23 examples/igetfile.py          : mining/cache/wp/wp@99950.dat.bz2 or .gz, .bz2 not found. 
+ 61  0.37 examples/mode_identify_example_2012.py: orbar=colorbar NameError: name 'colorbar' is not defined 
+ 62  2.40 examples/plot_signals_trivial.py: OK!
+ 63  0.43 examples/small_65.py          : OK!
+ 64  2.74 examples/ne_profile_preprocess.py: OK!
+ 65  0.43 examples/small_300.py         : OK!
+ 66  0.53 examples/merge_basic_diagnostics.py: rror: [Errno 2] No such file or directory: 'DA_file.npz' 
+ 67  1.02 examples/W7X_analysis.py      : OK!
+ 68  3.79 examples/clean_up_pyfusion_text_mp.py: OK!
+ 69  2.54 examples/plot_svd_old.py      : OK!
+ 70  0.80 examples/file_sorter.py       : b112/PassportBDB4/20160303/20160303_2_W7X_L57_LP7_I.npz' 
+ 71  0.52 examples/merge_basic_HJ_diagnostics.py: sz = len(dd['shot']) NameError: name 'dd' is not defined 
+ 72  1.24 examples/marfe_time_plot.py   : OK!
+ 73  0.86 examples/svd_simple_rotator.py: OK!
+ 74  0.57 examples/testall.py           : OK!
+ 75  0.81 examples/save_to_local.py     : OK!
+ 76  0.99 examples/density_cluster.py   : OK!
+ 77  0.46 examples/fonts.py             : OK!
+ 78  0.01 examples/h1_mode_identify.py  : amples/cluster_info.py     ^ SyntaxError: invalid syntax 
+ 79  0.21 examples/W7X_probe_list.py    : OK!
+ 80  0.02 examples/prepfs_range_sep.py  : utput_path prepfs_range_sep.py: error: too few arguments 
+ 81  0.36 examples/plot_DA.py           : OK!
+ 82  1.65 examples/restore_sin.py       : before DC adjust') NameError: name 'plot' is not defined 
+ 83  2.90 examples/read_DF.py           : g/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags_comp5.h5...done 
+ 84  0.81 examples/compare_LPdas.py     : le>     ylim(0,60) NameError: name 'ylim' is not defined 
+ 85  0.21 examples/__init__.py          : OK!
+ 86  3.50 examples/basic_ne_scan.py     : OK!
+ 87  0.06 examples/modify_cfg.py        : OK!
+ 88  1.73 examples/channel_angle_games.py: OK!
+ 89  2.80 examples/gen_fs_general.py    : OK!
+ 90  1.23 examples/marfe_plot.py        : OK!
+ 91  0.39 examples/flip_phase.py        : OK!
+ 92  0.37 examples/plot_text_pyfusion.py: /pyfusion/examples/PF2_120227_HMPno12_27233_27233_1.dat' 
+ 93  2.09 examples/check_polarity_flips.py: OK!
+ 94  0.06 examples/file_finder_db.py    : r: glob() got an unexpected keyword argument 'recursive' 
+ 95  0.51 examples/play_with_fft_signals.py: OK!
+ 96  0.13 examples/prepfs_range_mp.py   : OK!
+62 good, 35 errors out of 97
+
 Python 2.7.6 (default, Jun , Pyfusion 0.7.3a (36cb629) Thu Sep  8 13:41:36 2016
  19  0.62 examples/barber_pole.py       : OK!
  91  3.28 examples/basic_ne_scan.py     : OK!

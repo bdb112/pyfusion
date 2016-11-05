@@ -1,4 +1,10 @@
 """ Script to animate Te and ne - first attempt - needs generalising
+See plot_both_LP2D.py for upper and lower together - 
+This version has only some of the logical improvements of the 'both' version
+
+To make larger, nicer fonts 
+    import setup_poster   
+
 """
 #_PYFUSION_TEST_@@Skip
 import os, sys
@@ -13,8 +19,8 @@ from matplotlib.ticker import MaxNLocator
 from pyfusion.acquisition.W7X.puff_db import get_puff
 
 dummy = 0  # True will generate dummy data
-NGX = 300j  # number of points in image grid
-NGY = 2*NGX
+NGX = 500j  # number of points in image grid
+NGY = NGX   # thought we needed more in x, but near horiz edges need more Y
 #rc('font', **{'size':18})
 minpts = 17
 probe_chans = [1]
@@ -22,10 +28,12 @@ loc = 'best'
 srange = range(110, 120)
 #srange = range(len(da['t_mid']))
 step = 14  # 3  # use every (step) time slice but skip unsuitable ones
+ne_scl_basic = 500  # 500 good for normal sized plots - will be normalised later
 
-# Soren says seg 7,  9 and 19 are dmamaged, and seg 3 10 and 12
+# Soren says seg 7,  9 and 19 are damaged, and seg 3 10 and 12
 suppress_ne = '3_LP10::3_LP11::7_LP09::7_LP11::7_LP12::7_LP19'.split('::')
 
+ne_kwargs = dict(cmap='jet')   # 'gray_r'
 
 dafile = '20160302_12_L57'
 Te_range = None
@@ -98,7 +106,7 @@ srange = range(60, 92)   # range over which to create frames (or to average)
 #srange = range(200, 222)   # towards end before rise (2000,2)
 #srange = range(230, 262)   # towards end during rise (2000,2)
 minpts=18
-"""
+
 
 # dafile = 'LP20160224_25_L53'
 dafile = 'LP20160224_25_L53_2k2.npz'
@@ -110,7 +118,7 @@ srange = range(145, 175)   # 20160224_25_L53  0.33
 srange = range(155, 205)   # 20160224_25_L53  0.4
 #srange = range(175, 225)   # 20160224_25_L53  0.4
 minpts=18
-
+"""
 
 dafile = 'LP20160309_41_L57_2k2.npz'
 Te_range = [10, 80]  # 
@@ -127,9 +135,17 @@ if len(sys.argv)>2:
     minpts=int(sys.argv[2])
 
 if not(os.path.exists(dafile)):
+    print('try LP/ folder')
     dafile = 'LP/' + dafile
 
-da = DA(dafile)
+try:
+    if da.name == dafile:
+        print('NOT reloading file - run without -i to force reload')
+    else:
+        raise NameError
+except NameError:
+    da = DA(dafile)
+
 areas = 'uncalibrated'
 
 if (len(da['Te'][0])<minpts):
@@ -146,10 +162,8 @@ except:
     print('******* Really Old data file??***********')
 
 sc_kwargs = dict(vmin=Te_range[0], vmax=Te_range[1]) if Te_range is not None else {}
-ne_kwargs = dict(vmin=ne_range[0], vmax=ne_range[1]) if ne_range is not None else {}
+ne_kwargs.update(dict(vmin=ne_range[0], vmax=ne_range[1]) if ne_range is not None else {})
 
-if ne_range is not None:
-    ne_scl = 500./ne_range[1]
 
 st = 0
 skipped = []
@@ -177,7 +191,7 @@ for s in srange:
             ne_cleaned[c] = np.nan
     wg = np.where(~np.isnan(ne_raw))[0]
     if len(wg) < minpts: #  Too few - get next
-        print('{n} is too few '.format(n=len(wg)))
+        print('{n} is too few (see minpts)'.format(n=len(wg)))
         continue
     if (step > 0):
         if st == 0:
@@ -198,16 +212,23 @@ for s in srange:
             ne_raw = np.sum([n/err for n,err in zip(ne_list, eTe_list)],0)/div
             Te_raw = np.sum([Te/err for Te,err in zip(Te_list, eTe_list)],0)/div
             st=0  # reset
-            ccc=13
-            print(da['info']['channels'][wg[ccc]], Te_raw[ccc])
+            ck_ch=6
+            print('Averaged over {n} frames, Te for channel {c} = {Te:.1f}'
+                  .format(n=len(eTe_list), c=da['info']['channels'][wg[ck_ch]], Te=Te_raw[ck_ch]))
     # fig = plt.figure(100, figsize=(12, 8))
     if len(figs) > 5:  # if more than 5, reuse figure 100
         num = 100
-    figs.append(plt.figure(num, figsize=(8, 6)))
+    figsize=(8, 6) if len(figs)>0 else None  # first figure is default size
+    figs.append(plt.figure(num, figsize=figsize))
+
+    ne_scl = figs[-1].get_size_inches()[0]/8.0 * ne_scl_basic
+    if ne_range is not None:
+        ne_scl = ne_scl/ne_range[1]  # normalize ne_scl
+
     print('{nf} figs, last index is {l}'
           .format(nf=len(figs), l=len(da['t_mid'])))
     wg_sup = np.where(~np.isnan(ne_cleaned))[0]
-    wg_dodgy = np.lib.arraysetops.setdiff1d(wg,wg_sup)
+    wg_dodgy = np.lib.arraysetops.setdiff1d(wg,wg_sup)  # dodgy refers to suppressed
     ne_cleaned = ne_cleaned[wg_sup]
     Te_raw = da.masked['Te'][s]
     coords = np.array(da.infodict['coords'])
@@ -227,13 +248,13 @@ for s in srange:
     # 'nearest', 'linear', 'cubic'
     negr = griddata(coords2D[wg_sup], ne_cleaned, (grid_x, grid_z), method='cubic')
     org = 'lower' if (sgn > 0) else 'upper'
-    axim = plt.imshow(negr.T, origin=org, aspect='equal',
-                      extent=(np.min(grid_x), np.max(grid_x), np.min(grid_z), np.max(grid_z)), **ne_kwargs)
+    ext = (np.min(grid_x), np.max(grid_x), np.min(grid_z), np.max(grid_z))
+    axim = plt.imshow(negr.T, origin=org, aspect='equal', extent=ext, **ne_kwargs)
     ax = axim.get_axes()
     cbarne = plt.colorbar(fraction=0.08, pad=0.01)
     # cbarne.set_label(r'$n_e/10^{18}$', rotation=270, labelpad=15, fontsize='large')
-    cbarne.ax.set_xlabel(r'$n_e/10^{18}$', fontsize='large')
-    w = wg_dodgy  # dodgy first
+    cbarne.ax.set_xlabel(r'$n_e/10^{18}$', fontsize='large') # ignored ,verticalalignment='top')
+    w = wg_dodgy  # dodgy points first
     dodgy_kwargs = sc_kwargs.copy()
     dodgy_kwargs.update(dict(linestyle=':',lw=10,edgecolor='gray'))
     sp = ax.scatter(x[w], z[w], ne_scl*ne_raw[w], Te_raw[w], **dodgy_kwargs)
@@ -289,7 +310,8 @@ for s in srange:
             axx = axtime if i == 0 else axtwin
             axx.plot(probedata.timebase + dtprobe, probedata.signal,
                      ls=['-', ':'][i], lw=[1, 2][i],
-                     label=diag + ' s' + da['info']['channels'][prch][2:])
+                     label='{diag} s{ch}'  # _ needs to have sepcial treatment if full latex
+                     .format(diag=diag, ch=da['info']['channels'][prch][2:]))
 
     axtime.plot(echdata.timebase - tech, echdata.signal/1000, label='ECH')
     gasdata = dev.acq.getdata(shot, 'W7X_GasCtlV_23')
@@ -334,4 +356,8 @@ for s in srange:
         plt.close(figs[-1])
     else:
         plt.show()
+
+numOK = [len(np.where(~np.isnan(slic))[0]) for slic in da.masked['Te']]
+firstOK = np.where(np.array(numOK)>8)[0][0]
+print('first reasonably complete time is t_mid = {t:.4f}, index {f}'.format(t=da['t_mid'][firstOK], f=firstOK))
 

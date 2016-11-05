@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""  Show info for a DA_datamining DA file, optional parameters detail and key
+           detail=1 gives more detail, and key will select one of the keys of the info dict
+            Confused if used on a non DA .npz file
+"""
 import sys, os
 this_file = os.path.realpath( __file__ )  # this ignores symlinks
 this_full_path = os.path.split(this_file)[0]
@@ -7,10 +11,19 @@ sys.path.append(os.path.split(os.path.split(this_full_path)[0])[0])
 #import pyfusion
 from pyfusion.data.DA_datamining import DA
 
+detail = 0
+key = None
+
 if len(sys.argv)>2:
    detail = int(sys.argv[2])
-else:
-   detail = 0
+
+if len(sys.argv)>3:
+   key = sys.argv[3]
 
 da = DA(sys.argv[1])
 da.info(detail)
+if key is None:
+   print(da['info'])
+else:
+   print(da['info'][key])
+

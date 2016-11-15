@@ -3,7 +3,7 @@ import numpy as np
 
 def next_shot(shot):
     if isinstance(shot,(tuple, list, np.ndarray)):
-        return([shot[0], shot[1] + 1])
+        return((shot[0], shot[1] + 1))
     else:
         return(shot + 1)
 
@@ -28,5 +28,5 @@ def shot_range(shot_from, shot_to):
         shot = next_shot(shot)
         # this part is a fudge, but only needed for two component shots
         if shot[1]>150:   # assume max per day
-            shot[0] += 1
-            shot[1] = 1
+            shot = (shot[0]+1, 1)
+

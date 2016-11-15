@@ -136,7 +136,10 @@ def plot_signals(input_data, filename=None,downsamplefactor=1,n_columns=1, hspac
             if pyfusion.VERBOSE>3: print(subplot_num+1,chan_num)
             if axcount == 0:
                 # note - sharex=None is required fo that overlays can be done
-                axlead = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = None)
+                if n_rows * n_columns == 1:
+                    axlead = pl.gca()  # this allows plotting on existing axis for a single plot
+                else:
+                    axlead = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = None)
                 axn = axlead
                 axlead_x = axlead if sharex else None
             else:

@@ -34,19 +34,19 @@ except:
 # this connection with pyfusion.settings ONLY captures the value at startup - 
 # i.e. doesn't respond to changes from within python
 try:
-    from pyfusion.pyfusion_settings import VERBOSE as verbose
+    from pyfusion import VERBOSE as verbose
 except: 
     verbose=1
     print("assuming verbose output")
 
-    from numpy import savez_compressed
+from numpy import savez_compressed
 
 def discretise_array(arrin, eps=0, bits=0, maxcount=0, verbose=None, delta_encode=False):
     """
     Return an integer array and scales etc in a dictionary 
     - the dictionary form allows for added functionaility.
     If bits=0, find the natural accuracy.  eps defaults to 3e-6, and 
-    is the error relative to the larest element, as is maxerror.
+    is the error relative to the largest element, as is maxerror.
     """
     verbose = pyfusion.VERBOSE if verbose is None else verbose
     if eps==0: eps=3e-6

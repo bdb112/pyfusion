@@ -1,5 +1,8 @@
 """ see plot_signal_trivial for bare bones 
 plots a single or multi-channel signal
+  hold=0 use a new figure
+       1 Reuse figure
+       2 make a second y axis on the same figure
 This example shows bad motorboating
 run pyfusion/examples/plot_signals dev_name='H1Local' diag_name='H1Poloidal1' shot_number=76887
 # multichannel example
@@ -25,6 +28,7 @@ fun=myiden
 fun2=myiden2
 plotkws={}
 hold=0
+labeleg='False'
 """
 exec(_var_defaults)
 
@@ -35,9 +39,16 @@ dev = pyfusion.getDevice(dev_name)
 data = dev.acq.getdata(shot_number,diag_name)
 
 if hold==0: plt.figure()
+elif hold==2:
+    first_ax = plt.gca()
+    ax=first_ax.twinx()
+    plt.sca(ax)
+    labeleg='True'
 
 # maybe should be in data/plots.py, but config_name not fully implemented
 data.plot_signals(suptitle='shot {shot}: '+diag_name, sharey=sharey,
-                  fun=fun, fun2=fun2, **plotkws)
+                  fun=fun, fun2=fun2, labeleg=labeleg, **plotkws)
 
 # for shot in range(76620,76870,10): dev.acq.getdata(shot,diag_name).plot_signals()
+if labeleg:
+    plt.legend()

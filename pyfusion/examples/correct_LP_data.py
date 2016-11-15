@@ -67,14 +67,14 @@ def correctly_name(fn=None):
     else:
         pyfusion.logging.debug(str('renaming {fn} to {newfn}'.format(fn=fn, newfn=newfn)))
         os.rename(fn, newfn)
-
+    return([fn, newfn])
                 
 
 """
 fn = '/data/datamining/local_data/extra_data/20160310_9_W7X_L53_LP12_I.npz'
 correctly_name(fn)
 """
-
+goods = []
 # the sort is essential so that 13 is renamed before 15
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/temp/20160310_39_*')):
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may2016/0224/20160224_*LP*')):
@@ -91,5 +91,14 @@ correctly_name(fn)
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0217/2016*_*LP*')):
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0204/x/2016*_*LP*')):
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0203/2016*_*LP*')):
-for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0202/2016*_*LP*')):
-    correctly_name(fn)
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0202/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0209/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0128/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0127/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0126/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0122/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0121/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0120/2016*_*LP*')):
+for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0119/2016*_*LP*')):
+    goods.append(correctly_name(fn))
+print('renamed {l} files - see goods'.format(l=len(goods)))

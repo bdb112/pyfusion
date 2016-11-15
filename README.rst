@@ -5,12 +5,32 @@ pyfusion - python code for data mining plasma fluctuations
 Most recent update: 
 
 ***  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.***
-
+ * partial fix - don't allow local_saves from local cache (only works
+   on machines with acccess to the archivedB
  maybe use functools.wraps so that the __doc__ of plot_signals can be seen
 
-Version 0.7.5 beta
+Version 0.7.6 alpha
 
-* integrate doc and updatest README.rst, eliminate README.md
+ * change W7X shot to a tuple (reason for calling an alpha)
+ * debug some error messages in W7X
+ * fix images in README.rst
+ * make the feedback about which shotDA file is used only print for VERBOSE>0
+ * fix units and magnitude error in puff_db
+ * integrate filter function had a confused baseline removal - now fixed and allows for constant and slope removal
+ * added hold=2 option to plot_signals.py to put such data on a second y axis 
+   (also in data/plots allow plotting a single channel on an existing axis for overplotting etc)
+ * converted mini_summary to use pure pyfusion
+ * improvements to plot_both_LP2D, debug weighted averaging
+ * get_shot_list - info messages suppressed unless VREBOSE>0
+ * acq/data/base - keep track of data source (source via acq.source) in params 
+ * several Langmuir file - change Vp to Vf
+ * N2_puff_correlation - move ECH to a twin axis, imporve limit
+   setting
+ * extract_limiter_coords - extract limiter profile in midplane, include node index list
+
+Version 0.7.5 beta 
+
+* integrate doc and update README.rst, eliminate README.md
 * get_shot_list - nicer output format
 * data/base.py warn if cached data is in a temp dir
 * DA_info optional 3rd positional argument - key to examine
@@ -20,6 +40,8 @@ Version 0.7.5 beta
   improvements back ported to plot_LP2D.py
 * run_process_LP - changed tcomp to slightly smaller to allow for
   early breakdown
+* partial fix of save_to_local - don't allow local_saves from local cache (only works
+  on machines with acccess to the archivedB
 * save_to_local saves log in a pickle
 
 See below for previous updates
@@ -126,15 +148,17 @@ If you don't have write permission, many of the examples will not complete.  <co
 Example output
 --------------
 
+| Example clustering showing Alfvenic scaling in the H-1 heliac.
+|
 
-.. raw:: html
-    
-   <a href="" target="_blank"><img src="pyfusion/6_good_clusters_CPC.png"/></a>
-   <p> Example clustering showing Alfvenic scaling in the H-1 heliac.<p>
+.. image:: pyfusion/6_good_clusters_CPC.png
 
-   <a href="" target="_blank"><img src="pyfusion/65139_N_mode_id_new.png"/></a>
-   <p> Example of mode identification in the LHD Heliotron at the National Institute of Fusion Science, Toki.<p>
- 
+| Example of mode identification in the LHD Heliotron at the National Institute of Fusion Science, Toki.
+| 
+
+.. image:: pyfusion/65139_N_mode_id_new.png
+
+
 **Relevant publications include:**:
 
 1. D. G. Pretty and B. D. Blackwell.   Comp. Phys. Comm., 2009. http://dx.doi.org/10.1016/j.cpc.2009.05.003 and thesis 

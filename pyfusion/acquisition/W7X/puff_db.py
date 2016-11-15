@@ -11,14 +11,16 @@ delta = 1e-6
 
 def puffadd(self, key, **kwargs):
     self.update({key: dict(**kwargs)})
+# Data from Oliver Schmit's commented shot list, for N2, Ar, igore the estimated density - they
+# seemed to be leaving it alone at 2e19
 
-puffadd(puff_db, (20160309, 42), times=[100, 150, 160, 190, 210, 230, 260, 280, 320, 340], nd=320, gas='N2')
+puffadd(puff_db, (20160309, 42), times=[100, 150, 160, 190, 210, 230, 260, 280, 320, 340], nd=300, gas='N2')
 puffadd(puff_db, (20160309, 43), times=[100,300], nd=200, gas='N2')
 puffadd(puff_db, (20160309, 44), times=[100,500], nd=300, gas='N2')
 puffadd(puff_db, (20160309, 50), times=[100, 300], nd=100, gas='N2')
 # HM51 100 
 puffadd(puff_db, (20160309, 51), times=[100, 300], nd=100, gas='N2')
-# actually two gase boxes at 100 each
+# actually two gas boxes at 100 each
 puffadd(puff_db, (20160309, 52), times=[100, 300], nd=200, gas='N2')
 
 puffadd(puff_db, (20160310, 40), times=[100, 175, 250, 325, 400, 475, 550, 625, 700, 775 ], nd=145, gas='Ar')
@@ -30,8 +32,8 @@ def get_puff(shot, t_range=None, numpoints=500, debug=0):
         return(None)
     dct = puff_db[shot]
     times = (np.array(dct['times'])/1000.0).tolist()  # to seconds
-    nd18 = np.array(dct['nd'])/1e18
-    divis = '/10^18'
+    nd18 = np.array(dct['nd'])/100.
+    divis = '/100mBar'
     if len(np.shape(nd18)) == 0:
         nd18 = nd18 * np.ones(len(times))
     if t_range is None:

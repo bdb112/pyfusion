@@ -139,6 +139,10 @@ def try_fetch_local(input_data, bare_chan):
     else:
         # yes, it seems like duplication, but no
         output_data.utc = None
+        output_data.params = dict(comment = 'old npz file has no params')
+
+    oldsrc =  ', originally from ' + output_data.params['source'] if 'source' in output_data.params else ''
+    output_data.params.update(dict(source='from npz cache' + oldsrc))
     return(output_data)
 
 
@@ -299,6 +303,21 @@ class BaseDataFetcher(object):
                              .format(chan=chan))
         #bare_chan = (chan.split('-'))[-1]
         # use its gain, or if it doesn't have one, its acq gain.
+        if hasattr(self,'valid_from_date'):
+            valid_from_date = self.valid_from_date
+        elif hasattr(self.acq, 'valid_from_date'):
+            valid_from_date = self.acq.valid_from_date
+        else:
+            valid_from_date = None
+        # another example of inheritance - need to formalise this, extract the code to a function?
+        if  valid_from_date is not None:
+            valid_dict = eval('dict({ps})'.format(ps=valid_from_date))
+            for k in valid_dict:
+                if k in self.config_name:
+                    if self.shot[0] < int(valid_dict[k]):
+                        raise LookupError('The chain of pyfusion.cfg files is not valid for {diag} of date {dat}'
+                                          .format(dat=self.shot[0],diag=self.config_name))
+            
         if pyfusion.RAW == 0:
             gain_units = "1 arb"  # default to gain 1, no units
             if hasattr(self,'gain'):
@@ -321,6 +340,10 @@ class BaseDataFetcher(object):
                 raise LookupError("{inf}\n{details}".format(inf=self.error_info(step='setup'),details=details))
             try:
                 data = self.do_fetch()
+                if not hasattr(data, 'params'):
+                    data.params = dict(comment='should really inherit all params from acq.fetch')
+                data.params.update(dict(source=self.acq.acq_class))
+
             except exception as details:   # put None here to show exceptions.
                                            # then replace with Exception once
                                            # "error_info" is working well

@@ -39,7 +39,7 @@ dt = (probedata.utc[0] - t0_utc)/1e9
 # Corrected using Maciej's email
 time_g = np.array([0, 0.099, 0.1, 0.149, 0.150, 0.160, 0.161, 0.191, 0.191, 0.210, 0.211, 0.230, 0.231, 0.260, 0.261, 0.280, 0.281, 0.320, 0.321, 0.340, 0.341, 0.8])
 gas_g = np.array([3.1, 3.1, 3.7, 3.7, 3.1, 3.1, 3.7, 3.7, 3.1, 3.1, 3.7, 3.7, 3.1, 3.1, 3.7, 3.7, 3.1, 3.1, 3.7, 3.7, 3.1, 3.1])
-# LP5342.process_swept_Langmuir(t_range=[0.9,1.4],dtseg=.002,initial_TeVpI0=dict(Te=20,Vp=0,I0=None),filename='20160309_42_L532_short')
+# LP5342.process_swept_Langmuir(t_range=[0.9,1.4],dtseg=.002,initial_TeVfI0=dict(Te=20,Vf=0,I0=None),filename='20160309_42_L532_short')
 #da532=DA('20160309_42_L532_short.npz')
 da532=DA('LP/LP20160309_42_L53_2k2.npz')
 #da532=DA('LP/LP20160309_52_L53_2k2.npz')
@@ -154,11 +154,17 @@ ch1=0
 plt.plot(da572['t_mid']+dt, da572['ne18'][:,ch1],hold=0,label='ne18 s'+ da572['info']['channels'][ch1][2:])
 ch2=1
 plt.plot(da532['t_mid']+dt, da532['ne18'][:,ch2],label='ne18 s'+ da532['info']['channels'][ch2][2:])
-plt.plot(np.array(time_g), 0.8+(np.array(gas_g)-3),label='N2 valve')
-plt.plot(echdata.timebase - tech, echdata.signal/1000,label='ECH (MW)',color='magenta', lw=0.3)
-plt.legend()
+plt.plot(np.array(time_g), 1.6+(np.array(gas_g)-3),label='N2 valve')
+neaxis = plt.gca()
+ECHaxis = neaxis.twinx()
+ECHaxis.plot(echdata.timebase - tech, echdata.signal/1000,label='ECH (MW)',color='magenta', lw=0.3)
+ECHaxis.set_ylim(0,20)
+for axx, loc in zip([ECHaxis, neaxis], ['upper right', 'upper left']):
+    leg=axx.legend(loc=loc)
+    leg.draggable()
 plt.title(da572.name)
-plt.xlim(0,0.4)
+neaxis.set_xlim(-.01,0.4)
+neaxis.set_ylim(0,neaxis.get_ylim()[1]) 
 plt.xlabel('time after ECH start')
 plt.show(0)
 
@@ -170,8 +176,8 @@ ch3=2
 plt.plot(dt+da53['t_mid'],da53.masked['Te'][:,ch3], label='Te s'+da53['info']['channels'][ch3][2:])
 ch4=1
 plt.plot(dt+da53['t_mid'],da53.masked['Te'][:,ch4], label='Te s'+da53['info']['channels'][ch4][2:])
-plt.plot(np.array(time_g), 10*(np.array(gas_g)-3),label='gas valve')
-plt.legend()
+plt.plot(np.array(time_g), 10*(np.array(gas_g)-3),label='N2 valve')
+plt.legend(loc='upper left')
 plt.title(da53.name)
 plt.xlim(0,0.4)
 plt.xlabel('time after ECH start')

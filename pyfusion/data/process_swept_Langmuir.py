@@ -13,7 +13,7 @@ This version assumes that all required sweep data are in a multi-channel diagnos
     # then to tune mask:
     from pyfusion.data.DA_datamining import Masked_DA, DA
     myDA=DA('20160310_9_L57',load=1)  # just to be sure it is a good DA
-    myDA.masked=Masked_DA(['Te','I0','Vp'], baseDA=myDA)
+    myDA.masked=Masked_DA(['Te','I0','Vf'], baseDA=myDA)
     myDA.da['mask']=(myDA['resid']/abs(myDA['I0'])<.35) & (myDA['nits']<100)
     clf();plot(myDA.masked['Te']);ylim(0,100)
 
@@ -70,13 +70,13 @@ def fixup(da=None, locs=None, newmask=None, suppress_ne=None, newpath='/tmp'):
 """
 # In order to make leastsq work we THOUGHT we needed these OUT of a class
 # No so! see below
-def LPchar(v, Te, Vp, I0):
+def LPchar(v, Te, Vf, I0):
     # hard to add a series resistance here as fun returns I as a fn of V
-    return(I0 * (1 - exp((v-Vp)/Te)))
+    return(I0 * (1 - exp((v-Vf)/Te)))
 
 def residuals(params, y, x):
-    Te, Vp, I0 = params
-    err = LPchar(x, Te, Vp, I0) - y
+    Te, Vf, I0 = params
+    err = LPchar(x, Te, Vf, I0) - y
     # return np.sqrt(np.abs(err))
     return err
 """
@@ -100,18 +100,18 @@ class LPfitter():
             and self.fit_params['Lnorm']<1.2):
             pyfusion.logging.warn('leastsq behaves strangely near Lnorm=1')
 
-    def LPchar(self, v, Te, Vp, I0):
+    def LPchar(self, v, Te, Vf, I0):
         # hard to add a series resistance here as fun returns I as a fn of V
-        return(I0 * (1 - exp((v-Vp)/Te)))
+        return(I0 * (1 - exp((v-Vf)/Te)))
 
-    def plotchar(self, v, Te, Vp, I0, alpha=1, col='g', linewidth=2):
+    def plotchar(self, v, Te, Vf, I0, alpha=1, col='g', linewidth=2):
         varr = np.linspace(np.min(v), np.max(v))
-        plt.plot(varr, self.LPchar(varr, Te, Vp, I0), 'k', linewidth=linewidth+1)
-        plt.plot(varr, self.LPchar(varr, Te, Vp, I0), col, linewidth=linewidth)
+        plt.plot(varr, self.LPchar(varr, Te, Vf, I0), 'k', linewidth=linewidth+1)
+        plt.plot(varr, self.LPchar(varr, Te, Vf, I0), col, linewidth=linewidth)
 
     def error_fun(self, vars, data):
         """ return RMS error """
-        Te, Vp, I0 = vars
+        Te, Vf, I0 = vars
         v = data['v']
         i = data['i']
         Lnorm = self.actual_fparams['Lnorm']
@@ -120,27 +120,27 @@ class LPfitter():
             # note - alpha chosen according to number of lines (maxits)
             #  We use the maxits value here via actual_fparams
             # we would prefer to use the actual number used
-            plt.plot(varr, self.LPchar(varr, Te, Vp, I0), 'g', linewidth=2,
+            plt.plot(varr, self.LPchar(varr, Te, Vf, I0), 'g', linewidth=2,
                      alpha=min(1, 1./np.sqrt(self.actual_fparams['maxits'])))
-        #  err = np.sqrt(np.mean((i - LPchar(v, Te, Vp, I0))**2))
-        err = np.power(np.mean(np.abs(i - self.LPchar(v, Te, Vp, I0))**Lnorm), 1./Lnorm)
+        #  err = np.sqrt(np.mean((i - LPchar(v, Te, Vf, I0))**2))
+        err = np.power(np.mean(np.abs(i - self.LPchar(v, Te, Vf, I0))**Lnorm), 1./Lnorm)
         if self.debug > 4:
             print('error fun:'+', '.join(['{k} = {v:.3g}'.format(k=var, v=val)
-                             for (var, val) in dict(Te=Te, Vp=Vp, I0=I0, resid=err).iteritems()]))
+                             for (var, val) in dict(Te=Te, Vf=Vf, I0=I0, resid=err).iteritems()]))
         self.trace.append([np.copy(vars), err])
         return(-err)  # amoeba is a maximiser, hence - sign
 
 
     def residuals(self, params, x, y):
-        Te, Vp, I0 = params
-        err = self.LPchar(x, Te, Vp, I0) - y
+        Te, Vf, I0 = params
+        err = self.LPchar(x, Te, Vf, I0) - y
         Lnorm = self.fit_params['Lnorm']
         self.trace.append([params.copy(), np.power(np.mean(np.abs(err)**Lnorm), 1./Lnorm)])
         if  Lnorm != 2:  # leastsq routine will square the residual
             err = np.power(np.abs(err), Lnorm/2.)
         return err
         
-    def fit(self, init=None, plot=None, fit_params=None, default_init=dict(Te=50, Vp=15, I0=None)):
+    def fit(self, init=None, plot=None, fit_params=None, default_init=dict(Te=50, Vf=15, I0=None)):
         """ Perform a curve fit operation with the given parameter and initial
         value.  'None' invokes the fit_params determined at creation
         of the class, and for 'init', the default_init
@@ -175,12 +175,12 @@ class LPfitter():
         Lnorm = self.actual_fparams['Lnorm']
 
         Te = init['Te']
-        Vp = init['Vp']
+        Vf = init['Vf']
         I0 = init['I0']
         if I0 is None:
             I0 = 1.7 * np.average(np.clip(self.i, 0, 1000))
 
-        var = [Te, Vp, I0]
+        var = [Te, Vf, I0]
         scale = np.array([Te, Te/3, I0])
         if alg == 'leastsq':
             pfit, pcov, infodict, msg, ier = \
@@ -206,7 +206,7 @@ class LPfitter():
             s_sq = None  # don't know how to get cov for amoeba
             pcov = None
 
-        Te, Vp, I0 = fit_results[0]
+        Te, Vf, I0 = fit_results[0]
         fit_results[1] /= I0  # normalise to IO 
         residual, mits = fit_results[1:3]
         fit_results.append(maxits)
@@ -217,10 +217,10 @@ class LPfitter():
             plt.scatter(self.v, self.i, c='r', s=80,
                         alpha=min(1, 4/np.sqrt(len(self.v))))
 
-            self.plotchar(self.v, Te, Vp, I0, linewidth=4)
+            self.plotchar(self.v, Te, Vf, I0, linewidth=4)
             # provide brief info about algorithm and Lnorm in the title
-            plt.title('Te = {Te:.1f}eV, Vp = {Vp:.1f}, Isat = {I0:.3g}, <res> = {r:.2e} {mits} {A}{p}:its '
-                      .format(Te=Te, Vp=Vp, I0=I0, r=residual, mits=mits, A=alg.upper()[0],p=Lnorm))
+            plt.title('Te = {Te:.1f}eV, Vf = {Vf:.1f}, Isat = {I0:.3g}, <res> = {r:.2e} {mits} {A}{p}:its '
+                      .format(Te=Te, Vf=Vf, I0=I0, r=residual, mits=mits, A=alg.upper()[0],p=Lnorm))
             plt.show(block=0)
 
         return(fit_results)
@@ -245,14 +245,14 @@ def tog(colls=None, hide_all=0):
 
 def tryone(var, data, mrk='r', w=4):
     """ evaluate fit and show curve - meant for manual use
-    tryone([Te,Vp,I0],dict(v=sweepV,i=iprobe))
+    tryone([Te,Vf,I0],dict(v=sweepV,i=iprobe))
     """
     # tryone([25,-15, .02],dict(i=iprobe, v=sweepV))
     print(-error_fun(var, data))
-    Te, Vp, I0 = var
+    Te, Vf, I0 = var
     v = data['v']
     i = data['i']
-    plotchar(v, Te, Vp, I0, linewidth=w)
+    plotchar(v, Te, Vf, I0, linewidth=w)
 
 
 def find_clipped(sigs, clipfact):
@@ -298,7 +298,7 @@ class Langmuir_data():
     them through process_swept_Langmuir
 
     obvious candidates for object: debug, plot, select
-    obvious candidates for args: Lnorm, initial_TeVpI0, clipfact, rest_swp
+    obvious candidates for args: Lnorm, initial_TeVfI0, clipfact, rest_swp
 
     If params contains a filename entry, save the result as that name
 
@@ -411,7 +411,7 @@ class Langmuir_data():
                 self.vcorrfull.signal[c] = restore_sin(self.vmeasfull, chan=c, sweep_freq=sweep_freq,
                                                        Vpp=Vpp, clip_level_minus=clip_level_minus, verbose=self.verbose)
 
-    def fit_swept_Langmuir_seg_multi(self, m_seg, i_seg, v_seg, clipfact=5,  initial_TeVpI0=None, fit_params=None, plot=None):
+    def fit_swept_Langmuir_seg_multi(self, m_seg, i_seg, v_seg, clipfact=5,  initial_TeVfI0=None, fit_params=None, plot=None):
         if self.select is None:
             self.select = range(len(self.i_chans))
         res = []
@@ -421,7 +421,7 @@ class Langmuir_data():
             v = v_seg.signal[self.vlookup[self.vassoc[c]]]
             i = i_seg.signal[c]
             im = m_seg.signal[c]
-            result = self.fit_swept_Langmuir_seg_chan(im, i, v, i_seg, channame=chan.config_name, clipfact=clipfact,  initial_TeVpI0=initial_TeVpI0, fit_params=fit_params, plot=plot)
+            result = self.fit_swept_Langmuir_seg_chan(im, i, v, i_seg, channame=chan.config_name, clipfact=clipfact,  initial_TeVfI0=initial_TeVfI0, fit_params=fit_params, plot=plot)
             if fit_params.get('esterr', False):             
                 [Te, ne, I0], resid, nits, maxits, Ie_Ii, errest = result
                 eTe, ene, eI0 = errest
@@ -435,7 +435,7 @@ class Langmuir_data():
             res.append(res_list)
         return(res)
     
-    def fit_swept_Langmuir_seg_chan(self, m_sig, i_sig, v_sig, i_segds, channame, fit_params=None, clipfact=5,  initial_TeVpI0=None, plot=None):
+    def fit_swept_Langmuir_seg_chan(self, m_sig, i_sig, v_sig, i_segds, channame, fit_params=None, clipfact=5,  initial_TeVfI0=None, plot=None):
         """Lowish level routine - takes care of i clipping and but not
         leakage or restoring sweep.
 
@@ -468,7 +468,7 @@ class Langmuir_data():
                 print('{t:.3f}s suppress clipped {b}/{a}'
                       .format(b=len(np.where(~good)[0]), a=len(good), t=np.average(segtb)))
 
-        # [[Te, Vp, I0], res, its]
+        # [[Te, Vf, I0], res, its]
         if plot is None:
             # plot in detail only if there are 20 figures or less
             plot = self.plot + 2*((len(list(self.segs))*len(self.imeasfull.channels)) < 8)
@@ -504,13 +504,13 @@ class Langmuir_data():
             plt.sca(axs[0, 0])  # ready for VI curve
 
         self.fitter = LPfitter(i=i[wg], v=v[wg], fit_params=fit_params, plot=plot, parent = self)
-        result = self.fitter.fit(init=initial_TeVpI0, fit_params=fit_params, plot=plot)
+        result = self.fitter.fit(init=initial_TeVfI0, fit_params=fit_params, plot=plot)
         # get a 'fitted' value of most negative current to give us Ie_max
         # Use the fitted curve evaluated at the max voltage (measured V is smooth)
         maxv = np.max(v)
         debug_(self.debug, 2, key='after_fit')
-        Te, Vp, I0 = result[0]
-        Imaxsmoothed = self.fitter.LPchar(maxv, Te, Vp, I0)
+        Te, Vf, I0 = result[0]
+        Imaxsmoothed = self.fitter.LPchar(maxv, Te, Vf, I0)
         Ie_Ii = (I0-Imaxsmoothed)/I0
         result.append(Ie_Ii)
         #  print(Te, result)
@@ -537,12 +537,12 @@ class Langmuir_data():
             dd[key] = np.zeros([nt,nc], dtype=np.uint16)
 
         # make all the f32 arrays - note - ne is just I0 for now - fixed below
-        lookup = [(0, 't_mid'), (1, 'Te'), (2, 'Vp'), (3, 'I0'), 
+        lookup = [(0, 't_mid'), (1, 'Te'), (2, 'Vf'), (3, 'I0'), 
                   (4, 'resid'), (5, 'nits'), (6, 'maxits'), (7, 'Ie_Ii'),
                   (3, 'ne18')]
 
         if self.fitter.fit_params.get('esterr',False):
-            lookup.extend([(8, 'eTe'), (9, 'eVp'), (10, 'eI0') ])
+            lookup.extend([(8, 'eTe'), (9, 'eVf'), (10, 'eI0') ])
 
         for (ind, key) in lookup:
             if key not in dd:
@@ -553,6 +553,7 @@ class Langmuir_data():
         dd['t_mid'] = dd['t_mid'][:, 0]
         dd['info'] = dict(params=self.actual_params,
                           coords=[self.coords[ic] for ic in self.select],
+                          #area=[self.area[ic] for ic in self.select], # needs to be in npz file etc first
                           shotdata=dict(shot=[self.shot], utc_ns=[self.imeas.utc[0]]),
                           channels=[chn.replace(self.dev.name+'_', '')
                                     .replace('_I', '')
@@ -562,7 +563,7 @@ class Langmuir_data():
                           username = os.getlogin())
         
         da = DA(dd)
-        da.masked = Masked_DA(['Te', 'I0', 'Vp', 'ne18', 'Ie_Ii'], baseDA=da)
+        da.masked = Masked_DA(['Te', 'I0', 'Vf', 'ne18', 'Ie_Ii'], baseDA=da)
         #  da.da['mask']=(da['resid']/abs(da['I0']) < .7) & (da['nits']<100)
         #  da.da['mask'] = ((da['resid']/abs(da['I0']) < .7) & (da['nits'] < da['maxits'])
         # from version 0.7.0 onwards, resid is already normed to I0
@@ -575,7 +576,7 @@ class Langmuir_data():
         if lpf is not None:
             rthr = rthr * np.sqrt(lpf/100.0)
         da.da['mask'] = ((da['resid'] < rthr) & (da['nits'] < da['maxits'])
-                         & (np.abs(da['Vp']) < 200) & (np.abs(da['Te']) < 200) 
+                         & (np.abs(da['Vf']) < 200) & (np.abs(da['Te']) < 200) 
                          & (da['I0']>0.0004))
         # additional restriction applied if the error estimate is available
         if 'eTe' in da.da:  # want error not too big and smaller than temp
@@ -597,7 +598,7 @@ class Langmuir_data():
             da.da['ne18'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
-    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr=1), initial_TeVpI0=dict(Te=50, Vp=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, suffix=''):
+    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr=1), initial_TeVfI0=dict(Te=50, Vf=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, clip_iprobe = None, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, suffix=''):
         """ 
         ==> results[time,probe,quantity]
         plot = 1   : V-I and data if there are not too many.
@@ -607,6 +608,9 @@ class Langmuir_data():
 
         can send parameters through the init or process - either way
          they all are recorded in actual_params
+
+        clip_iprobe = [-0.015, .02]  # used to check if a resistive term is affecting Te
+
 
         Start by processing in the ideal order: - logical, but processes more data than necessary
         fix up the voltage sweep
@@ -623,13 +627,15 @@ class Langmuir_data():
 
         self.figs = []  # reset the count of figures used to stop too many plots
         self.actual_params = locals().copy()
+        # try to catch mispelling, variables in the wrong place
         for k in fit_params:
             if k not in 'Lnorm,cov,esterr,alg,xtol,ftol,lpf,maxits,track_ratio'.split(','):
                 raise ValueError('Unknown fit_params key ' + k)
         self.actual_params.pop('self')
         self.actual_params.update(dict(i_diag=self.i_diag, v_diag=self.v_diag))
+        # and do it for actuals too
         for k in self.actual_params:
-            if k not in 'amu,clipfact,dtseg,filename,initial_TeVpI0,leakage,overlap,plot,rest_swp,suffix,t_comp,t_range,threshold,threshchan,fit_params,v_diag,i_diag,return_data'.split(','):
+            if k not in 'amu,clipfact,clip_iprobe,dtseg,filename,initial_TeVfI0,leakage,overlap,plot,rest_swp,suffix,t_comp,t_range,threshold,threshchan,fit_params,v_diag,i_diag,return_data'.split(','):
                 raise ValueError('Unknown actual_params key ' + k)
 
         self.actual_params.update(dict(i_diag_utc=self.imeasfull.utc, pyfusion_version=pyfusion.VERSION))
@@ -702,8 +708,16 @@ class Langmuir_data():
             # print('len vseg', len(vseg.signal[0]))
             if len(vseg.signal[0]) < dtseg//5:  # skip short segments
                 continue
-            print(np.mean(mseg.timebase),4,end='s: ')
-            self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, initial_TeVpI0=initial_TeVpI0, fit_params=fit_params, plot=plot))
+            print(np.round(np.mean(mseg.timebase),4), end='s: ')  # midpoint    
+            if clip_iprobe is not None:
+                print('fudge hard clipping')
+                # have to clip the raw signal, because that is where the decision is made
+                # but we have to do it AFTER isage is extracted, becuause the leakage
+                # will make the clipping uneven (a sinusoidal top) - so clip isge too
+                iseg.signal = np.clip(iseg.signal, *clip_iprobe)
+                mseg.signal = iseg.signal.copy()
+
+            self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, initial_TeVfI0=initial_TeVfI0, fit_params=fit_params, plot=plot))
         # note: fitter.actual_fparams only records the most recent!
         self.actual_params.pop('fit_params') # only want the ACTUAL ones.
         self.actual_params['actual_fit_params'] = self.fitter.actual_fparams
@@ -736,7 +750,7 @@ if __name__ == '__main__':
 
 """
 Testing synchronisation using dead reckoning.
-LP952.process_swept_Langmuir(overlap=1,dtseg=5e5/500.402/2,initial_TeVpI0=dict(Te=30,Vp=5,I0=None),fit_params=dict(alg='amoeba',maxits=300,lpf=21,esterr=1,track_ratio=1.2),filename='*2k2',threshold=0.001,threshchan=0)
+LP952.process_swept_Langmuir(overlap=1,dtseg=5e5/500.402/2,initial_TeVfI0=dict(Te=30,Vf=5,I0=None),fit_params=dict(alg='amoeba',maxits=300,lpf=21,esterr=1,track_ratio=1.2),filename='*2k2',threshold=0.001,threshchan=0)
 # these overlap well about 20 samples difference beginning to end - could be the drift
 plot(LP952.segs[-11][2].signal[1])
 plot(LP952.segs[1][2].signal[1])

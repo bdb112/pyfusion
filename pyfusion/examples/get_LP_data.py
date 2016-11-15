@@ -5,11 +5,11 @@ plotting, processing
 Testing:
 # with the current figure containing a Langmuir characteristic and time plot,
 
-run pyfusion/examples/get_LP_data.py "init=dict(Te=4,Vp=15,I0=None)" test=1
+run pyfusion/examples/get_LP_data.py "init=dict(Te=4,Vf=15,I0=None)" test=1
 
 # Getting data from a plot produced by process_swept_Langmuir(plot=3_
 run pyfusion/examples/get_LP_data.py
-run pyfusion/examples/get_LP_data.py "init=dict(Te=4,Vp=15,I0=None)"
+run pyfusion/examples/get_LP_data.py "init=dict(Te=4,Vf=15,I0=None)"
 
 lpf    7      9     15     21    51   101     201
 <res> 5e-4   3e-4  1e-4  6e-5   1e-5  3e-6    6e-7  
@@ -24,9 +24,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pyfusion.data.process_swept_Langmuir import LPfitter
 
-def LPchar( v, Te, Vp, I0):
+def LPchar( v, Te, Vf, I0):
     # hard to add a series resistance here as fun returns I as a fn of V
-    return(I0 * (1 - np.exp((v-Vp)/Te)))
+    return(I0 * (1 - np.exp((v-Vf)/Te)))
 _var_defaults = """
 lpf = 9  # approx harmonic at 3dB pt
 test = 0
@@ -116,7 +116,7 @@ class dummy:
     debug=debug
 
 fitter = LPfitter(i_filt, v, parent=dummy, fit_params=fit_params)
-[[Te, Vp, I0], resid, its, maxits] = fitter.fit(plot=2, init=init)
+[[Te, Vf, I0], resid, its, maxits] = fitter.fit(plot=2, init=init)
 
     
 goodRMS = np.sqrt(np.sum(np.abs(ft)[goodharm]**2))
@@ -132,8 +132,8 @@ if len(harms)>10:
     extra += '\n'
 extra += ' [' + harms + ']'
 print(extra)
-print("fitter.fit(init={'Vp': 15, 'I0': None, 'Te': 50}, plot=2, fit_params=dict(maxits=300))")
-print("or for a new object, \nLPfitter(i_filt, v, parent=dummy).fit(init={'Vp': 15, 'I0': None, 'Te': 50}, plot=2, fit_params=dict(maxits=300))")
+print("fitter.fit(init={'Vf': 15, 'I0': None, 'Te': 50}, plot=2, fit_params=dict(maxits=300))")
+print("or for a new object, \nLPfitter(i_filt, v, parent=dummy).fit(init={'Vf': 15, 'I0': None, 'Te': 50}, plot=2, fit_params=dict(maxits=300))")
 
 """
 Analyse trace - look for 50% increase in resid, and set errors to

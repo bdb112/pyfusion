@@ -53,20 +53,19 @@ from pyfusion.utils import process_cmd_line_args
 from pyfusion.data.shot_range import shot_range
 
 _var_defaults="""
-diag_name = 'SLOW2k'  # Use a list - otherwise process_cmd will not accept a list
 dev_name='W7X'
 readback=False
 downsample=None
 time_range=None
 shot_list=[[20160310,9]]  # make it a list so that process_cmd_line_args is happy
-compress_local=1
+compress_local=False
 overwrite_local=True
 save_kwargs = {} 
 prefix=''  #'HeliotronJ_'
 local_dir='/tmp'  # safe for linux and windows
 exception = Exception
 pyfusion.RAW=1   # save in raw mode by default, so gain is not applied twice.
-diag_name=["W7X_TotECH"]
+diag_name=["W7X_TotECH"] # Use a list - otherwise process_cmd will not accept a list
 """
 exec(_var_defaults)
 exec(process_cmd_line_args())
@@ -122,6 +121,10 @@ for shot_number in shot_list:
 
             for diag_chan in chan_list:
                 data = dev.acq.getdata(shot_number, diag_chan)
+                if 'npz'  in data.params['source'] and compress_local == False:
+                    # this is to protect against accidental recompressions - 
+                    raise Exception("Should not use local cached (npz) data unless you are compressing")
+
                 chan = data.channels
                 if downsample is not None:
                     data = data.downsample(downsample)
@@ -165,7 +168,7 @@ for shot_number in shot_list:
             goods.append((shot_number,'whole thing'))
         except exception as reason:
             bads.append((shot_number,'whole thing',reason))
-            print('skipping shot {s} because {r}'.format(r=reason, s=shot_number))
+            print('skipping shot {s} because <<{r}>>'.format(r=reason, s=shot_number))
 pfile = tm.strftime('%Y%m%d%H%M%S_save_local_log.pickle')
 print('See bads for {l} errors, also goods, and in {pfile}'.format(l=len(bads), pfile=pfile))
 pk = open(pfile,'w')

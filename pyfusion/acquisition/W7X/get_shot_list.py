@@ -22,6 +22,8 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 import sys, json, time, os, calendar
+import pyfusion
+
 
 from future.standard_library import install_aliases
 install_aliases()
@@ -53,12 +55,12 @@ def json_save_shot_list(shotDA, new_name='/tmp/shotDA.json'):
 def _get_shotDA(fname):
     # TODO(boyd.blackwell@anu.edu.au): remove pickle option, use json only.
     ext = os.path.splitext(fname)[-1].lower()
-    print('==> Trying ' +  fname)
+    if pyfusion.VERBOSE>0: print('==> Trying ' +  fname)
     try:
         if ext == '.pickle':
             return(pickle.load(open(fname,'rb')))
     except (FileNotFoundError, UnicodeDecodeError, TypeError) as reason:
-        print('Error opening {f}\n {r}'.format(f=fname, r=reason))
+        if pyfusion.VERBOSE>0: print('Error opening {f}\n {r}'.format(f=fname, r=reason))
         return None
 
     if ext == '.json':
@@ -166,7 +168,7 @@ update=0
         selected = np.where(seldate == shotDA['date'])[0]
 
     for i in selected:
-        print('<<< {dtm}, {progId}, {tm} {dt}\n{cmt} >>>' 
+        print(u'<<< {dtm}, {progId}, {tm} {dt}\n{cmt} >>>' 
               .format(dtm=shotDA['date'][i],progId=shotDA['progId'][i],
                       tm=time.asctime(time.gmtime(shotDA['end_utc'][i]/1e9)),
                       dt=1e-9*(shotDA['end_utc'][i]-shotDA['start_utc'][i]),

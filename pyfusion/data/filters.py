@@ -766,8 +766,13 @@ def downsample(input_data, skip=10, chan=None, copy=False):
     return tmp_data
 
 @register("TimeseriesData")
-def integrate(input_data, baseline=[], chan=None, copy=False):
-    """ Return the time integral of a signal, 
+def integrate(input_data, baseline=[], delta_t=0.01, chan=None, copy=False):
+    """ Return the time integral of a signal, with baseline optionally removed before integration
+      baseline = None  No removal
+               = [] sloping baseline for delta_t at either end of the data 
+               = [t0, t1, t2, t3] as above, but t values are explicit
+               = [t0, t1]  as above, but simple constant removal.
+
     Perhaps the first sample will be a Nan - no,the samples are all displaced by one
     If we used the trapeziodal method, the first and last samples are 'incorrect' 
     and Nans may be appropriate
@@ -781,6 +786,9 @@ def integrate(input_data, baseline=[], chan=None, copy=False):
             input_data.signal[s][:] = integrate(input_data, chan=s, baseline=baseline).signal
 
     else:
+        if baseline is not None:
+            input_data = remove_baseline(input_data, baseline, delta_t=delta_t, copy=False)
+
         if chan is None:
             signal = input_data.signal
         else:
@@ -790,14 +798,10 @@ def integrate(input_data, baseline=[], chan=None, copy=False):
         #signal[0] = np.nan   cumsum defines the first point
 
         input_data.signal = signal*np.average(np.diff(input_data.timebase))
-
-    if baseline is not None:
-        return remove_baseline(input_data, baseline, copy=False)
-    else:
-        return(input_data)
+    return(input_data)
 
 @register("TimeseriesData")
-def remove_baseline(input_data, baseline=None, chan=None, copy=False):
+def remove_baseline(input_data, baseline=None, delta_t=0.01, chan=None, copy=False):
     """ Remove a tilted baseline from a signal
     if the baseline is 4 elements, correct at two points (mid point of those intervals)
     baseline in the same units as the timebase
@@ -808,7 +812,7 @@ def remove_baseline(input_data, baseline=None, chan=None, copy=False):
 
     if (len(np.shape(input_data.signal)) == 2) and chan is None:
         for (s,sig) in enumerate(input_data.signal):
-            input_data.signal[s][:] = remove_baseline(input_data, chan=s, baseline=baseline).signal
+            input_data.signal[s][:] = remove_baseline(input_data, chan=s, baseline=baseline, delta_t=delta_t).signal
 
     else:
         if chan is None:
@@ -820,24 +824,26 @@ def remove_baseline(input_data, baseline=None, chan=None, copy=False):
 
         bl = np.array(baseline).flatten()
         if baseline is None or len(baseline) == 0:
-            delta = .01
-            bl = [np.min(tb), np.min(tb) + delta,
-                        np.max(tb) - delta, np.max(tb)]
+            bl = [np.min(tb), np.min(tb) + delta_t,
+                        np.max(tb) - delta_t, np.max(tb)]
 
         wst = np.where(btw(tb, bl[0:2]))[0]
-        wend = np.where(btw(tb, bl[2:4]))[0]
-
         bl_st = np.average(signal[wst])
-        bl_end = np.average(signal[wend])
-
         time_st = np.average(tb[wst])
-        time_end = np.average(tb[wend])
+
+        if len(bl) == 4:
+            wend = np.where(btw(tb, bl[2:4]))[0]
+            bl_end = np.average(signal[wend])
+            time_end = np.average(tb[wend])
+            input_data.signal = signal - (bl_st  * (time_end - tb)/(time_end - time_st)
+                                          - bl_end * (time_st - tb)/(time_end - time_st))
+        
+        else:
+            bl_end, time_end = None, None
+            input_data.signal = signal - bl_st                                        
+
         if pyfusion.VERBOSE>0:
             print('baseline removal start, end, indicies', bl_st, bl_end, time_st, time_end)
-
-        input_data.signal = signal - (bl_st  * (time_end - tb)/(time_end - time_st)
-                                      - bl_end * (time_st - tb)/(time_end - time_st))
-        
 
     return(input_data)
 

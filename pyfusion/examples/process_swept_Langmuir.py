@@ -12,7 +12,7 @@ Best so far! 1Ohm!!
 run pyfusion/examples/process_swept_Langmuir.py diag_name=W7X_L57_LP10_I "atten=(.5e-5,-5e-5)" maxits=1000 t_range=[1,1.1] debug=3
 
 Play around after
-LPfit(sweepV[inds], iprobe[inds],plot=1,maxits=20, init=dict(Te=3,Vp=0,I0=None))
+LPfit(sweepV[inds], iprobe[inds],plot=1,maxits=20, init=dict(Te=3,Vf=0,I0=None))
 """
 # n_e = I/(q*A) * sqrt(2*pi*mi/(q*Te))    # Chen notes
 # n_e = I/(0.6*q*A)*sqrt(mi/(q*Te))/1e18  #  usual -> 2.4e19 for 100mA
@@ -32,31 +32,31 @@ def AC(x):
     ns = len(x)
     return(x - np.average(x * np.blackman(ns))/np.average(np.blackman(ns)))
 
-def LPchar(v, Te, Vp, I0):
+def LPchar(v, Te, Vf, I0):
     # hard to add a series resistance here as fun returns I as a fn of V
-    return(I0 * (1 - exp((v-Vp)/Te)))
+    return(I0 * (1 - exp((v-Vf)/Te)))
 
-def plotchar(v, Te, Vp, I0, alpha=1, col='g', linewidth=2):
+def plotchar(v, Te, Vf, I0, alpha=1, col='g', linewidth=2):
     varr = np.linspace(np.min(v), np.max(v))
     if debug > 0 + 2*(len(t_range) == 1) :   # if debug>3 will do all segs
-        plt.plot(varr,  LPchar(varr, Te, Vp, I0), 'k', linewidth=linewidth+1)
-        plt.plot(varr,  LPchar(varr, Te, Vp, I0), col, linewidth=linewidth)
+        plt.plot(varr,  LPchar(varr, Te, Vf, I0), 'k', linewidth=linewidth+1)
+        plt.plot(varr,  LPchar(varr, Te, Vf, I0), col, linewidth=linewidth)
 
 
 def error_fun(var, data):
     """ return RMS error """
-    Te, Vp, I0 = var
+    Te, Vf, I0 = var
     v = data['v']
     i = data['i']
     varr = np.linspace(np.min(v), np.max(v))
     if debug > 1: 
-        plt.plot(varr,  LPchar(varr, Te, Vp, I0), 'g', linewidth=2, 
+        plt.plot(varr,  LPchar(varr, Te, Vf, I0), 'g', linewidth=2, 
                  alpha=min(1,1./np.sqrt(maxits)))
-    #err = np.sqrt(np.mean((i - LPchar(v, Te, Vp, I0))**2))
-    err = np.power(np.mean(np.abs(i - LPchar(v, Te, Vp, I0))**pnorm),1./pnorm)
+    #err = np.sqrt(np.mean((i - LPchar(v, Te, Vf, I0))**2))
+    err = np.power(np.mean(np.abs(i - LPchar(v, Te, Vf, I0))**pnorm),1./pnorm)
     if debug>2: 
         print(', '.join(['{k} = {v:.3g}'.format(k=i[0],v=i[1]) 
-                         for i in dict(Te=Te, Vp=Vp, I0=I0, resid=err).iteritems()]))
+                         for i in dict(Te=Te, Vf=Vf, I0=I0, resid=err).iteritems()]))
     return(-err)  #  amoeba is a maximiser
 
 def tog(colls=None, hide_all=0):
@@ -78,13 +78,13 @@ def tog(colls=None, hide_all=0):
 # tryone([25,-15, .02],dict(i=iprobe, v=sweepV))
 def tryone(var, data, mrk='r', w=4):
     """ evaluate fit and show curve - meant for manual use
-    tryone([Te,Vp,I0],dict(v=sweepV,i=iprobe))
+    tryone([Te,Vf,I0],dict(v=sweepV,i=iprobe))
     """
     print(-error_fun(var, data))
-    Te, Vp, I0 = var
+    Te, Vf, I0 = var
     v = data['v']
     i = data['i']
-    plotchar(v, Te, Vp, I0, linewidth=w)
+    plotchar(v, Te, Vf, I0, linewidth=w)
 
 def find_clipped(sigs, fact):
     """ look for digitizer or amplifier saturation in all raw 
@@ -118,28 +118,28 @@ def find_clipped(sigs, fact):
     return(~wunder & ~wover)
 
 
-def LPfit(v,i,init=dict(Te=50, Vp=15, I0=None), plot=None, maxits=None):
+def LPfit(v,i,init=dict(Te=50, Vf=15, I0=None), plot=None, maxits=None):
     #Takes about 2ms/it for 2500 points, and halving this only saves 10%
     if maxits is None:  # this trickiness makes it work, but not pythonic.
         maxits = globals()['maxits']
     if plot is None: plot = debug>0
 
     Te = init['Te']
-    Vp = init['Vp']
+    Vf = init['Vf']
     I0 = init['I0']
     if I0 is None:
         I0 = 1.7 * np.average(np.clip(i, 0, 1000))
 
-    var = [Te, Vp, I0]
+    var = [Te, Vf, I0]
     scale = np.array([Te, Te/3, I0])
     fit_results = amoeba.amoeba(var, scale, error_fun, itmax = maxits, 
                                 data = dict(v=v, i=i))
-    Te, Vp, I0 = fit_results[0]
-    plotchar(v, Te, Vp, I0, linewidth=4)
+    Te, Vf, I0 = fit_results[0]
+    plotchar(v, Te, Vf, I0, linewidth=4)
     residual, mits = fit_results[1:3]
     if plot: 
-        plt.title('Te = {Te:.1f}eV, Vp = {Vp:.1f}, Isat = {I0:.3g}, resid = {r:.2e} {mits} its '
-                       .format(Te=Te, Vp=Vp, I0=I0, r=-residual, mits=mits))
+        plt.title('Te = {Te:.1f}eV, Vf = {Vf:.1f}, Isat = {I0:.3g}, resid = {r:.2e} {mits} its '
+                       .format(Te=Te, Vf=Vf, I0=I0, r=-residual, mits=mits))
         plt.suptitle('{shot} {tr} {d}'
                      .format(tr=t_range, shot=shot_number, d=diag_name))
         plt.show(block=0)
@@ -340,9 +340,9 @@ else:  # series of automated fits
             plt.scatter(v,i,c='r', s=80,
                         alpha=min(1,4/np.sqrt(len(v))))
 
-        [[Te, Vp, I0], res, its] =  LPfit(v, i, plot=(debug>1))
+        [[Te, Vf, I0], res, its] =  LPfit(v, i, plot=(debug>1))
         tresults.append([(vseg.timebase[0] + vseg.timebase[1])/2.,
-                         Te, Vp, I0, res, its])
+                         Te, Vf, I0, res, its])
 
     import pickle
     tail = ['']

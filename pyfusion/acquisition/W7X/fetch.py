@@ -142,7 +142,7 @@ class W7XDataFetcher(BaseDataFetcher):
             # now read from the local copy - it is in the wd, so only //
             # but it seems we need the full path for now
             url = url.replace('http://','file:///home/bdb112/pyfusion/working/pyfusion/')
-            print('now trying {url}'.format(url=url))
+            print('now trying the cached copy we just grabbed: {url}'.format(url=url))
         if pyfusion.VERBOSE > 0:
             print('===> fetching url {u}'.format(u=url))
 
@@ -158,8 +158,9 @@ class W7XDataFetcher(BaseDataFetcher):
             print('****** first timeout error *****')
             dat = json.load(urlopen(url,timeout=3*pyfusion.TIMEOUT))
         except Exception as reason:
-            print('********Exception***** on {c}: {u} \n{r}'
-                  .format(c=self.config_name, u=url, r=reason))
+            if pyfusion.VERBOSE:
+                print('********Exception***** on {c}: {u} \n{r}'
+                      .format(c=self.config_name, u=url, r=reason))
             raise
 
         # this form will default to repair = 2 for all LP probes.
@@ -243,12 +244,13 @@ class W7XDataFetcher(BaseDataFetcher):
             import dns.resolver
             domain = self.acq.domain
             answers = dns.resolver.query(domain,'NS')
-            for server in answers:
+            for (iii, server) in enumerate(answers):
                 if self.acq.lookfor in server.to_text():
                     self.acq.access = True 
                 if pyfusion.VERBOSE>0: 
+                    dominfo.update(dict(access=self.acq.access))
                     print(server.to_text())
-                    print('dns.resolver test for nameserver {domain} indicates access is {access}'
+                    print('dns.resolver test for {look} in nameserver {dom} indicates access is {access}'
                           .format(**dominfo))
         except ImportError:
             # this alternative may work, especially if cygwin is installed, but is noisier
@@ -262,7 +264,7 @@ class W7XDataFetcher(BaseDataFetcher):
                     (0 == os.system('nslookup {dom}|grep {look} 2> /tmp/linjunk'.format(**dominfo))))
 
                 if pyfusion.VERBOSE>0: 
-                    print('nslookup test on nameserver {dom} indicates access is {access}'
+                    print('nslookup test looking for {look} on nameserver {dom} indicates access is {access}'
                           .format(**dominfo))
             except ():
                 print('*******************************************************************************')

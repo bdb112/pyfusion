@@ -1,11 +1,16 @@
 """
 Convenience script to run process_Langmuir over a range of shots.
+
+to replace/add keywords simply, use replace_kw (if you use dict() remember to quote '..=dict(...)'
+   run pyfusion/examples/run_process_LP.py  shot_list='[[20160309,7],[20160310,7]]' "replace_kw=dict(t_range=[1,1.1])"
+
 # this example is about 2.8 (11 if ALLI) seconds. - beginning of shot 309_52
 _PYFUSION_TEST_@@ select='[0,1]' replace_kw='dict(t_range=[0.88,0.9])' shot_list='[[20160309, 52]]' lpdiag='W7X_L5{s}_LP0107'
 """
 
 import pyfusion
 from pyfusion.data.process_swept_Langmuir import Langmuir_data, fixup
+# rename the function to avoid name clash
 from pyfusion.data.shot_range import shot_range as expand_shot_range
 
 
@@ -24,7 +29,7 @@ select=None                            # e.g. select=[0,1]
 exception=Exception
 #  t_comp was [0.85,0.88] for a while (to work with tiny files), but it fails on 0309_22
 # shot really have this default to closer to 0 - e.g. [0,0.1]
-proc_kwargs = dict(overlap=2,dtseg=2000,initial_TeVpI0=dict(Te=30,Vp=5,I0=None),fit_params=dict(alg='amoeba',maxits=300,lpf=21,esterr=1,track_ratio=1.2),filename='/tmp/*2k2',threshold=0.001,t_comp=[.81,.84]) # debug ,t_range=[0.5,0.51])
+proc_kwargs = dict(overlap=2,dtseg=2000,initial_TeVfI0=dict(Te=30,Vf=5,I0=None),fit_params=dict(alg='amoeba',maxits=300,lpf=21,esterr=1,track_ratio=1.2),filename='/tmp/*2k2',threshold=0.001,t_comp=[.81,.84]) # debug ,t_range=[0.5,0.51])
 #select=1
 lpdiag='W7X_L5{s}_LPALLI'
 """

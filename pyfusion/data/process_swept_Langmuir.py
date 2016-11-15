@@ -713,21 +713,74 @@ class Langmuir_data():
             if '{' in filename:
                 filename = filename.format(s0=self.shot[0], s1=self.shot[1], i_diag=self.i_diag)
             print('writing {fn}'.format(fn=filename))
-            self.write_DA(filename)
+            print(r"doesn't work yet")
+            #self.write_DA(filename)
             
         if return_data:
             return(self.fitdata)
+            
+    def process_constant_Langmuir(self, t_range=None, t_comp=[0, 0.1], leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, suffix=''):
+        '''
+        This function should analyse the shots with constant Voltage, usually measuring I_sat. It will try to use as much of process_swept_Langmuir as possible and the pyfusion environment.
+        '''
+        self.figs = []  # reset the count of figures used to stop too many plots
+        self.amu = amu
+        if not isinstance(self.imeasfull.channels, (list, tuple, np.ndarray)):
+            self.imeasfull.channels = [self.imeasfull.channels]
 
+        self.i_chans = [ch.config_name for ch in self.imeasfull.channels]
+        for ch in self.i_chans:  # only take the current channels, not U
+            if ch[-1] != 'I':
+                raise ValueError("Warning - removal of V chans doesn't work!!!")
+                # hopefully we can ignore _U channels eventually, but not yet
+                self.i_chans.remove(ch)
+
+        self.coords = [ch.coords.w7_x_koord for ch in self.imeasfull.channels]
+        self.get_iprobe(leakage=leakage, t_comp=t_comp)
+        tb = self.iprobefull.timebase
+        # the 3000 below tries to avoid glitches from Hilbert at both ends
+        # only look at electron current - bigger (shot 0309.52 LP53 has a positive spike at 2s)
+        w_plasma = np.where((-self.iprobefull.signal[threshchan] > threshold) & (tb > tb[3000]) &(tb < tb[-3000]))[0]
+        
+        if t_range is None:
+            t_range = [tb[w_plasma[0]], tb[w_plasma[-1]]]
+
+        self.t_range = t_range
+        if t_range is not None:
+            self.imeas = self.imeasfull.reduce_time(t_range)
+            self.iprobe = self.iprobefull.reduce_time(t_range)
+        else:
+            self.imeas = self.imeasfull
+            self.iprobe = self.iprobefull
+        if self.debug>0: print(' {n} segments'.format(n=len(self.segs)))
+        debug_(self.debug, 3, key='process_loop')
+        if filename is not None:            
+            if  '*' in filename:
+                fmt = 'LP{s0}_{s1}_'
+                if 'L5' in self.i_diag:
+                    fmt += 'L5' + self.i_diag.split('L5')[1][0]
+                filename = filename.replace('*',fmt+'_')
+                if filename.endswith('_'):  # remove ending _
+                    filename = filename[0:-1]
+            if '{' in filename:
+                filename = filename.format(s0=self.shot[0], s1=self.shot[1], i_diag=self.i_diag)
+            print('writing {fn}'.format(fn=filename))
+            self.write_DA(filename)
+            
+        if return_data:
+            return(self.iprobe)
+            
 # quick test code - just 'run' this file
 if __name__ == '__main__':
     #LP = Langmuir_data([20160310, 9], 'W7X_L57_LP01_04','W7X_L5UALL') # 4 chans
     #LP = Langmuir_data([20160310, 9], 'W7X_L53_LPALLI','W7X_L5UALL') # lower
     #LP = Langmuir_data([20160309, 7], 'W7X_L57_LPALLI','W7X_L5UALL') # upper
     #LP = Langmuir_data([20160302, 12], 'W7X_L57_LPALLI','W7X_L5UALL') # bad tb?
-    LP = Langmuir_data([20160310, 9], 'W7X_L57_LP01_02','W7X_L5UALL') #quickest
+    #LP = Langmuir_data([20160310, 9], 'W7X_L57_LP01_02','W7X_L5UALL') #quickest
     # the following, using ([20160310, 9], 'W7X_L57_LP01_02) gives one nice char
+    LP= Langmuir_data([20160309,10], 'W7X_L57_LPALLI','W7X_L5UALL')
     # and another char spoilt by a change in i_electron between cycles
-    results = LP.process_swept_Langmuir(rest_swp=1,t_range=[1.6,1.604],t_comp=[0.8,0.85],threshchan=0)
+    results = LP.process_swept_Langmuir(rest_swp=1,t_range=[0.91,0.93],t_comp=[0.05,0.1],threshchan=0,plot=3, return_data=True)
 
 """
 Testing synchronisation using dead reckoning.

@@ -1,4 +1,5 @@
-Use emacs sort-columns after defining column wuth the region to put in order
+Use emacs sort-columns after defining column with the region to put in order
+maybe need to move 0-9 manually - also, if nwest first, the numbering goes to 105?
 
  Python 2.7.6 (default, Jun , Pyfusion 0.7.6a (acfe66a) Tue Nov  8 10:49:44 2016
   0  2.23 examples/plot_specgram.py     : t_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 

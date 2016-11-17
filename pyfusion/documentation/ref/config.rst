@@ -93,6 +93,21 @@ see the configuration sections, type::
 
     pyfusion.config.sections()
 
+Valid Dates
+-----------
+A new feature allows configuration to change for different date
+ranges.  Initially the dates work back from the latest config.  If for
+a particular diagnostic, the date is outside the valid_dates, then
+alternate diag names such as W7XM1_L53_LP02_I are checked for in the
+config file.  If found, and the date range matches, we are finished. 
+Otherwise an error is generated.
+
+A second modification (M2) builds on the first (M1), so the effect is
+cumulative.  If a diagnostic is missing on a day, it will have to be
+restored on the previous day. Diagnostics can be suppressed for now by
+setting DMD=0, so all the other charactersitics remain, so it can be
+easily restored.
+
 
 
 Loading config files

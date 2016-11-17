@@ -24,6 +24,7 @@ diag_name = "W7X_TotECH"
 shot_number = [20160308,39]
 # dev_name = "LHD"; diag_name = "MP1" ; shot_number = 27233
 sharey=2
+decimate=0
 fun=myiden
 fun2=myiden2
 plotkws={}
@@ -46,7 +47,7 @@ elif hold==2:
     labeleg='True'
 
 # maybe should be in data/plots.py, but config_name not fully implemented
-data.plot_signals(suptitle='shot {shot}: '+diag_name, sharey=sharey,
+data.plot_signals(suptitle='shot {shot}: '+diag_name, sharey=sharey, downsamplefactor=decimate,
                   fun=fun, fun2=fun2, labeleg=labeleg, **plotkws)
 
 # for shot in range(76620,76870,10): dev.acq.getdata(shot,diag_name).plot_signals()

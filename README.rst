@@ -9,40 +9,35 @@ Most recent update:
    on machines with acccess to the archivedB
  maybe use functools.wraps so that the __doc__ of plot_signals can be seen
 
+Version 0.7.7 alpha
+
+* Add a valid_dates feature to base.py so that pyfusion.cfg can have
+  changes to parameters for specific date ranges.
+* implement for L53_LP05-12 - need to do converse for LP_U
+* Also simple check that params['DMD'] is consistent between npz.file
+  and pyfusion.cfg
+* add no_cache option to getdata so that the local cache can be
+  avoided, (activate by save_compress=0 in save to_local for now)
+
+
 Version 0.7.6 alpha
 
- * change W7X shot to a tuple (reason for calling an alpha)
- * debug some error messages in W7X
- * fix images in README.rst
- * make the feedback about which shotDA file is used only print for VERBOSE>0
- * fix units and magnitude error in puff_db
- * integrate filter function had a confused baseline removal - now fixed and allows for constant and slope removal
- * added hold=2 option to plot_signals.py to put such data on a second y axis 
-   (also in data/plots allow plotting a single channel on an existing axis for overplotting etc)
- * converted mini_summary to use pure pyfusion
- * improvements to plot_both_LP2D, debug weighted averaging
- * get_shot_list - info messages suppressed unless VREBOSE>0
- * acq/data/base - keep track of data source (source via acq.source) in params 
- * several Langmuir file - change Vp to Vf
- * N2_puff_correlation - move ECH to a twin axis, imporve limit
-   setting
- * extract_limiter_coords - extract limiter profile in midplane, include node index list
-
-Version 0.7.5 beta 
-
-* integrate doc and update README.rst, eliminate README.md
-* get_shot_list - nicer output format
-* data/base.py warn if cached data is in a temp dir
-* DA_info optional 3rd positional argument - key to examine
-* process_Langmuir - rearrange so that mask can be re set by simple paste
-* mini_summary - add some more diags
-* plot_both_LP2D.py - plot upper and lower segs together, only some
-  improvements back ported to plot_LP2D.py
-* run_process_LP - changed tcomp to slightly smaller to allow for
-  early breakdown
-* partial fix of save_to_local - don't allow local_saves from local cache (only works
-  on machines with acccess to the archivedB
-* save_to_local saves log in a pickle
+* change W7X shot to a tuple (reason for calling an alpha)
+* debug some error messages in W7X
+* fix images in README.rst
+* make the feedback about which shotDA file is used only print for VERBOSE>0
+* fix units and magnitude error in puff_db
+* integrate filter function had a confused baseline removal - now fixed and allows for constant and slope removal
+* added hold=2 option to plot_signals.py to put such data on a second y axis 
+  (also in data/plots allow plotting a single channel on an existing axis for overplotting etc)
+* converted mini_summary to use pure pyfusion
+* improvements to plot_both_LP2D, debug weighted averaging
+* get_shot_list - info messages suppressed unless VREBOSE>0
+* acq/data/base - keep track of data source (source via acq.source) in params 
+* several Langmuir file - change Vp to Vf
+* N2_puff_correlation - move ECH to a twin axis, imporve limit
+  setting
+* extract_limiter_coords - extract limiter profile in midplane, include node index list
 
 See below for previous updates
 
@@ -167,6 +162,22 @@ Example output
 
 Previous Updates
 ----------------
+
+Version 0.7.5 beta 
+
+* integrate doc and update README.rst, eliminate README.md
+* get_shot_list - nicer output format
+* data/base.py warn if cached data is in a temp dir
+* DA_info optional 3rd positional argument - key to examine
+* process_Langmuir - rearrange so that mask can be re set by simple paste
+* mini_summary - add some more diags
+* plot_both_LP2D.py - plot upper and lower segs together, only some
+  improvements back ported to plot_LP2D.py
+* run_process_LP - changed tcomp to slightly smaller to allow for
+  early breakdown
+* partial fix of save_to_local - don't allow local_saves from local cache (only works
+  on machines with acccess to the archivedB
+* save_to_local saves log in a pickle
 
 Version 0.7.4 beta
 

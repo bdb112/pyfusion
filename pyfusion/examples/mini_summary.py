@@ -35,6 +35,7 @@ import sys
 from pyfusion.data.signal_processing import smooth_n
 from time import time as seconds
 import pyfusion
+from six.moves import input
 
 from sqlalchemy import create_engine 
 #engine=create_engine('sqlite:///:memory:', echo=False)
@@ -215,8 +216,10 @@ ins=summ.insert()  # not sure why this is needed?
 result=conn.execute('select count(*) from summ')
 n = result.fetchone()[0]
 if n> 0:
-    raise ValueError('database is populated with {n} entries'.format(n=n))
-
+    ans = input('database is populated with {n} entries:  Continue?  (y/N)'.format(n=n))
+if len(ans)==0 or ans.lower()[0] != 'n':
+    print("Example: conn.execute('select * from summ limit 1').fetchone()")
+    sys.exit()
 shots = 0
 
 # set these both to () to stop on errors

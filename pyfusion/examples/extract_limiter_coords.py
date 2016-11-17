@@ -52,7 +52,7 @@ axsin.legend(loc='upper right')
 axsin.plot([0, axsin.get_xlim()[1]], [0, 0], 'k', lw=0.5)
 axsin.set_ylim(axsin.get_ylim()[0],0.2)
 # dR means delta Rmaj
-plt.show()
+plt.show(0)
 
 from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure()

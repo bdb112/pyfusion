@@ -240,15 +240,49 @@ class BaseDataFetcher(object):
     def __init__(self, acq, shot, config_name=None, **kwargs):
         self.shot = shot
         self.acq = acq
+        self.no_cache = False  # this allows getData to request that cached data is NOT used - eg for saving local
         #bdb?? add device name here, so can prepend to Diagnostic
         # e.g. LHD_Diagnostic - avoids ambiguity
         debug_(pyfusion.DEBUG,5,key='device_name')
         if config_name is not None:
             self.__dict__.update(get_config_as_dict('Diagnostic', config_name))
+            # look for the first valid date range for this diag - 
+            #   see config/'Valid Dates' in the reference docs
+            self.config_name=config_name
+            for Mod in ['M1','M2','M3','M4']:
+                if self.find_valid_for_date():
+                    break
+                else:
+                    self.__dict__.update(get_config_as_dict('Diagnostic', config_name.replace('W7X','W7X'+Mod)))                  
+                
+            else:
+                raise LookupError(config_name)
+                    
+
             if pyfusion.VERBOSE>3: print(get_config_as_dict('Diagnostic', config_name))
         self.__dict__.update(kwargs)
-        self.config_name=config_name
-#        print('BaseDFinit',config_name,self.__dict__.keys())
+        # self.config_name=config_name
+        # print('BaseDFinit',config_name,self.__dict__.keys())
+
+    def find_valid_for_date(self):
+        if hasattr(self,'valid_dates'):
+            valid_dates = self.valid_dates
+        elif hasattr(self.acq, 'valid_dates'):
+            valid_dates = self.acq.valid_dates
+        else:
+            valid_dates = None
+        # another example of inheritance - need to formalise this, extract the code to a function?
+        if  valid_dates is not None:
+            valid_dict = eval('dict({ps})'.format(ps=valid_dates))
+            for k in valid_dict:
+                root = k.replace('_from','').replace('_to','')
+                if '_' + root in self.config_name:
+                    if pyfusion.VERBOSE>1: print(k, root, self.shot[0], int(valid_dict[k]))
+                    if ('_from' in k and self.shot[0] < int(valid_dict[k])
+                        or ('_to' in k and self.shot[0] > int(valid_dict[k]))):
+                        return(False)
+        return(True)
+
 
     def setup(self):
         """Called by :py:meth:`fetch` before retrieving the data.
@@ -303,21 +337,6 @@ class BaseDataFetcher(object):
                              .format(chan=chan))
         #bare_chan = (chan.split('-'))[-1]
         # use its gain, or if it doesn't have one, its acq gain.
-        if hasattr(self,'valid_from_date'):
-            valid_from_date = self.valid_from_date
-        elif hasattr(self.acq, 'valid_from_date'):
-            valid_from_date = self.acq.valid_from_date
-        else:
-            valid_from_date = None
-        # another example of inheritance - need to formalise this, extract the code to a function?
-        if  valid_from_date is not None:
-            valid_dict = eval('dict({ps})'.format(ps=valid_from_date))
-            for k in valid_dict:
-                if k in self.config_name:
-                    if self.shot[0] < int(valid_dict[k]):
-                        raise LookupError('The chain of pyfusion.cfg files is not valid for {diag} of date {dat}'
-                                          .format(dat=self.shot[0],diag=self.config_name))
-            
         if pyfusion.RAW == 0:
             gain_units = "1 arb"  # default to gain 1, no units
             if hasattr(self,'gain'):
@@ -330,7 +349,7 @@ class BaseDataFetcher(object):
         sgn *= float(gain_units.split()[0])
         if pyfusion.VERBOSE > 0: print('Gain factor', sgn, self.config_name)
 
-        tmp_data = try_fetch_local(self, chan)  # is there a local copy?
+        tmp_data = None if self.no_cache else try_fetch_local(self, chan)  # is there a local copy?
         if tmp_data is None:
             method = 'specific'
             try:
@@ -374,6 +393,14 @@ class BaseDataFetcher(object):
         else:
             data = tmp_data
             method = 'local_npz'
+            self_params = eval('dict('+self.params+')')
+            if hasattr(data, 'params') and 'DMD' in data.params:
+                if pyfusion.VERBOSE>0: print('Comparing params in base.py',self_params,'\n', data.params)
+                if self_params['DMD'] != data.params['DMD']:
+                    raise Exception(('conflicting DMD from npz on {s}, {d}: {dmd1}, {dmd2}'.
+                                     format(s=self.shot, d=self.config_name, dmd1=self_params['DMD'], dmd2=data.params['DMD'])))
+            else: 
+                if pyfusion.VERBOSE>-1: print("Can't check DMD on {s}, {d}".format(s=self.shot, d=self.config_name))
 
         data.meta.update({'shot':self.shot})
         if hasattr(data,'comment'):  # extract comment if there

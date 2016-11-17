@@ -133,7 +133,7 @@ try:  # this try is to catch ^C
 
         print(resp[-10000:])
         dt = round(seconds() - st, 3)
-        out_list.append([filename, errout, resp, dt])
+        out_list.append([filename, errout, resp, dt, sub_pipe.returncode])
         total += 1
 except KeyboardInterrupt as reason:
     print('KeyboardInterrupt', reason)
@@ -153,7 +153,7 @@ print('Python {pv}, Pyfusion {pfv} {date}'.format(pv=sys.version[0:20], pfv=pyfu
 for i, ll in enumerate(out_list):
     print('{o:3d} {dt:5.2f} {fn:30s}: {msg}'
           .format(o=orig_order[i], dt=ll[3], fn='/'.join(ll[0].split('/')[-2:]),
-                  msg=[ll[1][-57:].replace(b'\n', b' '), b'OK!'][ll[1] == b'']))
+                  msg=[b'', b'OK! '][ll[-1] == 0] + [ll[1][-77:].replace(b'\n', b' ')][0]))
 
 print('{g} good, {e} errors out of {t}'.format(e=n_errs, t=total, g=total-n_errs))
 

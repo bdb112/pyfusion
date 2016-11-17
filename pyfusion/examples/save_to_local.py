@@ -27,7 +27,7 @@ run pyfusion/examples/save_to_local.py shot_list='[[20160225,20]]' overwrite_loc
 run pyfusion/examples/save_to_local.py shot_list='[[20160225,s] for s in range(1,50)]'  overwrite_local=1 dev_name='W7X' diag_name='W7X_L57_LP01_08'  local_dir='/data/datamining/local_data/' exception=Exception
 
 from the old pyfusion - may need to tidy up
-_PYFUSION_TEST_@@local_dir=/tmp/ overwrite_local=True
+_PYFUSION_TEST_@@local_dir=/tmp/ overwrite_local=True compress_local=1
 
 # this example works Mar 8 2016 - need shot list and diag list to avoid problems
 run  pyfusion/examples/save_to_local.py diag_name=1 diag_name="['W7X_L53_LP{nnnn}_I'.format(nnnn=nn) for nn in [1,2,3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21,22]]" shot_list="[[20160302,s] for s in range(1,10)]"  overwrite_local=1 dev_name='W7X'  local_dir='/tmp' exception=Exception
@@ -120,7 +120,12 @@ for shot_number in shot_list:
                 chan_list = [diag]
 
             for diag_chan in chan_list:
-                data = dev.acq.getdata(shot_number, diag_chan)
+                data = dev.acq.getdata(shot_number, diag_chan, no_cache=compress_local==False)
+                print(diag_chan)
+
+                # the above will help stop saving over existing data.  This is important
+                # if we are replacing incorrect existing data..
+                # the next line also will protect if the cache file is new enough
                 if 'npz'  in data.params['source'] and compress_local == False:
                     # this is to protect against accidental recompressions - 
                     raise Exception("Should not use local cached (npz) data unless you are compressing")

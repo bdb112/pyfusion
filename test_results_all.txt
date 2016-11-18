@@ -1,6 +1,106 @@
 Use emacs sort-columns after defining column with the region to put in order
 maybe need to move 0-9 manually - also, if nwest first, the numbering goes to 105?
 
+Python 2.7.6 (default, Jun , Pyfusion 0.7.7a (f2317a3) Thu Nov 17 23:11:03 2016
+  0  2.16 examples/plot_specgram.py     : OK! , (0.0, 250.0))   set_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
+  1  0.54 examples/get_basic_params.py  :  in <module>     raise ValueError('no good shots') ValueError: no good shots 
+  2  1.23 examples/tables_extract.py    : OK! 
+  3  0.37 examples/slider_f_t.py        : pen(file, "rb") IOError: [Errno 2] No such file or directory: 'MP512all.npz' 
+  4  1.79 examples/check_HD_histogram.py: OK! 
+  5  2.50 examples/extract_limiter_coords.py: OK! 
+  6  0.43 examples/merge_h1_diagnostics.py:  22, in <module>     t_mid = dd['t_mid'] NameError: name 'dd' is not defined 
+  7  0.66 examples/barber_pole.py       : OK! 
+  8  0.58 examples/mode_identify_script.py:     if mode is None: mode = mode_list[0] IndexError: list index out of range 
+  9  1.13 examples/coherence_vs_time.py : OK! 
+ 10  0.39 examples/test_lasso_fs.py     : 2, in <module>     for key in dd.keys(): NameError: name 'dd' is not defined 
+ 11  1.85 examples/medium_300.py        : OK! 
+ 12  0.01 examples/mode_identify_example_from_ICPP_2010.py: .py filename='MP512all.txt' skip=4             ^ SyntaxError: invalid syntax 
+ 13  8.77 examples/prepfs_range.py      : OK! 
+ 14  4.79 examples/gen_fs_local.py      : OK! 
+ 15  0.22 examples/bug_report.py        : OK! 
+ 16  2.69 examples/plot_svd.py          : OK! 
+ 17  1.00 examples/DP14_mode_plot.py    : OK! 
+ 18  2.96 examples/run_process_LP.py    : OK! 
+ 19  0.01 examples/W7X_analysis_Fri_11Mar.py: [20160310,9] hold=0 sharey=2                   ^ SyntaxError: invalid syntax 
+ 20  0.23 examples/correct_LP_data.py   : ining/local_data/extra_data/may22/0119/20160119_10_W7X_L53_LP01_I.npz exists 
+ 21  0.07 examples/W7X_OP1.1_LCFS.py    : num, xyz=np.round([X,Y,Z], 2), dLC=dLC)) NameError: name 'np' is not defined 
+ 22  1.36 examples/plot_signals.py      : OK! ...' kwarg on individual plots.   warnings.warn("No labeled objects found. " 
+ 23  0.49 examples/copy_DA.py           :  or directory: '../../datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags.npz' 
+ 24  7.83 examples/process_swept_Langmuir.py: OK! 
+ 25  7.75 examples/h1_mode_lists.py     : OK! 
+ 26  2.40 examples/cluster_info.py      : OK! 
+ 27  7.60 examples/gen_fs_bands.py      : OK! Time:  ########shot 27233: 230/1428 fs finished in 5.64/6.58 
+ 28  2.85 examples/phase_histogram.py   : OK! 
+ 29  0.56 examples/find_last_data.py    : it of {l} not there'.format(l=low))  ValueError: low limit of None not there 
+ 30  0.47 examples/find_close_shot.py   : OK! 
+ 31  0.61 examples/realtime_mode.py     :   cmap=cm.jet   # see also cm.gray_r etc NameError: name 'cm' is not defined 
+ 32  0.40 examples/process_chirps.py    : ug, verbose=verbose, dfdtunit=dfdtunit)  NameError: name 'dd' is not defined 
+ 33  1.87 examples/cross_phase.py       : OK! 
+ 34  1.08 examples/W7X_neTe_profile.py  : OK! : Mean of empty slice   warnings.warn("Mean of empty slice", RuntimeWarning) 
+ 35  0.48 examples/check_DA.py          : OK! 
+ 36  0.07 examples/prepfs_time_mp.py    :                      output_path prepfs_time_mp.py: error: too few arguments 
+ 37  2.62 examples/plot_svd_simple.py   : OK! 
+ 38  0.40 examples/plot_many.py         : se ValueError('SCAN NOT AVAILABLE!!!!!') ValueError: SCAN NOT AVAILABLE!!!!! 
+ 39  0.23 examples/query_h1ds.py        : m sqlalchemy.ext.sqlsoup import SqlSoup ImportError: No module named sqlsoup 
+ 40  2.66 examples/plot_basic.py        : OK! 
+ 41  6.27 examples/cluster_phases_three_colour.py: OK! om [11 12 13 14 15] to [10 11 12 13 14 15] - i.e. cldata has different sel,  
+ 42  0.41 examples/new_mode_identify_script.py: N=True and/or doM=True') ValueError: Need to choose doN=True and/or doM=True 
+ 43  0.62 examples/write_LP_as_CSV.py   : OK! 
+ 44  4.14 examples/clean_up_pyfusion_text.py: OK! 
+ 45  0.53 examples/check_other_data.py  : OK! 
+ 46  0.38 examples/plot_npz_data.py     : OK! 
+ 47  5.03 examples/check_W7X_timebase_repair.py: OK! 
+ 48  0.02 examples/find_VSL_locking.py  : nge(5)  doN=1 mode_list=mmm                    ^ SyntaxError: invalid syntax 
+ 49  0.53 examples/plot_text_fft.py     : (fname, 'U')) IOError: [Errno 2] No such file or directory: 'g:fft26_50.dat' 
+ 50  0.70 examples/merge_text_pyfusion.py: OK! 
+ 51  2.68 examples/N2_puff_correlation.py: OK! 
+ 52  0.70 examples/multi_plot.py        : or(section) ConfigParser.NoSectionError: No section: 'Diagnostic:ti_crystal' 
+ 53  3.04 examples/channel_spectra.py   : OK! 
+ 54  0.26 examples/plot_json_timeseries.py: OK! 
+ 55  0.01 examples/good_ones_density_cluster.py: g/DA300_384_rms1_b5a_f32_diags.npz'            ^ SyntaxError: invalid syntax 
+ 56  0.39 examples/plot_shot.py         : OK! 
+ 57  0.21 examples/check_dw_pdt.py      : OK! 
+ 58  1.53 examples/wid_specgram.py      : /data/datamining/local_data/extra_data/temp/'])<type 'exceptions.Exception'> 
+ 59  9.10 examples/cluster_DA.py        : OK! 
+ 60  1.36 examples/igetfile.py          : OK! ome/bdb112/data/datamining/cache/wp/wp@99950.dat.bz2 or .gz, .bz2 not found. 
+ 61  0.42 examples/mode_identify_example_2012.py:  <module>     oldcolorbar=colorbar NameError: name 'colorbar' is not defined 
+ 62  2.55 examples/plot_signals_trivial.py: OK! 
+ 63  0.47 examples/small_65.py          : OK! 
+ 64  2.89 examples/ne_profile_preprocess.py: OK! 
+ 65  0.54 examples/small_300.py         : OK! 
+ 66  0.65 examples/merge_basic_diagnostics.py: open(file, "rb") IOError: [Errno 2] No such file or directory: 'DA_file.npz' 
+ 67  1.31 examples/W7X_analysis.py      : OK! 
+ 68  4.27 examples/clean_up_pyfusion_text_mp.py: OK! 
+ 69  2.66 examples/plot_svd_old.py      : OK! 
+ 70  0.88 examples/file_sorter.py       : irectory: '/media/bdb112/PassportBDB4/20160303/20160303_2_W7X_L57_LP7_I.npz' 
+ 71  0.63 examples/merge_basic_HJ_diagnostics.py: 81, in <module>     sz = len(dd['shot']) NameError: name 'dd' is not defined 
+ 72  1.44 examples/marfe_time_plot.py   : OK! 
+ 73  0.95 examples/svd_simple_rotator.py: OK! 
+ 74  0.60 examples/testall.py           : OK! 
+ 75  0.85 examples/save_to_local.py     : OK! 
+ 76  1.06 examples/density_cluster.py   : OK! 
+ 77  0.55 examples/fonts.py             : OK! 
+ 78  0.02 examples/h1_mode_identify.py  :     %run pyfusion/examples/cluster_info.py     ^ SyntaxError: invalid syntax 
+ 79  0.26 examples/W7X_probe_list.py    : OK! 
+ 80  0.03 examples/prepfs_range_sep.py  :                    output_path prepfs_range_sep.py: error: too few arguments 
+ 81  0.39 examples/plot_DA.py           : OK! 
+ 82  2.06 examples/restore_sin.py       : 'm', label='reconst before DC adjust') NameError: name 'plot' is not defined 
+ 83  3.42 examples/read_DF.py           : OK! iles:/data/datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags_comp5.h5...done 
+ 84  0.88 examples/compare_LPdas.py     : y", line 6, in <module>     ylim(0,60) NameError: name 'ylim' is not defined 
+ 85  0.23 examples/__init__.py          : OK! 
+ 86  3.95 examples/basic_ne_scan.py     : OK! 
+ 87  0.07 examples/modify_cfg.py        : OK! 
+ 88  1.95 examples/channel_angle_games.py: OK! 
+ 89  3.36 examples/gen_fs_general.py    : OK! 
+ 90  1.61 examples/marfe_plot.py        : OK! 
+ 91  0.51 examples/flip_phase.py        : OK! 
+ 92  0.44 examples/plot_text_pyfusion.py: ion/working/pyfusion/pyfusion/examples/PF2_120227_HMPno12_27233_27233_1.dat' 
+ 93  2.24 examples/check_polarity_flips.py: OK! 
+ 94  0.08 examples/file_finder_db.py    : 3.5 onwards TypeError: glob() got an unexpected keyword argument 'recursive' 
+ 95  0.56 examples/play_with_fft_signals.py: OK! 
+ 96  0.14 examples/prepfs_range_mp.py   : OK! 
+62 good, 35 errors out of 97
+
  Python 2.7.6 (default, Jun , Pyfusion 0.7.6a (acfe66a) Tue Nov  8 10:49:44 2016
   0  2.23 examples/plot_specgram.py     : t_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
   1  0.57 examples/get_basic_params.py  : se ValueError('no good shots') ValueError: no good shots 

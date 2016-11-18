@@ -393,8 +393,8 @@ class BaseDataFetcher(object):
         else:
             data = tmp_data
             method = 'local_npz'
-            self_params = eval('dict('+self.params+')')
             if hasattr(data, 'params') and 'DMD' in data.params:
+                self_params = eval('dict('+self.params+')')
                 if pyfusion.VERBOSE>0: print('Comparing params in base.py',self_params,'\n', data.params)
                 if self_params['DMD'] != data.params['DMD']:
                     raise Exception(('conflicting DMD from npz on {s}, {d}: {dmd1}, {dmd2}'.

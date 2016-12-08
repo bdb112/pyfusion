@@ -9,6 +9,10 @@ Most recent update:
    on machines with acccess to the archivedB
  maybe use functools.wraps so that the __doc__ of plot_signals can be seen
 
+Version 0.7.9.beta
+
+* fixups in W7X/fetch and W7X_read_json
+
 Version 0.7.8.beta
 
 * include raw dimension utcs in data.params - can be used to try to recontruct bad time vectors.

@@ -200,7 +200,8 @@ class W7XDataFetcher(BaseDataFetcher):
         # this is a minor duplication - at least it gets saved via params
         params['data_utc'] = output_data.utc
         # Warning - this could slow things down! - but allows corrupted time to be re-calculated as algorithms improve.
-        params['diff_dimraw'] = np.diff(dimraw)
+        params['diff_dimraw'] = dimraw
+        params['diff_dimraw'][1:] = np.diff(dimraw)
         params['pyfusion_version'] = pyfusion.version.get_version()
         if pyfusion.VERBOSE > 0:
             print('shot {s}, config name {c}'

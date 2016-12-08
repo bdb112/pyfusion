@@ -13,12 +13,26 @@ files = """
 """
 
 import json
-from numpy import sort, unique, diff
+from numpy import sort, unique, diff, cumsum
 from numpy import savez_compressed as savez
 from tempfile import TemporaryFile
+import numpy as np
+import matplotlib.pyplot as plt
+
+def recover_time(dat, debug=1, linthreshy=1e5):
+    diffdim = dat.params['diff_dimraw']
+    dim = cumsum(diffdim)
+    fake = np.arange(len(dim)) * 2000
+    plt.plot(dim - dim[0] - fake)
+    plt.gca().set_yscale('symlog', linthreshy=linthreshy)
+    plt.ylim(-1e7,1e7)
+    plt.show()
+    if debug: 
+        1/0
+    
 
 files = files.split()
-
+files =''
 dicts = []
 for fil in files:
     dic = json.load(open(fil))
@@ -39,6 +53,7 @@ for fil in files:
 #pyfusion.config.set('global','localdatapath','local_data') 
 
 # this request translates to a json file which is stored locally - see below for complete example
+# need to disable all networks
 xx=dev.acq.getdata([20160302,23],'W7X_L53_LP10_I',no_cache=1)
 http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.82/DataModuleDesc.190_DATASTREAM/5/Channel_5/scaled/_signal.json?from=1457536002136103981&upto=1457536069136103980
 
@@ -55,3 +70,19 @@ run pyfusion/examples/save_to_local.py "diag_name=['W7X_L53_LP10_I']" shot_list=
  6200080  Defl:N  2143103  65% 2016-12-08 13:28 e737eb58  rawtimebase.npy
  3100080  Defl:N  1583864  49% 2016-12-08 13:28 7c85b5a6  rawsignal.npy
 12400613  Defl:N    19644 100% 2016-12-08 13:28 147443c3  params.npy
+
+dev.acq.getdata([20160302,26],'W7X_L53_LP07_I',no_cache=1)
+is 
+archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.82/DataModuleDesc.190_DATASTREAM/2/Channel_2/scaled/_signal.json?from=1456932404467103981&upto=1456932471467103980
+
+
+dev.acq.getdata([20160302,26],'W7X_L53_LP01_I',no_cache=1)
+is
+archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.82/DataModuleDesc.183_DATASTREAM/4/Channel_4/scaled/_signal.json?from=1456932404467103981&upto=1456932471467103980
+
+dev.acq.getdata([20160302,23],'W7X_L57_LP10_I',no_cache=1) is
+archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.82/DataModuleDesc.182_DATASTREAM/1/Channel_1/scaled/_signal.json?from=1456930821345103981&upto=1456930888345103980
+
+and /Channel_0/_signal.json?from=1455802229271153060&upto=1455802230268617061 is probbaly 0218.040 but the time range is 67 secs!
+
+"""

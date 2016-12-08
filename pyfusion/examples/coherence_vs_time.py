@@ -24,6 +24,7 @@ def runavg(t, y, period=1e-3, return_time=False):
 _var_defaults = """
 diag1 = 'H1ISat'
 diag2 = 'H1CameraTrig'
+diag_extra = "H1Puff"
 dev_name = "H1"
 shot_number = 91700
 hold=0
@@ -44,10 +45,15 @@ if shot_number in  [0,1]:
     shot_number = tr.getCurrent('h1data') + shot_number
 
 dev = pyfusion.getDevice(dev_name)
-data1 = dev.acq.getdata(shot_number,diag1)
-data2 = dev.acq.getdata(shot_number,diag2)
+data1 = dev.acq.getdata(shot_number, diag1)
+data2 = dev.acq.getdata(shot_number, diag2)
+
+comlen = min(data1.timebase[-1], data2.timebase[-1])
+data1 = data1.reduce_time([0, comlen])
+data2 = data2.reduce_time([0, comlen])
+
 try:
-    datap = dev.acq.getdata(shot_number,'H1Puff')
+    datap = dev.acq.getdata(shot_number,diag_extra)
 except:
     datap = None
 

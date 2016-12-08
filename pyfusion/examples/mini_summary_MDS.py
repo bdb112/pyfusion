@@ -27,12 +27,16 @@ scatter(*(np.transpose(conn.execute('select shot, is2/im2 as kh from summ where 
 duds 36362
 """
 import sys
+import os
 from pyfusion.data.signal_processing import smooth_n
 from time import time as seconds
-
+from six.moves import input
 
 from sqlalchemy import create_engine 
-engine=create_engine('sqlite:///:memory:', echo=False)
+sqlfilename = '/H1.sqlite'
+dbpath = os.path.dirname(__file__)
+engine=create_engine('sqlite:///'+ dbpath + sqlfilename, echo=False)
+#engine=create_engine('sqlite:///:memory:', echo=False)
 #engine=create_engine('sqlite:///testmds.sqlite', echo=False)
 #engine = create_engine('mysql://127.0.0.1/bdb112', echo=False)
 """
@@ -102,6 +106,14 @@ def Integral(x,t):
 def Value(x,t):
     if np.issubdtype(type(x), int):
         return(int(x))
+    elif isinstance(x, (str)):
+        return(x[0])
+    else:
+        return(x)
+
+def StringValue(x,t):
+    if isinstance(x, (np.ndarray)):
+        return(x[0])
     else:
         return(x)
 
@@ -117,7 +129,8 @@ else:
     srange = range(88600,88732)
 
 
-diags = dict(im1 = [Float, '.operations.magnetsupply.lcu.setup_main.i1', Value],
+diags = dict(comment = [String, '.log.machine.comment', StringValue],
+             im1 = [Float, '.operations.magnetsupply.lcu.setup_main.i1', Value],
              im2 = [Float, '.operations.magnetsupply.lcu.setup_main.i2', Value],
              im3 = [Float, '.operations.magnetsupply.lcu.setup_main.i3', Value],
              is1 = [Float, '.operations.magnetsupply.lcu.setup_sec.i1', Value],
@@ -126,6 +139,7 @@ diags = dict(im1 = [Float, '.operations.magnetsupply.lcu.setup_main.i1', Value],
              rf_drive = [Float, '.rf.rf_drive', Peak],
              i_fault = [Float, '.operations:i_fault', Average],
              rf_freq = [Float, '.log.heating.rf_freq', Value],
+             rf_freq2 = [Float, '.log.heating.snmp.t2.measured.frequency', Value],
              llrf_mode = [Integer, '.log.heating.snmp.t1.operational.llrf.stallrfopm', Value],
              llrf_power = [Float, '.log.heating.snmp.t1.operational.llrf.stallrfppw', Value],
              llrf2_mode = [Integer, '.log.heating.snmp.t2.operational.llrf.stallrfopm', Value],
@@ -151,6 +165,13 @@ metadata.create_all(engine)
 # simple method
 
 ins=summ.insert()  # not sure why this is needed?
+result=conn.execute('select count(*) from summ')
+n = result.fetchone()[0]
+if n> 0:
+    ans = input('database is populated with {n} entries:  Continue?  (y/N)'.format(n=n))
+    if len(ans)==0 or ans.lower()[0] == 'n':
+        print("Example\n>>> conn.execute('select * from summ order by shot desc limit 1').fetchone()")
+        sys.exit()
 
 import MDSplus as MDS
 

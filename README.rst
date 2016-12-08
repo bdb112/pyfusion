@@ -9,6 +9,17 @@ Most recent update:
    on machines with acccess to the archivedB
  maybe use functools.wraps so that the __doc__ of plot_signals can be seen
 
+Version 0.7.8.beta
+
+* include raw dimension utcs in data.params - can be used to try to recontruct bad time vectors.
+* save_compress py3, save_to_local - save logs as json.
+* document valid_dates
+* many impronements to W7X_neTe_profile, cmd_line, Pdsmooth, median, compensation, profile fits
+* also plot_both_LP2D.py
+* mini_summary includes text and MDS version
+* pyfusion.cfg - add more valid_dates, and add individual ECH chans
+* W7X_read_json - for testing url reads off line
+
 Version 0.7.7 alpha
 
 * Add a valid_dates feature to base.py so that pyfusion.cfg can have

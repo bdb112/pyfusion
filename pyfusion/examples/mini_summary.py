@@ -40,8 +40,15 @@ from six.moves import input
 from sqlalchemy import create_engine 
 #engine=create_engine('sqlite:///:memory:', echo=False)
 # put the file in the example (this) folder although it may be better in the acquisition/W7X folder
+
+devname = 'W7X'
+if 'W7' in devname:
+    sqlfilename = '/W7X_mag_OP1_1.sqlite'
+else:
+    sqlfilename = '/H1.sqlite'
+
 dbpath = os.path.dirname(__file__)
-engine=create_engine('sqlite:///'+ dbpath + '/W7X_mag_OP1_1.sqlite', echo=False)
+engine=create_engine('sqlite:///'+ dbpath + sqlfilename, echo=False)
 #engine = create_engine('mysql://127.0.0.1/bdb112', echo=False)
 """
 from sqlalchemy.interfaces import PoolListener
@@ -160,14 +167,18 @@ diags = dict(IPlanar_A = [Float, 'W7X_IPlanar_A', Average, 1],
              ITrim_3 = [Float, 'W7X_ITrim_3', Average, 1],
              ITrim_4 = [Float, 'W7X_ITrim_4', Average, 1],
              ITrim_5 = [Float, 'W7X_ITrim_5', Average, 1],
+             ECH_Rf_A1 = [Float, 'W7X_ECH_Rf_A1', Average, 1],
+             ECH_Rf_B1 = [Float, 'W7X_ECH_Rf_B1', Average, 1],
+             ECH_Rf_C1 = [Float, 'W7X_ECH_Rf_C1', Average, 1],
+             ECH_Rf_D1 = [Float, 'W7X_ECH_Rf_D1', Average, 1],
+             ECH_Rf_A5 = [Float, 'W7X_ECH_Rf_A5', Average, 1],
+             ECH_Rf_B5 = [Float, 'W7X_ECH_Rf_B5', Average, 1],
+             ECH_Rf_C5 = [Float, 'W7X_ECH_Rf_C5', Average, 1],
+             ECH_Rf_D5 = [Float, 'W7X_ECH_Rf_D5', Average, 1],
+             
              imain = [Float, 'W7X_INonPlanar_1', Average, 1],)
 
-"""
-diags = dict(imain = [Float, 'need to define in pyfusion.cfg', Value],
-             im2 = [Float, '.operations.magnetsupply.lcu.setup_main.i2', Value],
-"""
-
-"""
+xdiags = dict(imain = [Float, 'need to define in pyfusion.cfg', Value],
              im2 = [Float, '.operations.magnetsupply.lcu.setup_main.i2', Value],
              im3 = [Float, '.operations.magnetsupply.lcu.setup_main.i3', Value],
              is1 = [Float, '.operations.magnetsupply.lcu.setup_sec.i1', Value],
@@ -189,7 +200,7 @@ diags = dict(imain = [Float, 'need to define in pyfusion.cfg', Value],
              isweep = [Float, '.fluctuations.BPP:isweep',Std],
              mirnov_coh =  [Float, '', Special],
          )
-"""
+
 # make the database infrastructure
 col_list = [Column('shot', Integer, primary_key=True), 
             Column('date', Integer, primary_key=True),
@@ -217,9 +228,9 @@ result=conn.execute('select count(*) from summ')
 n = result.fetchone()[0]
 if n> 0:
     ans = input('database is populated with {n} entries:  Continue?  (y/N)'.format(n=n))
-if len(ans)==0 or ans.lower()[0] != 'n':
-    print("Example: conn.execute('select * from summ limit 1').fetchone()")
-    sys.exit()
+    if len(ans)==0 or ans.lower()[0] == 'n':
+        print("Example\n>>> conn.execute('select * from summ order by shot desc limit 1').fetchone()")
+        sys.exit()
 shots = 0
 
 # set these both to () to stop on errors
@@ -234,24 +245,35 @@ print('If off-line, set pyfusion.TIMEOUT=0 to prevent long delays')
 
 
 start = seconds()
-dev=pyfusion.getDevice('W7X')  # 'H1Local')
+dev=pyfusion.getDevice(devname)  # 'H1Local')
 from pyfusion.data.shot_range import shot_range as expand_shot_range
 srange = ((20160309,1), (20160310,99))
 srange = ((20160101,1), (20160310,99))
 #srange = ((20160202,1), (20160202,99))
-srange = expand_shot_range(*srange)
+if 'W7' in devname:
+    srange = expand_shot_range(*srange)
+else:
+    srange=range(92000,95948)
 
 for sh in srange: # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,88891): #81399,81402):  #(81600,84084):
-    datdic = dict(shot=sh[0]*1000+sh[1], date=sh[0], sshot=sh[1])
-    shots += 1
-    try:
-        if (sh[1]%10)==0: 
+    if 'W7' in devname:
+        datdic = dict(shot=sh[0]*1000+sh[1], date=sh[0], sshot=sh[1])
+        if (sh[1] % 10) == 0:
             print(sh),
         else: 
             print('.'),
         if (sh[1]%100)==0: print('')
+    else:
+        datdic = dict(shot=sh)
+        if (sh%10)==0: 
+            print(sh),
+        else: 
+            print('.'),
+
+    shots += 1
+    try:
         non_special = list(diags.keys())
-        #non_special.remove('mirnov_coh')
+        # non_special.remove('mirnov_coh')
         for diag in non_special:
             try:
                 if len(diags[diag]) == 3: 
@@ -261,7 +283,6 @@ for sh in srange: # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,8889
                     typ, node, valfun, dp = diags[diag]
 
                 data = dev.acq.getdata(sh, node)
-
                 if hasattr(data, 'timebase'):
                     tb = data.timebase
                 else:

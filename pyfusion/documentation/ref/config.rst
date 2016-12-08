@@ -109,6 +109,53 @@ setting DMD=0, so all the other charactersitics remain, so it can be
 easily restored.
 
 
+1/ If a single channel diagnostic has no 'valid_dates', the value of its .acq valid dates is used.
+
+2/ If a shot is requested outside the valid range, a series of modifier diagnostic entries Mn, where n is an integer are searched for until one with a valid_date range which includes that shot.
+ 
+An extract from pyfusion.cfg as an example::
+
+  [Acquisition:W7X]
+  acq_class = pyfusion.acquisition.W7X.acq.W7XAcquisition
+  domain = ipp-hgw.mpg.de
+  # Look for this string in the list of name servers for domain - if not found,
+  #   then the URL is probably not accessible through this connection.
+  # Avoids an unnecessary (long) wait to see error messages.  
+  lookfor = sv
+  valid_dates = L53_LP_from=20160122,L53_LP_to=20160310,L57_LP_from=20160122,L57_LP_to=20160310
+
+  ----- further down in the file ----
+
+  [Diagnostic:W7X_L53_LP05_I]
+  valid_dates = L53_LP_from=20160223,L53_LP_to=20160310
+  coords_w7_x_koord = 1.72390, -5.41380, 0.21680
+  area = 0.963e-06
+  sweepv = W7X_L53_LP01_U
+  gain =  %(1Ohm)s
+  data_fetcher = %(W7Xfetcher)s
+  params = CDS=82,DMD=190,ch=0
+
+  [Diagnostic:W7XM1_L53_LP05_I]
+  #The first modification says for the dates from 1/22 to 2/18, use a different DMD (digitiser box address)
+  valid_dates = L53_LP_from=20160122,L53_LP_to=20160218
+  params = CDS=82,DMD=184,ch=0
+
+So in this example shots on 20160224 would get the parameters from the
+main entry (W7X_L53_LP05_I) but a shot on the 18th Feb or earlier would get the main entry, but with the new params line, including DMD=184
+
+The effect is cumulative, so there is no need to repeat the unchanged parameters.
+
+The LHS of the date (e.g. L53_LP) restricts the application to
+diagnostics matching the letters before '_from' and '_to' .  This is
+pretty crude, but is needed so that inheritance form .acq will work.
+Otherwise there has to be a valid_date in every entry.   (which may be
+a good thing in the long term, but to much work for now. - only the
+diagnostics that change need valid dates for now.) Another reason for
+a 'selective' date range, one that applies to a select range of
+diagnostics, is that %() substitution can be used to simplfy edits.
+
+This 'working backwards' seems a natural fit to the way the changes were made, and fits well with Soren's excel, but it would need modification if a new configuration was used at a later date.  Some M1's would need to be edited into M2's etc.  Messy.  I can't easily see how to make a scheme working forward in time, but we don't need that until W7-X Op1.2!  
+
 
 Loading config files
 --------------------

@@ -28,28 +28,6 @@ from pyfusion.acquisition.W7X.puff_db import get_puff
 from pyfusion.acquisition.W7X.mag_config import get_mag_config, plot_trim
 from copy import deepcopy
 
-dummy = 0  # True will generate dummy data
-NGY = 600j  # number of points in image grid
-NGX = NGY # theoretically need more res in X, but
-          # near horizontal lines at top and bottom need more Y
-#rc('font', **{'size':18})
-minpts = 17
-probe_chans = [1]
-loc = 'best'
-marg = 0.2  # room to leave at either end of the time axis
-srange = range(110, 130)
-p_range = [0, 1]  # .4 for 224:35 - default
-start_time = None  # default
-#srange = range(len(da['t_mid']))
-step = 14  # 3  # use every (step) time slice but skip unsuitable ones
-ne_scl_basic = 500  # 500 good for normal sized plots - will be normalised later
-
-# Soren says seg 7,  9 and 19 are damaged, and seg 3 10 and 12
-suppress_ne = '3_LP10::3_LP11::7_LP09::7_LP11::7_LP12::7_LP19'.split('::')
-show_power = 1
-ne_kwargs = dict(cmap='jet')   # 'gray_r'
-
-db ={}
 """
 dafile = '20160302_12_L57'
 Te_range = None
@@ -63,21 +41,25 @@ dafile = 'LP20160302_12_L57'
 Te_range = [10, 100]  # 20160302_12
 ne_range = [0, 2]
 
+
 """
+db = {}
+
 db.update(dict(LP20160310_9=dict(
 Te_range = [20, 100],  # 
 ne_range = [0, 15],
     p_range = [0,5],  # 3 later in shot
-minpts=16,
+minpts=15,
+srange = range(294,320), # .35 sec
 #srange = range(600,620), # 983ms
-srange = range(680,700) # 983ms
+#srange = range(680,700) # 1140ms
 )))
 
 
 db.update(dict(LP20160310_7=dict(
 Te_range = [10, 80],  # 
 ne_range = [0, 2],
-minpts=17,
+minpts=16,
 #srange = range(200,220), #440
 srange = range(400,420), #840
 #srange = range(800,820), # 1.644 sec 
@@ -127,19 +109,18 @@ db.update(dict(LP20160309_52=dict(
 Te_range = [5, 20],  # [8, 60] for 51
 ne_range = [0, 15],
 #probe_chans = [1,4,5,6,7],
-probe_chans = [1,4,5,6],
+    probe_chans = [1,4,5,6], # 7 is good, but takes up space.
 average = False,  #  in future, make this an option
-#srange = range(60,68), # 92),   # range over which to create frames (or to average)
+#srange = range(60, 92),   # 196ms range over which to create frames (or to average)
 #srange = range(200, 222),   # towards end before rise (2000,2)
-srange = range(230, 248),   # towards end during rise (2000,2)
-#srange = range(230, 262),   # during fall
+srange = range(230, 248),   # during fall (2000,2) 508MS
 minpts=16,
 )))
 for ss in [51]: db.update({'LP20160309_{ss}'.format(ss=ss): deepcopy(db['LP20160309_52'])})
 #db['LP20160309_51'].update(dict(Te_range=[10,50], p_range=[0,1.5], srange=range(160,180)))
 
 db.update(dict(LP20160224_31=dict(
-    Te_range = [8, 40],  # [8, 60] for 51
+Te_range = [8, 40],  # [8, 60] for 51
 ne_range = [0, 10],
 #probe_chans = [1,4,5,6,7],
 probe_chans = [1,4,5,6],
@@ -151,6 +132,18 @@ minpts=16,
 )))
 for ss in [23, 26, 30, 35]: db.update({'LP20160224_{ss}'.format(ss=ss): deepcopy(db['LP20160224_31'])})
 db['LP20160224_26'].update(dict(Te_range=[10,50], p_range=[0,1.5], srange=range(160,180)))
+db['LP20160224_30'].update(dict(Te_range=[10,60], p_range=[0,1.5], srange=range(160,180)))
+
+db.update(dict(LP20160308_23=dict(
+Te_range = [8, 80],  # [8, 60] for 51
+ne_range = [0, 5],
+#probe_chans = [1,4,5,6,7],
+probe_chans = [1,4,5,6],
+average = False,  #  in future, make this an option
+srange = range(60,80),
+minpts=16,
+)))
+for ss in [22,24]: db.update({'LP20160308_{ss}'.format(ss=ss): deepcopy(db['LP20160308_23'])})
 
 """
 # dafile = 'LP20160224_25_L53'
@@ -176,14 +169,48 @@ minpts=18
 """
 
 #########################
-if len(sys.argv)>1:
-    dafile=sys.argv[1]
+_var_defaults = """
+dafile = 'foo'
+dummy = 0  # True will generate dummy data
+NGY = 600j  # number of points in image grid
+NGX = NGY # theoretically need more res in X, but
+          # near horizontal lines at top and bottom need more Y
+#rc('font', **{'size':18})
+minpts = 17
+probe_chans = [1]
+loc = 'best'
+marg = 0.2  # room to leave at either end of the time axis
+srange = range(110, 130)
+p_range = [0, 1]  # .4 for 224:35 - default
+start_time = None # 0.9 # None  # default
+#srange = range(len(da['t_mid']))
+step = 20  # 3  # use every (step) time slice but skip unsuitable ones
+ne_scl_basic = 500  # 500 good for normal sized plots - will be normalised later
 
-if len(sys.argv)>2:
-    start_time=float(sys.argv[2])
+# Soren says seg 7,  9 and 19 are damaged, and seg 3 10 and 12
+suppress_ne = '3_LP10::3_LP11::7_LP09::7_LP11::7_LP12::7_LP19'.split('::')
+show_power = 0
+ne_kwargs = dict(cmap='jet')   # 'gray_r'
+nrm = [None, None]
 
-if len(sys.argv)>3:
-    minpts=int(sys.argv[3])
+"""
+
+exec(_var_defaults)
+
+# read single arg if there are no equal signs - otherwise interpret options
+if len(sys.argv)>1 and np.all(['=' not in sa for sa in sys.argv]):
+    if len(sys.argv)>1:
+        dafile=sys.argv[1]
+
+    if len(sys.argv)>2:
+        start_time=float(sys.argv[2])
+
+    if len(sys.argv)>3:
+        minpts=int(sys.argv[3])
+
+else:
+    from pyfusion.utils import process_cmd_line_args
+    exec(process_cmd_line_args())
 
 
 #if not(os.path.exists(dafile)):
@@ -221,7 +248,7 @@ figs= []
 num = None  # None auto numbers figures
 
 
-figsize=(10, 7) if len(figs)>-1 else plt.rcParams['figure.figsize']  # first figure is rc default size
+figsize=(10, 7) if len(figs)>0 else plt.rcParams['figure.figsize']  # first figure is rc default size
 fig, (axu, axl) = plt.subplots(2, 1, sharex=True, num=num, figsize=np.array(figsize)[::-1])
 
 # see N2_puff_correlation for the vertical offsets of text point labels
@@ -262,6 +289,11 @@ for ax, seg in zip([axu, axl],['3','7']):
         eTe_raw = da['eTe'][s] if 'eTe' in da else 10 + 0*Te_raw
         Vf_raw  = da.masked[Vf][s]
         I0_raw  = da.masked['I0'][s]
+        if nrm[seg == '7'] is not None:
+            ne_raw_orig = ne_raw * 1.0
+            ne_raw = ne_raw/nrm[seg == '7']
+            I0_raw = I0_raw*ne_raw/ne_raw_orig/nrm[seg == '7']
+
         #  ne_cleaned has the suspect channels removed (see suppress_ne)
 
         coords = np.array(da.infodict['coords'])
@@ -341,7 +373,7 @@ for ax, seg in zip([axu, axl],['3','7']):
         # fig.set_figheight(1.5*fig.get_figheight())  # no effect!
         # fig.set_size_inches(fig.get_size_inches()[::-1], forward=True) # this works I think
         figs.append(fig)
-        time_strip_h = 0.12  # 0.2
+        time_strip_h = 0.16  # 0.2  0.12
         split = 0.03
         broken_axes = 0
         fig.subplots_adjust(bottom=.11 + time_strip_h, left=0.13, hspace=split, right=0.75, top=0.93)
@@ -391,7 +423,7 @@ for ax, seg in zip([axu, axl],['3','7']):
         ext = (np.min(grid_x), np.max(grid_x), np.min(grid_z), np.max(grid_z))
         axim = ax.imshow(negr.T, origin=org, aspect='equal', extent=ext, **ne_kwargs)
         shr = 0.1  #  the colorbars are a little shorter
-        cbarneax = plt.axes([0.9, 0.1 + shr + time_strip_h, 0.04, 0.8 - time_strip_h - 2*shr])
+        cbarneax = plt.axes([0.88, 0.1 + shr + time_strip_h, 0.04, 0.8 - time_strip_h - 2*shr])
         cbarne = plt.colorbar(axim,cax=cbarneax)
         # cbarne.set_label(r'$n_e/10^{18}$', rotation=270, labelpad=15, fontsize='large')
         cbarne.ax.title.set_text(ne_lab)
@@ -404,7 +436,7 @@ for ax, seg in zip([axu, axl],['3','7']):
         # now better ones
         w = wg_suppr
         Temappable = ax.scatter(x[w], z[w], ne_scl*ne_cleaned, Te_raw[w], **sc_kwargs)
-        cbarTeax = plt.axes([0.8, 0.1 + shr + time_strip_h, 0.05, 0.8 - time_strip_h - 2*shr])
+        cbarTeax = plt.axes([0.79, 0.1 + shr + time_strip_h, 0.05, 0.8 - time_strip_h - 2*shr])
         cbarTe = plt.colorbar(Temappable, cax=cbarTeax)
         #  cbarTe.set_label(r'$T_e (eV)$', rotation=270, fontsize='large')
         cbarTe.ax.title.set_text('$T_e$\n$(eV)$')
@@ -451,7 +483,6 @@ wech = np.where(echdata.signal > 100)[0]
 tech = echdata.timebase[wech[0]]
 t0_utc = int(tech * 1e9) + echdata.utc[0]
 dtprobe = (da['info']['params']['i_diag_utc'][0] - t0_utc)/1e9
-
 tslice = da['t_mid'][s-step//2] + dtprobe
 dtaverage = da['t_mid'][s] - da['t_mid'][s-step]
 dtstr = '{dt:.2f}s avg'.format(dt=dtaverage)
@@ -470,7 +501,7 @@ axu.set_title(tit+'\nProgram Id {s}, time={t:.4f} {ind}'# {dt}'
               .format(s=shot, fn=da.name, t=tslice, dt=dtstr, ind=ind))
 
 if cfg_dict is not None:
-    plot_trim(axu, mag_dict=cfg_dict)
+    plot_trim(axu, mag_dict=cfg_dict, color='g', aspect=1.2)
 
 if time_strip_h > 0:
     locator = MaxNLocator(nbins=3)  # , prune='upper') # This is for the time
@@ -480,6 +511,7 @@ if time_strip_h > 0:
     # plot ECH til after probes so colours match up
     diags = ['ne18','Te']
     axtwin = axtime.twinx()
+    deflw = plt.rcParams['lines.linewidth']
     for (i, diag) in enumerate(diags):
         for (pp, prch) in enumerate(probe_chans):
             probedata = dummysig(da['t_mid'],da[diag][prch])
@@ -488,11 +520,11 @@ if time_strip_h > 0:
             dtprobe = (probedata.utc[0] - t0_utc)/1e9
             axx = axtime if i == 0 else axtwin
             axx.plot(probedata.timebase + dtprobe, probedata.signal,
-                     ls=['-', ':'][i], lw=[1, 2][i],
+                     ls=['-', ':'][i], lw=[1*deflw, 1.5*deflw][i], # dashes heavier than line
                      label='{diag} s{ch}'  # _ needs to have sepcial treatment if full latex
                      .format(diag=diag, ch=da['info']['channels'][prch][2:]))
 
-    axtime.plot(echdata.timebase - tech, echdata.signal/1000, label='ECH',lw=2*plt.rcParams['lines.linewidth'])
+    axtime.plot(echdata.timebase - tech, echdata.signal/1000, label='ECH',lw=1.5*plt.rcParams['lines.linewidth'])
     gasdata = dev.acq.getdata(shot, 'W7X_GasCtlV_23')
     dtgas = (gasdata.utc[0] - t0_utc)/1e9
     wplasmagas = np.where((gasdata.timebase+dtgas > np.min(probedata.timebase+dtprobe)) 

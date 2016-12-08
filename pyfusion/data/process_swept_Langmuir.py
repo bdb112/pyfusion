@@ -623,8 +623,6 @@ class Langmuir_data():
         detect plasma time range with quick and dirty method
         restrict time range, but keep pre-shot data accessible for evaluation of success of removal
         """
-        # first do the things that are better done on the whole data set.
-
         self.figs = []  # reset the count of figures used to stop too many plots
         self.actual_params = locals().copy()
         # try to catch mispelling, variables in the wrong place
@@ -673,7 +671,10 @@ class Langmuir_data():
             # TODO(bdb): use of default_sweep should generate a warning
             self.vassoc.append(cd.get('sweepv', default_sweep))
 
+        # first do the things that are better done on the whole data set.
         # prepare_sweeps will populate self.vcorrfull
+        # self.check_crosstalk(verbose=0)  # this could be slow
+
         self.prepare_sweeps(rest_swp=rest_swp)
         self.get_iprobe(leakage=leakage, t_comp=t_comp)
 
@@ -733,8 +734,8 @@ class Langmuir_data():
             if '{' in filename:
                 filename = filename.format(s0=self.shot[0], s1=self.shot[1], i_diag=self.i_diag)
             print('writing {fn}'.format(fn=filename))
-            print(r"doesn't work yet")
-            #self.write_DA(filename)
+            # Lukas had trouble with this in python 3
+            self.write_DA(filename)
             
         if return_data:
             return(self.fitdata)

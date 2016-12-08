@@ -69,13 +69,13 @@ def discretise_array(arrin, eps=0, bits=0, maxcount=0, verbose=None, delta_encod
     if initial_deltar>0:
         # find the largest power of 10 smaller than initial_deltar
         p10r=log10(initial_deltar)
-        p10int=int(100+p10r)-100   # always round down
+        p10int=int(100+p10r)-100   # always round down - MUST use np.round otherwise get type Signal doesn't define __round__ 
         ratiop10=initial_deltar/10**p10int
-        eps10=abs(round(ratiop10)-ratiop10)
+        eps10=abs(np.round(ratiop10)-ratiop10)
         if verbose>3: print("ratiop10=%g, p10r=%g, eps10=%g, p10int=%d, initial_deltar=%g" % 
               (ratiop10, p10r, eps10, p10int, initial_deltar))
         if eps10<3e-3*ratiop10: 
-            initial_deltar=round(ratiop10)*10**p10int
+            initial_deltar=np.round(ratiop10)*10**p10int
             if verbose>2: print("timebase: trying an integer x power of ten")
             ans=try_discretise_array(arr, eps=eps,bits=bits, 
                                      deltar=initial_deltar, verbose=verbose, 

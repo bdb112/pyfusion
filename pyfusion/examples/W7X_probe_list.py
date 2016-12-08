@@ -4,17 +4,22 @@ Useful for cross-checking.
 
 Can either have one option/line, and no irrelevant diags or all options
 on one line, but then irrelevant diags are printed as well
+
+# another way to check for dups
+
+>>> import collections
+>>> print [item for item, count in collections.Counter([(a['DMD'],a['ch']) for a in allvals]).items() if count > 1]
+
 """
 
 from __future__ import print_function
 import pyfusion
 import numpy as np      
 
-option_list = 'coords_w7_x_koord,area,params,sweepv,gain'
+#option_list = 'coords_w7_x_koord,area,params,sweepv,gain'
 #option_list = 'sweepv'
-#option_list = 'params'
+option_list = 'params'
 #option_list = 'gain'
-
 allsects = pyfusion.config.sections()
 allsort = np.sort(allsects)
 

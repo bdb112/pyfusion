@@ -44,7 +44,7 @@ import pyfusion
 from pyfusion.data.save_compress import discretise_signal as savez_new
 import pyfusion.utils
 import numpy as np
-import os, pickle
+import os, pickle, json
 import time as tm
 from pyfusion.debug_ import debug_
 
@@ -172,9 +172,12 @@ for shot_number in shot_list:
                               verbose=pyfusion.VERBOSE, **save_kwargs)
             goods.append((shot_number,'whole thing'))
         except exception as reason:
-            bads.append((shot_number,'whole thing',reason))
+            bads.append((shot_number,'whole thing',reason.__repr__()))
             print('skipping shot {s} because <<{r}>>'.format(r=reason, s=shot_number))
-pfile = tm.strftime('%Y%m%d%H%M%S_save_local_log.pickle')
+pfile = tm.strftime('%Y%m%d%H%M%S_save_local_log')
 print('See bads for {l} errors, also goods, and in {pfile}'.format(l=len(bads), pfile=pfile))
-pk = open(pfile,'w')
-pickle.dump([bads,goods], pk)
+pk = open(pfile+'.pickle','w')
+try:
+    json.dump((bads, goods), open(pfile+'.json','w'))
+except:
+    pickle.dump([bads,goods], pk)

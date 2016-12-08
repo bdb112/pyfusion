@@ -397,7 +397,8 @@ class BaseDataFetcher(object):
                 self_params = eval('dict('+self.params+')')
                 if pyfusion.VERBOSE>0: print('Comparing params in base.py',self_params,'\n', data.params)
                 if self_params['DMD'] != data.params['DMD']:
-                    raise Exception(('conflicting DMD from npz on {s}, {d}: {dmd1}, {dmd2}'.
+                    # below was raise Exception but really should be replace with nans?
+                    print(('conflicting DMD from npz on {s}, {d}: {dmd1}, {dmd2}'.
                                      format(s=self.shot, d=self.config_name, dmd1=self_params['DMD'], dmd2=data.params['DMD'])))
             else: 
                 if pyfusion.VERBOSE>-1: print("Can't check DMD on {s}, {d}".format(s=self.shot, d=self.config_name))

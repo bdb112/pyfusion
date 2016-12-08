@@ -1,4 +1,8 @@
 """ W7-X data fetchers. 
+
+Since December 8th 2016, cached npz files include the raw utcs (differenced) at very little additional cost
+in space.  - see examples/read_W7X_json.py
+
 Example of data reaching over a break in time
 run pyfusion/examples/plot_signals.py  dev_name='W7X' diag_name=W7X_L53_LP1 shot_number=[1457015819400000000,1457015821000000000] hold=1 sharey=2
 best to limit nSamples to ~ 10k - see pyfusion.cfg
@@ -167,7 +171,8 @@ class W7XDataFetcher(BaseDataFetcher):
         default_repair = 2 if 'Desc.82/' in url else 0
         # this form follows the config file settings
         self.repair = int(self.repair) if hasattr(self, 'repair') else default_repair
-        dim = np.array(dat['dimensions']) - dat['dimensions'][0]
+        dimraw = np.array(dat['dimensions'])  
+        dim = dimraw - dimraw[0]
         if self.repair == 0:
             pass # leave as is
         # need at least this clipping for Langmuir probes in Op1.1
@@ -194,6 +199,8 @@ class W7XDataFetcher(BaseDataFetcher):
         output_data.units = dat['units'] if 'units' in dat else ''
         # this is a minor duplication - at least it gets saved via params
         params['data_utc'] = output_data.utc
+        # Warning - this could slow things down! - but allows corrupted time to be re-calculated as algorithms improve.
+        params['diff_dimraw'] = np.diff(dimraw)
         params['pyfusion_version'] = pyfusion.version.get_version()
         if pyfusion.VERBOSE > 0:
             print('shot {s}, config name {c}'
@@ -273,10 +280,10 @@ class W7XDataFetcher(BaseDataFetcher):
                 self.acq.access = None
         #the lines below probably should be in W7X/fetch
         if self.acq.access is False:
-            raise LookupError('URL for {u} is probably not accessible or the\n '\
+            raise LookupError('URL for {d} in {s} is probably not accessible or the\n '\
                               'necessary software (dnspython or nslookup/grep) is not installed.\n'\
                               'Set pyfusion.LAST_DNS_TEST=-1 to skip test'
-                              .format(u=self.config_name))
+                              .format(d=self.config_name, s=self.shot))
 
 
 

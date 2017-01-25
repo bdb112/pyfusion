@@ -26,6 +26,7 @@ def recover_time(dat, debug=1, linthreshy=1e5):
     plt.plot(dim - dim[0] - fake)
     plt.gca().set_yscale('symlog', linthreshy=linthreshy)
     plt.ylim(-1e7,1e7)
+    plt.title(dat.history)
     plt.show()
     if debug: 
         1/0

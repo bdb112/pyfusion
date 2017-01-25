@@ -84,7 +84,7 @@ def list_vars(locdict, Stop, tail_msg=''):
                 print("  %s = %s" %  (k, locdict[k]))
                 _n +=1
                 if (_n==20):
-                    # was raw_input for python2 - hopefully siz.moves works for python2/3
+                    # was raw_input for python2 - hopefully six.moves works for python2/3
                     ans=input('do you want to see the rest of the local vars? (y/N/Q) ')
                     if  ans.upper()=='Q': 
                         _sys.exit()

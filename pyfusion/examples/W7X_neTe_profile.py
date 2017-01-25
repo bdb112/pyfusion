@@ -9,7 +9,18 @@ run -i pyfusion/examples/W7X_neTe_profile.py dafile_list='["LP/all_LD/LP20160224
 
 t_range = [[x/1e3, (x+0.03)/1e3] for x in range(200,800,200)]
 
+## marfe example
+dafile_5marfe = ['LP/all_LD/LP20160309_52_L5SEG_2k2.npz','LP/all_LD/LP20160309_52_L5SEG_2k2.npz','LP/all_LD/LP20160309_52_L5SEG_2k2.npz','LP/all_LD/LP20160309_52_L5SEG_2k2.npz','LP/all_LD/LP20160309_51_L5SEG_2k2.npz']
+t_range_list_5marfe=[[0.3,0.32], [0.45,0.47], [0.5,0.52], [.52,0.53], [0.5,0.52]]
+run -i pyfusion/examples/W7X_neTe_profile.py dafile_list=dafile_5marfe labelpoints=0 t_range_list=t_range_list_5marfe diag2=ne18 av=np.median xtoLCFS=0 nrms=sigs30 axset_list="row" ne_lim=[0,18] Te_lim=[0,70] labelpoints=1
 
+## 0310.009 example - complete including 224_30
+run -i pyfusion/examples/W7X_neTe_profile.py dafile_list="['LP/all_LD/LP20160224_30_L5SEG_2k2.npz']" labelpoints=0 t_range_list=[0.1,0.2] diag2=ne18 av=np.median
+sigs224_30=sigs
+sigs30=np.array([sigs224_30[1]*exp(abs(solds[1])/15),sigs224_30[3]*exp(abs(solds[3])/15)])/6
+dafile_list_9 = ['LP/all_LD/LP20160310_9_L5SEG_amoeba21_1.2_2k.npz']  # could do 6* but don't need to
+t_range_list_9=[[0.2,0.22], [0.3,0.32], [0.4,0.42], [0.5,0.52],[.6,.62], [.7,.72]]
+run -i pyfusion/examples/W7X_neTe_profile.py dafile_list=dafile_list_9 labelpoints=0 t_range_list=t_range_list_9 diag2=ne18 av=np.median xtoLCFS=0 nrms=sigs30 axset_list="row" ne_lim=[0,10] Te_lim=[0,150] labelpoints=0
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -200,7 +211,7 @@ def LCFS_plot(da, diag, t0_utc, t_range, av=None, ax=None, xtoLCFS=1, nrm=None, 
             sig[c] = np.nan
         if labelpoints>0 and (not np.isnan(sig[c])):
             if labelpoints>1 or sig[c]>1.3*np.median(sig):
-                ax.text(signed_dLCFS[c], sig[c], ch)
+                ax.text(([td, signed_dLCFS][xtoLCFS])[c], sig[c], ch,  fontsize='small')
     ax.errorbar([td, signed_dLCFS][xtoLCFS], sig, ebars, fmt='o', label=lim, color=col, lw=0.5)
     ax.set_ylabel(diag)
     #if diag == 'Te':

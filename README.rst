@@ -2,12 +2,30 @@
 pyfusion - python code for data mining plasma fluctuations
 ----------------------------------------------------------
 
-Most recent update: 
-
 ***  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.***
  * partial fix - don't allow local_saves from local cache (only works
    on machines with acccess to the archivedB
- maybe use functools.wraps so that the __doc__ of plot_signals can be seen
+  implemented (differently):  maybe use functools.wraps so that the __doc__ of plot_signals can be seen
+
+
+Most recent update: 
+
+Version 0.8 beta
+
+ * valid_dates changed to valid shots - more flexible
+ * 'updated' or inherited methods such as data.plot_signals now have
+   their correct __doc__ strings (e.g. for ? help() dir(s)
+   information) - in plots/base.py
+ * DA_datamining - method to make dictionary items also attributes
+ * data/base.py - transfer __doc__ to new 'updated' function in MetaMethods
+ * data/convenience.py add inlist and inds_from_list to allow lists in
+   where clauses
+ * data/process_swept_Langmuir - add freq arg, adapt shot to work with
+   simple and two component shot numbers.
+ * save_compress - exetend fix for obscure nan rubbish data bug
+ * mini_summary_MDS - implement creation of attributes for each
+   element (array) in the result of a query
+ * pyfusion.cfg  change valid_dates to valid_shots
 
 Version 0.7.9.beta
 

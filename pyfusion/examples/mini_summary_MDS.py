@@ -33,9 +33,9 @@ from time import time as seconds
 from six.moves import input
 
 from sqlalchemy import create_engine 
-sqlfilename = '/H1.sqlite'
+sqlfilename = 'H1.sqlite'
 dbpath = os.path.dirname(__file__)
-engine=create_engine('sqlite:///'+ dbpath + sqlfilename, echo=False)
+engine=create_engine('sqlite:///'+ os.path.join(dbpath, sqlfilename), echo=False)
 #engine=create_engine('sqlite:///:memory:', echo=False)
 #engine=create_engine('sqlite:///testmds.sqlite', echo=False)
 #engine = create_engine('mysql://127.0.0.1/bdb112', echo=False)
@@ -92,7 +92,13 @@ def Special():
 
 
 def Std(x, t):
+    # This is like AC RMS
     return(np.std(x))
+
+def RMS(x,t):
+# like DC_RMS
+    w = np.where((t>interval[0]) & (t>interval[1]))[0]
+    return plt.mlab.rmsflat(x[w])
 
 def Average(x,t):
 # should really to an average over an interval
@@ -138,6 +144,9 @@ diags = dict(comment = [String, '.log.machine.comment', StringValue],
              is3 = [Float, '.operations.magnetsupply.lcu.setup_sec.i3', Value],
              rf_drive = [Float, '.rf.rf_drive', Peak],
              i_fault = [Float, '.operations:i_fault', Average],
+             kappa_s = [Float, '.operations.magnetsupply.lcu.setup_shunt.kappa_s', Value],
+             shunt_r = [Float, '.operations.magnetsupply.lcu.setup_shunt.resistance', Value],
+             i_hel = [Float, '.operations:i_hel', Average],
              rf_freq = [Float, '.log.heating.rf_freq', Value],
              rf_freq2 = [Float, '.log.heating.snmp.t2.measured.frequency', Value],
              llrf_mode = [Integer, '.log.heating.snmp.t1.operational.llrf.stallrfopm', Value],
@@ -151,6 +160,8 @@ diags = dict(comment = [String, '.log.machine.comment', StringValue],
              i_sat_1 = [Float, '.fluctuations.BPP:vf_pin1',Std],
              i_sat_2 = [Float, '.fluctuations.BPP:vf_pin2',Std],
              isweep = [Float, '.fluctuations.BPP:isweep',Std],
+             mirnov_RMS =  [Float, 'mirnov.ACQ132_7.INPUT_01', Std],
+             mirnov_RMS2 =  [Float, 'mirnov.ACQ132_7.INPUT_02', Std],
              mirnov_coh =  [Float, '', Special],
          )
 col_list = [Column('shot', Integer, primary_key=True)]
@@ -268,5 +279,33 @@ select count(*) from test.summ where shot> 83808 and (i_sweep>2 or i_sat_1>0.2 o
 
 probe no mirnov 452
  select count(*) from test.summ where shot> 83808 and (i_sweep>2 or i_sat_1>0.2 or i_sat_2>0.2 or (mirnov_coh>10000000000.00 and im2>2000)); 
+
+# make a DA file from the whole database
+result = conn.execute('select * from summ order by shot' ) # where shot>90000')  # 90000
+# result = conn.execute("select * from summ where proc_time> date('2016-12-20')")
+xx = result.fetchall()
+xxt = np.array(xx).T
+# put them in a dictionary
+# note that the presence of Nones requires fiddling to avoid 'objects'
+dat = {}
+for (k, key) in enumerate(xx[0].keys()):
+    vals =  xxt[k]
+    bads = [v is None for v in vals]
+    vals[[np.where(bads)[0]]] = np.nan
+    dat.update({key: np.array(vals.tolist())})
+
+# put the dictionary in a DA
+from pyfusion.data.DA_datamining import Masked_DA, DA
+dam = DA(dat)
+# make each one an attribute
+# nice trick, but won't survive a save unless we explicitly re-do this on restore.
+for key in dam:
+    if not hasattr(dam, key):
+        exec("dam."+key+"=dam['" + key + "']")
+
+
+# a range of shots suitable for testing
+from pyfusion.data.convenience import inlist, between
+dam.extract(locals())  # all shots
 
 """

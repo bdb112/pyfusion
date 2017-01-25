@@ -65,16 +65,41 @@ def history_reg_method(method):
         return output
     return updated_method
 
-class MetaMethods(type):
+class MetaMethods(type):  # type here is used in the sense type(name, bases, dict)
     """Metaclass which provides filter and plot methods for data classes."""
     def __new__(cls, name, bases, attrs):
-        for reg in [filter_reg, plot_reg]:
+        attrs_in = attrs.copy()
+        for reg in [filter_reg, plot_reg]:  # this is one or the other
             reg_methods = reg.get(name, [])
-            attrs.update((rm.__name__,history_reg_method(rm))
+            attrs.update((rm.__name__, history_reg_method(rm))
                          for rm in reg_methods)
-        debug_(pyfusion.DEBUG, 9, key='MetaMethods')
-        return super(MetaMethods, cls).__new__(cls, name, bases, attrs)
 
+#        return super(MetaMethods, cls).__new__(cls, name, bases, attrs)
+        newc = super(MetaMethods, cls).__new__(cls, name, bases, attrs)
+        # Note: only executed at startup, so import pyfusion, then set DEBUG, then run
+        # pyfusion.DEBUG='register' stops on all registers and metaMethods 
+        if pyfusion.VERBOSE > 1: print(name)
+        debug_(pyfusion.DEBUG, 2, key=['register', 'MetaMethods'])
+
+        if pyfusion.VERBOSE > 1 and name == 'TimeseriesData':
+            print('=============>>>>>>> TimeseriesData.plot_signals doc'),
+            # __doc__ is missing at this point
+            if newc.plot_signals.__doc__ is None:
+                print('is lost')
+            else:
+                print(' is ' + newc.plot_signals.__doc[0:50])
+
+        # restore the __doc__ to updated functions - adapted from: q
+        # http://stackoverflow.com/questions/8100166/inheriting-methods-docstrings-in-python
+        import types
+        for func in reg_methods:
+            if isinstance(func, types.FunctionType) and func.__doc__ is not None:
+                if pyfusion.VERBOSE>0: print func, 'needs doc...',
+                for newf in (newc.__dict__):
+                    if isinstance(newc.__dict__[newf], types.FunctionType) and newf == func.func_name:
+                        newc.__dict__[newf].__doc__ = func.__doc__
+                        if pyfusion.VERBOSE>0: print(' setting..')
+        return(newc)
 
 class Coords(object):
     """Stores coordinates with an interface for coordinate transforms."""

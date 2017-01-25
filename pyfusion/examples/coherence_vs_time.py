@@ -1,9 +1,13 @@
 """
+
+W7X Note - for use on probe current signals, the sweep voltage pickup can dominate - ideally should be removed, although voltage being more sinusoidal is a better candidate and should be used for this test if possible
+
 _PYFUSION_TEST_@@shot_number=92902 dev_name='H1Local'
 """
 import pyfusion
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy
 
 """
 def runavg(tseries, period=1e-3):
@@ -31,8 +35,10 @@ hold=0
 ylims=[-.1,1.1]
 passband = [3e3,8e3]
 stopband = [2e3,9e3]
-period = [2e-4,1e-3]  #  interval (or list of intervals) over which coherence is   averaged (top hat)
+corrdelay = 1
+period = [2e-4,1e-3]  #  interval (or list of intervals) over which coherence is averaged (top hat)
 plotit = 1
+t_range=[]
 """
 exec(_var_defaults)
 from pyfusion.utils import process_cmd_line_args
@@ -48,9 +54,15 @@ dev = pyfusion.getDevice(dev_name)
 data1 = dev.acq.getdata(shot_number, diag1)
 data2 = dev.acq.getdata(shot_number, diag2)
 
-comlen = min(data1.timebase[-1], data2.timebase[-1])
-data1 = data1.reduce_time([0, comlen])
-data2 = data2.reduce_time([0, comlen])
+if len(t_range) != 0:
+    data1.reduce_time(t_range, copy=0)
+    data2.reduce_time(t_range, copy=0)
+
+comstart = max(data1.timebase[0], data2.timebase[0])
+comend = min(data1.timebase[-1], data2.timebase[-1]) - 0.05 # allow room to take more samples in reduce time
+# if the timebases are not identical, this doesn't always work, so take off a half interval to avoid representational errs
+data1 = data1.reduce_time([comstart, comend - np.diff(data1.timebase)[0]/2],fftopt=1)
+data2 = data2.reduce_time([comstart, comend - np.diff(data2.timebase)[0]/2],fftopt=1)
 
 try:
     datap = dev.acq.getdata(shot_number,diag_extra)
@@ -77,6 +89,15 @@ for (i,per) in enumerate(period):
                        runavg(t, fd2.signal**2, per))
     if plotit:
         plt.plot(t_coh, -coh, color=['c','b'][i])  #  why minus??
+
+if corrdelay:
+    fd1 = scipy.fft(data1.signal)
+    fd2 = scipy.fft(data2.signal)
+    corr = scipy.ifft(fd1 * scipy.conj(fd2))
+    imax = np.argmax(np.abs(corr))
+    if imax > len(corr)/2:
+        imax = imax - len(corr)
+    print('time delay = {td:.4g}'.format(td=imax*np.diff(data1.timebase)[0]))
 
 if plotit:    
 

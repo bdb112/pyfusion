@@ -13,7 +13,18 @@ Filters in pyfusion are methods which take a data object, modify the data, and r
  >>> data.reduce_time([0.02,0.03])
 
 
-For example, the internal pyfusion code which defines the ``reduce_time()`` filter looks like this::
+For example, the internal pyfusion code which defines the ``reduce_time()`` filter 
+uses a decorator function ``register`` (defined dseparately for plots
+nd filters) which wraps the definition into different data classes::
+
+ # the registration function is similar but separate for plots and filters
+ def register(*class_names):
+     def reg_item(plot_method):
+         for cl_name in class_names:
+             if cl_name not in plot_reg:
+	     ... etc
+
+and looks like this::
 
  @register("TimeseriesData", "DataSet")
  def reduce_time(input_data, new_time_range):
@@ -36,5 +47,7 @@ For example, the internal pyfusion code which defines the ``reduce_time()`` filt
          input_data.signal = input_data.signal[:,new_time_args[0]:new_time_args[1]]
      return input_data
 
-
+Some extra code is required to transfer the __doc__ string over to the
+updated function - see data/base.py, MetMethods, history_reg_method.
+However the args and keywords are still hidden - probably by history_reg_method
 

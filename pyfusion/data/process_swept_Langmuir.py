@@ -400,7 +400,7 @@ class Langmuir_data():
         if self.debug > 0:
             print('entering prepare_sweeps ', len(self.vmeasfull.signal[0]))
         if str(rest_swp).lower() == 'auto':
-            rest_swp = self.shot[0]>20160309
+            rest_swp = self.shot > [20160309, 0]
             print ('* Automatically setting rest_swp to {r} *'.format(r=rest_swp))
 
         if rest_swp:
@@ -598,7 +598,7 @@ class Langmuir_data():
             da.da['ne18'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
-    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr=1), initial_TeVfI0=dict(Te=50, Vf=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, clip_iprobe = None, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, suffix=''):
+    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr=1), initial_TeVfI0=dict(Te=50, Vf=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, clip_iprobe = None, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, sweep_freq=500, suffix=''):
         """ 
         ==> results[time,probe,quantity]
         plot = 1   : V-I and data if there are not too many.
@@ -633,7 +633,7 @@ class Langmuir_data():
         self.actual_params.update(dict(i_diag=self.i_diag, v_diag=self.v_diag))
         # and do it for actuals too
         for k in self.actual_params:
-            if k not in 'amu,clipfact,clip_iprobe,dtseg,filename,initial_TeVfI0,leakage,overlap,plot,rest_swp,suffix,t_comp,t_range,threshold,threshchan,fit_params,v_diag,i_diag,return_data'.split(','):
+            if k not in 'amu,clipfact,clip_iprobe,dtseg,filename,initial_TeVfI0,leakage,overlap,plot,rest_swp,suffix,t_comp,t_range,threshold,threshchan,fit_params,v_diag,i_diag,return_data,sweep_freq'.split(','):
                 raise ValueError('Unknown actual_params key ' + k)
 
         self.actual_params.update(dict(i_diag_utc=self.imeasfull.utc, pyfusion_version=pyfusion.VERSION))
@@ -648,7 +648,9 @@ class Langmuir_data():
                 # hopefully we can ignore _U channels eventually, but not yet
                 self.i_chans.remove(ch)
 
-        self.coords = [ch.coords.w7_x_koord for ch in self.imeasfull.channels]
+        self.coords = [ch.coords.w7_x_koord for ch in self.imeasfull.channels] if self.dev.name.startswith('W7') else []
+
+
         # if you want just one voltage channel, at the moment, you still
         # need it to be a multi-channel diag. (to simplify this code).
         self.v_chans = [ch.config_name for ch in self.vmeasfull.channels]
@@ -675,7 +677,7 @@ class Langmuir_data():
         # prepare_sweeps will populate self.vcorrfull
         # self.check_crosstalk(verbose=0)  # this could be slow
 
-        self.prepare_sweeps(rest_swp=rest_swp)
+        self.prepare_sweeps(rest_swp=rest_swp, sweep_freq=sweep_freq)
         self.get_iprobe(leakage=leakage, t_comp=t_comp)
 
         tb = self.iprobefull.timebase

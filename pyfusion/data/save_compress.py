@@ -330,7 +330,7 @@ def newload(filename, verbose=verbose):
         timebaseexpr = timebaseexpr.replace("== dic['rawtimebase']","== temp")
 
     exec(signalexpr)
-    if dic['version'] <= 103 and timebaseexpr.startswith('timebase=0+'):  # bdb103
+    if dic['version'] <= 104 and timebaseexpr.startswith('timebase=0+'):  # bdb103 - needed for 104 too
         timebaseexpr = timebaseexpr.replace('timebase=0+','timebase=0.+')
 
     exec(timebaseexpr)

@@ -16,6 +16,32 @@ def broaden(inds, data=None, dw=1):
     inds_new = np.unique(np.concatenate([inds[1:]-1,inds,inds[0:-1]+1]))
     return(inds_new)
 
+def inds_from_list(var, lst):
+    """ return a list of indices of var which match the items in lst.  This is
+    to replace
+    shot in [90000,90001] etc
+    which can't be used in where()  (gets msg "...... Use a.any() or a.all()")
+    >>> inds_from_list([1,4,5,1], [1,2,3])
+    array([0, 3])
+    """
+    inds = []
+    for elt in lst:
+        inds.extend(np.where(np.array(var) == elt)[0].tolist())
+    return(np.unique(inds))
+
+def inlist(var, lst):
+    """ return a list of True/False  of var which match the items in lst.  
+    This is to replace
+    shot in [90000,90001] etc
+    which gets msg "...... Use a.any() or a.all()"
+    >>> inlist([1,4,5,1], [1,2,3])
+    array([ True, False, False,  True], dtype=bool)
+    """
+    inds = np.zeros([len(var)],dtype=bool)  
+    for elt in lst:
+        inds = (np.array(var) == elt) |  inds
+    return(inds)
+
 def between(var, lower, upper=None, closed=True):
     """ return whether var is between lower and upper 
     includes end points if closed=True
@@ -96,3 +122,7 @@ def his(xa, tabs=False, sort=-1, dfmt=None,total=True, maxsort=None):
                  format(x = xarr[i]+0, nx = nxarr[i], 
                         fx=float(100*nxarr[i])/len(xa)))
     if total: print(' Total: {num:10d}  {pc:10.2f}%'.format(num=len(nxarr), pc=100))
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

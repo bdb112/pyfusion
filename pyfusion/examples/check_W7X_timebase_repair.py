@@ -8,6 +8,8 @@ from pyfusion.utils.time_utils import utc_ns
 from pyfusion.data.signal_processing import analytic_phase
 from numpy import pi
 from pyfusion.utils import fix2pi_skips, modtwopi
+from pyfusion.data.restore_sin import restore_sin
+
 # fix2pi_skips  seems to slow things down.
 
 _var_defaults = """
@@ -29,10 +31,13 @@ from  pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
 dev = pyfusion.getDevice(dev_name)
+if shot_number[0] == 20160310:
+    pyfusion.utils.warn(' need to restore sin ')
 data = dev.acq.getdata(shot_number,diag_name)
 print('data length is ',len(data.timebase))
 fd = data
-#fd = data.filter_fourier_bandpass(passband=[490,510], stopband=[450,550])
+# this is a workaround for clipped sweep signals, but it slows time response
+fd = data.filter_fourier_bandpass(passband=[490,510], stopband=[450,550])
 print('filtered data length is ',len(fd.timebase))
 
 # maybe should be in data/plots.py, but config_name not fully implemented

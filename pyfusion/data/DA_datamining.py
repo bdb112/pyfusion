@@ -233,7 +233,7 @@ referred to hereafter as a "DA".
 
 Args:
   fileordict: An .npz file containing a DA object or a dictionary of arrays 
-    sharing common first dimension, including the result of a 
+    sharing a common first dimension, including the result of a 
     loadtxt(dtype=...) command. The filename is processed for env vars ~/ etc,
     but sometimes this seems to substitute the path of the DA module? (bug)
   load: 1 will immediately load into memory, 0 will defer load allowing 
@@ -648,6 +648,19 @@ Note: This is my prototype of google style python sphinx docstrings - based on
                 else: print('')  # to close line
         print(self.name)
 
+    def make_attributes(self):
+        """ make each element of the dictionary an attribute of the DA object
+        This is very convenient for operations on more than one dataset e.g.
+        plot(da.im2 - daold.im2)
+        Is this python 3 compatible?  It seems to work fine for continuum 3.5.1
+        """
+        for key in list(self):
+            if hasattr(self, key):
+                print('Not replacing attribute ' + key)
+            else:
+                exec("self."+key+"=self['" + key + "']")
+  
+        
     def load(self, sel=None):
         start_mem = report_mem(msg='load')
         st = seconds()

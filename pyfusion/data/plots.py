@@ -55,7 +55,8 @@ def register(*class_names):
                 plot_reg[cl_name] = [plot_method]
             else:
                 plot_reg[cl_name].append(plot_method)
-        debug_(pyfusion.DEBUG, 2, key='register plot')
+        # See Note in base.py line 76 about when this works.
+        debug_(pyfusion.DEBUG, 2, key=['register plot', 'register'])
         return plot_method
     return reg_item
 
@@ -154,6 +155,8 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
             #  To do better, should be one or the other, but the
             #  original code is after the plot - need to move it
             # back to here, before the plot
+            ##### No! should use text(0.5,1,'foo',verticalalignment='top',transform=gca().transAxes)
+            
                 
             if labeleg == 'False':
                 lab = ''
@@ -203,7 +206,7 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
                 #print('locator_params',int(25/np.sqrt(n_rows)))
                 axn.locator_params(prune='both', axis = 'y',
                                    nbins=min(5,int(25/np.sqrt(n_rows))))
-                # this gets rid of the x labels at either end until wee 
+                # this gets rid of the x labels at either end until we 
                 # can suppress xlabels on all but the lowest
 
                 if n_rows>1: axn.locator_params(prune='both', axis = 'x')
@@ -296,7 +299,7 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
     if title is None or title == '':  # get the default title
         pass # tit is the default
     else:
-        tit = tit.replace('+',tit)
+        tit = title.replace('+',tit)
     pl.title(tit)
 
     if filename != None:

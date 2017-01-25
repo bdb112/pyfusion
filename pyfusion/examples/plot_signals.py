@@ -30,6 +30,7 @@ fun2=myiden2
 plotkws={}
 hold=0
 labeleg='False'
+t_range=[]
 """
 exec(_var_defaults)
 
@@ -38,6 +39,8 @@ exec(process_cmd_line_args())
 
 dev = pyfusion.getDevice(dev_name)
 data = dev.acq.getdata(shot_number,diag_name)
+if len(t_range) > 0:
+    data = data.reduce_time(t_range)
 
 if hold==0: plt.figure()
 elif hold==2:

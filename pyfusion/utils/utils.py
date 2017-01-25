@@ -187,7 +187,7 @@ def warn(warning, category=UserWarning ,stacklevel=2, exception=None):
     else: exmsg = 'Exception "%s, %s": ' %  (type(exception),exception)
     # need the +1 so that the caller's line is printed, not this line.
     # also break the line where the 'red' colour starts
-    warnings.warn('\n'+exmsg+warning, category, stacklevel=stacklevel+1)
+    warnings.warn('\n**************************\n'+exmsg+warning+'\n**************************', stacklevel=stacklevel+1)
 
 
 def modtwopi(x, offset=np.pi):

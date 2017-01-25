@@ -71,7 +71,7 @@ def try_fetch_local(input_data, bare_chan):
         # MDSplus style path to access sorted files into folders by shot
         path, patt = os.path.split(each_path)
         #  print(patt)
-        if len(patt) == 2*len(patt.replace('~','')):  # a subdir code based on date
+        if len(patt) == 2*len(patt.replace('~','')):  # a subdir code based on date/shot
             subdir = ''
             # reverse the order of both the pattern and the shot so a posn is 0th char
             strshot = str(shot[0]) if len(np.shape(shot))>0 else str(shot)
@@ -246,14 +246,16 @@ class BaseDataFetcher(object):
         debug_(pyfusion.DEBUG,5,key='device_name')
         if config_name is not None:
             self.__dict__.update(get_config_as_dict('Diagnostic', config_name))
-            # look for the first valid date range for this diag - 
-            #   see config/'Valid Dates' in the reference docs
+            # look for the first valid shot range for this diag - 
+            #   see config/'Valid Shots' in the reference docs
             self.config_name=config_name
+            devshort = self.config_name.split('_')[0]
             for Mod in ['M1','M2','M3','M4']:
-                if self.find_valid_for_date():
+                if self.find_valid_for_shot():
                     break
                 else:
-                    self.__dict__.update(get_config_as_dict('Diagnostic', config_name.replace('W7X','W7X'+Mod)))                  
+                    # replace W7X_ with W7XM1_  etc
+                    self.__dict__.update(get_config_as_dict('Diagnostic', config_name.replace(devshort, devshort+Mod)))                  
                 
             else:
                 raise LookupError(config_name)
@@ -264,24 +266,39 @@ class BaseDataFetcher(object):
         # self.config_name=config_name
         # print('BaseDFinit',config_name,self.__dict__.keys())
 
-    def find_valid_for_date(self):
-        if hasattr(self,'valid_dates'):
-            valid_dates = self.valid_dates
-        elif hasattr(self.acq, 'valid_dates'):
-            valid_dates = self.acq.valid_dates
+    def find_valid_for_shot(self):
+        """ Determine if this diag definition or modified diag is valid 
+        for this shot
+        """
+        def check_to_clause(shot, k, dic):
+            """ check for leftover instances of to=[date, shot]
+            where shot is 0 - this is very likely to be a mistake
+            as there is no shot before 0
+            """
+            if ('_to' in k and isinstance(shot,(list, tuple, ndarray)) 
+                and dic[k][1] == 0):
+                print('********  Warning - valid shot of 0 in to clause?')
+
+        if hasattr(self,'valid_shots'):
+            valid_shots = self.valid_shots
+        elif hasattr(self.acq, 'valid_shots'):
+            valid_shots = self.acq.valid_shots
         else:
-            valid_dates = None
+            valid_shots = None
         # another example of inheritance - need to formalise this, extract the code to a function?
-        if  valid_dates is not None:
-            valid_dict = eval('dict({ps})'.format(ps=valid_dates))
+        is_valid = True
+        if valid_shots is not None:
+            valid_dict = eval('dict({ps})'.format(ps=valid_shots))
             for k in valid_dict:
                 root = k.replace('_from','').replace('_to','')
                 if '_' + root in self.config_name:
-                    if pyfusion.VERBOSE>1: print(k, root, self.shot[0], int(valid_dict[k]))
-                    if ('_from' in k and self.shot[0] < int(valid_dict[k])
-                        or ('_to' in k and self.shot[0] > int(valid_dict[k]))):
-                        return(False)
-        return(True)
+                    if pyfusion.VERBOSE>1: print(k, root, self.shot, valid_dict[k])
+                    check_to_clause(self.shot, k, valid_dict)
+                    if ('_from' in k and self.shot < valid_dict[k]
+                        or ('_to' in k and self.shot > valid_dict[k])):
+                        is_valid = False
+        debug_(pyfusion.DEBUG, 2, 'valid_shots')
+        return(is_valid)
 
 
     def setup(self):

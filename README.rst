@@ -10,6 +10,13 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+Version 0.81 beta
+
+ * many __doc__ edits and formatting on the doc files in http://people.physics.anu.edu.au/~bdb112/pyfusion/
+ * W7X/fetch.py %% py3 compat fix, use cygwin if there for wget
+ * data/base.py has a fudge to reenable use of [utc,utc] in place of [date,shot]
+ * manage_data.py replaces filesorter.py
+
 Version 0.8 beta
 
  * valid_dates changed to valid shots - more flexible

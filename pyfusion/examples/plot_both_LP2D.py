@@ -55,6 +55,16 @@ srange = range(294,320), # .35 sec
 #srange = range(680,700) # 1140ms
 )))
 
+db.update(dict(LP20160309_6=dict(
+Te_range = [20, 100],  # 
+ne_range = [0, 2],
+p_range = [0,5],  # 3 later in shot
+minpts=15,
+srange = range(294,320), # .35 sec
+#srange = range(600,620), # 983ms
+#srange = range(680,700) # 1140ms
+)))
+
 
 db.update(dict(LP20160310_7=dict(
 Te_range = [10, 80],  # 

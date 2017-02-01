@@ -56,3 +56,4 @@ data.plot_signals(suptitle='shot {shot}: '+diag_name, sharey=sharey, downsamplef
 # for shot in range(76620,76870,10): dev.acq.getdata(shot,diag_name).plot_signals()
 if labeleg:
     plt.legend()
+

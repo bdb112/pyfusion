@@ -5,6 +5,7 @@ import time as tm
 
 # see https://docs.python.org/2/howto/logging-cookbook.html
 """
+#_PYFUSION_TEST_@@Skip
 logging.basicConfig(level=logging.DEBUG,filename='file_sorter.log', filemode='w')
 # define a Handler which writes INFO messages or higher to the sys.stderr
 console = logging.StreamHandler()
@@ -40,7 +41,7 @@ console.setFormatter(formatter)
 logging.getLogger('').addHandler(console)
 """
 
-#ftable = pickle.load(open('ftable.pickle','rb'))
+
 ftable = pickle.load(open('ftablePassPort4.pickle','rb'))
 dirpath = "/tmp"
 #dirpath = '/data/datamining/local_data/extra_data/may22'

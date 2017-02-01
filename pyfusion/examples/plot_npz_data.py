@@ -17,4 +17,7 @@ else:
     dat = newload(filename)
     plt.plot(dat['timebase'], dat['signal'])
     # hold if called from a bin directory - otherwise (e.g. interactive) don't
-    plt.show('/bin' in sys.argv[0])
+    # originally tested if '/bin' in argv[0], but this fails for run ~/bin/plot.. under ipython
+    block_me = not hasattr(sys, 'ps1')
+    print('block_me = {b}, args={a}'.format(b=block_me, a=sys.argv))
+    plt.show(block=block_me)

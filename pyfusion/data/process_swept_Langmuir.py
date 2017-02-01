@@ -4,18 +4,24 @@ This supersedes the example in examples/process_swept_Langmuir.py
  
 pyfusion v0.7.0 - estimate error, include a lpfilter, resid normed to I0
 This version assumes that all required sweep data are in a multi-channel diagnostic (dataset)
- - the other version (not in the repo) grabs sweepV data as required
+ - the other version (should not be in the repo) grabs sweepV data as required
 
-    Example:
-    run pyfusion/data/process_swept_Langmuir
-    LP.process_swept_Langmuir()
-    LP.write_DA('20160310_9_L57')
-    # then to tune mask:
-    from pyfusion.data.DA_datamining import Masked_DA, DA
-    myDA=DA('20160310_9_L57',load=1)  # just to be sure it is a good DA
-    myDA.masked=Masked_DA(['Te','I0','Vf'], baseDA=myDA)
-    myDA.da['mask']=(myDA['resid']/abs(myDA['I0'])<.35) & (myDA['nits']<100)
-    clf();plot(myDA.masked['Te']);ylim(0,100)
+See main README.rst for more recent changes 
+ - see also the docs of the main method :py:meth:`~Langmuir_data.process_swept_Langmuir`
+ - The convenience script examples/run_process_Langmuir runs a list of shots for both limiter segments 
+with suitable inputs
+
+    Example of step by step operation and tuning:
+
+    >>> run pyfusion/data/process_swept_Langmuir
+    >>> LP.process_swept_Langmuir()
+    >>> LP.write_DA('20160310_9_L57')
+    >>> # then to tune mask:
+    >>> from pyfusion.data.DA_datamining import Masked_DA, DA
+    >>> myDA=DA('20160310_9_L57',load=1)  # just to be sure it is a good DA
+    >>> myDA.masked=Masked_DA(['Te','I0','Vf'], baseDA=myDA)
+    >>> myDA.da['mask']=(myDA['resid']/abs(myDA['I0'])<.35) & (myDA['nits']<100)
+    >>> clf();plot(myDA.masked['Te']);ylim(0,100)
 
 
 """
@@ -45,8 +51,13 @@ def AC(x):
 
 def fixup(da=None, locs=None, newmask=None, suppress_ne=None, newpath='/tmp'):
     """ some miscellaneous post processing mainly to set the time offset of ECH
-    need to run plot_LP2d.py first.
-    sets t_zero, and tweaks the Nan coverage
+need to run plot_LP2d.py first.
+sets t_zero, and tweaks the Nan coverage
+
+Args: 
+  da: a dictionary of arrays (DA) file.
+  locs: a dictionary containing the variable dtprobe, usually locals()
+   
     """
     if locs is None:
         raise ValueError('Need two args, first is an open da, second is locals()) containing variable dtprobe')
@@ -82,7 +93,22 @@ def residuals(params, y, x):
 """
 
 class LPfitter():
+    """
+    Mainly used by :py:meth:`~Langmuir_data.process_swept_Langmuir` but also stands alone.
+    Assumes the i and v are in arrays already.  
+    See `:py:meth:LPfitter.__init__` for more info
+    """
     def __init__(self, i, v,  fit_params=None, plot=1, verbose=1, parent=None, debug=1):
+        """
+This is the code presently used to default fit params
+
+    >>> self.fit_params = dict(maxits=300, alg='leastsq', ftol=1e-4, xtol=1e-4, Lnorm=1.2, track_ratio=1.2, lpf=None)
+
+Safer to type this to see the actual defaults if the code has changed:
+    >>> from pyfusion.data.process_swept_Langmuir import LPfitter
+    >>> LPfitter(None, None).fit_params
+
+        """
         self.i = i
         self.v = v
         self.debug = debug
@@ -105,6 +131,7 @@ class LPfitter():
         return(I0 * (1 - exp((v-Vf)/Te)))
 
     def plotchar(self, v, Te, Vf, I0, alpha=1, col='g', linewidth=2):
+        """ plot a Langmuir characteristic """
         varr = np.linspace(np.min(v), np.max(v))
         plt.plot(varr, self.LPchar(varr, Te, Vf, I0), 'k', linewidth=linewidth+1)
         plt.plot(varr, self.LPchar(varr, Te, Vf, I0), col, linewidth=linewidth)
@@ -144,6 +171,8 @@ class LPfitter():
         """ Perform a curve fit operation with the given parameter and initial
         value.  'None' invokes the fit_params determined at creation
         of the class, and for 'init', the default_init
+
+        The final parameters actually used are saved in actual_params
 
         """
         # Takes about 2ms/it for 2500 points, and halving this only saves 10%
@@ -195,7 +224,7 @@ class LPfitter():
                 fit_results[-1] = 9000+ier  # keep it in uint16 range
             if self.parent is not None and self.parent.debug>0:
                 if self.parent.debug>1 or ier not in [1,2,3,4]:
-                    print(ier, msg)
+                    print('fit:', ier, msg)
 
         elif alg == 'amoeba':
             fit_results = list(amoeba.amoeba(var, scale, self.error_fun, 
@@ -257,7 +286,7 @@ def tryone(var, data, mrk='r', w=4):
 
 def find_clipped(sigs, clipfact):
     """ look for digitizer or amplifier saturation in all raw
-    signals, and return offending indices.  Digitizer saturation
+    signals, and return offending indices.  Detecting digitizer saturation
     is easy, amplifier saturation is softer - need to be careful
 
     sigs can be a signal, array or a list of those
@@ -290,7 +319,7 @@ def find_clipped(sigs, clipfact):
 
 class Langmuir_data():
     """ get the fits for a multi (or single) cpt diagnostic using segments
-    if a dictionary params is supplied, use these to process the data, 
+    If a dictionary params is supplied, use these to process the data, 
     otherwise just read in the data.
 
     Eternal question: Should I pass parameters or set them in the object?
@@ -304,8 +333,22 @@ class Langmuir_data():
 
     Final solution: save the ACTUAL params used in the object, and then 
     save THOSE in when writing, not the onbes entered.
+
+    See :py:meth:`process_swept_Langmuir` for the processing arguments
     """
     def __init__(self, shot, i_diag, v_diag, dev_name="W7X", debug=debug, plot=1, verbose=0, params=None):
+        """
+Create a Langmuir Data oject for later processing
+
+Args:
+        shot: shot number
+        i_diag: name of probe corrent diagnostic - at present should be a multi channel
+        v_diag: sweep voltage diagnostic - should include all voltages referred to by all the corrent channels config as sweepV
+        dev_name:
+        debug:
+        plot:  can be set later in process_langmuir
+        params: if set, can cause the process step to be executed after loading
+"""
         self.dev = pyfusion.getDevice(dev_name)
         self.shot = shot
         self.verbose = verbose
@@ -333,7 +376,7 @@ class Langmuir_data():
 
 
     def get_iprobe(self, leakage=None, t_comp=None):
-        """ main purpose is to subtract leakage currents
+        """ The main purpose is to subtract leakage currents
         Will use the full data, as the t_range is meant to be plasma interval
         returns a copy of the measured courremt, overwritten with the
         corrected iprobe
@@ -374,11 +417,14 @@ class Langmuir_data():
 
             #print('leakage compensation factor = {r:.2e} + j{i:.2e}'
             #      .format(r=np.real(comp), i=np.imag(comp)))
-            print('{u}sing computed leakage comp factor = {m:.2e} e^{p:.2f}j'
+            print('{u}sing computed the leakage comp factor = {m:.2e} e^{p:.2f}j'
                   .format(u = ["Not u", "U"][leakage is None],
                           m=np.abs(comp), p=np.angle(comp)))
             if leakage is None:
                 leakage = [np.real(comp), np.imag(comp)]
+            elif np.isscalar(leakage):
+                leakage = [np.real(leakage), np.imag(leakage)]
+                
 
             # find the common length - assuming they start at the same time????
             comlen = min(len(self.imeasfull.timebase),len(self.vmeasfull.timebase),len(sweepQ))
@@ -400,7 +446,7 @@ class Langmuir_data():
         if self.debug > 0:
             print('entering prepare_sweeps ', len(self.vmeasfull.signal[0]))
         if str(rest_swp).lower() == 'auto':
-            rest_swp = self.shot > [20160309, 0]
+            rest_swp = self.shot > [20160310, 0]  # was wrong 0309,0 - but didn't affect any data I sent
             print ('* Automatically setting rest_swp to {r} *'.format(r=rest_swp))
 
         if rest_swp:
@@ -598,30 +644,56 @@ class Langmuir_data():
             da.da['ne18'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
-    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr=1), initial_TeVfI0=dict(Te=50, Vf=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, clip_iprobe = None, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, sweep_freq=500, suffix=''):
+    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr=1, lpf=None), initial_TeVfI0=dict(Te=50, Vf=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, clip_iprobe = None, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, sweep_freq=500, suffix=''):
         """ 
-        ==> results[time,probe,quantity]
-        plot = 1   : V-I and data if there are not too many.
-        plot >= 2  : V-I curves
-        plot >= 3  : ditto + time plot
-        plot >= 4  : ditto + all I-V iterations
+Process the I, V probe data in the Langmuir_data object
 
-        can send parameters through the init or process - either way
-         they all are recorded in actual_params
+Args:
+  fit_params: a dictionary of parameters used in the fitting stage (passed to the  LP_fitter class)
+    Most of these have reasonable defaults (for W7X limiter probes), and the *actual* values used are 
+    attached to the Langmuir_data object and saved in the the DA_ file.
+  filename: The output (DA) file name, defaults to a pattern containing the shot number etc.  If a user 
+    entered value contains a '*', then that pattern is inserted in its place e.g. filename='test_*' 
+    generates a DA file test_LP20160308_23_L53.npz.
+  t_range: time range in secs over which data is processed - None uses a minimum current value as follows.
+  threshold: processing starts once this value is exceeded in the following channel (assuming t_range=None).
+  threshchan: the current channel number (base 0) used to detect plasma start.
+  overlap: degree of overlap of the analysed segments: 1 is no overlap, 2 means half the segment is common
+    to neighboring data.
+  dtseg: The length of a segment over shich analysis is performed, either in seconds (float) or samples (int)
+  rest_swp: Restore clipped sweep V if True.  If None, for March 10 only.
+  leakage: A complex conductance to represent the crosstalk between voltage and current channels.  If None
+    it is automatically calculated for the interval t_comp.  To set to zero, use [0,0] 
 
-        clip_iprobe = [-0.015, .02]  # used to check if a resistive term is affecting Te
+Returns:
+    A DA object as described above
+
+Raises:
+    ValueError:
 
 
-        Start by processing in the ideal order: - logical, but processes more data than necessary
-        fix up the voltage sweep
-        compensate I
-        detect plasma
-        reduce time
-        segment and process
 
-        Faster order - reduces time range earlier: (maybe implement later)
-        detect plasma time range with quick and dirty method
-        restrict time range, but keep pre-shot data accessible for evaluation of success of removal
+==> results[time,probe,quantity]
+plot = 1   : V-I and data if there are not too many.
+plot >= 2  : V-I curves
+plot >= 3  : ditto + time plot
+plot >= 4  : ditto + all I-V iterations
+
+Can send parameters through the init or process - either way they are all 
+   recorded in actual_params
+
+clip_iprobe = [-0.015, .02]  # used to check if a resistive term is affecting Te
+
+Start by processing in the ideal order: - logical, but processes more data than necessary
+fix up the voltage sweep
+compensate I
+detect plasma
+reduce time
+segment and process
+
+Faster order - reduces time range earlier: (maybe implement later)
+detect plasma time range with quick and dirty method
+restrict time range, but keep pre-shot data accessible for evaluation of success of removal
         """
         self.figs = []  # reset the count of figures used to stop too many plots
         self.actual_params = locals().copy()
@@ -704,7 +776,7 @@ class Langmuir_data():
                         self.iprobe.segment(dtseg, overlap),
                         self.vcorr.segment(dtseg, overlap))
 
-        if self.debug>0: print(' {n} segments'.format(n=len(self.segs)))
+        if self.debug>0: print('Use {n} segments'.format(n=len(self.segs)))
         self.fitdata = []
         debug_(self.debug, 3, key='process_loop')
         for mseg, iseg, vseg in self.segs:
@@ -775,7 +847,7 @@ class Langmuir_data():
         else:
             self.imeas = self.imeasfull
             self.iprobe = self.iprobefull
-        if self.debug>0: print(' {n} segments'.format(n=len(self.segs)))
+        if self.debug>0: print('Using {n} segments'.format(n=len(self.segs)))
         debug_(self.debug, 3, key='process_loop')
         if filename is not None:            
             if  '*' in filename:

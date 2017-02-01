@@ -59,19 +59,22 @@ from pyfusion.utils import process_cmd_line_args
 pyfftw.interfaces.cache.enable()
 
 def specgram(x, NFFT=256, Fs=2, Fc=0, detrend=None, window = pl.hanning, noverlap=128, cmap=None, hold=None, dtype = np.float32, threads=1, im_obj=None, interpolation='nearest', pylab_scaling=True, fast=True):
-    """ return and optionally plot the spectrogram of the data in x,
-    using fftw3 to optimise the speed.  Note that using fftw3, most of the time
-    is spent elsewhere, so perhaps a cython implementation would be more 
-    efficient.
-    Sofar only coded for float32 and float64
-    Slight increase in speed if the previous image_object is given in the 
-    arg list.
-    Tests below on E4300, power on, 1 thread
-    6 secs til image for specgram of 16M points, NFFT=512, noverlap=128  std win
-    1.8 secs til first image fast=1, im_obj=im_obj (1 sec more for float64)
-    e.g. (note this is a wide dynamic range (17 decades of power) so there
-    will be slight errors visible in the float32 version.
-    time figure(3);s=specgram(arange(2**24)**n,Fs=1e6,NFFT=512,im_obj=s[3],dtype=float64);n=(n+1)%3
+    """ 
+Return and optionally plot the spectrogram of the data in x, using fftw3 to 
+  optimise the speed.  Note that using fftw3, most of the time
+  is spent elsewhere, so perhaps a cython implementation would be more efficient.
+So far only coded for float32 and float64
+
+Slight increase in speed if the previous image_object is given in the arg list.
+
+Tests below on E4300, power on, 1 thread
+  * 6 secs til image for specgram of 16M points, NFFT=512, noverlap=128  std win
+  * 1.8 secs til first image fast=1, im_obj=im_obj (1 sec more for float64)
+  * e.g. (note this is a wide dynamic range (17 decades of power) so there
+       will be slight errors visible in the float32 version.
+
+    >>> time figure(3);s=specgram(arange(2**24)**n,Fs=1e6,NFFT=512,im_obj=s[3],dtype=float64);n=(n+1)%3
+
     matplotlib specgram has good dyn range for arange2*24, but error of ~ -8 for random
     """
     siglen = len(x)

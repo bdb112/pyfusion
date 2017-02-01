@@ -166,6 +166,22 @@ in ``$HOME/.pyfusion/pyfusion.cfg``, if it exists.
 and finally files pointed to by the environment variable PYFUSION_CONFIG_FILE
 if they exist. This allows temporarily overriding config variables.
 
+The user's own custom file ``$HOME/.pyfusion/pyfusion.cfg`` contains information specific to the machine it is on and the user::
+
+ # this is an example of .pyfusion/pyfusion.cfg - the user's personal config -
+ #   ~/.pyfusion/pyfusion.cfg on linux
+ #   c:/Users/bobl/.pyfusion/pyfusion.cfg on window including cygwin
+ [global]
+ localdatapath = C:\cygwin\home\bobl\data\datamining\local_data\+\\sv-w7x-nas-1\Freigaben\bobl\LLPcache\W7X\~d~c~b~a
+ # other examples - windows cygwin
+ #localdatapath = C:\cygwin\home\bobl\data\datamining\local_data\+C:\cygwin\home\bobl\pyfusion\working\pyfusion\may2016\~d~c~b~a
+ # linux
+ #localdatapath=/data/+/data/datamining/local_data/extra_data/may22/0218/+/data/datamining/local_data/extra_data/may2016/~d~c~b~a
+ #localdatapath = .
+
+
+
+
 Additional config files can be loaded with ``pyfusion.read_config()``::
 
 	   pyfusion.read_config(["another_config_filename_1", "another_config_filename_2"])
@@ -275,17 +291,13 @@ the data for the diagnostic.
 tests.cfg
 ---------
 
-A seperate configuration file "tests.cfg", in the same ".pyfusion" folder in your home directory, can be used during development to enable tests which are disabled by default.
+A separate configuration file "tests.cfg", in the same ".pyfusion" folder in your home directory, can be used during development to enable tests which are disabled by default.
 
 An example of the syntax is::
 
 	[EnabledTests]
 	mdsplus = True
 	flucstrucs = True
-
-etc...
-
-
 
 
 Database

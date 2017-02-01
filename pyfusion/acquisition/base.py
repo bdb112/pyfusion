@@ -246,11 +246,14 @@ class BaseDataFetcher(object):
         debug_(pyfusion.DEBUG,5,key='device_name')
         if config_name is not None:
             self.__dict__.update(get_config_as_dict('Diagnostic', config_name))
-            # look for the first valid shot range for this diag - 
+            #  look for the first valid shot range for this diag -
             #   see config/'Valid Shots' in the reference docs
-            self.config_name=config_name
-            devshort = self.config_name.split('_')[0]
-            for Mod in ['M1','M2','M3','M4']:
+            self.config_name = config_name
+            devshort = self.config_name.split('_')[0]  # assume the device short name is first, before _
+            for Mod in ['M1', 'M2', 'M3', 'M4']:
+                if isinstance(shot, (tuple, list, ndarray)) and shot[0] > 1e9:
+                    pyfusion.logger.warning('Ignoring valid_shots')
+                    break    # it is a utc pair, don't check for valid_shots (dangerous though!)
                 if self.find_valid_for_shot():
                     break
                 else:

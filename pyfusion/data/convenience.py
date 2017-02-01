@@ -21,8 +21,10 @@ def inds_from_list(var, lst):
     to replace
     shot in [90000,90001] etc
     which can't be used in where()  (gets msg "...... Use a.any() or a.all()")
+
     >>> inds_from_list([1,4,5,1], [1,2,3])
     array([0, 3])
+
     """
     inds = []
     for elt in lst:
@@ -31,11 +33,12 @@ def inds_from_list(var, lst):
 
 def inlist(var, lst):
     """ return a list of True/False  of var which match the items in lst.  
-    This is to replace
-    shot in [90000,90001] etc
-    which gets msg "...... Use a.any() or a.all()"
+    This is to replace shot in [90000,90001] etc
+    which would get msg "...... Use a.any() or a.all()"
+
     >>> inlist([1,4,5,1], [1,2,3])
     array([ True, False, False,  True], dtype=bool)
+
     """
     inds = np.zeros([len(var)],dtype=bool)  
     for elt in lst:

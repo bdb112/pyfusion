@@ -26,9 +26,9 @@ def runavg(t, y, period=1e-3, return_time=False):
         return(csum[0:-nsamp] - csum[nsamp:])
 
 _var_defaults = """
-diag1 = 'H1ISat'
-diag2 = 'H1CameraTrig'
-diag_extra = "H1Puff"
+diag1 = 'H1_ISat'
+diag2 = 'H1_CameraTrig'
+diag_extra = "H1_Puff"
 dev_name = "H1"
 shot_number = 91700
 hold=0

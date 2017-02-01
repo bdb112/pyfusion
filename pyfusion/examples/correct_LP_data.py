@@ -5,7 +5,7 @@ to avoid overwriting LP13.
 Note that the reading (and consistency check) of the pyfusion.cfg file is through 
 the pyfusion interface.
 This is different to the text file method in modify_cfg.py, and is probably more reliable,
-
+#_PYFUSION_TEST_@@Skip
 """
 import numpy as np
 import os
@@ -15,7 +15,8 @@ import glob
 sections = pyfusion.config.sections()
 params_cfg = []
 params_section = []
-verbose=0
+verbose = 0
+dry=0
 for section in sections:
     toks = section.split(':')
     if len(toks) != 2:
@@ -42,19 +43,21 @@ def correctly_name(fn=None):
     except KeyError as reason:
         msg = str('Missing DMD params - moving to {fn}.old \n {r}'.format(fn=fn, r=reason))
         pyfusion.logging.error(msg)
-        os.rename(fn, fn+'.old')
+        if not dry: 
+            os.rename(fn, fn+'.old')
         return
 
     matches = [i for i in range(len(params_cfg)) 
-               if (params_npz == params_cfg[i]) and ( params_section[i].endswith(unit))]
+               if (params_npz == params_cfg[i]) and ( params_section[i].endswith(unit))
+               and 'W7XM' not in params_section[i] ]
 
     if len(matches) != 1:
         raise LookupError('{num} matches to {fn} {pz}: {m}'
                           .format(fn=fn, pz=params_npz,  num=len(matches),
                                   m=[params_section[i] for i in matches]))
     
-    newfn = fn.split('W7X')[0] + params_section[matches[0]] + '.npz'
-    if verbose>2: print('filename of {fn} should be {newfn}'.format(fn=fn, newfn=newfn))
+    newfn = fn.split('W7X_L')[0] + params_section[matches[0]] + '.npz'
+    if verbose>1: print('filename of {fn} should be {newfn}'.format(fn=fn, newfn=newfn))
 
     if os.path.exists(newfn):
         if 'LP10' in newfn:
@@ -99,6 +102,15 @@ goods = []
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0122/2016*_*LP*')):
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0121/2016*_*LP*')):
 #for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0120/2016*_*LP*')):
-for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0119/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/extra_data/may22/0119/2016*_*LP*')):
+# second go in Jan 2017
+#for fn in np.sort(glob.glob('/data/datamining/local_data/W7X/0308/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/W7X/0310/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/W7X/0309/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/W7X/0217/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/tmp/0309/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/W7X/0224/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/tmp/0217/2016*_*LP*')):
+for fn in np.sort(glob.glob('/data/datamining/local_data/W7X/0218/2016*_*LP*')):
     goods.append(correctly_name(fn))
 print('renamed {l} files - see goods'.format(l=len(goods)))

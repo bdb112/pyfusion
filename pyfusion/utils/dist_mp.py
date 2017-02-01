@@ -69,6 +69,7 @@ except ImportError as reason:
 def dist_mp(cl_instance, instances, squared = None, averaged = None, threads=None, debug=0):
     """ multithreaded distance calculation using dist.pyx and nogil version
     set debug>=1 to to a comparison against single processor, GIL version
+
     >>> import numpy as np
     >>> x=dist_mp(np.random.random((14,)).astype(np.float32),np.random.random((1000,14)).astype(np.float32),debug=1,threads=3)
 

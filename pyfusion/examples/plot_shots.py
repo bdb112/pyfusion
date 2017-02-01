@@ -30,4 +30,4 @@ for shot in shot_list:
     except LookupError:
         pass
 
-plt.show()
+plt.show(block=0)

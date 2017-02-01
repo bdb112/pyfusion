@@ -133,6 +133,7 @@ def peak_freq(signal,timebase,minfreq=0,maxfreq=1.e18):
     now also returns peaking factor
     this function only has a basic unittest to make sure it returns
     the correct freq in a simple case.
+
     >>> tb = np.linspace(0,1,10000)
     >>> int(peak_freq(np.sin(2*np.pi*567*tb), tb)[1])
     567
@@ -185,6 +186,7 @@ def split_names(names, pad=' ',min_length=3):
     The array of varying parts is first in the tuple in case others are not
     wanted.  This is used to make the x labels of phase plots simpler and smaller.
     e.g.
+
     >>> split_names(['MP01','MP10'],min_length=2)
     (['01', '10'], 'MP', '')
 

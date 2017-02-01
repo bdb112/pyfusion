@@ -24,6 +24,7 @@ run -i pyfusion/examples/W7X_neTe_profile.py dafile_list=dafile_list_9 labelpoin
 """
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import pyfusion
 from pyfusion.data.DA_datamining import Masked_DA, DA
 import sys

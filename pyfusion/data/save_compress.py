@@ -346,6 +346,7 @@ def save_compress(timebase=None, signal=None, filename=None, *args, **kwargs):
     """ save a signal and timebase into a compress .npz file.  See arglist
     of discretise_signal.
     Example:
+
     >>> sig=[1,2,1,2] ; tb=[1,2,3,4] # need this only for later comparison
     >>> save_compress(timebase=tb, signal=sig, filename='junk')
     >>> readback=newload('junk.npz',verbose=0)
@@ -358,7 +359,9 @@ def save_compress(timebase=None, signal=None, filename=None, *args, **kwargs):
 
 def test_compress(file=None, verbose=0, eps=0, debug=False, maxcount=0):
     """ Used in developing the save compress routines.  Not tested since then
+
     >>> test_compress()
+
     Looks like it only saves the time series, not the rest.
     """
     from numpy import load as loadz

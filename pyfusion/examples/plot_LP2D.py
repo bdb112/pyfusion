@@ -51,6 +51,9 @@ dafile = 'LP20160310_9_L57'
 Te_range = [20, 100]  # 
 ne_range = [0, 10]
 
+dafile = 'LP20160309_6_L57'
+Te_range = [20, 100]  # 
+ne_range = [0, 2]
 
 dafile = 'LP20160310_9_L53'
 Te_range = [20, 100]  # 
@@ -123,6 +126,8 @@ minpts=18
 dafile = 'LP20160309_41_L57_2k2.npz'
 Te_range = [10, 80]  # 
 ne_range = [0, 6]   # 
+
+
 srange = range(145, 175)   # 20160308_38_L53  0.33
 srange = range(105, 135)   # 20160224_25_L53  0.33
 

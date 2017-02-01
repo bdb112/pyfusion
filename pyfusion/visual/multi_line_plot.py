@@ -9,12 +9,13 @@ import os
 
 
 def join_segments(*args):
-    """ take a list or array of sequences representing line coordinates, and join them
-    using nans as the separator.  This way plotting will be faster, and rasterization 
-    will be more efficient.  Works on one or more lists, typical call is
+    """take a list or array of sequences representing line coordinates,
+    and join them using nans as the separator.  This way plotting will
+    be faster, and rasterization will be more efficient.  Works on one
+    or more lists, typical call is
 
-    x2, y2 = join_segments(x,y)
-    plt.plot(x2,y2,'r',lw=30./nlines,rasterized=True)
+    >>> x2, y2 = join_segments(x,y)
+    >>> plt.plot(x2,y2,'r',lw=30./nlines,rasterized=True)
 
     """
     if len(args)>1:  # process multiple args recursively
@@ -28,31 +29,33 @@ def join_segments(*args):
     return(veclist)
 
 #  test code
-npts = 10
-nlines = 1000
-x,y = np.mgrid[0: 1: 1j*npts, 0: 1: 1j*nlines]
-y = 0.1 * np.random.random((npts, nlines))
+if __name__ == '__main__':
 
-#test single arg case
-x1 = join_segments(x)
-y1 = join_segments(y)
+    npts = 10
+    nlines = 1000
+    x,y = np.mgrid[0: 1: 1j*npts, 0: 1: 1j*nlines]
+    y = 0.1 * np.random.random((npts, nlines))
 
-plt.figure()
-plt.plot(x1,y1,lw=30./nlines,rasterized=True)
-plt.ylim(0,1)
-plt.show()
-plt.savefig('junk1.pdf', dpi=400)
+    #test single arg case
+    x1 = join_segments(x)
+    y1 = join_segments(y)
 
-# test multi arg case
-x2, y2 = join_segments(x,y)
-plt.figure()
-plt.plot(x2,y2,'r',lw=30./nlines,rasterized=True)
+    plt.figure()
+    plt.plot(x1,y1,lw=30./nlines,rasterized=True)
+    plt.ylim(0,1)
+    plt.show()
+    plt.savefig('junk1.pdf', dpi=400)
 
-# test rasterized
-plt.figure()
-pt = plt.plot(x, y, 'g', linewidth=30./nlines) #,rasterized=True)
-plt.gcf().set_rasterized(True)
-plt.ylim(-1, 1)
-plt.show()
-plt.savefig('junk.pdf', dpi=200)
-os.system('evince junk.pdf')
+    # test multi arg case
+    x2, y2 = join_segments(x,y)
+    plt.figure()
+    plt.plot(x2,y2,'r',lw=30./nlines,rasterized=True)
+
+    # test rasterized
+    plt.figure()
+    pt = plt.plot(x, y, 'g', linewidth=30./nlines) #,rasterized=True)
+    plt.gcf().set_rasterized(True)
+    plt.ylim(-1, 1)
+    plt.show()
+    plt.savefig('junk.pdf', dpi=200)
+    os.system('evince junk.pdf')

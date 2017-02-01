@@ -58,7 +58,9 @@ Example:
         self.valid_keys = valid_keys
 
     def keys(self):
-        """  return the keys for masked elements only """
+        """  Return the keys for elements with validity masking only.
+        To see all elements, including raw data, use keys() on the parent DA.
+        object."""
         if 'mask' not in self.DA :
             print('no mask set')
             return([])
@@ -886,10 +888,11 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         """ plot a histogram of Te or resid etc, replacing Nans or infs
         with nanval, and considering only up to the <percentile>th percentile
         DA('LP20160310_9_L57__amoeba21_1.2_2k.npz').hist('resid')
+
         Examples:
-          da.hist('resid',percentile=97,label='{k}: {fn}')
-          da.hist('resid',percentile=97,label='{k}: {actual_fit_params}')
-          da.hist('resid',percentile=97,label='{k}: {i_diag} {actual_fit_params}')
+          >>> da.hist('resid',percentile=97,label='{k}: {fn}')
+          >>> da.hist('resid',percentile=97,label='{k}: {actual_fit_params}')
+          >>> da.hist('resid',percentile=97,label='{k}: {i_diag} {actual_fit_params}')
        """
         dat = self.da[key]
         wn = np.where(np.isinf(dat) | np.isnan(dat))
@@ -972,7 +975,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
             ax.yaxis.set_major_locator(locator)
             # this worked in data/plots.py - but warning in DA_datamining
             # ax.locator_params(prune='both', axis=x)
-            # but the plot doesnt overwite axis labels for sharex='col' anyway
+            # but the plot doesnt overwrite axis labels for sharex='col' anyway
             """  This suppresses all if sharex='col'
             print(c+1, nvis)
             if (c+1 != nvis):

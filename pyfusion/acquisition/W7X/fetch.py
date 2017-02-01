@@ -140,12 +140,27 @@ class W7XDataFetcher(BaseDataFetcher):
 
         params.update(shot_f=f, shot_t=t)
         url = fmt.format(**params)
+        # fudgey fix for python3's special treatment of %
+        # we need %% in pyfusion.cfg to keep py3 happy
+        if sys.version < (3, 0, 0) and '%%' in url:
+            url = url.replace('%%','%')
+
         if pyfusion.CACHE:
+            # needed for improperly configured cygwin systems: e.g.IPP Virual PC
+            # perhaps this should be executed at startup of pyfusion?
+            cygbin = "c:\\cygwin\\bin"
+            if os.path.exists(cygbin) and not cygbin in os.environ['path']:
+                os.environ['path'] += ";" + cygbin
             print('using wget on {url}'.format(url=url))
-            os.system('wget -x "{url}"'.format(url=url))
-            # now read from the local copy - it is in the wd, so only //
-            # but it seems we need the full path for now
-            url = url.replace('http://','file:///home/bdb112/pyfusion/working/pyfusion/')
+            retcode = os.system('wget -x "{url}"'.format(url=url))
+            #  retcode = os.system('c:\\cygwin\\bin\\bash.exe -c "/bin/wget {url}"'.format(url=url))
+            debug_(retcode != 0, level=1, key='wget', msg="wget error or DEBUG='wget'")
+            # now read from the local copy - seems like urls need full paths
+            # appears to be a feature! http://stackoverflow.com/questions/7857416/file-uri-scheme-and-relative-files
+            # /home/bdb112/pyfusion/working/pyfusion/archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.82/DataModuleDesc.181_DATASTREAM/7/Channel_7/scaled/_signal.json?from=1457626020000000000&upto=1457626080000000000&nSamples=10000
+            # url = url.replace('http://','file:///home/bdb112/pyfusion/working/pyfusion/')
+            url = url.replace('http://','file://'+os.getcwd()+'/')
+            # nicer replace - readback still fails in Win, untested on unix systems
             print('now trying the cached copy we just grabbed: {url}'.format(url=url))
         if pyfusion.VERBOSE > 0:
             print('===> fetching url {u}'.format(u=url))
@@ -279,16 +294,9 @@ class W7XDataFetcher(BaseDataFetcher):
                 print('Warning- assuming we have archive network access in the absence of any real information')
                 print('*******************************************************************************')
                 self.acq.access = None
-        #the lines below probably should be in W7X/fetch
+
         if self.acq.access is False:
             raise LookupError('URL for {d} in {s} is probably not accessible or the\n '\
                               'necessary software (dnspython or nslookup/grep) is not installed.\n'\
                               'Set pyfusion.LAST_DNS_TEST=-1 to skip test'
                               .format(d=self.config_name, s=self.shot))
-
-
-
-
-
-
-

@@ -20,13 +20,30 @@ python generate_modules.py -f -d modules -s rst ..
 Actual line Dec 2015:
 Hard to get the excludes to work - used full path in the end
 
-run generate_modules1.py ../../pyfusion -f  -d modules -s rst exclude /home/bdb112/pyfusion/mon121210/pyfusion/pyfusion/examples/
+#run generate_modules1.py ../../pyfusion -f  -d modules -s rst exclude /home/bdb112/pyfusion/mon121210/pyfusion/pyfusion/examples/
+## 2017 version !!
+run generate_modules.py ../../pyfusion -f  -d modules -s rst exclude /home/bdb112/pyfusion/working/pyfusion/pyfusion/examples/
+# have to close a few windows etc to allow to finish
 
 Then to generate the complete documentation (e.g. in html)
 
 cd pyfusion/documentation
 make html
 
-Example of reasonable in-line python documentation in LHD/fetch.py
+!! Note - browser needs to be reloaded on every page!!
 
-Hope to redo sphix, using numpydoc!
+Example of reasonable in-line python documentation in 
+LHD/fetch.py, 
+newer, better: DA-datamining
+
+cross ref 
+within the same class:
+:py:meth:`process_swept_Langmuir`
+- refer to a mthod of a class in the same file (~)
+:py:meth:`~Langmuir_data.process_swept_Langmuir`
+- full
+   :py:meth:`pyfusion.data.process_swept_Langmuir.Langmuir_data.process_swept_Langmuir` 
+
+
+
+Hope to redo sphinx, using numpydoc!

@@ -142,7 +142,7 @@ class W7XDataFetcher(BaseDataFetcher):
         url = fmt.format(**params)
         # fudgey fix for python3's special treatment of %
         # we need %% in pyfusion.cfg to keep py3 happy
-        if sys.version < (3, 0, 0) and '%%' in url:
+        if sys.version < '3.0.0' and '%%' in url:
             url = url.replace('%%','%')
 
         if pyfusion.CACHE:

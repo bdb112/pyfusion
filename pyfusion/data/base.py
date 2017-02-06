@@ -94,9 +94,9 @@ class MetaMethods(type):  # type here is used in the sense type(name, bases, dic
         import types
         for func in reg_methods:
             if isinstance(func, types.FunctionType) and func.__doc__ is not None:
-                if pyfusion.VERBOSE>0: print func, 'needs doc...',
+                if pyfusion.VERBOSE>0: print(func, 'needs doc...')
                 for newf in (newc.__dict__):
-                    if isinstance(newc.__dict__[newf], types.FunctionType) and newf == func.func_name:
+                    if isinstance(newc.__dict__[newf], types.FunctionType): #and newf == func.func_name:
                         newc.__dict__[newf].__doc__ = func.__doc__
                         if pyfusion.VERBOSE>0: print(' setting..')
         return(newc)

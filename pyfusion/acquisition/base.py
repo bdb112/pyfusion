@@ -50,7 +50,10 @@ def newloadv3(filename, verbose=1):
     # Sucess using eval instead of exec
     signal = eval(signalexpr.tolist().split(b'=')[1])
     time_unit_in_seconds = timeunitexpr.tolist()
-    timebase = time_unit_in_seconds * eval(timebaseexpr.tolist().split(b'=')[1])
+    print(type(timebaseexpr))
+    print(timebaseexpr)
+    #print(timebaseexpr.tolist().split(b'=')[1])
+    timebase = time_unit_in_seconds * eval(timebaseexpr.tolist().split(b'\n')[0].split(b'=')[1])
     retdic = {"signal":signal, "timebase":timebase, "parent_element":
               dic['parent_element'], "params": dic['params'].tolist()}
     return(retdic)

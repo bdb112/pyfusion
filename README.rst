@@ -10,6 +10,13 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+
+Version 0.82 beta
+
+ * W7X/fetch.py kludge to fixed spikes in scaled data, partially implement nSamples,
+ * add get_programs to get_shot_list.py
+ * data/base.py  fix bug in compare shot (force tuples)
+
 Version 0.81 beta
 
  * many __doc__ edits and formatting on the doc files in http://people.physics.anu.edu.au/~bdb112/pyfusion/

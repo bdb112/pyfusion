@@ -252,7 +252,10 @@ class BaseDataFetcher(object):
             devshort = self.config_name.split('_')[0]  # assume the device short name is first, before _
             for Mod in ['M1', 'M2', 'M3', 'M4']:
                 if isinstance(shot, (tuple, list, ndarray)) and shot[0] > 1e9:
-                    pyfusion.logger.warning('Ignoring valid_shots')
+                    # if the shot is after 20160223_0 we can ignore valid shots
+                    # kludge - should be fixed propoerly
+                    if shot[0]<1457599965437656661: # shotDA['start_utc'][950]
+                        pyfusion.logger.warning('Ignoring valid_shots')
                     break    # it is a utc pair, don't check for valid_shots (dangerous though!)
                 if self.find_valid_for_shot():
                     break
@@ -295,10 +298,12 @@ class BaseDataFetcher(object):
             for k in valid_dict:
                 root = k.replace('_from','').replace('_to','')
                 if '_' + root in self.config_name:
-                    if pyfusion.VERBOSE>1: print(k, root, self.shot, valid_dict[k])
+                    if pyfusion.VERBOSE>1: print('find_valid_for_shot: key={k}, root={r} shot={s} valid={v}'
+                                                 .format(k=k, r=root, s=self.shot, v=valid_dict[k]))
                     check_to_clause(self.shot, k, valid_dict)
-                    if ('_from' in k and self.shot < valid_dict[k]
-                        or ('_to' in k and self.shot > valid_dict[k])):
+                    # need to be both tuples or both lists for comparison to work
+                    if ('_from' in k and tuple(self.shot) < tuple(valid_dict[k])
+                        or ('_to' in k and tuple(self.shot) > tuple(valid_dict[k]))):
                         is_valid = False
         debug_(pyfusion.DEBUG, 2, 'valid_shots')
         return(is_valid)
@@ -369,7 +374,12 @@ class BaseDataFetcher(object):
         sgn *= float(gain_units.split()[0])
         if pyfusion.VERBOSE > 0: print('Gain factor', sgn, self.config_name)
 
-        tmp_data = None if self.no_cache else try_fetch_local(self, chan)  # is there a local copy?
+        if self.no_cache: 
+            if pyfusion.VERBOSE>0:
+                print('** Skipping cache serach as no_cache is set')
+            tmp_data = None 
+        else:
+            try_fetch_local(self, chan)  # is there a local copy?
         if tmp_data is None:
             method = 'specific'
             try:

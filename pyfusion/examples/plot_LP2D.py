@@ -52,7 +52,7 @@ Te_range = [20, 100]  #
 ne_range = [0, 10]
 
 dafile = 'LP20160309_6_L57'
-Te_range = [20, 100]  # 
+Te_range = [10, 60]  # 
 ne_range = [0, 2]
 
 dafile = 'LP20160310_9_L53'

@@ -56,7 +56,7 @@ srange = range(294,320), # .35 sec
 )))
 
 db.update(dict(LP20160309_6=dict(
-Te_range = [20, 100],  # 
+    Te_range = [10, 60],  # 
 ne_range = [0, 2],
 p_range = [0,5],  # 3 later in shot
 minpts=15,
@@ -421,9 +421,11 @@ for ax, seg in zip([axu, axl],['3','7']):
         Te_raw = da.masked['Te'][s]
         if dummy:
             x, z = np.mgrid[-.07:.07:21j, .15:.25:23j]
-            x, z = x.flatten(), z.flatten()
-            ne_raw = np.cos(10*x)*np.exp(3*z)
-
+            # x, z = x.flatten(), z.flatten()
+            ne_cleaned = np.cos(10*x)*np.exp(3*z)
+            wg_suppr = np.where(ne_cleaned > -999)
+            NGX=50j; NGY = 20j
+            lowerz=z.min() ; upperz=z.max()
         coords2D = np.array(zip(x, z))
         sgn = int(np.sign(np.nanmean(z)))
         grid_x, grid_z = np.mgrid[-.06:.06:NGX, lowerz*sgn:upperz*sgn:NGY]

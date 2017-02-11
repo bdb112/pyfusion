@@ -41,6 +41,17 @@ this_dir = os.path.dirname(__file__)
 
 import json
 
+def get_programs(json_file='/data/datamining/local_data/W7X/all_programs.json'):
+    """ (data.utc[0] - progs['programs'][-1]['trigger']['6'][0])/1e9 is the start of ECH
+    """
+    progs = json.load(open(json_file))
+    programs = {}
+    for p in progs['programs']:
+        programs.update({p['id']: p})
+
+    return(programs)
+
+
 def json_save_shot_list(shotDA, new_name='/tmp/shotDA.json'):
     shot_dict = {}
     for k in shotDA:

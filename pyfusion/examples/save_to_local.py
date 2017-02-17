@@ -103,7 +103,7 @@ for shot_number in shot_list:
     dev = pyfusion.getDevice(dev_name)
     for diag in diag_list:
         if 'W7' in diag and 'LP' in diag:
-            print('override encode time')
+            print('override delta encode time')
             save_kwargs={"delta_encode_time":False}
 
         diag = prefix + diag
@@ -174,10 +174,13 @@ for shot_number in shot_list:
         except exception as reason:
             bads.append((shot_number,'whole thing',reason.__repr__()))
             print('skipping shot {s} because <<{r}>>'.format(r=reason, s=shot_number))
-pfile = tm.strftime('%Y%m%d%H%M%S_save_local_log')
+pfile = str('{s}_{dt}_save_local'
+            .format(dt=tm.strftime('%Y%m%d%H%M%S'), 
+                    s=str(shot_number).replace('(','').replace(')','')
+                    .replace(',','_').replace(' ','')))
+
 print('See bads for {l} errors, also goods, and in {pfile}'.format(l=len(bads), pfile=pfile))
-pk = open(pfile+'.pickle','w')
 try:
-    json.dump((bads, goods), open(pfile+'.json','w'))
+    json.dump(dict(bads=bads, goods=goods), open(pfile+'.json','w'))
 except:
-    pickle.dump([bads,goods], pk)
+    pickle.dump([bads,goods], open(pfile+'.pickle','w'))

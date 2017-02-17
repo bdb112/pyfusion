@@ -136,6 +136,8 @@ class W7XDataFetcher(BaseDataFetcher):
             fmt += '_signal.json?from={shot_f}&upto={shot_t}'
 
         # nSamples now needs a reduction mechanism http://archive-webapi.ipp-hgw.mpg.de/
+        # minmax is increasingly slow for nSamples>10k, 100k hopeless
+        # should ignore the test comparing hte first tow elements of the tb
         if ('nSamples' not in fmt) and (pyfusion.NSAMPLES != 0):
             fmt += '&reduction=minmax&nSamples={ns}'.format(ns=pyfusion.NSAMPLES)
 

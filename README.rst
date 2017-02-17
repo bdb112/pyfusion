@@ -11,6 +11,12 @@ pyfusion - python code for data mining plasma fluctuations
 Most recent update: 
 
 
+Version 0.83 beta
+
+ * acquistion/base.py fix tmp_data bug, respects valid_dates when called with utc_ns args
+ * save_to_local names log files more clearly, and stores as a dict.
+ * some __doc__ improvements
+
 Version 0.82 beta
 
  * W7X/fetch.py kludge to fixed spikes in scaled data, partially implement nSamples,

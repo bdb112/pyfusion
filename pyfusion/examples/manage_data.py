@@ -71,9 +71,11 @@ allmatches = [f for f in allpaths if target in os.path.split(f)[-1]]
 names = np.unique([os.path.split(m)[-1] for m in allmatches])
 directories = np.unique([os.path.split(am)[0] for am in allmatches])
 wanted = [nm for nm in names if target in nm]
-
-print('processing {n} unique files of {am} matching {tg}, in {dirs} '
-      .format(n=len(wanted), am=len(allmatches), tg=target, dirs=directories))
+print('processing {n} unique files of {am} matching {tg}, in \n'#{dirs}'
+      .format(n=len(wanted), am=len(allmatches), tg=target))
+for dir in directories:
+    c = len([d for d in allmatches if dir == os.path.split(d)[0]])
+    print('{c:10}: {dir}'.format(c=c, dir=dir))
 
 if to_root == '':
     sys.exit()

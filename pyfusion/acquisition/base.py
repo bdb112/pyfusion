@@ -241,6 +241,14 @@ class BaseDataFetcher(object):
     fetcher's :py:meth:`fetch` method.
     """
     def __init__(self, acq, shot, config_name=None, **kwargs):
+        """ Accepts scalar(LHD/H-1) or tuple/list (MIT/W7X) shot numbers 
+        The tuple may be date,progid or from,upto in utc ns
+        Testing: try these three 
+           run pyfusion/examples/plot_signals shot_number=97661 diag_name='H1_CliveProbeI' dev_name='H1Local'
+           run -i pyfusion/examples/plot_signals.py  dev_name='W7X' diag_name='W7X_L53_LP01_I' shot_number=[20160310,40]
+           run -i pyfusion/examples/plot_signals.py  dev_name='W7X' diag_name='W7X_L53_LP01_I' shot_number=data.utc
+        # if the W7X server is not accessible, the last should error looking for the W7X server
+        """
         self.shot = shot
         self.acq = acq
         self.no_cache = False  # this allows getData to request that cached data is NOT used - eg for saving local
@@ -254,9 +262,6 @@ class BaseDataFetcher(object):
             self.config_name = config_name
             devshort = self.config_name.split('_')[0]  # assume the device short name is first, before _
             for Mod in ['M1', 'M2', 'M3', 'M4']:
-                if isinstance(shot, (tuple, list, ndarray)) and shot[0] > 1e9:
-                    pyfusion.logger.warning('Ignoring valid_shots')
-                    break    # it is a utc pair, don't check for valid_shots (dangerous though!)
                 if self.find_valid_for_shot():
                     break
                 else:
@@ -294,14 +299,36 @@ class BaseDataFetcher(object):
         # another example of inheritance - need to formalise this, extract the code to a function?
         is_valid = True
         if valid_shots is not None:
+            # this 15 line code block is W7X specific - how to remove to W7X?
+            if np.isscalar(self.shot) or self.shot[1]<1e9:
+                actual_shot = self.shot
+            else:
+                actual_shot = None
+                from pyfusion.acquisition.W7X.get_shot_list import get_programs 
+                progs = get_programs()
+                for prog in progs:
+                    if self.shot >= progs[prog]['from'] and self.shot <= progs[prog]['upto']:
+                        actual_shot = [int(i) for i in prog.split('.')]
+                if actual_shot is None: # we haven't found a match
+                    # return True, but if it is before 0223, warn
+                    if self.shot[0]<1457599965437656661: # shotDA['start_utc'][950] - 0223
+                        pyfusion.logger.warning('Shot {s} is not found in programs - digitiser choice is not reliable'.format(s=self.shot))
+                    return(True)
+            # from here on is not W7X specific
+            if np.isscalar(actual_shot):
+                compfun = int
+            else:
+                compfun = tuple
             valid_dict = eval('dict({ps})'.format(ps=valid_shots))
             for k in valid_dict:
                 root = k.replace('_from','').replace('_to','')
                 if '_' + root in self.config_name:
-                    if pyfusion.VERBOSE>1: print(k, root, self.shot, valid_dict[k])
-                    check_to_clause(self.shot, k, valid_dict)
-                    if ('_from' in k and self.shot < valid_dict[k]
-                        or ('_to' in k and self.shot > valid_dict[k])):
+                    if pyfusion.VERBOSE>1: print('find_valid_for_shot: key={k}, root={r} shot={s} valid={v}'
+                                                 .format(k=k, r=root, s=self.shot, v=valid_dict[k]))
+                    check_to_clause(actual_shot, k, valid_dict)
+                    # need to be both tuples or both lists for comparison to work
+                    if ('_from' in k and compfun(actual_shot) < compfun(valid_dict[k])
+                        or ('_to' in k and compfun(actual_shot) > compfun(valid_dict[k]))):
                         is_valid = False
         debug_(pyfusion.DEBUG, 2, 'valid_shots')
         return(is_valid)
@@ -372,7 +399,12 @@ class BaseDataFetcher(object):
         sgn *= float(gain_units.split()[0])
         if pyfusion.VERBOSE > 0: print('Gain factor', sgn, self.config_name)
 
-        tmp_data = None if self.no_cache else try_fetch_local(self, chan)  # is there a local copy?
+        if self.no_cache: 
+            if pyfusion.VERBOSE>0:
+                print('** Skipping cache serach as no_cache is set')
+            tmp_data = None 
+        else:
+            tmp_data = try_fetch_local(self, chan)  # If there is a local copy, get it
         if tmp_data is None:
             method = 'specific'
             try:

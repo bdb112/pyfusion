@@ -135,8 +135,11 @@ class W7XDataFetcher(BaseDataFetcher):
         if 'upto' not in fmt:
             fmt += '_signal.json?from={shot_f}&upto={shot_t}'
 
+        # nSamples now needs a reduction mechanism http://archive-webapi.ipp-hgw.mpg.de/
+        # minmax is increasingly slow for nSamples>10k, 100k hopeless
+        # should ignore the test comparing hte first tow elements of the tb
         if ('nSamples' not in fmt) and (pyfusion.NSAMPLES != 0):
-            fmt += '&nSamples={ns}'.format(ns=pyfusion.NSAMPLES)
+            fmt += '&reduction=minmax&nSamples={ns}'.format(ns=pyfusion.NSAMPLES)
 
         params.update(shot_f=f, shot_t=t)
         url = fmt.format(**params)
@@ -145,6 +148,9 @@ class W7XDataFetcher(BaseDataFetcher):
         if sys.version < '3.0.0' and '%%' in url:
             url = url.replace('%%','%')
 
+        if 'StationDesc.82' in url:  # fix spike bug in scaled QRP data
+            url = url.replace('/scaled/', '/unscaled/')
+            
         if pyfusion.CACHE:
             # needed for improperly configured cygwin systems: e.g.IPP Virual PC
             # perhaps this should be executed at startup of pyfusion?
@@ -159,7 +165,10 @@ class W7XDataFetcher(BaseDataFetcher):
             # appears to be a feature! http://stackoverflow.com/questions/7857416/file-uri-scheme-and-relative-files
             # /home/bdb112/pyfusion/working/pyfusion/archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.82/DataModuleDesc.181_DATASTREAM/7/Channel_7/scaled/_signal.json?from=1457626020000000000&upto=1457626080000000000&nSamples=10000
             # url = url.replace('http://','file:///home/bdb112/pyfusion/working/pyfusion/')
-            url = url.replace('http://','file://'+os.getcwd()+'/')
+            url = url.replace('http://','file:/'+os.getcwd()+'/')
+            if 'win' in os.sys.platform:
+                # weven thoug it seems odd, want 'file:/c:\\cygwin\\home\\bobl\\pyfusion\\working\\pyfusion/archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.82/DataModuleDesc.192_DATASTREAM/4/Channel_4/scaled/_signal.json@from=147516863807215960&upto=1457516863809815961'
+                url= url.replace('?','@')
             # nicer replace - readback still fails in Win, untested on unix systems
             print('now trying the cached copy we just grabbed: {url}'.format(url=url))
         if pyfusion.VERBOSE > 0:
@@ -171,7 +180,7 @@ class W7XDataFetcher(BaseDataFetcher):
             # dat = json.load(urlopen(url,timeout=pyfusion.TIMEOUT)) works
             # but follow example in
             #    http://webservices.ipp-hgw.mpg.de/docs/howtoREST.html#python, 
-            dat = json.loads(urlopen(url,timeout=pyfusion.TIMEOUT).read().decode())
+            dat = json.loads(urlopen(url,timeout=pyfusion.TIMEOUT).read().decode('utf-8'))
         except socket.timeout:
             # should check if this is better tested by the URL module
             print('****** first timeout error *****')
@@ -207,8 +216,9 @@ class W7XDataFetcher(BaseDataFetcher):
         coords = get_coords_for_channel(**self.__dict__)
         # used to be bare_chan? should we include - signs?
         ch = Channel(self.config_name,  coords)
+        scl = 1/3277.24 if dat['datatype'].lower() == 'short' else 1
         output_data = TimeseriesData(timebase=Timebase(1e-9*dim),
-                                     signal=Signal(dat['values']), channels=ch)
+                                     signal = scl*Signal(dat['values']), channels=ch)
         output_data.meta.update({'shot': self.shot})
         output_data.utc = [dat['dimensions'][0], dat['dimensions'][-1]]
         output_data.units = dat['units'] if 'units' in dat else ''

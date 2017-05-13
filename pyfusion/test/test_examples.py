@@ -1,6 +1,13 @@
 """ walk through the examples folder and run them according to comments contained - if any
 e.g.
 _PYFUSION_TEST_@@diag_name="DIA135"
+
+To test an old checkout with the extra files needed
+clone_pyfusion  # ( an alias)
+source /tmp/testpf/pyfusion/pyfusion/run_pyfusion 57 Lim57%1
+cd ~/pyfusion/working/pyfusion
+run /home/bdb112/pyfusion/working/pyfusion/pyfusion/test/test_examples.py newest_first=0 filewild="/tmp/testpf/pyfusion/pyfusion/examples/*py"
+
 """ 
 
 
@@ -16,7 +23,7 @@ _var_defaults="""
 filewild = 'pyfusion/examples/*.py'  # an explict filewild (but gets non repo)
 python_exe = 'python' # -3'
 start = 0  # allow a restart part-way through - always early, as it ignores @@Skip
-pfdebug=0 # normally set pyfsion.DEBUG to 0 regardless
+pfdebug=0 # normally set pyfusion.DEBUG to 0 regardless
 newest_first=1 # if True, order the files so the last edited is first.
 max_sec=2
 """
@@ -69,7 +76,12 @@ if gitlist is not None:
 else:
     filelist = wildlist
 
+# use alphabetical order as a reference
+alpha_order = np.argsort([os.path.split(f)[-1] for f in filelist])
+filelist = [filelist[i] for i in alpha_order]
+print('First is ' + filelist[0])
 orig_order = np.arange(0, len(filelist))
+
 if newest_first:
     order = np.argsort([os.path.getmtime(f) for f in filelist])
     filelist = np.array(filelist)[order[::-1]]
@@ -83,6 +95,7 @@ try:  # this try is to catch ^C
         print(flags)
         if flags != []:
             if 'skip' in [flag.lower() for flag in flags]:
+                out_list.append([filename,'skip','skip',0, 0])
                 continue  # this stops it from further consideration (and from being run)
             else:
                 for flag in flags:
@@ -151,11 +164,11 @@ pickle.dump(out_list, open(dumpname, 'wb'))
 print()
 print('Python {pv}, Pyfusion {pfv} {date}'.format(pv=sys.version[0:20], pfv=pyfusion.VERSION, date=ctime()))
 for i, ll in enumerate(out_list):
-    print('{o:3d} {dt:5.2f} {fn:30s}: {msg}'
+    print('{o:03d} {dt:5.2f} {fn:30s}: {msg}'
           .format(o=orig_order[i], dt=ll[3], fn='/'.join(ll[0].split('/')[-2:]),
                   msg=[b'', b'OK! '][ll[-1] == 0] + [ll[1][-77:].replace(b'\n', b' ')][0]))
 
-print('{g} good, {e} errors out of {t}'.format(e=n_errs, t=total, g=total-n_errs))
+print('{g} good, {e} errors out of {t} not skipped'.format(e=n_errs, t=total, g=total-n_errs))
 
 if '-3' in python_exe:
     print('python 3 warnings coming from my files')

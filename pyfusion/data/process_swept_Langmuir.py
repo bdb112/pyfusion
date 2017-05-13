@@ -446,7 +446,7 @@ Args:
         if self.debug > 0:
             print('entering prepare_sweeps ', len(self.vmeasfull.signal[0]))
         if str(rest_swp).lower() == 'auto':
-            rest_swp = self.shot > [20160310, 0]  # was wrong 0309,0 - but didn't affect any data I sent
+            rest_swp = self.shot > [20160310, 0]  # bug: was wrong 0309,0 - but didn't affect any data I sent
             print ('* Automatically setting rest_swp to {r} *'.format(r=rest_swp))
 
         if rest_swp:

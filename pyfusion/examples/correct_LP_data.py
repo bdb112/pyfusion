@@ -17,6 +17,10 @@ params_cfg = []
 params_section = []
 verbose = 0
 dry=0
+# work through the sections: this is bypassing/overriding the normal use of the config file. because we want to 
+# find the true 'owner' of the DMD in question - the section it SHOULD have been in, 
+# In other words, we look for all diagnostics of that type: 
+#   for example there is no file LP01_I in early data - it is named LP1_I instead
 for section in sections:
     toks = section.split(':')
     if len(toks) != 2:
@@ -27,6 +31,19 @@ for section in sections:
     params_section.append(name)
     param_str = pyfusion.config.pf_get(typ, name, 'params')
     params_cfg.append(eval('dict({ps})'.format(ps=param_str)))
+
+# In order to recognise the variants over the history of the experiment, using the same code 
+# as base.py, we make a dummy fetcher for one shot on that day 
+shot = [20160119, 1]
+from pyfusion.acquisition.base import BaseDataFetcher, update_with_valid_config
+for (s, (section, cfg)) in  enumerate(zip(params_section, params_cfg)):
+    if section.startswith(dev.name + 'M'):
+        continue
+    # dum  = BaseDataFetcher(dev.acq,[20160310,9], 'W7X_L53_LP20_I')  # example
+    dum = BaseDataFetcher(dev.acq, shot, section)
+    params_cfg[s].update(update_with_valid_config(dum))
+
+
 
 def correctly_name(fn=None):
     # this is U or V for the files of interest (LP1_I0 will appear as a dup error otherwise
@@ -111,6 +128,8 @@ goods = []
 #for fn in np.sort(glob.glob('/tmp/0309/2016*_*LP*')):
 #for fn in np.sort(glob.glob('/data/datamining/local_data/W7X/0224/2016*_*LP*')):
 #for fn in np.sort(glob.glob('/tmp/0217/2016*_*LP*')):
-for fn in np.sort(glob.glob('/data/datamining/local_data/W7X/0218/2016*_*LP*')):
+#for fn in np.sort(glob.glob('/data/datamining/local_data/W7X/0218/2016*_*LP*')):
+1/0
+for fn in np.sort(glob.glob('/data/datamining/local_data/W7X/0303/2016*_*LP*')):
     goods.append(correctly_name(fn))
 print('renamed {l} files - see goods'.format(l=len(goods)))

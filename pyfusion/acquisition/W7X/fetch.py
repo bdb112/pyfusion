@@ -224,9 +224,13 @@ class W7XDataFetcher(BaseDataFetcher):
         output_data.units = dat['units'] if 'units' in dat else ''
         # this is a minor duplication - at least it gets saved via params
         params['data_utc'] = output_data.utc
-        # Warning - this could slow things down! - but allows corrupted time to be re-calculated as algorithms improve.
+        # Warning - this could slow things down! - but allows 
+        # corrupted time to be re-calculated as algorithms improve.
+        # and storage as differences takes very little space.
         params['diff_dimraw'] = dimraw
         params['diff_dimraw'][1:] = np.diff(dimraw)
+        # NOTE!!! need float128 to process dimraw, and cumsum won't return ints
+        # or automatically promote to 128bit (neither do simple ops like *, +)
         params['pyfusion_version'] = pyfusion.version.get_version()
         if pyfusion.VERBOSE > 0:
             print('shot {s}, config name {c}'

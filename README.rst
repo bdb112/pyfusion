@@ -5,12 +5,31 @@ pyfusion - python code for data mining plasma fluctuations
 ***  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.***
  * partial fix - don't allow local_saves from local cache (only works
    on machines with acccess to the archivedB
-  implemented (differently):  maybe use functools.wraps so that the __doc__ of plot_signals can be seen
-
 
 Most recent update: 
 
 
+Version 0.84 beta
+
+ * add H-1 wiki functions - scrape_wiki and wiki_days_db to connect
+   wiki and summary db to a degree
+ * acquisition/base extract valid_for_shot logic into a function: update_with_valid_config()
+ * data/base: fixed bug in MetaMethods which failed to transfer  __doc__ to filters.
+ * data/filters: make RMS the default - variance is not a good normaliser, pass on norm params, some care with copy=
+ * data/plots: some misc fixes and fixes on angle name, add time offset t0
+ * JSPS_tutorial/examples/cross_phase: fix incorrect indexing now total phase is first
+ * check_W7X_timebase_repair - improvements
+ * correct_LP_data.py - try to include the various changes to config with date not tested much
+ * examples/cross_phase: bring in most of the features from the JSPS longer version   
+ * examples/plot_both_LP2D.py: make  'not enough frames' error clearer, and tolerate missing gas data
+ * examples/plot_signals: add time offset t0
+ * examples/plot_svd: AngName,  add some test cases at top
+ * save_to_local prevent abort of a multi channel if one is missing
+ * pyfusion.cfg - W7X modifications back to the 18 Jan
+ * pyfusion_boyd_nov_2012: add coord data to mirnov 
+ * test_examples: alphabetical order is default (filename[-1], incl
+   case), fixed bug when @SKIP encountered
+ 
 Version 0.83 beta
 
  * acquistion/base.py fix tmp_data bug, respects valid_dates when called with utc_ns args

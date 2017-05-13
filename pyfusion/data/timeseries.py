@@ -138,6 +138,7 @@ class TimeseriesData(BaseData):
         self.timebase = timebase
         self.channels = channels
         self.scales = np.array([[1]])  # retain amplitude scaling info for later
+        self.norm_method = 'None'  # corresponds to 1s
         if bypass_length_check == True:
             self.signal = signal
         else:

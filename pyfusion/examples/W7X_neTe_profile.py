@@ -1,4 +1,7 @@
 """
+labelpoints=1 label highest amplitude
+labelpoints=2 label all
+
 exclude="['LP07']"   excludes L53_LP07 and L57_LP07
 exclude="['L53_LP07','LP19']"   excludes L53_LP07 and both LP19s
 
@@ -97,6 +100,8 @@ def rot(x, y, t):
     return(x*cos(t)+y*sin(t), -x*sin(t)+y*cos(t))
 
 def get_calculated(da, diag, inds, av=np.average, x=None, Tesmooth=None, nrm=None):
+    """ returns calculated power density, directly or smoothed (by using ne instead of isat)
+    """
     import json
     ebars = None
     Vfkey = 'Vf' if 'Vf' in da.keys() else 'Vp'
@@ -121,7 +126,7 @@ def get_calculated(da, diag, inds, av=np.average, x=None, Tesmooth=None, nrm=Non
         #    sig = sig/nrm
         ebars = None
     elif diag == 'Pdsmooth':
-        # using ne can avoid some noise at least on shot 30
+        # using ne instead of Isat can avoid some noise at least on shot 30
         qe = 1.602e-19
         mp = 1.67e-27
         amu = da['info']['params']['amu']
@@ -445,4 +450,7 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
 fp_list[-1].close()
 """ 
 figure(); i3=argsort(solds[0]); plot(solds[0][i3], sigs[1][i3]*sqrt(fitsigs[0][i3]),'o-'); i7=argsort(solds[2]); plot(solds[2][i7], sigs[3][i7]*sqrt(fitsigs[1][i7]),'o-');ylim(0,ylim()[1]); title(da.name+' '+str(t_range))
+
+run ~/python/digitize_overlay_graph_image imagefile='/data/databases/W7X/LP/philipp_drews_20171122_talk_Te.png' origin='upper' lower_left.dxy=[5.97,0] upper_right.dxy=[6.04,30]
+r,T = loadtxt('/data/databases/W7X/LP/digitize_philipp_drew.txt',delimiter=',').T
 """

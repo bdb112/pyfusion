@@ -28,9 +28,10 @@ decimate=1   #  1 is no decimation, 10 is by 10x
 fun=myiden
 fun2=myiden2
 plotkws={}
-hold=0
+hold=0  # 0 means erase, 1 means hold, 2 means twinx
 labeleg='False'
 t_range=[]
+t0=0
 """
 exec(_var_defaults)
 
@@ -49,8 +50,14 @@ elif hold==2:
     plt.sca(ax)
     labeleg='True'
 
-# maybe should be in data/plots.py, but config_name not fully implemented
-data.plot_signals(suptitle='shot {shot}: '+diag_name, sharey=sharey, downsamplefactor=max(1, decimate),
+if 'W7X' in dev_name and t0 is None:
+    pgms = pyfusion.acquisition.W7X.get_shot_list.get_programs()
+    pgm = pgms['{d}.{s:03d}'.format(d=shot_number[0], s=shot_number[1])]
+    utc0 = pgm['trigger']['5'][0]
+    # maybe should be in data/plots.py, but config_name not fully implemented
+    t0 = (utc0 - data.utc[0])/1e9
+
+data.plot_signals(suptitle='shot {shot}: '+diag_name, t0=t0, sharey=sharey, downsamplefactor=max(1, decimate),
                   fun=fun, fun2=fun2, labeleg=labeleg, **plotkws)
 
 # for shot in range(76620,76870,10): dev.acq.getdata(shot,diag_name).plot_signals()

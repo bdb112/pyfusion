@@ -145,6 +145,88 @@ def try_fetch_local(input_data, bare_chan):
     output_data.params.update(dict(source='from npz cache' + oldsrc))
     return(output_data)
 
+def update_with_valid_config(fetcher):
+    """
+    Look for the first valid shot range for this fetcher working backwards
+    and update the fetcher with its dictionary info
+       see config/'Valid Shots' in the reference docs
+    This code was extracted into a function
+    """
+    def valid_for_shot(fetcher):
+        """ Determine if this fetcher's diag definition or modified diag is valid 
+        for this shot
+        """
+        def check_to_clause(shot, k, dic):
+            """ check for leftover instances of to=[date, shot]
+            where shot is 0 - this is very likely to be a mistake
+            as there is no shot before 0
+            """
+            if ('_to' in k and isinstance(shot,(list, tuple, ndarray)) 
+                and dic[k][1] == 0):
+                print('********  Warning - valid shot of 0 in to clause?')
+
+
+        if hasattr(fetcher,'valid_shots'):
+            valid_shots = fetcher.valid_shots
+        elif hasattr(fetcher.acq, 'valid_shots'):
+            valid_shots = fetcher.acq.valid_shots
+        else:
+            valid_shots = None
+        # another example of inheritance via pyfusion.cfg 
+        #   - need to formalise this, extract the code to a function?
+        is_valid = True
+        if valid_shots is not None:
+            # this 15 line code block is W7X specific - how to remove to W7X?
+            if np.isscalar(fetcher.shot) or fetcher.shot[1]<1e9:
+                actual_shot = fetcher.shot
+            else:
+                actual_shot = None
+                from pyfusion.acquisition.W7X.get_shot_list import get_programs 
+                progs = get_programs()
+                for prog in progs:
+                    if fetcher.shot >= progs[prog]['from'] and fetcher.shot <= progs[prog]['upto']:
+                        actual_shot = [int(i) for i in prog.split('.')]
+                if actual_shot is None: # we haven't found a match
+                    # return True, but if it is before 0223, warn
+                    if fetcher.shot[0]<1457599965437656661: # shotDA['start_utc'][950] - 0223
+                        pyfusion.logger.warning('Shot {s} is not found in programs - digitiser choice is not reliable'.format(s=fetcher.shot))
+                    return(True)
+            # from here on is not W7X specific
+            if np.isscalar(actual_shot):
+                compfun = int
+            else:
+                compfun = tuple
+            valid_dict = eval('dict({ps})'.format(ps=valid_shots))
+            for k in valid_dict:
+                root = k.replace('_from','').replace('_to','')
+                if '_' + root in fetcher.config_name:
+                    if pyfusion.VERBOSE>1: print('find_valid_for_shot: key={k}, root={r} shot={s} valid={v}'
+                                                 .format(k=k, r=root, s=fetcher.shot, v=valid_dict[k]))
+                    check_to_clause(actual_shot, k, valid_dict)
+                    # need to be both tuples or both lists for comparison to work
+                    if ('_from' in k and compfun(actual_shot) < compfun(valid_dict[k])
+                        or ('_to' in k and compfun(actual_shot) > compfun(valid_dict[k]))):
+                        is_valid = False
+        debug_(pyfusion.DEBUG, 2, 'valid_shots')
+        return(is_valid)
+    # now the actual code
+    devshort = fetcher.config_name.split('_')[0]  # assume the device short name is first, before the _
+    #  config_dict = {}
+    for Mod in ['M1', 'M2', 'M3', 'M4', 'M5']:
+        if valid_for_shot(fetcher):  
+            break
+        else:
+            # replace W7X_ with W7XM1_  etc
+            fetcher.__dict__.update(get_config_as_dict('Diagnostic', fetcher.config_name.replace(devshort, devshort+Mod)))
+            if pyfusion.VERBOSE>3: print('### >> Loading config from {m} -> {d}\n'.format(m=Mod, d=fetcher.__dict__))
+
+    else:  # here if we complete the for loop - it is an error
+        raise LookupError(config_name)
+
+    return fetcher.__dict__
+
+    # fetcher.config_name=config_name
+    # print('BaseDFinit',config_name,fetcher.__dict__.keys())
 
 
 class BaseAcquisition(object):
@@ -252,83 +334,13 @@ class BaseDataFetcher(object):
         #bdb?? add device name here, so can prepend to Diagnostic
         # e.g. LHD_Diagnostic - avoids ambiguity
         debug_(pyfusion.DEBUG,5,key='device_name')
-        if config_name is not None:
+        if config_name is not None: 
             self.__dict__.update(get_config_as_dict('Diagnostic', config_name))
-            #  look for the first valid shot range for this diag -
-            #   see config/'Valid Shots' in the reference docs
             self.config_name = config_name
-            devshort = self.config_name.split('_')[0]  # assume the device short name is first, before _
-            for Mod in ['M1', 'M2', 'M3', 'M4']:
-                if self.find_valid_for_shot():
-                    break
-                else:
-                    # replace W7X_ with W7XM1_  etc
-                    self.__dict__.update(get_config_as_dict('Diagnostic', config_name.replace(devshort, devshort+Mod)))                  
-                
-            else:
-                raise LookupError(config_name)
-                    
-
-            if pyfusion.VERBOSE>3: print(get_config_as_dict('Diagnostic', config_name))
-        self.__dict__.update(kwargs)
-        # self.config_name=config_name
-        # print('BaseDFinit',config_name,self.__dict__.keys())
-
-    def find_valid_for_shot(self):
-        """ Determine if this diag definition or modified diag is valid 
-        for this shot
-        """
-        def check_to_clause(shot, k, dic):
-            """ check for leftover instances of to=[date, shot]
-            where shot is 0 - this is very likely to be a mistake
-            as there is no shot before 0
-            """
-            if ('_to' in k and isinstance(shot,(list, tuple, ndarray)) 
-                and dic[k][1] == 0):
-                print('********  Warning - valid shot of 0 in to clause?')
-
-        if hasattr(self,'valid_shots'):
-            valid_shots = self.valid_shots
-        elif hasattr(self.acq, 'valid_shots'):
-            valid_shots = self.acq.valid_shots
+            self.__dict__.update(update_with_valid_config(self))
         else:
-            valid_shots = None
-        # another example of inheritance - need to formalise this, extract the code to a function?
-        is_valid = True
-        if valid_shots is not None:
-            # this 15 line code block is W7X specific - how to remove to W7X?
-            if np.isscalar(self.shot) or self.shot[1]<1e9:
-                actual_shot = self.shot
-            else:
-                actual_shot = None
-                from pyfusion.acquisition.W7X.get_shot_list import get_programs 
-                progs = get_programs()
-                for prog in progs:
-                    if self.shot >= progs[prog]['from'] and self.shot <= progs[prog]['upto']:
-                        actual_shot = [int(i) for i in prog.split('.')]
-                if actual_shot is None: # we haven't found a match
-                    # return True, but if it is before 0223, warn
-                    if self.shot[0]<1457599965437656661: # shotDA['start_utc'][950] - 0223
-                        pyfusion.logger.warning('Shot {s} is not found in programs - digitiser choice is not reliable'.format(s=self.shot))
-                    return(True)
-            # from here on is not W7X specific
-            if np.isscalar(actual_shot):
-                compfun = int
-            else:
-                compfun = tuple
-            valid_dict = eval('dict({ps})'.format(ps=valid_shots))
-            for k in valid_dict:
-                root = k.replace('_from','').replace('_to','')
-                if '_' + root in self.config_name:
-                    if pyfusion.VERBOSE>1: print('find_valid_for_shot: key={k}, root={r} shot={s} valid={v}'
-                                                 .format(k=k, r=root, s=self.shot, v=valid_dict[k]))
-                    check_to_clause(actual_shot, k, valid_dict)
-                    # need to be both tuples or both lists for comparison to work
-                    if ('_from' in k and compfun(actual_shot) < compfun(valid_dict[k])
-                        or ('_to' in k and compfun(actual_shot) > compfun(valid_dict[k]))):
-                        is_valid = False
-        debug_(pyfusion.DEBUG, 2, 'valid_shots')
-        return(is_valid)
+            pass # should do something here??
+        self.__dict__.update(kwargs)
 
 
     def setup(self):
@@ -453,7 +465,8 @@ class BaseDataFetcher(object):
                     print(('conflicting DMD from npz on {s}, {d}: {dmd1}, {dmd2}'.
                                      format(s=self.shot, d=self.config_name, dmd1=self_params['DMD'], dmd2=data.params['DMD'])))
             else: 
-                if pyfusion.VERBOSE>-1: print("Can't check DMD on {s}, {d}".format(s=self.shot, d=self.config_name))
+                if pyfusion.VERBOSE>-1 and 'W7X' in self.acq.acq_class: 
+                    print("Can't check DMD on {s}, {d}".format(s=self.shot, d=self.config_name))
 
         data.meta.update({'shot':self.shot})
         if hasattr(data,'comment'):  # extract comment if there

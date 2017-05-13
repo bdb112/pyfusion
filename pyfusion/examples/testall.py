@@ -10,7 +10,7 @@ import pyfusion.clustering.modes
 from pyfusion.acquisition.LHD.read_igetfile import igetfile
 from pyfusion.data.signal_processing import smooth, smooth_n, cross_correl, analytic_phase
 import pyfusion.clustering as clust
-from pyfusion.visual.window_manager import rwm, cm
+from pyfusion.visual.window_manager import rmw, cm
 from pyfusion.utils import compact_str, modtwopi
 from pyfusion.utils.dist_mp import dist_mp as dist
 

@@ -62,7 +62,7 @@ from time import sleep, time as seconds
 try:
     from dist_nogil import dist
 except ImportError as reason:
-    if raw_input('auto compile cython code? [Y/n]').lower() != 'n':
+    if pyfusion.VERBOSE>0 and raw_input(reason.__repr__() + 'auto compile cython code? [Y/n]').lower() != 'n':
         import pyximport; pyximport.install()
         from dist_nogil import dist
 

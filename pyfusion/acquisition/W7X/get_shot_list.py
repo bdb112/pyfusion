@@ -41,8 +41,9 @@ this_dir = os.path.dirname(__file__)
 
 import json
 
-def get_programs(json_file='/data/datamining/local_data/W7X/all_programs.json'):
+def get_programs(json_file='/data/datamining/local_data/W7X/json/all_programs.json'):
     """ (data.utc[0] - progs['programs'][-1]['trigger']['6'][0])/1e9 is the start of ECH
+    Looks like '5' works better for 0309.052
     The original file was downloaded manually in three chunks.  
     http://archive-webapi.ipp-hgw.mpg.de/ has more details on downloading by machine
 

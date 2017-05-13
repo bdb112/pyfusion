@@ -58,6 +58,7 @@ def register(*class_names):
                 filter_reg[cl_name] = [filter_method]
             else:
                 filter_reg[cl_name].append(filter_method)
+        debug_(pyfusion.DEBUG, 2, key=['register filter', 'register'])
         return filter_method
     return reg_item
 
@@ -148,13 +149,13 @@ def get_optimum_time_range(input_data, new_time_range, try_more=0.0002):
 
 @register("TimeseriesData", "DataSet")
 def copy(input_data):
-    """ safe (deep) copy of camplete data """
+    """ safe (deep) copy of complete data """
     output_data = deepcopy(input_data)
     output_data.history += '\ncopy'
     return(output_data)
 
 @register("TimeseriesData", "DataSet")
-def reduce_time(input_data, new_time_range, fftopt=0):
+def reduce_time(input_data, new_time_range, fftopt=0, copy=True):
     """ reduce the time range of the input data in place(copy=False)
     or the returned Dataset (copy=True - default at present).
     if fftopt, then extend time if possible, or if not reduce it so that
@@ -162,6 +163,7 @@ def reduce_time(input_data, new_time_range, fftopt=0):
     But this way users can obtain optimum fft even without filters.
     The fftopt is only visited when it is a dataset, and this isn't happening
     """
+    if not copy: raise ValueError("copy=False not supported now")
     from pyfusion.data.base import DataSet
     if pyfusion.VERBOSE > 1:
         print('Entering reduce_time, fftopt={0}, isinst={1}'
@@ -178,7 +180,7 @@ def reduce_time(input_data, new_time_range, fftopt=0):
 
     if isinstance(input_data, DataSet):
 
-        # output_dataset = input_data.copy()
+        # if copy: output_dataset = input_data.copy()
         # output_dataset.clear()
         print('****new time range={n}'.format(n=new_time_range))
         output_dataset = DataSet(input_data.label+'_reduce_time')
@@ -271,7 +273,9 @@ def normalise(input_data, method=None, separate=False):
     # this allows method='0'(or 0) to prevent normalisation for cleaner code
     # elsewhere
     if pyfusion.DBG() > 3: print('separate = %d' % (separate))
-    if (method == 0) or (method == '0'): return(input_data)
+    if (method == 0) or (method == '0'): 
+        return(input_data)
+
     if (method is None) or (method.lower() == "none"): method='rms'
     if isinstance(input_data, DataSet):
         output_dataset = DataSet(input_data.label+"_normalise")
@@ -295,6 +299,7 @@ def normalise(input_data, method=None, separate=False):
                 max_vals = max(max_vals)
             norm_value = atleast_2d(max_vals).T
     elif method.lower() in ['var', 'variance', 'v']:
+        # this is strange because it over-compensates - if we use sqrt(var()) it would be the same as RMS
         if input_data.signal.ndim == 1:
             norm_value = var(input_data.signal)
         else:
@@ -308,6 +313,7 @@ def normalise(input_data, method=None, separate=False):
     input_data.history += "\n:: norm_value =[{0}]".format(norm_hist)
     input_data.history += ", method={0}, separate={1}".format(method, separate)
     input_data.scales = norm_value
+    input_data.norm_method = method + ':' + ['all','sep'][separate]
 
     debug_(pyfusion.DEBUG, level=2, key='normalise',msg='about to return from normalise')
     return input_data
@@ -318,6 +324,7 @@ def svd(input_data):
     svddata = SVDData(input_data.timebase, input_data.channels, linalg.svd(input_data.signal, 0))
     svddata.history = input_data.history
     svddata.scales = input_data.scales # need to pass it on to caller
+    svddata.norm_method = input_data.norm_method # this too
     if pyfusion.DBG() > 4: print("input_data.scales",input_data.scales)
     debug_(pyfusion.DEBUG, level=2, key='svd',msg='about to return from svd')
     return svddata
@@ -334,7 +341,7 @@ def fs_group_geometric(input_data, max_energy = 1.0):
     #from base import OrderedDataSet
 
     if not isinstance(input_data, SVDData):
-        input_data = input_data.subtract_mean().normalise(method="var").svd()
+        input_data = input_data.subtract_mean().normalise(method="RMS").svd()
 
     output_fs_list = []#OrderedDataSet()
 
@@ -372,7 +379,7 @@ def fs_group_threshold(input_data, threshold=0.7):   # was 0.2 in earlier versio
     from timeseries import SVDData
 
     if not isinstance(input_data, SVDData):
-        input_data = input_data.subtract_mean().normalise(method="var").svd()
+        input_data = input_data.subtract_mean().normalise(method="RMS").svd()
     
     
     #svd_data = linalg.svd(norm_data.signal,0)
@@ -421,6 +428,7 @@ def flucstruc(input_data, min_dphase = -pi, group=fs_group_geometric, method='rm
         tmp.meta = input_data.meta
         tmp.history = svd_data.history
         tmp.scales = svd_data.scales
+        tmp.norm_method = svd_data.norm_method
         fs_dataset.add(tmp)    
     return fs_dataset
 
@@ -666,7 +674,7 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     if singl:
         ## this is a fudge - need to set the value part to a list.
         output_data.signal = [output_data.signal]
-        #output_data.signal.n_channels = 1  #bdb fudge for single channel diag - doesn't work
+        #output_data.signal.n_channels = 1  #bdb fudge for single channel diag - doesn't work, because we fudged output_data.signal to be a list
     for i,s in enumerate(output_data.signal):
         #if len(output_data.signal) == 1: print('bug for a single signal')
 
@@ -766,9 +774,9 @@ def downsample(input_data, skip=10, chan=None, copy=False):
     return tmp_data
 
 @register("TimeseriesData")
-def integrate(input_data, baseline=[], delta_t=0.01, chan=None, copy=False):
+def integrate(input_data, baseline=[], delta_t=0.01, chan=None, copy=True):
     """ Return the time integral of a signal, with baseline optionally removed before integration
-      baseline = None  No removal
+      baseline = None  No removal (not the same as remove_baseline)
                = [] sloping baseline for delta_t at either end of the data 
                = [t0, t1, t2, t3] as above, but t values are explicit
                = [t0, t1]  as above, but simple constant removal.
@@ -777,8 +785,8 @@ def integrate(input_data, baseline=[], delta_t=0.01, chan=None, copy=False):
     If we used the trapeziodal method, the first and last samples are 'incorrect' 
     and Nans may be appropriate
     """
-    # for now, always copy, too many problems otherwise.
-    input_data = deepcopy(input_data)
+    if copy:
+        input_data = deepcopy(input_data)
     if copy: 
         input_data = input_data.copy()
     if (len(np.shape(input_data.signal)) == 2) and chan is None:
@@ -801,14 +809,20 @@ def integrate(input_data, baseline=[], delta_t=0.01, chan=None, copy=False):
     return(input_data)
 
 @register("TimeseriesData")
-def remove_baseline(input_data, baseline=None, delta_t=0.01, chan=None, copy=False):
+def remove_baseline(input_data, baseline=None, delta_t=0.01, chan=None, copy=True):
     """ Remove a tilted baseline from a signal
-    if the baseline is 4 elements, correct at two points (mid point of those intervals)
+    If baseline is None, then average over delta_t at either end
+    If it is two times, then subtract the average between those (no tilt)
+    If it is 4 times, then bl[0,1] and bl[2,3] are averaged - so 
+    the correction is at two points (mid point of those intervals)
+
     baseline in the same units as the timebase
+    baseline == None is NOT the same as for integrate
+    
     """
     from pyfusion.data.convenience import whr, btw
-    # for now, always copy, too many problems otherwise.
-    input_data = deepcopy(input_data)
+    if copy:
+        input_data = deepcopy(input_data)
 
     if (len(np.shape(input_data.signal)) == 2) and chan is None:
         for (s,sig) in enumerate(input_data.signal):
@@ -840,7 +854,7 @@ def remove_baseline(input_data, baseline=None, delta_t=0.01, chan=None, copy=Fal
         
         else:
             bl_end, time_end = None, None
-            input_data.signal = signal - bl_st                                        
+            input_data.signal = signal - bl_st  # these are to avoid upsetting print
 
         if pyfusion.VERBOSE>0:
             print('baseline removal start, end, indicies', bl_st, bl_end, time_st, time_end)

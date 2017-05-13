@@ -16,7 +16,7 @@ import numpy as np
 from pyfusion.utils.utils import warn
 from pyfusion.data.DA_datamining import DA, report_mem
 from pyfusion.data.convenience import between, bw, btw, decimate, his, broaden
-from pyfusion.visual.window_manager import rwm, cm
+from pyfusion.visual.window_manager import rmw, cm
 from pyfusion.utils import compact_str, modtwopi
 #from pyfusion.utils.dist import dist
 from pyfusion.utils.dist_mp import dist_mp as dist

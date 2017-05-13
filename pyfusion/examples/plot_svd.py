@@ -15,6 +15,12 @@ Note that the code is hard wired to reset hold after a "hold" so that you can co
 
 Note: Unless deepcopy is used in data/base.py,  data is changed after processing, so it will be a little different when revisited.
 Better to re-run WITHOUT -i to check 
+
+Test cases: See /data/datamining/LHD_datamining_collaboration_2010-2015.odt illustration 11 -
+# the scales=[1,1,1,1,-1,1] is necessary for old npz data, which included the - factor
+# if we use a filter bw of 4.5e3 the 3rd SVD is about as far down as the old version (probably some changes to the filter defn)
+run pyfusion/examples/plot_svd.py "dev_name='LHD'" start_time=.497 "normalise='v'" shot_number=50639 numpts=512 diag_name=MP2010 "filter=dict(centre=6e3,bw=5e3,taper=2)" plot_mag=1 plot_phase=1 separate=1 time_range=[2.4000,2.9000] closed=1 offset=-3 scales=[1,1,1,1,-1,1]
+run pyfusion/examples/plot_svd.py "dev_name='HeliotronJ'" start_time=208 "normalise='r'" shot_number=50136 numpts=128 diag_name=HeliotronJ_MP_array "filter=dict(centre=200,bw=100,taper=2)" plot_mag=1 plot_phase=1 separate=1 closed=1
 """
 
 def order_fs(fs_set, by='p'):
@@ -71,11 +77,14 @@ filter = None
 help=0
 separate=1
 closed=True
+AngName=None  # need 'AngName="Phi"'
 offset=0   # the approx delta phase expected (helps check aliasing)
 
+scales=None #[1,1,-1,1,-1,1]
 verbose=0
 max_fs = 2
 shot_number = None
+# to set freq range  pyfusion.config.set('Plots','FT_axis','[0.01, 0.07, 30, 50]')
 """
 exec(_var_defaults)
 exec(pf.utils.process_cmd_line_args())
@@ -112,6 +121,8 @@ if this_key in shot_cache: # we can expect the variables to be still around, run
 else:
     print('get data for {k}'.format(k=this_key))
     d = device.acq.getdata(shot_number, diag_name) # ~ 50MB for 6ch 1MS. (27233MP)
+    if scales is not None:
+        d.signal=(d.signal.T*np.array(scales)).T  # a little kludgey
     shot_cache.update({this_key: deepcopy(d)})
 
 if time_range != None:
@@ -222,7 +233,7 @@ else:
                 fs=fs_arr[0]    
                 ax = pl.axes([0.21,0.75,0.35,0.15])
     #            ax=pl.subplot(8,2,-3)
-                fs.fsplot_phase(closed=closed,offset=offset)    
+                fs.fsplot_phase(closed=closed,offset=offset, AngName=AngName)    
                 pl.xlabel('fs_phase')
                 pl.ylim([-4,4])
                 #end if plotmsg

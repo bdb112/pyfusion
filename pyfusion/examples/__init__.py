@@ -1,0 +1,1 @@
+from new_mode_identify_script import Mode

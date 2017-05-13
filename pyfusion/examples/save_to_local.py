@@ -120,57 +120,64 @@ for shot_number in shot_list:
                 chan_list = [diag]
 
             for diag_chan in chan_list:
-                data = dev.acq.getdata(shot_number, diag_chan, no_cache=compress_local==False)
-                print(diag_chan)
+                # this try except was added to catch errors on a diagnotic by
+                # diagnostic basis.  Previously one bad killed the shot
+                # There is some redunant code left over in out try/ex loop
+                try:
+                    data = dev.acq.getdata(shot_number, diag_chan, no_cache=compress_local==False)
+                    print(diag_chan)
 
-                # the above will help stop saving over existing data.  This is important
-                # if we are replacing incorrect existing data..
-                # the next line also will protect if the cache file is new enough
-                if 'npz'  in data.params['source'] and compress_local == False:
-                    # this is to protect against accidental recompressions - 
-                    raise Exception("Should not use local cached (npz) data unless you are compressing")
+                    # the above will help stop saving over existing data.  This is important
+                    # if we are replacing incorrect existing data..
+                    # the next line also will protect if the cache file is new enough
+                    if 'npz'  in data.params['source'] and compress_local == False:
+                        # this is to protect against accidental recompressions - 
+                        raise Exception("Should not use local cached (npz) data unless you are compressing")
 
-                chan = data.channels
-                if downsample is not None:
-                    data = data.downsample(downsample)
+                    chan = data.channels
+                    if downsample is not None:
+                        data = data.downsample(downsample)
 
-                if time_range is not None:  # not tested!!
-                    data = data.reduce_time(time_range, fftopt=True)
+                    if time_range is not None:  # not tested!!
+                        data = data.reduce_time(time_range, fftopt=True)
 
-                # I don't believe this test - always true!
+                    # I don't believe this test - always true!
 
-                if readback:
-                    srb = pyfusion.get_shot(shot_number)
-                    srb.load_diag(diag_chan, savelocal=False, ignorelocal=False)
-                    srb==s
+                    if readback:
+                        srb = pyfusion.get_shot(shot_number)
+                        srb.load_diag(diag_chan, savelocal=False, ignorelocal=False)
+                        srb==s
 
-                if (compress_local is not None):
-                    from pyfusion.data.save_compress import discretise_signal as savez_new
-                    from matplotlib.cbook import is_string_like
+                    if (compress_local is not None):
+                        from pyfusion.data.save_compress import discretise_signal as savez_new
+                        from matplotlib.cbook import is_string_like
 
-                    tb = data.timebase
+                        tb = data.timebase
 
-                    if local_dir !='':
-                        #probably should be chan.config_name here (not chan.name)
-                        localfilename = getlocalfilename(
-                            shot_number, chan.config_name, local_dir = local_dir)
-                    else:
-                        localfilename = getlocalfilename(shot_number, chan.config_name)
+                        if local_dir !='':
+                            #probably should be chan.config_name here (not chan.name)
+                            localfilename = getlocalfilename(
+                                shot_number, chan.config_name, local_dir = local_dir)
+                        else:
+                            localfilename = getlocalfilename(shot_number, chan.config_name)
 
-                    params = dict(name = diag_chan, device = dev_name, utc=data.utc, raw=pyfusion.RAW, host = pyfusion.utils.host())
-                    if hasattr(data, 'params'):  # add the other params
-                        params.update(data.params)
+                        params = dict(name = diag_chan, device = dev_name, utc=data.utc, raw=pyfusion.RAW, host = pyfusion.utils.host())
+                        if hasattr(data, 'params'):  # add the other params
+                            params.update(data.params)
 
-                    signal = data.signal
+                        signal = data.signal
 
-                    if os.path.isfile(localfilename) and not overwrite_local:
-                        raise IOError('file {f} exists'.format(f=localfilename))
+                        if os.path.isfile(localfilename) and not overwrite_local:
+                            raise IOError('file {f} exists'.format(f=localfilename))
 
-                    debug_(pyfusion.DEBUG,1, key='save_to_local')
-                    savez_new(signal=signal, timebase=tb, filename=localfilename, 
-                              params = np.array(params),
-                              verbose=pyfusion.VERBOSE, **save_kwargs)
-            goods.append((shot_number,'whole thing'))
+                        debug_(pyfusion.DEBUG,1, key='save_to_local')
+                        savez_new(signal=signal, timebase=tb, filename=localfilename, 
+                                  params = np.array(params),
+                                  verbose=pyfusion.VERBOSE, **save_kwargs)
+                        goods.append((shot_number,diag_chan))
+                except exception as chan_reason:
+                    bads.append((shot_number, diag_chan, chan_reason.__repr__()))
+            # redundant goods.append((shot_number,'whole thing'))
         except exception as reason:
             bads.append((shot_number,'whole thing',reason.__repr__()))
             print('skipping shot {s} because <<{r}>>'.format(r=reason, s=shot_number))

@@ -120,7 +120,7 @@ for (i,pair) in enumerate(pairs[strtpair:]):
     plt.setp(lines, dashes = lineset[i])  # this sets the dash style
     
 plt.setp(ax1, ylim=(-4,4), ylabel = 'phase difference (rad) || coherence')
-totph=np.sum([cp[pair] for pair in pairs[0:-1]],0)
+totph=np.sum([cp[pair] for pair in pairs[1:]],0)  # fixed 2017 bdb was :-1
 hist = data.history
 sz = 'small' if len(hist.split('\n'))>3 else 'medium'
 plt.title(hist + str(': NFFT={NFFT}, noverlap={noverlap}'

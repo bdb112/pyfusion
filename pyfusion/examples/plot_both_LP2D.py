@@ -154,7 +154,9 @@ srange = range(60,80),
 minpts=16,
 )))
 for ss in [22,24]: db.update({'LP20160308_{ss}'.format(ss=ss): deepcopy(db['LP20160308_23'])})
-
+for ss in [17,28]: db.update({'LP20160309_{ss}'.format(ss=ss): deepcopy(db['LP20160309_6'])})
+for ss in [17]: db.update({'LP20160303_{ss}'.format(ss=ss): deepcopy(db['LP20160308_23'])})
+db['LP20160303_17'].update(dict(ne_range=[0,8], Te_range=[8,80]))
 """
 # dafile = 'LP20160224_25_L53'
 dafile = 'LP20160224_25_L53_2k2.npz'
@@ -263,7 +265,7 @@ fig, (axu, axl) = plt.subplots(2, 1, sharex=True, num=num, figsize=np.array(figs
 
 # see N2_puff_correlation for the vertical offsets of text point labels
 for ax, seg in zip([axu, axl],['3','7']):
-
+    sgn = None
     da = DA(dafile.replace('SEG',seg))
     if (len(da['Te'][0])<minpts):
         raise LookupError('fewer channels ({nc}) than minpts'.
@@ -474,6 +476,9 @@ for ax, seg in zip([axu, axl],['3','7']):
 
     #figs[-1].suptitle('W7-X limiter 5 seg {seg} amu {amu} (point color is Te, size is ne: {areas} probe areas)'
     #                  .format(areas=areas, seg=[0,3,7][sgn],amu=da.infodict['params'].get('amu','?')))
+    if sgn is None:
+        raise LookupError('not enough frames  - try step < {step}'.format(step=step))
+
     axu.set_title('W7-X limiter 5 Langmuir Array, segments 3 and 7 '#amu={amu}'
                   .format(areas=areas, seg=[0,3,7][sgn],amu=da.infodict['params'].get('amu','?')))
 
@@ -537,12 +542,15 @@ if time_strip_h > 0:
                      .format(diag=diag, ch=da['info']['channels'][prch][2:]))
 
     axtime.plot(echdata.timebase - tech, echdata.signal/1000, label='ECH',lw=1.5*plt.rcParams['lines.linewidth'])
-    gasdata = dev.acq.getdata(shot, 'W7X_GasCtlV_23')
-    dtgas = (gasdata.utc[0] - t0_utc)/1e9
-    wplasmagas = np.where((gasdata.timebase+dtgas > np.min(probedata.timebase+dtprobe)) 
-                          & (gasdata.timebase+dtgas < np.max(probedata.timebase+dtprobe)))[0]
-    if np.max(gasdata.signal[wplasmagas]) > 0.1:
-        axtime.plot(gasdata.timebase + dtgas, gasdata.signal,label=gasdata.config_name[4:])
+    try:
+        gasdata = dev.acq.getdata(shot, 'W7X_GasCtlV_23')
+        dtgas = (gasdata.utc[0] - t0_utc)/1e9
+        wplasmagas = np.where((gasdata.timebase+dtgas > np.min(probedata.timebase+dtprobe)) 
+                              & (gasdata.timebase+dtgas < np.max(probedata.timebase+dtprobe)))[0]
+        if np.max(gasdata.signal[wplasmagas]) > 0.1:
+            axtime.plot(gasdata.timebase + dtgas, gasdata.signal,label=gasdata.config_name[4:])
+    except Exception as reason:
+        print('Gas puffs not plotted ' + reason.__repr__())
     axtime.set_xlim(-0.01,max(probedata.timebase + dtprobe))
     ## cleanp = probedata.signal[np.where(~np.isnan(probedata.signal))[0]]
     ## probemax = (np.sort(cleanp))[int(0.98*len(cleanp))] if len(cleanp)>10 else ne_range[1]
@@ -560,7 +568,7 @@ if time_strip_h > 0:
 
     axtime.plot([tslice,tslice],axtime.get_ylim(),'k',lw=2)
     twlocator = MaxNLocator(nbins=3, prune='upper') # reduce clutter on twin
-    axtwin.set_ylim(0,50)
+    axtwin.set_ylim(0,Te_range[1])
     axtwin.yaxis.set_major_locator(twlocator)
 
     act_xlim = axtime.get_xlim()

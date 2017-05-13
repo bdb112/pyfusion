@@ -14,7 +14,7 @@ def save_matching(str, prefix = None):
             pl.figure(lab)
             pl.savefig((prefix+lab).replace(' ','_'))
 
-swm = save_matching  # short cut
+smw = save_matching  # short cut
 
 def raise_matching(str):
     """ raise all pylab windows with str in the title,
@@ -27,7 +27,7 @@ def raise_matching(str):
             mgr = pl.get_current_fig_manager()
             mgr.window.tkraise()
 
-rwm = raise_matching  # short cut
+rmw = raise_matching  # short cut
 
 def close_matching(str):
     """ close all pylab windows with str in the title,
@@ -35,10 +35,11 @@ def close_matching(str):
     (labs_nums) = zip(pl.get_figlabels(),pl.get_fignums())
     closed = 0
     for (lab,num) in labs_nums:
-        if str in lab:
+        if (str == '' and str == lab) or (str != '' and str in lab):
+            # x=input('pause')
             pl.close(num)
             closed += 1
-    if closed == 0: print('No figures matching {s} found'
+    if closed == 0: print('No figures matching "{s}" found'
                           .format(s=str))
 
 cm = close_matching

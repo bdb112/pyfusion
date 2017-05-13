@@ -50,7 +50,11 @@ exec(pyfusion.utils.process_cmd_line_args())
 #run -i ./examples/plot_text_pyfusion.py filename=fsfile skip=skip
 #sys.argv = ['filename='+fsfile, 'skip='+str(skip)]
 
-oldcolorbar=colorbar
+try:
+    oldcolorbar=colorbar
+except:
+    oldcolorbar=0
+    
 colorbar=0
 execfile("./examples/plot_text_pyfusion.py") 
 colorbar=oldcolorbar

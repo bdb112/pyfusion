@@ -71,7 +71,7 @@ def myiden2(t,y):
     return(t,y)
 
 @register("TimeseriesData")
-def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', decimate=0, markersize=2,linestyle=True,labelfmt="{short_name} {units}", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', fun=myiden, fun2=None, **kwargs):
+def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', decimate=0, markersize=2,linestyle=True,labelfmt="{short_name} {units}", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', t0=0, fun=myiden, fun2=None, **kwargs):
     """ 
     Plot a figure full of signals using n_columns[1], 
         sharey [=1]  "gangs" y axes  - sim for sharex - sharex=None stops this
@@ -103,7 +103,7 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
     """
     if pyfusion.VERBOSE > 0: print(fun, fun2)
     import pylab as pl
-    n_rows = input_data.signal.n_channels()
+    n_rows = input_data.signal.n_channels() # doesn't work with fftd data
     n_rows = int(round(0.49+(n_rows/float(n_columns))))
     if (n_rows > 3) and (hspace is None): 
         hspace = 0.001 # should be 0, but some plots omitted if 
@@ -171,11 +171,11 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
             KWargs.update(kwargs)
 
             if fun2 is not None:
-                pl.plot(*fun2(input_data.timebase[::downsamplefactor], 
+                pl.plot(*fun2(input_data.timebase[::downsamplefactor]-t0, 
                               input_data.signal.get_channel(
                                   chan_num)[::downsamplefactor]),**KWargs)
             else:
-                pl.plot(input_data.timebase[::downsamplefactor], 
+                pl.plot(input_data.timebase[::downsamplefactor]-t0, 
                         fun(input_data.signal.get_channel(
                             chan_num)[::downsamplefactor]),**KWargs)
 
@@ -395,7 +395,7 @@ def findZero(i,x,y1,y2):
     return (xZero, yZero)
 
 @register("FlucStruc")
-def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, block=False):
+def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, AngName=None, block=False):
     """ plot the phase of a flucstruc, optionally inserting the first point
     at the end (if closed=True). Applies to closed arrays (e.g complete 2pi).
     Until Feb 2013, this version did not yet attempt to take into account angles, or check 
@@ -459,16 +459,16 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, block=False
 
     if hold == 0: ax.clear()
 
-    # This is a kludgy way to read coordinates.  Should be through acquisition.base or acquisition.'device'
+    # This is a kludgey way to read coordinates.  Should be through acquisition.base or acquisition.'device'
     Phi = np.array([2*np.pi/360*float(pyfusion.config.get
                                       ('Diagnostic:{cn}'.
-                                       format(cn=c.name), 
+                                       format(cn=c.config_name), 
                                        'Coords_reduced')
                                       .split(',')[0]) 
                     for c in input_data.channels])
     Theta = np.array([2*np.pi/360*float(pyfusion.config.get
                                         ('Diagnostic:{cn}'.
-                                         format(cn=c.name), 
+                                         format(cn=c.config_name), 
                                          'Coords_reduced')
                                         .split(',')[1]) 
                       for c in input_data.channels])
@@ -477,7 +477,9 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, block=False
         Phi = np.append(Phi, Phi[0])
         Theta = np.append(Theta, Theta[0])
 
-    if len(np.unique(Theta)) > 1:
+    # kludgey - needed to deal with Shaun's array - should
+    # really convert form cylindrical
+    if AngName is not 'Phi' and len(np.unique(Theta)) > 1:
         AngName = 'Theta'
         Ang = Theta
         dAngfor1 = np.pi/13  #dAngfor1 is the average coil dph for M=1
@@ -608,10 +610,10 @@ def svdplot(input_data, fmax=None, hold=0):
                             color='b', **kwargs)
 
     labstr = str('tmid = {tm:.1f} ms, 1/H = {invH:.2f}, below for 0,1, '\
-                     '?Amp = {Amp:.2g}, a12 = {a12:.2f} '
+                     'nrm={nrm}, ?Amp = {Amp:.2g}, a12 = {a12:.2f} '
                  .replace(', ','\n')
                  .format(tm=1e3*np.average(input_data.chrono_labels),
-                         invH=(1./entropy), 
+                         invH=(1./entropy), nrm = input_data.norm_method,
                          Amp = float(np.sqrt(np.sum(input_data.p*bsl))*RMS_scale),
                          a12 = float(np.sqrt(input_data.p[1]/input_data.p[0]))))
     ax2.text(0.96,0.85,labstr, color='r', **kwargs)
@@ -644,10 +646,11 @@ def svdplot(input_data, fmax=None, hold=0):
             axt = eval(pyfusion.config.get('Plots','FT_Axis'))
             if axt[3]<2e3: ffact=1.0  # avoid a python3 issue 
             fmax = axt[3]/ffact
+            fmin = axt[2]/ffact
         except:
             fmax = nyquist_kHz
-        
-    pl.xlim(0,fmax)
+            fmin = 0
+    pl.xlim(fmin, fmax)
 
     # axes 4: topo
     pl.axes(ax4)

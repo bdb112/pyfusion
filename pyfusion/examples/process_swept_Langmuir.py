@@ -138,7 +138,7 @@ def LPfit(v,i,init=dict(Te=50, Vf=15, I0=None), plot=None, maxits=None):
     plotchar(v, Te, Vf, I0, linewidth=4)
     residual, mits = fit_results[1:3]
     if plot: 
-        plt.title('Te = {Te:.1f}eV, Vf = {Vf:.1f}, Isat = {I0:.3g}, resid = {r:.2e} {mits} its '
+        plt.title('Te = {Te:.1f}eV, Vf = {Vf:.1f}, Isat = {I0:.3g}, resid = {r:.2g} {mits} its '
                        .format(Te=Te, Vf=Vf, I0=I0, r=-residual, mits=mits))
         plt.suptitle('{shot} {tr} {d}'
                      .format(tr=t_range, shot=shot_number, d=diag_name))

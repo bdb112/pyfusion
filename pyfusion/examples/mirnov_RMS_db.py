@@ -14,7 +14,7 @@ A small down side is that using the combined db (view) excludes shots where mirn
 
 Alternatives might be a blob or json representation in summary_h1, but then sql can't access mirnov_RMS data.
 
-
+_PYFUSION_TEST_@@Skip
 """
 import sys
 import os

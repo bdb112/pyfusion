@@ -78,6 +78,9 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
         sharey: 2 gangs all but first (top) axis
         x axes are ganged by default: see Note:
 
+    downsamplefactor = 1
+    n_columns = 1
+    decimate = 0
     fun, fun2: optionally plot a function of the signal.  fun= refers
     to a function of one variable.  fun2 is a function (t,x), such as
     one that returns a different timebase (diff should do this)

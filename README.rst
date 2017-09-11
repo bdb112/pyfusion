@@ -1,4 +1,3 @@
-
 pyfusion - python code for data mining plasma fluctuations
 ----------------------------------------------------------
 
@@ -8,6 +7,23 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+ * Many fixes or skip to improve test successes
+ * test_examples - add stop on error, restart at stop point, script as well as skip, accepts first arg without equals
+ * Add pyfusion.GL - global list for saving stuff to, e.g. results of mltiple runs of a script, e.g. using runpy
+ * runpy_cmd enhanced to allow substitution, and results of multiple runs (scans) to be saved 
+ * acquisition/base.py suggest similar names if diagnostic section not found
+ * add corrinterp (correlation following interpolation) pyfusion_corrinterp
+ * plot_correlation -  add filter, channel mask
+ * extended function of corrinterp and pyfusion_corrinterp to include freq
+ * data/filters/get_optimum_time_range.py to avoid error on small samples
+ * shot_range.py - simplify test of tuple or scalar
+ * signal_processing.py python3 cleanup (not tested on p3)
+ * W7X_neTe_profile.py add 'pub' options
+ * coherence_vs_time generalise, shade 'dodgy region'
+ * get_diamag - improved, also extra care to find pulse
+ * plot_shots.py auto row/col
+ * sql_plot lots - add colors, markers, swap axes, improved tolerance of null, Nan
+ * process_cmd_line_args_code.py - fix bug with locals
 
 Version 0.84 beta
 

@@ -52,7 +52,7 @@ try:
     verbose=pyfusion.settings.VERBOSE
     from pyfusion.utils import get_local_shot_numbers
 except:
-    if not 'verbose' in locals():
+    if 'verbose' not in locals() and 'verbose' not in globals():
         verbose=2
         print(' process_cmd_line_args detected we are running outside of'
               ' pyfusion, verbose=%d' % verbose)
@@ -79,6 +79,7 @@ def list_vars(locdict, Stop, tail_msg=''):
                 _user_locals.append(v)
         print('\n========= Accessible variables and current values are: =====')  #, _user_locals)
         if verbose > 0:
+            print('locals............')
             _n=0
             for k in _user_locals:
                 print("  %s = %s" %  (k, locdict[k]))
@@ -118,6 +119,7 @@ def list_vars(locdict, Stop, tail_msg=''):
 # override the defaults that have been set before execfile'ing' this code
 # exec is "built-in" apparently
    
+_loc_dict=locals().copy() # need to save, as the size changes
 if verbose>1: print ('{n} args found'.format(n=len(_sys.argv)))
 if verbose>1: print(' '.join([_arg for _arg in _sys.argv]))
 _rhs=None
@@ -127,19 +129,25 @@ _rhs=None
 # check if the argv is what we expect - (needed to work within emacs - argv[0] is ipython
 _args = _sys.argv[:]
 if os.path.split(_args[0])[-1] in ['ipython']:
-    _args = []
+    _args = []  # why wipe them out?
 else:     # argv[0] is hopefully a python script, and we don't want to parse it
     _args = _args[1:]
 
+print('pyfusion.utils.process_cmd_line_args_code')
+if 'from_runpy' in globals():
+    _args = args_from_runpy.split(' ')
 for _expr in _args:
     if (array(_expr.upper().split('-')) == "HELP").any():
-        if '__doc__' in locals():
+        if '__doc__' in _loc_dict:
             print("\n======Documentation from caller's source file "
                   "(__doc__ captures the first comment ===\n")
-            print(locals()['__doc__'])
+            print(_loc_dict['__doc__'])
         else: print('No local help')
-        list_vars(locals(), Stop=True)
+        list_vars(_loc_dict, Stop=True)
     else:
+        if _expr.startswith('--'):
+            print('skipping ' + _expr)
+            continue
         if verbose>3: print('assigning %s from command line') % _expr
         _words=_expr.split('=')
         _firstw=_words[0]
@@ -168,16 +176,5 @@ for _expr in _args:
             err2=str('< %s > raised the exception < %s >' % (_expr,_info))
             _sys.stderr.write(err)
             _sys.stderr.write(err2)
-            _loc_dict=locals().copy() # need to save, as the size changes
 # list_vars will also offer to enter a debugger..
             list_vars(_loc_dict, Stop=True, tail_msg=err2)
-
-
-
-
-
-
-
-
-
-

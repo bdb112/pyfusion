@@ -138,6 +138,10 @@ def get_calculated(da, diag, inds, av=np.average, x=None, Tesmooth=None, nrm=Non
         if fake_ne:
             sig = (5+0*da['ne18']) * np.power(Tesmooth, 1.5) * sintheta
             diag = diag + 'fake ne'
+
+    elif diag == "pres_e":
+        sig = da['ne18'] * da['Te']
+
     else:
         raise LookupError('diagnostic {diag} not known'.format(diag=diag))
     if debug:
@@ -212,6 +216,7 @@ def LCFS_plot(da, diag, t0_utc, t_range, av=None, ax=None, xtoLCFS=1, nrm=None, 
             print(nrm)
 
     signed_dLCFS = distLCFS * np.sign(td)
+    td = np.array(td)
     for (c, ch) in enumerate(chans):
         if sum([st in ch for st in exclude]):
             sig[c] = np.nan
@@ -252,6 +257,7 @@ ne_lim = None
 fp_list = [sys.stdout, open('profile_log.log','ab')]
 xtoLCFS = 1
 axset_list = "None"
+options = 'cfg,1leg' # 1leg for 1 legend, cfg for diagram of config.
 #fake_ne = 0
 #TeLRsym = 1
 #debug=0
@@ -345,7 +351,9 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
         ax.yaxis.set_major_locator(locator)
 
 
-    xlabel = ['Horizontal distance from limiter centre (mm)','Distance into LCFS (mm, from lukas R. -ve is left side)'][xtoLCFS]
+    xlabel = ['Horizontal distance from limiter centre (mm)','Distance outside LCFS (mm, -ve is left side)'][xtoLCFS]
+    if not 'pub' in options:
+        xlabel = xlabel.replace('mm -','mm,  from lukas R. -') # add comment about source normally
     kwargs = dict(t0_utc=t0_utc, t_range=t_range, labelpoints=labelpoints, av=av, xtoLCFS=xtoLCFS)
 
     solds = []
@@ -400,7 +408,9 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
         maxne = max(maxne, np.nanmax(sig2))
         #1/0
     cfg, cfg_dict = get_mag_config(shot_number)
-    if cfg_dict is not None:
+    if 'cfg' in options and cfg_dict is not None: # and '1leg' in options and framenum == 0::
+        if '1leg' in options and framenum != 0:
+            continue
         plot_trim(axLCTe, mag_dict=cfg_dict, aspect=2.6, size=0.06, color='g')
         ind = 13 - 12*cfg[2]/.3904
         if abs(ind - round(ind)) < .03:
@@ -412,7 +422,7 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
     tb = 'LP t_mid' if use_t_mid else 'into ECH'
     figLCFS.subplots_adjust(hspace=0, right=0.87)
     # figLCFS.suptitle('shot {s}, {avname} over time {fr}-{t}s {tb}: {ind}' 
-    title = str('shot {s}, {avname} filter over time {fr}-{t}s {tb}: {ind}' 
+    title = str('shot {s}, {avname} filter {fr}-{t}s {tb}: {ind}' 
                 .format(s=[da['date'][0], da['progId'][0]],
                         fr=t_range[0],t=t_range[1], tb=tb,
                         avname=av.__name__, ind=ind))
@@ -421,12 +431,13 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
         leg_title=''
     else:
         leg_title=title
-    infostamp(' '.join([da53.name, da57.name]))
+    if 'pub' not in options: infostamp(' '.join([da53.name, da57.name]))
 
     for maxval, ax in zip([maxTe, maxne],[axLCTe, axLCne]):
         if ax != axLCne:
-            ax.legend(prop=dict(size='medium'),#title=leg_title, 
-                loc='upper right')
+            if '1leg' in options and framenum == 0:
+                ax.legend(prop=dict(size='medium'),#title=leg_title, 
+                          loc='upper right')
             #        loc=['best','lower left'][save_images is not 'None'])
             # lower left best for ne, upper right for Te
             #ax.set_xlabel('distance to LCFS (from Lukas R: -ve for left side)')
@@ -449,6 +460,14 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
 
 fp_list[-1].close()
 """ 
+### basic example to get calibration and to plot it
+run -i pyfusion/examples/W7X_neTe_profile.py dafile_list="['LP/all_LD/LP20160309_17_L5SEG_2k2.npz']" labelpoints=0 t_range_list=[0.1,0.2] diag2=ne18 av=np.median
+sigs917=sigs; wscl=25   #  assume 25mm efolding in distance LCFS  factor of 3 below matches to MPM
+sigs25=np.array([sigs917[1]*exp(abs(solds[1])/wscl),sigs917[3]*exp(abs(solds[3])/wscl)])/3.
+# this plots the apparent gain excess if run after the above
+figure(); i3=argsort(tds[0]); plot(tds[0][i3], sigs25[0][i3],'o-',lw=0.3,label='upper'); i7=argsort(tds[2]); plot(tds[2][i7], sigs25[1][i7],'or-',lw=.3, label='lower');ylim(0,ylim()[1]); plt.legend(loc='best'); plt.title('based on ' + str(wscl) +'mm e-fold from '+ da.name+' '+str(t_range)); xlabel('transverse distance')
+
+# why the sqrt - some old thing?
 figure(); i3=argsort(solds[0]); plot(solds[0][i3], sigs[1][i3]*sqrt(fitsigs[0][i3]),'o-'); i7=argsort(solds[2]); plot(solds[2][i7], sigs[3][i7]*sqrt(fitsigs[1][i7]),'o-');ylim(0,ylim()[1]); title(da.name+' '+str(t_range))
 
 run ~/python/digitize_overlay_graph_image imagefile='/data/databases/W7X/LP/philipp_drews_20171122_talk_Te.png' origin='upper' lower_left.dxy=[5.97,0] upper_right.dxy=[6.04,30]

@@ -644,7 +644,7 @@ Args:
             da.da['ne18'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
-    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr=1, lpf=None), initial_TeVfI0=dict(Te=50, Vf=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, clip_iprobe = None, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, sweep_freq=500, suffix=''):
+    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr=1, lpf=None), initial_TeVfI0=dict(Te=50, Vf=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, clip_iprobe = None, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, sweep_freq=500, defaults=dict(sweep_freq=500, dtseg=4e-3), suffix=''):
         """ 
 Process the I, V probe data in the Langmuir_data object
 

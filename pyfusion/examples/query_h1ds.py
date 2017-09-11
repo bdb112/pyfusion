@@ -6,9 +6,15 @@ Can be saved by DA_datamining.
 import pylab as pl
 import numpy as np
 from sqlalchemy import create_engine
-from sqlalchemy.ext.sqlsoup import SqlSoup
 from sqlalchemy import or_, and_, desc, asc
 import time as tm
+
+try:
+    from sqlsoup import SQLSoup
+except ImportError:
+    print('trying to import obsolete form oof sqlsoup')
+    from sqlalchemy.ext.sqlsoup import SqlSoup as SQLSoup
+
 
 def replace_none(arr, val=np.nan):
     outarr = []
@@ -21,7 +27,7 @@ def replace_none(arr, val=np.nan):
 
 #engine = create_engine('mysql://localhost/from_h1ds')
 engine=create_engine('sqlite:////home/bdb112/datamining/h1ds_production_2013_09_15.db')
-db=SqlSoup(engine)
+db=SQLSoup(engine)
 #db.summary.shot.between(78000,78010)
 q=db.summary.filter(db.summary.shot.between(000,80000))
 #q=db.summary.filter(db.summary.shot.between(79000,79010))a

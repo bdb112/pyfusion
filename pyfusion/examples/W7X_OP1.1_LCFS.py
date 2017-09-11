@@ -1,5 +1,5 @@
 from lukas.PickledAssistant import lookupPosition
-
+#_PYFUSION_TEST_@@SKIP
 for lim in ['lower','upper']:
     print('\n ===== Limiter {l} ===== '.format(l=lim))
     print('Probe  X,       Y,      Z,     dLCFS')

@@ -113,7 +113,8 @@ def get_optimum_time_range(input_data, new_time_range, try_more=0.0002):
     if abs(try_more) == 1:
         try_more = 0.0002 * try_more
 
-    try_more = int(len(input_data.timebase) * try_more)
+    # avoid error on small samples
+    try_more = max(10, int(len(input_data.timebase) * try_more))
     extension = ((new_time_range[1]-new_time_range[0])
                  * float(try_more)/(nt_args[1]-nt_args[0]))
 
@@ -458,7 +459,7 @@ def subtract_mean(input_data):
 @register("TimeseriesData")
 def sp_filter_butterworth_bandpass(input_data, passband, stopband, max_passband_loss, min_stopband_attenuation,btype='bandpass'):
     """ 
-      **   Warning - fails for a single signal in the enumerate step.
+      **   Maybe fixed! Warning - fails for a single signal in the enumerate step.         BUT should try using data.keys - may avoid altogether
     This actually does ALL butterworth filters - just select bptype
     and use scalars instead of [x,y] for the passband.
      e.g df=data.sp_filter_butterworth_bandpass(2e3,4e3,2,20,btype='lowpass')
@@ -471,9 +472,12 @@ def sp_filter_butterworth_bandpass(input_data, passband, stopband, max_passband_
     
     output_data = deepcopy(input_data)  # was output_data = input_data
 
-    for i,s in enumerate(output_data.signal):
-        if len(output_data.signal) == 1: print('bug for a single signal')
-        output_data.signal[i] = sp_signal.lfilter(b,a,s)
+    if len(output_data.signal.shape) == 1:
+        output_data.signal = sp_signal.lfilter(b,a, input_data.signal)
+    else:
+        for i,s in enumerate(output_data.signal):
+            if len(output_data.signal.shape) == 1: print('bug for a single signal')
+            output_data.signal[i] = sp_signal.lfilter(b,a,s)
 
     return output_data
 
@@ -607,6 +611,7 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     narrowband filtering (much narrower than butterworth).  
     Problem is that bursts may generate ringing. 
     This should be better with taper=2, but it is not clear
+      debug = None (follow pyfusion debug), 2 plot responses
     
     See the __main__ code below for nice test facilities
     twid is the width of the transition from stop to pass (not impl.?)

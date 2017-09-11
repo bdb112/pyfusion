@@ -1,4 +1,5 @@
 # overlay Te, Ne, ECH for 20160310:9
+#_PYFUSION_TEST_@@SCRIPT
 import pickle
 run -i pyfusion/examples/plot_signals.py  dev_name='W7X' diag_name=W7X_TotECH shot_number=[20160310,9] hold=0 sharey=2
 figure()

@@ -26,6 +26,7 @@ start = 0  # allow a restart part-way through - always early, as it ignores @@Sk
 pfdebug=0 # normally set pyfusion.DEBUG to 0 regardless
 newest_first=1 # if True, order the files so the last edited is first.
 max_sec=2
+stop_on_error=False
 """
 
 exec(_var_defaults)
@@ -65,8 +66,8 @@ tm = localtime()
 wildlist = glob.glob(filewild)
 
 if start  == 0:
-    out_list = []
-    n_errs, total = 0, 0
+    out_list, err_files = [], []
+    total = 0
 
 if gitlist is not None:
     filelist = [wf for wf in wildlist if os.path.join(os.path.split(wf)[-1]) in gitshort]
@@ -79,7 +80,7 @@ else:
 # use alphabetical order as a reference
 alpha_order = np.argsort([os.path.split(f)[-1] for f in filelist])
 filelist = [filelist[i] for i in alpha_order]
-print('First is ' + filelist[0])
+print('First alphabetically is ' + filelist[0] + '\n')
 orig_order = np.arange(0, len(filelist))
 
 if newest_first:
@@ -88,14 +89,15 @@ if newest_first:
     orig_order = orig_order[order[::-1]]
 
 try:  # this try is to catch ^C
-    for filename in filelist[start:]:  # [1:3] for test
+    for this_one, filename in enumerate(filelist[start:]):  # [1:3] for test
         prerun, tmpfil = '', ''
         flags = look_for_flags(filename)
         args = ''
-        print(flags)
+        print('flags are', flags)
         if flags != []:
-            if 'skip' in [flag.lower() for flag in flags]:
-                out_list.append([filename,'skip','skip',0, 0])
+            if ('skip' in [flag.lower() for flag in flags] or
+                'script' in [flag.lower() for flag in flags]):
+                out_list.append([filename, flag.lower(), flag.lower(), 0, 0])
                 continue  # this stops it from further consideration (and from being run)
             else:
                 for flag in flags:
@@ -103,6 +105,10 @@ try:  # this try is to catch ^C
                         prerun = flag.split('PRE@')[1]
                     elif '=' in flag:
                         args += ' '+flag
+                    elif np.any([tok in flag.upper() for tok in 'NOTSKIP,PYFUSION_TEST'.split(',')]):
+                        pass
+                    else:
+                        args += ' '+flag # probably the first arg
                 print('run with', args)
 
 # need to cd for the JSPF examples:
@@ -140,14 +146,18 @@ try:  # this try is to catch ^C
         """
         (resp, errout) = sub_pipe.communicate()
         print(errout)
-        if ((errout != b'') and (not 'warn' in errout.lower())) or (sub_pipe.returncode != 0):
-            print(resp, errout, '.')
-            n_errs += 1
+        have_error = (((errout != b'')
+                       and (not 'warn' in errout.lower()))
+                      or (sub_pipe.returncode != 0))
+        if have_error:
+            err_files.append([this_one + start, filename])
 
         print(resp[-10000:])
         dt = round(seconds() - st, 3)
         out_list.append([filename, errout, resp, dt, sub_pipe.returncode])
         total += 1
+        if have_error and stop_on_error:
+            break
 except KeyboardInterrupt as reason:
     print('KeyboardInterrupt', reason)
 
@@ -160,6 +170,7 @@ dumpname = str('test_output_V{V}_{yy:02d}{mm:02d}{dd:02d}_{hh:02d}:{mn:02d}.pick
                        V=sys.version[0:5]))
 
 pickle.dump(out_list, open(dumpname, 'wb'))
+last_one = this_one + start
 
 print()
 print('Python {pv}, Pyfusion {pfv} {date}'.format(pv=sys.version[0:20], pfv=pyfusion.VERSION, date=ctime()))
@@ -168,13 +179,15 @@ for i, ll in enumerate(out_list):
           .format(o=orig_order[i], dt=ll[3], fn='/'.join(ll[0].split('/')[-2:]),
                   msg=[b'', b'OK! '][ll[-1] == 0] + [ll[1][-77:].replace(b'\n', b' ')][0]))
 
-print('{g} good, {e} errors out of {t} not skipped'.format(e=n_errs, t=total, g=total-n_errs))
+print('{g} good, {e} errors out of {t} not skipped'.format(e=len(err_files), t=total, g=total-len(err_files)))
 
 if '-3' in python_exe:
     print('python 3 warnings coming from my files')
     for (n, ll) in enumerate(out_list):
         if 'bdb112' in ll[1]:
             print(n, ll[0])
+
+print('to see problem files, type print(err_files)')
 """
 put this at the end of the file written
 %%% Local Variables: 

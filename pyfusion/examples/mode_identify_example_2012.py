@@ -5,6 +5,7 @@ from numpy import intersect1d, pi
 from numpy import loadtxt
 
 ##
+#_PYFUSION_TEST_@@Skip
 ##  See new_mode_identify_script.py
 ##
 # manually enter the mean and sd for three modes, called by color
@@ -56,7 +57,7 @@ except:
     oldcolorbar=0
     
 colorbar=0
-execfile("./examples/plot_text_pyfusion.py") 
+execfile("pyfusion/examples/plot_text_pyfusion.py") 
 colorbar=oldcolorbar
 
 try:

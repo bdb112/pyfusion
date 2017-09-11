@@ -56,43 +56,44 @@ def get_links(url='http://h1svr.anu.edu.au/wiki/Day/2010'):     # ?action=raw'
             print linklist[-1]
     return(linklist)
 
+if __name__ == '__main__':
 
-from collections import OrderedDict
+    from collections import OrderedDict
 
-URL = sys.argv[1] if len(sys.argv)>1 else 'http://h1svr.anu.edu.au/wiki/Day/2010' 
+    URL = sys.argv[1] if len(sys.argv)>1 else 'http://h1svr.anu.edu.au/wiki/Day/2010' 
 
-try:
-    if oldurl == URL:
-        links = oldlinks
-    else:
-        raise LookupError
-except:
-    links = get_links(URL)
-
-oldlinks, oldurl = links, URL
-
-daylinks = [link for link in links if '/wiki' in link[0] and '?' not in link[0] and len(link[0])==len('/wiki/Day/2010/12/17')]
-# The page urls (days) for this period (year)
-pages = np.unique([url for url,txt in daylinks])
-# for each day find all the links, and take the first that isn't a date 
-pagedict = OrderedDict()
-for page in pages:
-    matches = [link for link in links if link[0] == page]
-    for url, txt in matches:
-        if datelike(url, txt):
-            continue
+    try:
+        if oldurl == URL:
+            links = oldlinks
         else:
-            title = txt
-            break
-    else:
-        title = None
-    if title is not None: 
-        pagedict.update({url: title})
-        print url + ': ' + title
+            raise LookupError
+    except:
+        links = get_links(URL)
 
-import json
-pagedict = pagedict
-json.dump(pagedict, open('wikipagedict_{y}.json'.format(y=URL[-4:]),'w'))
+    oldlinks, oldurl = links, URL
+
+    daylinks = [link for link in links if '/wiki' in link[0] and '?' not in link[0] and len(link[0])==len('/wiki/Day/2010/12/17')]
+    # The page urls (days) for this period (year)
+    pages = np.unique([url for url,txt in daylinks])
+    # for each day find all the links, and take the first that isn't a date 
+    pagedict = OrderedDict()
+    for page in pages:
+        matches = [link for link in links if link[0] == page]
+        for url, txt in matches:
+            if datelike(url, txt):
+                continue
+            else:
+                title = txt
+                break
+        else:
+            title = None
+        if title is not None: 
+            pagedict.update({url: title})
+            print url + ': ' + title
+
+    import json
+    pagedict = pagedict
+    json.dump(pagedict, open('wikipagedict_{y}.json'.format(y=URL[-4:]),'w'))
 
 """
 cp -rp $MDSPLUS_DIR/trees /tmp/

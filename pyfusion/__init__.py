@@ -200,6 +200,10 @@ if fft_type == 'fftw3':
 fftw3_args = dict(planning_timelimit=10.)
 # pyfusion.fftw3_args= {'planning_timelimit': 50.0, 'threads':1, 'flags':['FFTW_MEASURE']}
 
+# A handly global list for saving stuff in e.g. results of a script, including
+#   runpy - note that it must be passed explicitly if using runpy
+GL = []
+
 # We import these into the base pyfusion namespace for convenience.
 from pyfusion.devices.base import getDevice
 from pyfusion.acquisition.utils import getAcquisition

@@ -1,12 +1,22 @@
-""" following mini_summary_MDS
+""" Use to fill a wikiday table in summary_h1 using files saved by scrape_wiki
+
+run -i pyfusion/acquisition/H1/scrape_wiki.py http://h1svr.anu.edu.au/wiki/Day/2016
+run -i pyfusion/acquisition/H1/scrape_wiki.py http://h1svr.anu.edu.au/wiki/Day/2017
+
+
+run -i pyfusion/acquisition/H1/wiki_day_db.py
+
+following mini_summary_MDS
 
 """
 import sys
 import os
+import time as tm
 from time import time as seconds
 from six.moves import input
 
 from sqlalchemy import create_engine 
+dbpath=''
 sqlfilename = '/data/summary.db'
 engine=create_engine('sqlite:///'+ os.path.join(dbpath, sqlfilename), echo=False)
 dbpath = os.path.dirname(__file__)
@@ -47,7 +57,7 @@ if len(sys.argv)>1:
         raise ValueError("Input was\n{inp}\nProbably need quotes:\n  Example:\n  run pyfusion/examples/mini_summary 'range(88600,88732)'"
                          .format(inp=sys.argv))
 else:
-    yrange = range(2016,2017)
+    yrange = range(2009,2020)
 
 
 col_list = [Column('wikiday', Date, primary_key=True),Column('topic', Text)]
@@ -58,8 +68,8 @@ wikidays = Table('wikidays', metadata, *col_list)
 metadata.create_all(engine)
 # simple method
 
-ins=wikidays.insert()  # not sure why this is needed?
-result=conn.execute('select count(*) from wikidays')
+ins = wikidays.insert()  # ins is a shortcut for insert
+result = conn.execute('select count(*) from wikidays')
 n = result.fetchone()[0]
 if n > 0:
     ans = input('database is populated with {n} entries:  Continue?  (y/N)'.format(n=n))

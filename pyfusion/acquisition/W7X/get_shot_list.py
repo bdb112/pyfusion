@@ -118,7 +118,7 @@ def test_pickles(from_file='/pyfusion/acquisition/W7X/shotDA.pickle', to_file='/
 if __name__ == "__main__":
     _var_defaults="""
 fr_UTC = '20150101 00:00:00'
-to_UTC = '20170101 00:00:00'
+to_UTC = '20180101 00:00:00'
 seldate=0
 seltext=""
 update=0

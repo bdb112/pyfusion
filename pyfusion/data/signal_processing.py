@@ -1,6 +1,6 @@
-""" Boyd's python for stand alone, general signal processing, try to be 
-"efficient".  
-Stuff that imports pyfusion should live in pyfusion_sigproc.py.  Put stuff here so that recompilation doesn't require restarting pyfusion.
+""" Boyd's python for stand alone, general signal processing, try to be "efficient".  
+Stuff that imports pyfusion should live in pyfusion_sigproc.py.
+Put stuff here so that recompilation doesn't require restarting pyfusion.
 """
 from numpy import cumsum, double, arange, array, shape, sqrt, cos, sin, size, shape
 import numpy as np
@@ -24,14 +24,14 @@ def smooth(data, n_smooth=3, timebase=None, causal=False, indices=False, keep=Fa
     If supplied with a timebase, the shortened timebase is returned as
     the first of a tuple.  
     
-    causal -- If true, the smoothed signal never preceded the input,
+    causal -- If true, the smoothed signal never precedes the input,
               otherwise, the smoothed signal is "centred" on the input 
               (for n_smooth odd) and close (1/2 timestep off) for even
     indices -- if true, return the timebase indices instead of the times       
     data = (timebase, data) is a shorthand way to pass timebase
     n_smooth - apply recursively if an array  e.g. n_smooth=[33,20,14,11] 
                removes 3rd, 5th, 7th, 9th harmonics
-               fraction values are interpreted as timeintervals.
+               **** fraction values are interpreted as timeintervals. ****
 
     >>> smooth([1,2,3,4],3) 
     array([ 2.,  3.])
@@ -56,6 +56,7 @@ def smooth(data, n_smooth=3, timebase=None, causal=False, indices=False, keep=Fa
         n_sm = n_smooth[0]
     else:
         n_sm = n_smooth
+
     if len(data) == 2:  # a tuple (timebase, data)
         timebase=data[0]
         data = data[1]
@@ -63,7 +64,7 @@ def smooth(data, n_smooth=3, timebase=None, causal=False, indices=False, keep=Fa
         if timebase is None:
             raise ValueError('fractional n_smooth {n_sm} implies a smoothing '
                              ' time interval, but no timebase given'
-                             .format(n_sm-n_sm))
+                             .format(n_sm=n_sm))
         else:
             n_sm = int(0.05 + n_sm/np.average(np.diff(timebase)))
 
@@ -94,11 +95,11 @@ def smooth(data, n_smooth=3, timebase=None, causal=False, indices=False, keep=Fa
             return(sm_sig)
     else:
         if causal: 
-            offset = n_smooth-1
+            offset = int(n_smooth-1)
         elif keep: 
             offset = 0
         else:
-            offset = n_smooth/2
+            offset = n_smooth//2
 
         if indices:
             sm_timebase = range(offset,offset+len(sm_sig))
@@ -148,7 +149,7 @@ def smooth_n(data, n_smooth=3, timebase=None, causal=False, iter=3, keep=False,
     """
     tim=timebase
     dat=data
-    if timebase != None: 
+    if timebase is not None: 
         for i in range(0,iter):
             tim, dat = smooth(dat, n_smooth=n_smooth, timebase=tim, 
                              causal=causal, keep=keep, indices=indices) 

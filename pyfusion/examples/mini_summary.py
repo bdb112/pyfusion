@@ -261,14 +261,14 @@ for sh in srange: # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,8889
         if (sh[1] % 10) == 0:
             print(sh),
         else: 
-            print('.'),
+            sys.stderr.write('.')
         if (sh[1]%100)==0: print('')
     else:
         datdic = dict(shot=sh)
         if (sh%10)==0: 
-            print(sh),
+            sys.stderr.write(str(sh))
         else: 
-            print('.'),
+            sys.stderr.write('.')
 
     shots += 1
     try:

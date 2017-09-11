@@ -54,6 +54,8 @@ ne = []
 zused = []
 
 myNoData = MDS.TreeNODATA if hasattr(MDS, 'TreeNODATA') else MDS.TreeNoDataException
+TdiException = Exception #  ()  I think Tom is deprecating TdiException in favour of more specific ones
+
 for ch in chans:
     nd = tr.getNode('\electr_dens::top.ne_het.' + ne_chans[ch - 1])
     try:
@@ -70,7 +72,7 @@ for ch in chans:
         zused.append(zlist[ch - 1])
     # MDS.TreeNoDataException before 7.1.13
     
-    except (MDS.TdiException, myNoData) as reason:
+    except (TdiException, myNoData) as reason:
         print('{r} error reading {n}'.format(r=reason, n=nd.getNodeName()))
         pass
 zused = np.array(zused)
@@ -119,7 +121,7 @@ if may == 0:
     fig.subplots_adjust(right=1)
     fig.suptitle(titl)
 
-    plt.show()
+    plt.show(0)
 
     from mpl_toolkits.mplot3d import Axes3D
     from matplotlib import cm
@@ -161,7 +163,7 @@ if may == 0:
     ax.set_ylabel('Z (m)')
     ax.set_zlabel('$n_e (10^{18}m^{-3})$')
 
-    fig3D.show()
+    fig3D.show(0)
 
 else:
     from mayavi import mlab

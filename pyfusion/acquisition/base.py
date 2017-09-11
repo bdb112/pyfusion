@@ -8,7 +8,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy import ndarray, shape
 from pyfusion.conf.utils import import_setting, kwarg_config_handler, \
-     get_config_as_dict, import_from_str
+     get_config_as_dict, import_from_str, NoSectionError
 from pyfusion.data.timeseries import Signal, Timebase, TimeseriesData
 from pyfusion.data.base import Coords, Channel, ChannelList, get_coords_for_channel
 from pyfusion.debug_ import debug_
@@ -293,12 +293,27 @@ class BaseAcquisition(object):
         """
         from pyfusion import config
         # if there is a data_fetcher arg, use that, otherwise get from config
-        if 'data_fetcher' in kwargs:
-            fetcher_class_name = kwargs['data_fetcher']
-        else:
-            fetcher_class_name = config.pf_get('Diagnostic',
-                                               config_name,
-                                               'data_fetcher')
+        if config_name.lower() == 'none':
+            return(None)
+        try:
+            if 'data_fetcher' in kwargs:
+                fetcher_class_name = kwargs['data_fetcher']
+            else:
+                fetcher_class_name = config.pf_get('Diagnostic',
+                                                   config_name,
+                                                   'data_fetcher')
+        except NoSectionError as reason:  # suggest 'similar' names from sections
+            our_sections = config.sections()
+            from difflib import SequenceMatcher
+            matches = np.argsort([SequenceMatcher(None, col, config_name).ratio() for col in our_sections])
+            print(reason.__repr__())
+            print('\nInstead of {v} try {c}'
+                  .format(v=config_name, c=[our_sections[m] for m in matches[::-1][:10]]))
+            if pyfusion.VERBOSE>0:
+                raise
+            else:
+                sys.exit()
+            
         fetcher_class = import_from_str(fetcher_class_name)
         ## Problem:  no check to see if it is a diag of the right device!??
         d = fetcher_class(self, shot,

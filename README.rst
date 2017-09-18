@@ -1,11 +1,19 @@
 pyfusion - python code for data mining plasma fluctuations
 ----------------------------------------------------------
 
-***  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.***
- * partial fix - don't allow local_saves from local cache (only works
-   on machines with acccess to the archivedB
+ * python3 - basically OK - some problems 20170817:
+   - python3 stops after one set of data in process_swept_Langmuir
+   - unicode problem in reading cached data (even self generated)
+   
+ *  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.  Partial fix - don't allow local_saves from local cache (only works on machines with acccess to the archivedB. F further problem to the above workaround - RAW  to be enforced independently of pyfusion.RAW, otherwise pyfusion.RAW is set (to 1) after any save_local - for now, just save in a separate process.
 
 Most recent update: 
+
+Version 0.86 beta
+ * incorporate lukas' py3 changes - but the signalexpr fix is not yet carefully tested
+ * many other small py3 fixes
+
+Version 0.85 beta
 
  * Many fixes or skip to improve test successes
  * test_examples - add stop on error, restart at stop point, script as well as skip, accepts first arg without equals

@@ -80,7 +80,7 @@ def json_save_shot_list(shotDA, new_name='/tmp/shotDA.json'):
         else:
             shot_dict.update({k: shotDA[k]})
 
-    json.dump(shot_dict, open(new_name, 'wb'))
+    json.dump(shot_dict, open(new_name, 'w'))
 
 
 def _get_shotDA(fname):
@@ -113,7 +113,7 @@ def get_shotDA(fname=os.path.join(this_dir, 'shotDA')):
     if os.path.splitext(fname)[-1] != '':
         return _get_shotDA(fname)
     else:
-        for ext in ['.pickle','.json']:
+        for ext in ['.json', '.pickle']:
             ret = _get_shotDA(fname + ext)
             if ret is not None:
                 return(ret)
@@ -181,7 +181,8 @@ update=0
         print('Over {d} days, there were {n} shots, {N} longer than 100ms'
               .format(N=len(wL), d=len(d), n=len(shotDA['date'])))
         pickle.dump(shotDA, open(os.path.join(this_dir,'shotDA.pickle'),'wb'),protocol=2)
-
+        json_save_shot_list(shotDA, new_name=os.path.join(this_dir,'shotDA.json'))
+        
     else:
         shotDA = get_shotDA()
 

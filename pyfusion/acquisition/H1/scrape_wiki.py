@@ -5,12 +5,15 @@
     This is especially useful with wiki_day_db to do allow queries with summary_db
     
 """
+from future.standard_library import install_aliases
 import sys
-import urllib2
 from bs4 import BeautifulSoup
 import time as tm
 import numpy as np
 import calendar
+
+install_aliases()
+from urllib.request import urlopen, Request
 
 
 def datelike(url, txt, minscore=5):
@@ -42,7 +45,7 @@ def datelike(url, txt, minscore=5):
 
 
 def get_links(url='http://h1svr.anu.edu.au/wiki/Day/2010', debug=1):     # ?action=raw'
-    conn = urllib2.urlopen(url)
+    conn = urlopen(url)
     html = conn.read()
 
     # specifying lxml is recommended by the author (by a message when it was omitted)
@@ -90,7 +93,7 @@ if __name__ == '__main__':
             title = None
         if title is not None: 
             pagedict.update({url: title})
-            print url + ': ' + title
+            print(url + ': ' + title)
 
     import json
     pagedict = pagedict

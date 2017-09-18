@@ -19,7 +19,10 @@ class MinervaMap(object):
     def __init__(self):
         fname =  "http-__archive-webapi.ipp-hgw.mpg.de_ArchiveDB_raw_Minerva_Minerva.QRP.settings_Settings_PARLOG_V12.json"
         #'http-__archive-webapi.ipp-hgw.mpg.de_ArchiveDB_raw_Minerva_Minerva.QRP.settings_Settings_PARLOG_V11.json'
-        self.parmdict = json.load(file(fname, 'rt'))
+        try:
+            self.parmdict = json.load(open(fname, 'rt'))
+        except FileNotFoundError:
+            print('run pyfusion/acquisition/W7X/get_url_parms.py  # to generate minerva cache')
 
     def get_parm(self, pseudourl=None):
         return get_parm(pseudourl, self.parmdict)
@@ -139,7 +142,7 @@ if __name__ == '__main__':
     parmdict = get_subtree(URL)
     fname = URL.replace('/','_').replace(':','-') + '.json'
     print('saving in ', fname)
-    json.dump(parmdict, file(fname, 'wt'))
+    json.dump(parmdict, open(fname, 'wt'))
 
 
 """

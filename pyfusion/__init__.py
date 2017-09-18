@@ -84,12 +84,13 @@ def DBG():
     else:
         return(0)
 
+
 # VERBOSE is likely to be used as an env var for debugging and as a config
 # var, depending on taste.
-VERBOSE = int(os.getenv('PYFUSION_VERBOSE','0'))  # allows config info to be debugged
-#read_config([DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
+VERBOSE = int(os.getenv('PYFUSION_VERBOSE', '0'))  # early setup allows config info to be debugged
+
 """ 
-Common stuff in DEFAULT_CONFIG_FILE, including my_tmp
+Common stuff in /home/bdb112/anaconda2/envs/py36DEFAULT_CONFIG_FILE, including my_tmp
 Computer specific personalisation in USER_CONFIG_FILE
 e.g. my_tmp = /tmp/blackwell
 Conputer independent personalisation in  USER_ENV_CONFIG_FILE

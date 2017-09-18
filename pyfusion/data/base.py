@@ -1,8 +1,11 @@
 """Base classes for data."""
+
+from __future__ import print_function
 import operator
 import uuid
 from datetime import datetime
 import copy
+import sys
 import six
 
 from pyfusion.conf.utils import import_from_str, get_config_as_dict
@@ -96,9 +99,10 @@ class MetaMethods(type):  # type here is used in the sense type(name, bases, dic
             import types
             for func in reg_methods:
                 if isinstance(func, types.FunctionType) and func.__doc__ is not None:
-                    if pyfusion.VERBOSE>0: print func, 'needs doc...',
+                    if pyfusion.VERBOSE>0: print(func, 'needs doc...', end='')
                     for newf in (newc.__dict__):
-                        if isinstance(newc.__dict__[newf], types.FunctionType) and newf == func.func_name:
+                        # py3 hide the func_name from version 3 for now
+                        if isinstance(newc.__dict__[newf], types.FunctionType) and ((sys.version > '3.0.0') or (newf == func.func_name)):
                             newc.__dict__[newf].__doc__ = func.__doc__
                             if pyfusion.VERBOSE>0: print(' setting..')
         return(newc)

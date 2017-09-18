@@ -19,8 +19,10 @@ ff.repair=1   # or 0,2
 Would be better to have an example with non-trivial units
 """
 
-from future.standard_library import install_aliases
-install_aliases()
+import sys
+if sys.version < '3.0.0':
+    from future.standard_library import install_aliases
+    install_aliases()
 
 from urllib.parse import urlparse, urlencode
 from urllib.request import urlopen, Request
@@ -144,7 +146,7 @@ class W7XDataFetcher(BaseDataFetcher):
         url = fmt.format(**params)
         # fudgey fix for python3's special treatment of %
         # we need %% in pyfusion.cfg to keep py3 happy
-        if sys.version < (3, 0, 0) and '%%' in url:
+        if sys.version < '3.0.0' and '%%' in url:
             url = url.replace('%%','%')
 
         if 'StationDesc.82' in url:  # fix spike bug in scaled QRP data

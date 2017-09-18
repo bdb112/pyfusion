@@ -71,16 +71,17 @@ def myiden2(t,y):
     return(t,y)
 
 @register("TimeseriesData")
-def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', decimate=0, markersize=2,linestyle=True,labelfmt="{short_name} {units}", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', t0=0, fun=myiden, fun2=None, **kwargs):
+def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', decimate=0, markersize=2,linestyle=True,labelfmt="{short_name} {units}", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', t0=0, fun=myiden, scale=1, fun2=None, **kwargs):
     """ 
     Plot a figure full of signals using n_columns[1], 
-        sharey [=1]  "gangs" y axes  - sim for sharex - sharex=None stops this
+        sharey [=1 or 'all']  "gangs" y axes  - sim for sharex - sharex=None stops this
         sharey: 2 gangs all but first (top) axis
         x axes are ganged by default: see Note:
 
     downsamplefactor = 1
     n_columns = 1
     decimate = 0
+    scale = 1  # only works if fun2 is None
     fun, fun2: optionally plot a function of the signal.  fun= refers
     to a function of one variable.  fun2 is a function (t,x), such as
     one that returns a different timebase (diff should do this)
@@ -104,7 +105,14 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
         
         suptitle by default refers to the shot number
     """
+    if isinstance(sharey, str) and sharey.lower() == 'all':
+        sharey = 1
+    elif isinstance(sharey, type(max)):  # really want isinstance(sharey, function) but not defined
+        raise ValueError('''sharey was set to the function all()! - use sharey=1 or "sharey='all'"''')
+
     if pyfusion.VERBOSE > 0: print(fun, fun2)
+    if scale != 1 and fun2 is not None:
+        raise ValueError('need fun2 to be None so that scale works')
     import pylab as pl
     n_rows = input_data.signal.n_channels() # doesn't work with fftd data
     n_rows = int(round(0.49+(n_rows/float(n_columns))))
@@ -139,7 +147,7 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
             if chan_num >= input_data.signal.n_channels(): break
             if pyfusion.VERBOSE>3: print(subplot_num+1,chan_num)
             if axcount == 0:
-                # note - sharex=None is required fo that overlays can be done
+                # note - sharex=None is required so that overlays can be done
                 if n_rows * n_columns == 1:
                     axlead = pl.gca()  # this allows plotting on existing axis for a single plot
                 else:
@@ -173,13 +181,13 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
                           linestyle=linestyle, label = lab, color=color)
             KWargs.update(kwargs)
 
-            if fun2 is not None:
+            if fun2 is not None:  # can't easily accommodate 'scale' here
                 pl.plot(*fun2(input_data.timebase[::downsamplefactor]-t0, 
                               input_data.signal.get_channel(
                                   chan_num)[::downsamplefactor]),**KWargs)
             else:
                 pl.plot(input_data.timebase[::downsamplefactor]-t0, 
-                        fun(input_data.signal.get_channel(
+                        scale * fun(input_data.signal.get_channel(
                             chan_num)[::downsamplefactor]),**KWargs)
 
 # this old code was no faster
@@ -221,7 +229,7 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
             suptitlestr = (suptitle.format(**input_data.meta))
         except:
             suptitlestr = ''
-            debug_(pyfusion.DEBUG, 1, 
+            debug_(pyfusion.DEBUG, 1, key='plot_signal_suptitle',
                    msg=' input metadata [{m}] does not have  a '
                    'key for suptitle [{s}]'
                    .format(m=input_data.meta, s=suptitle))

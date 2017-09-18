@@ -32,6 +32,7 @@ from urllib.parse import urlparse, urlencode
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 import codecs  # this is a workaround for urlopen/json - requests is supposed to be better
+
 import pickle
 if sys.version < '3, 0':     # 'fixups' for py2 compat.
     FileNotFoundError = IOError
@@ -41,19 +42,33 @@ this_dir = os.path.dirname(__file__)
 
 import json
 
-def get_programs(json_file='/data/datamining/local_data/W7X/json/all_programs.json'):
+#from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
+
+def get_programs(shot=None, json_file='/data/datamining/local_data/W7X/json/all_programs.json'):
     """ (data.utc[0] - progs['programs'][-1]['trigger']['6'][0])/1e9 is the start of ECH
     Looks like '5' works better for 0309.052
     The original file was downloaded manually in three chunks.  
     http://archive-webapi.ipp-hgw.mpg.de/ has more details on downloading by machine
 
     After first call, caching reduces time to <20ms
+    http://archive-webapi.ipp-hgw.mpg.de/programs.json
+    http://archive-webapi.ipp-hgw.mpg.de/programs.json?from=1505174400000000000&upto=1505260799999999999
     """
     progs = json.load(open(json_file))
     programs = {}
     for p in progs['programs']:
         programs.update({p['id']: p})
 
+    # check if it is the cached version - if not go to the web site
+    decimal_shot = '{d}.{s:03d}'.format(d=shot[0], s=shot[1])
+    if decimal_shot not in programs:
+        from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
+        utc = get_shot_utc(shot)
+        prog_url = ("http://archive-webapi.ipp-hgw.mpg.de/programs.json?from={f}&upto={t}"
+                    .format(f=utc[0], t=utc[1]))  #1505174400000000000&upto=1505260799999999999
+        this_program = json.loads(urlopen(prog_url, timeout=pyfusion.TIMEOUT).read().decode('utf-8'))
+        programs.update({decimal_shot: this_program['programs'][0]})
+        
     return(programs)
 
 

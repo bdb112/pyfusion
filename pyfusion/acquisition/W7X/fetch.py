@@ -114,12 +114,11 @@ class W7XDataFetcher(BaseDataFetcher):
         if self.shot[1]>1e9:  # we have start and end in UTC
             f,t = self.shot
         else:
-            f,t = get_shot_utc(*self.shot)
+            f,t = get_shot_utc(self.shot)
         # A URL STYLE diagnostic - used for a one-off
         # this could be moved to setup so that the error info is more complete
         if hasattr(self,'url'):
             fmt = self.url+'_signal.json?from={shot_f}&upto={shot_t}'
-            fmt = self.url+'_signal.json?from={shot_f}&upto={shot_t}&nSamples=200000'
             params = {}
         else:  # a pattern-based one - used for arrays of probes
             if hasattr(self,'fmt'):  #  does the diagnostic have one?

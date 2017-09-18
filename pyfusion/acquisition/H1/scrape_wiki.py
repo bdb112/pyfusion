@@ -41,11 +41,12 @@ def datelike(url, txt, minscore=5):
         return(score > minscore)
 
 
-def get_links(url='http://h1svr.anu.edu.au/wiki/Day/2010'):     # ?action=raw'
+def get_links(url='http://h1svr.anu.edu.au/wiki/Day/2010', debug=1):     # ?action=raw'
     conn = urllib2.urlopen(url)
     html = conn.read()
 
-    soup = BeautifulSoup(html)
+    # specifying lxml is recommended by the author (by a message when it was omitted)
+    soup = BeautifulSoup(html, "lxml")
     links = soup.find_all('a')
 
     linklist = []
@@ -53,7 +54,7 @@ def get_links(url='http://h1svr.anu.edu.au/wiki/Day/2010'):     # ?action=raw'
         link = tag.get('href',None)
         if link is not None:
             linklist.append([link, tag.get_text()])
-            print linklist[-1]
+            if debug: print(linklist[-1])
     return(linklist)
 
 if __name__ == '__main__':

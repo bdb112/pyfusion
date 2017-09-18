@@ -64,7 +64,7 @@ save_kwargs = {}
 prefix=''  #'HeliotronJ_'
 local_dir='/tmp'  # safe for linux and windows
 exception = Exception
-pyfusion.RAW=1   # save in raw mode by default, so gain is not applied twice.
+save_in_RAW=1   # save in raw mode by default, so gain is not applied twice.
 diag_name=["W7X_TotECH"] # Use a list - otherwise process_cmd will not accept a list
 """
 exec(_var_defaults)
@@ -161,7 +161,7 @@ for shot_number in shot_list:
                         else:
                             localfilename = getlocalfilename(shot_number, chan.config_name)
 
-                        params = dict(name = diag_chan, device = dev_name, utc=data.utc, raw=pyfusion.RAW, host = pyfusion.utils.host())
+                        params = dict(name = diag_chan, device = dev_name, utc=data.utc, raw=save_in_RAW, host = pyfusion.utils.host())
                         if hasattr(data, 'params'):  # add the other params
                             params.update(data.params)
 
@@ -186,7 +186,7 @@ pfile = str('{s}_{dt}_save_local'
                     s=str(shot_number).replace('(','').replace(')','')
                     .replace(',','_').replace(' ','')))
 
-print('See bads for {l} errors, also goods, and in {pfile}'.format(l=len(bads), pfile=pfile))
+print('See bads for {l} errors, also goods ({g}), and in {pfile}'.format(l=len(bads), g=len(goods), pfile=pfile))
 try:
     json.dump(dict(bads=bads, goods=goods), open(pfile+'.json','w'))
 except:

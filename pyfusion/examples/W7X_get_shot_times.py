@@ -7,9 +7,10 @@ _PYFUSION_TEST_@@Skip@@  only works on W7X net
 
 
 import pyfusion
-from pyfusion.acquisition.W7X.get_shot_utc  import get_shot_utc
+from pyfusion.acquisition.W7X.get_shot_info  import get_shot_utc
 from pyfusion.utils.time_utils import utc_ns
 import matplotlib.pyplot as plt
+import numpy as np
 
 _var_defaults = """
 dev_name = "W7X"
@@ -25,9 +26,12 @@ exec(process_cmd_line_args())
 
 dev = pyfusion.getDevice(dev_name)
 ECHdata = dev.acq.getdata(shot, ECH)
-t0,t_end = get_shot_utc(*shot)
- 
+t0,t_end = get_shot_utc(shot)
 toff_ECH = 60-(ECHdata.utc[0]-t0)/1e9
 
+wech = np.where(ECHdata.signal > 100)[0]
+tech = ECHdata.timebase[wech[0]]
+utc0 = int(tech * 1e9) + ECHdata.utc[0]
 
+first_ax = None
 plt.plot(ECHdata.timebase - toff_ECH, ECHdata.signal)

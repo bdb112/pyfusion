@@ -411,6 +411,12 @@ class BaseDataFetcher(object):
                              .format(chan=chan))
         #bare_chan = (chan.split('-'))[-1]
         # use its gain, or if it doesn't have one, its acq gain.
+        
+        if hasattr(self,'minerva_name'):
+            from pyfusion.acquisition.W7X.get_url_parms import get_minerva_parms
+            debug_(pyfusion.DEBUG, level=2, key='MinervaName')
+            self = get_minerva_parms(self)
+            
         if pyfusion.RAW == 0:
             gain_units = "1 arb"  # default to gain 1, no units
             if hasattr(self,'gain'):

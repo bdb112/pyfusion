@@ -446,7 +446,8 @@ Args:
         if self.debug > 0:
             print('entering prepare_sweeps ', len(self.vmeasfull.signal[0]))
         if str(rest_swp).lower() == 'auto':
-            rest_swp = self.shot > [20160310, 0]  # bug: was wrong 0309,0 - but didn't affect any data I sent
+            # bug: was wrong 0309,0 - but didn't affect any data I sent
+            rest_swp = self.shot > [20160310, 0]  and  self.shot < [20160310, 99] 
             print ('* Automatically setting rest_swp to {r} *'.format(r=rest_swp))
 
         if rest_swp:
@@ -705,7 +706,7 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         self.actual_params.update(dict(i_diag=self.i_diag, v_diag=self.v_diag))
         # and do it for actuals too
         for k in self.actual_params:
-            if k not in 'amu,clipfact,clip_iprobe,dtseg,filename,initial_TeVfI0,leakage,overlap,plot,rest_swp,suffix,t_comp,t_range,threshold,threshchan,fit_params,v_diag,i_diag,return_data,sweep_freq'.split(','):
+            if k not in 'amu,clipfact,clip_iprobe,dtseg,filename,initial_TeVfI0,leakage,overlap,plot,rest_swp,suffix,t_comp,t_range,threshold,threshchan,fit_params,v_diag,i_diag,return_data,sweep_freq,defaults'.split(','):
                 raise ValueError('Unknown actual_params key ' + k)
 
         self.actual_params.update(dict(i_diag_utc=self.imeasfull.utc, pyfusion_version=pyfusion.VERSION))
@@ -738,7 +739,14 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
                           # for OP1.1, only a few V chans were recorded and 
                           # in practice only two channels are necessary.  
         default_sweep = 'NO SWEEP'
-        default_sweep = 'W7X_L57_LP01_U'
+        if np.isscalar(self.shot):
+            compfun = int
+        else:
+            compfun = tuple
+        if compfun(self.shot) > compfun([20160310,999]):
+            default_sweep = 'W7X_LTDU_LP01_U'
+        else:
+            default_sweep = 'W7X_L57_LP01_U'
 
         for ch in self.i_chans:
             cd = get_config_as_dict('Diagnostic', ch)

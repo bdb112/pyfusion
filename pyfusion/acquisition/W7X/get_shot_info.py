@@ -1,7 +1,9 @@
 #from DA_datamining import DA
 import os, pickle
 import numpy as np
-from .get_shot_list import get_shotDA
+# Note: this would not run while the import of shot_list.py was at the top
+# probably should be combined with get shot_list (as module get_shot_info)
+from pyfusion.acquisition.W7X.get_shot_list import get_shotDA
     
 # should think about avoiding reloads - but need to reload if list has changed
 # maybe check the file timestamp.
@@ -28,7 +30,6 @@ def get_shot_info(date, shot, item='comment', quiet=False):
         raise LookupError('more than one match? to shot {shot}'
                           .format(shot=shot))
         
-def get_shot_utc(date, shot, quiet=False):
+def get_shot_utc(shot, quiet=False):
     """ convenience routine to obtain shot utc values """
-    return(get_shot_info(date=date, shot=shot, item='utc', quiet=quiet))
-
+    return(get_shot_info(date=shot[0], shot=shot[1], item='utc', quiet=quiet))

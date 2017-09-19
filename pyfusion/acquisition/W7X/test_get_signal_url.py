@@ -9,8 +9,8 @@ from get_shot_info import get_shot_utc
 
 
 
-for path in ['CBG_ECRH/A1/medium_resolution/Rf_A1','AAE_MainCoils/Currents/Current planar coils type A']:
-    for shot in [[20160310,23], [20170913,24]]:
+for path in ['CBG_ECRH/D5/medium_resolution/Rf_D5','CBG_ECRH/A1/medium_resolution/Rf_A1','AAE_MainCoils/Currents/Current planar coils type A']:
+    for shot in ([[20160310,23], [20170913,21]]):
         utc = get_shot_utc(shot)
         # this is the usual middle step, but
         # print(get_signal()+'scaled/_signal.json?filterstart={f}&filterstop={t}'.format(f=utc[0], t=utc[1]))
@@ -19,3 +19,9 @@ for path in ['CBG_ECRH/A1/medium_resolution/Rf_A1','AAE_MainCoils/Currents/Curre
         print(url,'\n--------------')
         retcode = os.system('wget -q -O - "{url}"|head -c 1000|fold -s -w80'.format(url=url))
         print('\nreturns ', retcode, '---------')
+
+"""
+# this works directly, but for two channels at least it doesn't (B1,B5,D1,D5 - shot 20170913.27)
+http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/views/KKS/CBG_ECRH/A1/medium_resolution/Rf_A1/scaled?filterstart=1505347200000000000&filterstop=1505433599999999999http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/views/KKS/CBG_ECRH/A5/medium_resolution/Rf_A5
+
+"""

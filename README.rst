@@ -10,6 +10,11 @@ pyfusion - python code for data mining plasma fluctuations
 Most recent update: 
 
 Version 0.86 beta
+ * more implementation of the smarter way (ECH, Main, Trim) - in W7X/fetch.py - now all those three work for op1.1 and 1.2a (with one or two exceptions), but timebase funny on multi-diag plots of ECH
+
+ * data/base.py - return None for an inacessible channel, unless DEBUG>2
+ * some more fixes above - version is the same
+
  * incorporate lukas' py3 changes - but the signalexpr fix is not yet carefully tested
  * many other small py3 fixes
 

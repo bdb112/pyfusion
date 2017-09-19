@@ -138,14 +138,24 @@ class W7XDataFetcher(BaseDataFetcher):
 
         # nSamples now needs a reduction mechanism http://archive-webapi.ipp-hgw.mpg.de/
         # minmax is increasingly slow for nSamples>10k, 100k hopeless
-        # should ignore the test comparing hte first tow elements of the tb
+        # should ignore the test comparing the first tow elements of the tb
         if ('nSamples' not in fmt) and (pyfusion.NSAMPLES != 0):
             fmt += '&reduction=minmax&nSamples={ns}'.format(ns=pyfusion.NSAMPLES)
 
         params.update(shot_f=f, shot_t=t)
         url = fmt.format(**params)
-        # fudgey fix for python3's special treatment of %
+        # fix up erroneous ECH alias mapping if ECH - only 6 work if I don't
+        #  Hopefully at some point in the future, they will fix it.
+        # this implementation is kludgey but proves the principle
+        if 'Rf' in url or 'MainCoils' in url:
+            from pyfusion.acquisition.W7X.get_url_parms import get_signal_url
+            # replace the main middle bit with the expanded one from the GUI
+            tgt = url.split('KKS/')[1].split('/scaled')[0]
+            url = url.replace(tgt, get_signal_url(tgt)).split('KKS/')[-1]
+
+        debug_(pyfusion.DEBUG, 3, key="url", msg="work on urls")
         # we need %% in pyfusion.cfg to keep py3 happy
+        # however with the new get_signal_url, this will all disappear
         if sys.version < '3.0.0' and '%%' in url:
             url = url.replace('%%','%')
 
@@ -173,7 +183,8 @@ class W7XDataFetcher(BaseDataFetcher):
             # nicer replace - readback still fails in Win, untested on unix systems
             print('now trying the cached copy we just grabbed: {url}'.format(url=url))
         if pyfusion.VERBOSE > 0:
-            print('===> fetching url {u}'.format(u=url))
+            print('======== fetching url over {dt:.1f} secs  =========\n[{u}]'
+                  .format(u=url, dt=(params['shot_t'] - params['shot_f'])/1e9))
 
         # seems to take twice as long as timeout requested.
         # haven't thought about python3 for the json stuff yet

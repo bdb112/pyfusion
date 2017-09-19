@@ -266,11 +266,13 @@ class BaseAcquisition(object):
             self.__dict__.update(get_config_as_dict('Acquisition', config_name))
         self.__dict__.update(kwargs)
 
-    def getdata(self, shot, config_name=None, **kwargs):
+    def getdata(self, shot, config_name=None, interp={}, **kwargs):
         """Get the data and return prescribed subclass of BaseData.
         
         :param shot: shot number
         :param config_name: ?? bdb name of a fetcher class in the configuration file
+        :param interp: dictionary specifying interpolation method, grid
+            methods are 'linear', 'linear_minmax' (W7X,H1) - NOT YET IMPL..
         :returns: an instance of a subclass of \
         :py:class:`~pyfusion.data.base.BaseData` or \
         :py:class:`~pyfusion.data.base.BaseDataSet`
@@ -319,8 +321,15 @@ class BaseAcquisition(object):
             
         fetcher_class = import_from_str(fetcher_class_name)
         ## Problem:  no check to see if it is a diag of the right device!??
-        d = fetcher_class(self, shot,
-                             config_name=config_name, **kwargs).fetch()
+        # enable stopping here on error to allow traceback if DEBUG>2
+        # there is similar code elsewhere - check if is duplication
+        exceptions = (LookupError) if pyfusion.DEBUG<3 else ()
+        try:
+            d = fetcher_class(self, shot,
+                              config_name=config_name, **kwargs).fetch()
+        except exceptions as reason:
+            print(str(reason))
+            return None
         d.history += "\n:: shot: {s} :: config: {c}".format(s=shot, c=config_name)
 
         return d
@@ -579,6 +588,8 @@ class MultiChannelFetcher(BaseDataFetcher):
             if len(t_range) == 2:
                 ch_data = ch_data.reduce_time(t_range)
 
+            if ch_data is None:
+                continue
             channels.append(ch_data.channels)
             # two tricky things here - tmp.data.channels only gets one channel hhere
             # Config_name for a channel is attached to the multi part -

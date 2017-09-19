@@ -7,6 +7,8 @@ from collections import OrderedDict
 import json
 import sys
 import numpy as np
+if sys.version < '3.0.0':         # 'fixups' for py2 compat.
+    FileNotFoundError = OSError   #  OSError is preferred over IOError in stackX
 
 import pyfusion
 from pyfusion.acquisition.H1.scrape_wiki import get_links
@@ -122,6 +124,7 @@ def get_subtree(url, debug=1, level=0):
     return(dic)
 
 def get_signal_url(path='CBG_ECRH/A1/medium_resolution/Rf_A1'):
+    """ return the cryptic url corresponding to the human readable form """
     import os
     root = 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/views/KKS/'
     oneup, wantname = os.path.split(path)
@@ -141,6 +144,10 @@ if __name__ == '__main__':
     URL = sys.argv[1] if len(sys.argv) > 1 else 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/raw/Minerva/Minerva.QRP.settings/Settings_PARLOG/V12'
     parmdict = get_subtree(URL)
     fname = URL.replace('/','_').replace(':','-') + '.json'
+    if len(list(parmdict)) < 10:
+        print('Warning - parmdict is too short')
+    if len(list(parmdict)) == 0:
+        raise LookupError('No Minerva data parameters found in \n' + URL)
     print('saving in ', fname)
     json.dump(parmdict, open(fname, 'wt'))
 

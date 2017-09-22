@@ -110,7 +110,7 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
     elif isinstance(sharey, type(max)):  # really want isinstance(sharey, function) but not defined
         raise ValueError('''sharey was set to the function all()! - use sharey=1 or "sharey='all'"''')
 
-    if pyfusion.VERBOSE > 0: print(fun, fun2)
+    if pyfusion.VERBOSE > 1: print(fun, fun2)
     if scale != 1 and fun2 is not None:
         raise ValueError('need fun2 to be None so that scale works')
     import pylab as pl

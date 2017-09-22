@@ -9,17 +9,17 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
-Version 0.86 beta
-* W7X/fetch.py can return raw timebase in integer ns (repair=-1)
-* fix bugs in get_url_parms (numbers cancelled, so bu not evident on LP)
-* also added cal_info data recording source of calibration (Minerva)
-* data/base - return None for bad data - also in plot_shots etc
+Version 0.87 beta
+ * W7X/fetch.py can return raw timebase in integer ns (repair=-1)
+ * fix bugs in get_url_parms (numbers cancelled, so bu not evident on LP)
+ * also added cal_info data recording source of calibration (Minerva)
+ * data/base - return None for bad data - also in plot_shots etc
             full_scale attribute causes data outside 2* full scale to be hidden
-* data/plots - add rough multi diagnotic plot to spectrogram
-* add grouped_shots facility to sql plot and plot_shots
-* save_to_local - add option to restrict tie range, also worked arounf save not RAW bug - need to fix using a separate save_in_RAW variable
-* Many fixes to pyfusion.cfg importantly using get links to resolve human readable address into actual address
-
+ * data/plots - add rough multi diagnotic plot to spectrogram
+ * add grouped_shots facility to sql plot and plot_shots
+ * save_to_local - add option to restrict tie range, also worked arounf save not RAW bug - need to fix using a separate save_in_RAW variable
+ * Many fixes to pyfusion.cfg importantly using get links to resolve human readable address into actual address
+ * koords, area still not real values
 
 Version 0.86 beta
  * more implementation of the smarter way (ECH, Main, Trim) - in W7X/fetch.py - now all those three work for op1.1 and 1.2a (with one or two exceptions), but timebase funny on multi-diag plots of ECH

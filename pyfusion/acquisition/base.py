@@ -629,7 +629,7 @@ class MultiChannelFetcher(BaseDataFetcher):
 
             # Make a common timebase and do some basic checks.
             if common_tb is None:
-                print('set common tb')
+                print('set common tb: ', end='')
                 common_tb = ch_data.timebase
                 if hasattr(ch_data,'utc'):
                     group_utc = ch_data.utc
@@ -697,7 +697,7 @@ class MultiChannelFetcher(BaseDataFetcher):
         #output_data.meta.update({'shot':self.shot})
         output_data.meta.update(meta_dict)
         output_data.comment = self.comment if hasattr(self, 'comment') else ''
-        print(output_data.comment)
+        print('output_data.comment: [' ,output_data.comment, ']')
         #if not hasattr(output_data,'utc'):
         #    output_data.utc = None  # probably should try to get it
         #                           # from a channel - but how?

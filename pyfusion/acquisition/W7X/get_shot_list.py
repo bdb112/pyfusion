@@ -75,7 +75,7 @@ def get_programs(shot=None, json_file='/data/datamining/local_data/W7X/json/all_
 
 def get_latest_program():
     """ meant to be a quck way to get only the latest programs, for use 
-    during operation"
+    during operation"""
     pass
 
 def json_save_shot_list(shotDA, new_name='/tmp/shotDA.json'):

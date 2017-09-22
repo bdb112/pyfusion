@@ -744,7 +744,7 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         else:
             compfun = tuple
         if compfun(self.shot) > compfun([20160310,999]):
-            default_sweep = 'W7X_LTDU_LP01_U'
+            default_sweep = 'W7X_LTDU_LP18_U'  # 13 is dead up to 0921 at least
         else:
             default_sweep = 'W7X_L57_LP01_U'
 
@@ -810,6 +810,8 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
                 fmt = 'LP{s0}_{s1}_'
                 if 'L5' in self.i_diag:
                     fmt += 'L5' + self.i_diag.split('L5')[1][0]
+                if 'TDU' in self.i_diag:
+                    fmt += self.i_diag.split('TDU')[0][-1] + 'TDU'
                 filename = filename.replace('*',fmt+'_')
                 if filename.endswith('_'):  # remove ending _
                     filename = filename[0:-1]

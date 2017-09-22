@@ -51,6 +51,7 @@ from pyfusion.debug_ import debug_
 from pyfusion.utils import process_cmd_line_args
 
 from pyfusion.data.shot_range import shot_range
+from pyfusion.acquisition.W7X.get_shot_info  import get_shot_utc
 
 _var_defaults="""
 dev_name='W7X'
@@ -70,6 +71,7 @@ diag_name=["W7X_TotECH"] # Use a list - otherwise process_cmd will not accept a 
 exec(_var_defaults)
 exec(process_cmd_line_args())
 
+pyfusion.RAW=save_in_RAW  # FUDGE!!! until fixed
 bads = []
 goods = []
 
@@ -124,13 +126,21 @@ for shot_number in shot_list:
                 # diagnostic basis.  Previously one bad killed the shot
                 # There is some redunant code left over in out try/ex loop
                 try:
-                    data = dev.acq.getdata(shot_number, diag_chan, no_cache=compress_local==False)
+                    if time_range is not None and 'W7X' in dev.name and shot_number[0]<1e9:
+                        utc = get_shot_utc(shot_number)
+                        retrieved_shot_number = [int(utc[0] + (61 + time_range[0])*1e9),
+                                                 int(utc[0] + (61 + time_range[1])*1e9)]
+                    else:
+                        retrieved_shot_number = shot_number
+                    data = dev.acq.getdata(retrieved_shot_number, diag_chan, no_cache=compress_local==False)
                     print(diag_chan)
 
                     # the above will help stop saving over existing data.  This is important
                     # if we are replacing incorrect existing data..
                     # the next line also will protect if the cache file is new enough
-                    if 'npz'  in data.params['source'] and compress_local == False:
+                    if data is None:
+                        raise LookupError('Data not found - maybe because use of cache is prevented')
+                    if 'npz' in data.params['source'] and compress_local == False:
                         # this is to protect against accidental recompressions - 
                         raise Exception("Should not use local cached (npz) data unless you are compressing")
 
@@ -138,7 +148,7 @@ for shot_number in shot_list:
                     if downsample is not None:
                         data = data.downsample(downsample)
 
-                    if time_range is not None:  # not tested!!
+                    if time_range is not None and 'W7X' not in dev.name:  # not tested!!
                         data = data.reduce_time(time_range, fftopt=True)
 
                     # I don't believe this test - always true!
@@ -164,6 +174,9 @@ for shot_number in shot_list:
                         params = dict(name = diag_chan, device = dev_name, utc=data.utc, raw=save_in_RAW, host = pyfusion.utils.host())
                         if hasattr(data, 'params'):  # add the other params
                             params.update(data.params)
+                        print('cal_info')
+                        if hasattr(data, 'cal_info'):  # add the cal_date
+                            params.update(data.cal_info)
 
                         signal = data.signal
 

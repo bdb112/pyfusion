@@ -26,7 +26,7 @@ def replace_none(arr, val=np.nan):
     return(np.array(outarr))
 
 #engine = create_engine('mysql://localhost/from_h1ds')
-engine=create_engine('sqlite:////home/bdb112/datamining/h1ds_production_2013_09_15.db')
+engine=create_engine('sqlite:////home/bdb112/data/datamining/h1ds_production_2013_09_15.db')
 db=SQLSoup(engine)
 #db.summary.shot.between(78000,78010)
 q=db.summary.filter(db.summary.shot.between(000,80000))

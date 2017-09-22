@@ -27,11 +27,11 @@ exec(process_cmd_line_args())
 dev = pyfusion.getDevice(dev_name)
 ECHdata = dev.acq.getdata(shot, ECH)
 t0,t_end = get_shot_utc(shot)
-toff_ECH = 60-(ECHdata.utc[0]-t0)/1e9
+toffs_ECH = 60-(ECHdata.utc[0]-t0)/1e9
 
 wech = np.where(ECHdata.signal > 100)[0]
 tech = ECHdata.timebase[wech[0]]
 utc0 = int(tech * 1e9) + ECHdata.utc[0]
 
 first_ax = None
-plt.plot(ECHdata.timebase - toff_ECH, ECHdata.signal)
+plt.plot(ECHdata.timebase - toffs_ECH, ECHdata.signal)

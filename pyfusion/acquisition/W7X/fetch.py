@@ -81,7 +81,13 @@ def regenerate_dim(x):
         print('[[diff, count],....]')
         print('small:', [[argc, counts[argc]] for argc in np.argsort(counts)[::-1][0:5]])
         print('big or negative:', [[bigvals[argc], bigcounts[argc]] for argc in np.argsort(bigcounts)[::-1][0:10]])
-
+        print('bincounts', counts)
+        
+    debug_(pyfusion.DEBUG, 3, key="repair", msg="repair of W7-X scrambled Langmuir timebase") 
+    if len(counts) == 0:
+        msg = 'no repair required'
+        print(msg)
+        return(x, msg)
     dtns = 1 + np.argmax(counts[1:])  # skip the first position - it is 0
     # wgt0 = np.where(sorted_diffs > 0)[0]  # we are in ns, so no worry about rounding
     histo = plt.hist if pyfusion.DBG() > 1 else np.histogram
@@ -117,6 +123,10 @@ class W7XDataFetcher(BaseDataFetcher):
             f,t = self.shot
         else:
             f,t = get_shot_utc(self.shot)
+            # at present, ECH usually starts 61 secs after t0
+            # so it is usually sufficient to request a later start than t0
+            pre_trig_secs = self.pre_trig_secs if hasattr(self, 'pre_trig_secs') else 2
+            f = f + int(1e9* (61 - float(pre_trig_secs)))
         # A URL STYLE diagnostic - used for a one-off
         # this could be moved to setup so that the error info is more complete
         if hasattr(self,'url'):
@@ -204,12 +214,13 @@ class W7XDataFetcher(BaseDataFetcher):
             raise
 
         # this form will default to repair = 2 for all LP probes.
-        default_repair = 2 if 'Desc.82/' in url else 0
+        #default_repair = -1 if 'Desc.82/' in url else 0
+        default_repair = int(self.acq.repair) if  hasattr(self.acq, 'repair') else 2 if 'Desc.82/' in url else 0
         # this form follows the config file settings
         self.repair = int(self.repair) if hasattr(self, 'repair') else default_repair
         dimraw = np.array(dat['dimensions'])  
         dim = dimraw - dimraw[0]
-        if self.repair == 0:
+        if self.repair == 0 or self.repair == -1:
             pass # leave as is
         # need at least this clipping for Langmuir probes in Op1.1
         elif self.repair == 1:
@@ -229,8 +240,12 @@ class W7XDataFetcher(BaseDataFetcher):
         # used to be bare_chan? should we include - signs?
         ch = Channel(self.config_name,  coords)
         scl = 1/3277.24 if dat['datatype'].lower() == 'short' else 1
-        output_data = TimeseriesData(timebase=Timebase(1e-9*dim),
-                                     signal = scl*Signal(dat['values']), channels=ch)
+        if self.repair == -1:
+            output_data = TimeseriesData(timebase=Timebase(dimraw),
+                                         signal = scl*Signal(dat['values']), channels=ch)
+        else:
+            output_data = TimeseriesData(timebase=Timebase(1e-9*dim),
+                                         signal = scl*Signal(dat['values']), channels=ch)
         output_data.meta.update({'shot': self.shot})
         output_data.utc = [dat['dimensions'][0], dat['dimensions'][-1]]
         output_data.units = dat['units'] if 'units' in dat else ''

@@ -22,7 +22,8 @@ from time import time as seconds
 _var_defaults="""
 filewild = 'pyfusion/examples/*.py'  # an explict filewild (but gets non repo)
 python_exe = 'python' # -3'
-start = 0  # allow a restart part-way through - always early, as it ignores @@Skip
+start = 0  # allow a restart part-way through - always starts earlier, as it ignores @@Skip
+#       start=last_one is got short_cut
 pfdebug=0 # normally set pyfusion.DEBUG to 0 regardless
 newest_first=1 # if True, order the files so the last edited is first.
 max_sec=2

@@ -250,12 +250,24 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
     debug_(pyfusion.DEBUG, 4, key='plot_signals')
 
 @register("TimeseriesData")
-def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, filename=None, coloraxis=None, noverlap=0,NFFT=None, title=None, **kwargs):
-    """ title will be auto generated, if supplied, include '+' to include
-    the auto-generated part
+def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, filename=None, coloraxis='now is clim!', clim=None, xlim=None, ylim=None, noverlap=0,NFFT=None, suptitle='shot {shot}', title=None, sharey=True, sharex=True, n_columns=None, raw_names=False, hspace=None, labelfmt="{short_name} {units}", filldown=False,hold=None,**kwargs):
+    """    Plot a spectrogram 
+      NFFTs
+      noverlap
+      windowfn (p.window.hanning)
+      coloraxis - gets from pyfusion.conf.get('Plots')
+
+    Accepts multi or single channel data (I think?)
+    Title will be auto generated: if supplied, include '+' to include the auto-generated part
+    To suppress, use title=' ' (one space)
+
     """
     import pylab as pl
     
+    # can't recurse as this is a signal   input_data[chan.name].plot_specgram()
+
+    if hold is not None and hold == 0:
+        pl.figure()
     if windowfn is None: windowfn=pl.window_hanning
 
     # look in the config file section Plots for NFFT = 1234
@@ -276,43 +288,109 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
     else: ffact =1.        
     xextent=(min(input_data.timebase),max(input_data.timebase))
 
-    pl.specgram(input_data.signal.get_channel(channel_number), NFFT=NFFT, noverlap=noverlap, Fs=input_data.timebase.sample_freq/ffact, window=windowfn, xextent=xextent, **kwargs)
-    #accept multi or single channel data (I think?)
+
+    n_pics = input_data.signal.n_channels() # doesn't work with fftd data
+    if n_columns is None:
+        n_columns = int(0.8 + np.sqrt(n_pics))
+    n_rows = int(round(0.49+(n_columns/float(n_pics))))
+    while n_rows * n_columns < n_pics:
+        n_rows += 1
         
-    if coloraxis != None: pl.clim(coloraxis)
-    else:
-        try:
-            pl.clim(eval(pyfusion.config.get('Plots','coloraxis')))
-        except:
-            pass
+    if (n_rows > 3) and (hspace is None): 
+        hspace = 0.001 # should be 0, but some plots omitted if 
+                       #exactly zero - fixed in matplotlib 1
+    if pyfusion.VERBOSE > 3: print(str(n_rows) + ' ' + str(n_columns))
 
-    # look in the config file section Plots for a string like 
-    # FT_Axis = [0,0.08,0,500e3]   don't quote
-    exceptions_to_hide = Exception if pyfusion.DBG() < 3 else None
-    try:
-        #pl.axis(eval(pyfusion.config.get('Plots','FT_Axis')))
-        # this is clumsier now we need to consider freq units.
-        axt = eval(pyfusion.config.get('Plots','FT_Axis'))
-        set_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact)
-    except exceptions_to_hide:
-        pass
-    # but override X if we have zoomed in bdb
-    if 'reduce_time' in input_data.history:
-        pl.xlim(np.min(input_data.timebase),max(input_data.timebase))
-        
+    fontkwargs = {'fontsize': 'small'}        
+    # True is the only sensible indicator I can think of that we want intelligient defaults
+    displace = '' # doens't make send for spectra, as they are usually squarish
+    
+    axcount = -1  # so the first will be 0
+    for row in range(n_rows):
+        for col in range(n_columns):
+            axcount += 1
+            # natural sequence for subplot is to fillacross l-r, then top-down 
+            subplot_num = row*n_columns+col
 
-    try:
-        tit = str("{s}, {c}"
-                  .format(s=input_data.meta['shot'], c=input_data.channels[channel_number].name))
-    except:
-        tit = str("{s}, {c}"
-                  .format(s=input_data.meta['shot'], c=input_data.channels.name))
-    if title is None or title == '':  # get the default title
-        pass # tit is the default
-    else:
-        tit = title.replace('+',tit)
-    pl.title(tit)
+            # we often want to fill downwards for simple arrays - especially if comparing with a 3x16 array
+            if filldown: chan_num = col*n_rows+row
+            else:        chan_num = row*n_columns+col
 
+            #print(chan_num, subplot_num, col, row)
+            if chan_num >= input_data.signal.n_channels(): break
+            if pyfusion.VERBOSE>3: print(subplot_num+1,chan_num)
+
+            if pyfusion.VERBOSE>3: print(subplot_num+1,chan_num)
+            if axcount == 0:
+                # note - sharex=None is required so that overlays can be done
+                if n_rows * n_columns == 1:
+                    axlead = pl.gca()  # this allows plotting on existing axis for a single plot
+                else:
+                    axlead = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = None)
+                axn = axlead
+                axlead_x = axlead if sharex else None
+            else:
+                if axcount >= sharey: 
+                    axn = pl.subplot(n_rows, n_columns, subplot_num+1, sharex = axlead_x, sharey=axlead)
+                else: # another noshare y, but sharex
+                    axn = pl.subplot(n_rows, n_columns, subplot_num+1,
+                                     sharex = axlead_x)
+                    axlead = axn
+    
+            (specarr, freqs, t, im) = \
+                axn.specgram(input_data.signal.get_channel(chan_num),
+                             NFFT=NFFT, noverlap=noverlap,
+                             Fs=input_data.timebase.sample_freq/ffact,
+                             window=windowfn, xextent=xextent, **kwargs)
+            # Used be (incorrectly coloraxis)
+            if xlim is not None:
+                axn.set_xlim(xlim)
+            if ylim is not None:
+                axn.set_ylim(ylim)
+            if clim is not None: im.set_clim(clim)
+            else:
+                try:
+                    pl.clim(eval(pyfusion.config.get('Plots','coloraxis')))
+                except:
+                    pass
+
+            if labelfmt != None:
+                if len(make_title(labelfmt, input_data, 0, raw_names=raw_names)) > 11: 
+                    mylabel = pl.xlabel
+                else:
+                    mylabel = pl.ylabel
+
+            lab = make_title(labelfmt+displace, input_data, chan_num)
+            mylabel(lab,**fontkwargs)
+
+            # look in the config file section Plots for a string like 
+            # FT_Axis = [0,0.08,0,500e3]   don't quote
+            exceptions_to_hide = Exception if pyfusion.DBG() < 3 else None
+            try:
+                #pl.axis(eval(pyfusion.config.get('Plots','FT_Axis')))
+                # this is clumsier now we need to consider freq units.
+                axt = eval(pyfusion.config.get('Plots','FT_Axis'))
+                set_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact)
+            except exceptions_to_hide:
+                pass
+            # but override X if we have zoomed in bdb
+            if 'reduce_time' in input_data.history:
+                pl.xlim(np.min(input_data.timebase),max(input_data.timebase))
+
+
+            try:
+                tit = str("{s}, {c}"
+                          .format(s=input_data.meta['shot'], c=input_data.channels[chan_num].config_name))
+            except:
+                tit = str("{s}, {c}"
+                          .format(s=input_data.meta['shot'], c=input_data.channels.name))
+            if title is None or title == '':  # get the default title
+                pass # tit is the default
+            else:
+                tit = title.replace('+',tit)
+            pl.title(tit)
+
+    # ======== end of plot loop
     if filename != None:
         pl.savefig(filename)
     else:

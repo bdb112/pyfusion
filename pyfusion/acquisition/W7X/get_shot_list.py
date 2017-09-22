@@ -56,21 +56,27 @@ def get_programs(shot=None, json_file='/data/datamining/local_data/W7X/json/all_
     """
     progs = json.load(open(json_file))
     programs = {}
-    for p in progs['programs']:
-        programs.update({p['id']: p})
+    if shot is None or shot is -1:
+        for p in progs['programs']:
+            programs.update({p['id']: p})
 
     # check if it is the cached version - if not go to the web site
-    decimal_shot = '{d}.{s:03d}'.format(d=shot[0], s=shot[1])
-    if decimal_shot not in programs:
-        from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
-        utc = get_shot_utc(shot)
-        prog_url = ("http://archive-webapi.ipp-hgw.mpg.de/programs.json?from={f}&upto={t}"
-                    .format(f=utc[0], t=utc[1]))  #1505174400000000000&upto=1505260799999999999
-        this_program = json.loads(urlopen(prog_url, timeout=pyfusion.TIMEOUT).read().decode('utf-8'))
-        programs.update({decimal_shot: this_program['programs'][0]})
-        
+    if shot is not None: 
+        decimal_shot = '{d}.{s:03d}'.format(d=shot[0], s=shot[1])
+        if  decimal_shot not in programs:
+            from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
+            utc = get_shot_utc(shot) if shot[0] < 1e9 else shot # assume shot is utcs if very big
+            prog_url = ("http://archive-webapi.ipp-hgw.mpg.de/programs.json?from={f}&upto={t}"
+                        .format(f=utc[0], t=utc[1]))  #1505174400000000000&upto=1505260799999999999
+            this_program = json.loads(urlopen(prog_url, timeout=pyfusion.TIMEOUT).read().decode('utf-8'))
+            programs.update({decimal_shot: this_program['programs'][0]})
+
     return(programs)
 
+def get_latest_program():
+    """ meant to be a quck way to get only the latest programs, for use 
+    during operation"
+    pass
 
 def json_save_shot_list(shotDA, new_name='/tmp/shotDA.json'):
     shot_dict = {}

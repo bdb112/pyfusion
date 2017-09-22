@@ -202,7 +202,9 @@ else:
 lines = []  # prepare line list for legend picker
     
 # label, label_extras refers to the legend, plabel, plabels refer to the point labels.
+grouped_shots = []
 for p,(inds,labex) in enumerate(zip(inds_list, label_extras)):
+    grouped_shots.append([dat['shot'][ii] for ii in inds])
     # mrk can be a comma, so split using / instead
     mk = mrk.split('/')[p] if '/' in mrk else mrk
     for pp,iidx in enumerate(idx[1:]):

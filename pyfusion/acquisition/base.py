@@ -212,7 +212,9 @@ def update_with_valid_config(fetcher):
                         is_valid = False
         debug_(pyfusion.DEBUG, 2, 'valid_shots')
         return(is_valid)
-    # now the actual code
+
+    # now the actual code       
+    
     devshort = fetcher.config_name.split('_')[0]  # assume the device short name is first, before the _
     #  config_dict = {}
     for Mod in ['M1', 'M2', 'M3', 'M4', 'M5']:
@@ -325,12 +327,13 @@ class BaseAcquisition(object):
         # there is similar code elsewhere - check if is duplication
         exceptions = (LookupError) if pyfusion.DEBUG<3 else ()
         try:
-            d = fetcher_class(self, shot,
+            d = fetcher_class(self, shot, interp=interp,
                               config_name=config_name, **kwargs).fetch()
         except exceptions as reason:
             print(str(reason))
             return None
-        d.history += "\n:: shot: {s} :: config: {c}".format(s=shot, c=config_name)
+        if d is not None:
+            d.history += "\n:: shot: {s} :: config: {c}".format(s=shot, c=config_name)
 
         return d
         
@@ -417,6 +420,7 @@ class BaseDataFetcher(object):
             exception = ()  # defeat the try/except
         else: exception = Exception
         sgn = 1
+        cal_info = {}
         chan = self.config_name
         if chan[0]=='-': #sgn = -sgn
             raise ValueError('Channel {chan} should not have sign at this point'
@@ -427,8 +431,8 @@ class BaseDataFetcher(object):
         if hasattr(self,'minerva_name'):
             from pyfusion.acquisition.W7X.get_url_parms import get_minerva_parms
             debug_(pyfusion.DEBUG, level=2, key='MinervaName')
-            self = get_minerva_parms(self)
-            
+            self, cal_info = get_minerva_parms(self)
+
         if pyfusion.RAW == 0:
             gain_units = "1 arb"  # default to gain 1, no units
             if hasattr(self,'gain'):
@@ -438,16 +442,23 @@ class BaseDataFetcher(object):
         else:
             gain_units = "1 raw"
 
+        if hasattr(self, 'fixup_gain'):
+            print('************ fixup_gain ***************')
+            gain_units = str(float(gain_units.split()[0]) * float(self.fixup_gain))\
+                         + ' ' + gain_units.split()[-1]
+            
         sgn *= float(gain_units.split()[0])
         if pyfusion.VERBOSE > 0: print('Gain factor', sgn, self.config_name)
 
         if self.no_cache: 
             if pyfusion.VERBOSE>0:
-                print('** Skipping cache serach as no_cache is set')
+                print('** Skipping cache search as no_cache is set')
             tmp_data = None 
         else:
             tmp_data = try_fetch_local(self, chan)  # If there is a local copy, get it
+
         if tmp_data is None:
+            self.gain = gain_units  # not needed by fetch - just to be consistent
             method = 'specific'
             try:
                 self.setup()
@@ -507,6 +518,13 @@ class BaseDataFetcher(object):
                   .format(cn=data.config_name, c=data.comment))
         data.comment = self.comment if hasattr(self, 'comment') else ''
         data.signal = sgn * data.signal
+        # if full_scale is set in the config, wipe out (np.nan) points exceeding 2x
+        if hasattr(self, 'full_scale'):
+            wbad = np.where(np.abs(data.signal) > 2 * float(self.full_scale))[0]
+            if len(wbad) > 0:
+                data.signal[wbad] = np.nan
+
+        data.cal_info = cal_info
         if not hasattr(data,'utc'):
             data.utc = None
         # Coords shouldn't be fetched for BaseData (they are required
@@ -521,6 +539,7 @@ class BaseDataFetcher(object):
             data.channels.units = data.units if hasattr(data,'units') else ' '
         if method == 'specific':  # don't pull down if we didn't setup
             self.pulldown()
+
         return data
 
 class MultiChannelFetcher(BaseDataFetcher):
@@ -581,6 +600,7 @@ class MultiChannelFetcher(BaseDataFetcher):
         else:
             t_range = []
         for chan in ordered_channel_names:
+            
             sgn = 1
             if chan[0]=='-': sgn = -sgn
             bare_chan = (chan.split('-'))[-1]
@@ -589,6 +609,7 @@ class MultiChannelFetcher(BaseDataFetcher):
                 ch_data = ch_data.reduce_time(t_range)
 
             if ch_data is None:
+                print('skipping ', chan)
                 continue
             channels.append(ch_data.channels)
             # two tricky things here - tmp.data.channels only gets one channel hhere
@@ -608,6 +629,7 @@ class MultiChannelFetcher(BaseDataFetcher):
 
             # Make a common timebase and do some basic checks.
             if common_tb is None:
+                print('set common tb')
                 common_tb = ch_data.timebase
                 if hasattr(ch_data,'utc'):
                     group_utc = ch_data.utc
@@ -653,6 +675,8 @@ class MultiChannelFetcher(BaseDataFetcher):
                         print('####  matching error in {c} - perhaps timebase not the same as the previous channel'.format(c=ch_data.config_name))
                         raise 
 
+        if len(data_list) == 0:
+            return(None)
         if hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'True':
             #  Messy - if we ignored timebase checks, then we have to check
             #  length and cut to size, otherwise it will be stored as a signal (and 

@@ -2,7 +2,10 @@
 run compare_analysis.py <filename>
 run compare_analysis.py @file_containing_list_of_names
   no arguments assumes a list of name in variable files
-A single file (list of length 1) will generate an ediff of the info atributes
+A single file (list of length 1) will generate an ediff of the info attributes
+
+seems to do a re-run of LP0107 and ocmpare the results with those channels of the given file.
+
 """
 import numpy as np
 import pyfusion

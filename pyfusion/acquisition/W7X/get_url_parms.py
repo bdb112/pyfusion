@@ -19,7 +19,7 @@ from urllib.request import urlopen, Request
 
 class MinervaMap(object):
     def __init__(self):
-        fname =  "http-__archive-webapi.ipp-hgw.mpg.de_ArchiveDB_raw_Minerva_Minerva.QRP.settings_Settings_PARLOG_V12.json"
+        fname =  "http-__archive-webapi.ipp-hgw.mpg.de_ArchiveDB_raw_Minerva_Minerva.QRP.settings_Settings_PARLOG_V17.json"
         #'http-__archive-webapi.ipp-hgw.mpg.de_ArchiveDB_raw_Minerva_Minerva.QRP.settings_Settings_PARLOG_V11.json'
         try:
             self.parmdict = json.load(open(fname, 'rt'))
@@ -49,7 +49,9 @@ def get_parm(pseudourl, parmdict):
 
 def get_minerva_parms(fetcher_obj):
     mm = MinervaMap()
-    print('last mod at ', mm.get_parm('parms/modifiedAt/values')[0], mm.get_parm('parms/generalRemarks/values')[0] )
+    last_mod = mm.get_parm('parms/modifiedAt/values')[0]
+    cal_remarks = mm.get_parm('parms/generalRemarks/values')[0] 
+    print('last mod at ', last_mod, cal_remarks)
     adcs = list(mm.get_parm('parms/probes/{mn}'.format(mn=fetcher_obj.minerva_name)))
     if len(adcs) == 0:
         raise LookupError('No adcs found for {minerva_name} on {shot}'
@@ -67,6 +69,7 @@ def get_minerva_parms(fetcher_obj):
         else:
             adc = adcs[-1]
     else:
+        debug_(pyfusion.DEBUG, 1, key='MinervaName', msg='leaving MinervaName')
         raise ValueError('Too many adcs found for {mn} on {shot}'
                           .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot))
             
@@ -84,8 +87,9 @@ def get_minerva_parms(fetcher_obj):
         rs = electronics['modeResistor']['values'][0]
         gainstr = str(1/(rs*electronics['driverElectronicTotalGain']['values'][0])) + ' A'
     else:
+        modeFactor = electronics['modeFactor']['values'][0]
         rs = None
-        gainstr = str((electronics['driverElectronicTotalGain']['values'][0])) + ' V'
+        gainstr = str(1/(modeFactor*electronics['driverElectronicTotalGain']['values'][0])) + ' V'
 
     fetcher_obj.gain = gainstr
     dmd = 180 + adc_no  # adc1 is the left most, and maps to 181_DATASTREAM
@@ -95,7 +99,7 @@ def get_minerva_parms(fetcher_obj):
     debug_(pyfusion.DEBUG, 1, key='MinervaName', msg='leaving MinervaName')
     print('rs={rs}, overall gain={gain}, params={params}'
           .format(rs=rs, gain=fetcher_obj.gain, params=fetcher_obj.params))
-    return(fetcher_obj)
+    return(fetcher_obj, dict(cal_date=last_mod, cal_comment=cal_remarks))
 
 
 def get_subtree(url, debug=1, level=0):
@@ -141,7 +145,7 @@ def get_signal_url(path='CBG_ECRH/A1/medium_resolution/Rf_A1'):
 
 
 if __name__ == '__main__':
-    URL = sys.argv[1] if len(sys.argv) > 1 else 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/raw/Minerva/Minerva.QRP.settings/Settings_PARLOG/V12'
+    URL = sys.argv[1] if len(sys.argv) > 1 else 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/raw/Minerva/Minerva.QRP.settings/Settings_PARLOG/V17'
     parmdict = get_subtree(URL)
     fname = URL.replace('/','_').replace(':','-') + '.json'
     if len(list(parmdict)) < 10:

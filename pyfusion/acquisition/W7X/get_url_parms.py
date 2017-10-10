@@ -1,26 +1,37 @@
 """ Obtain a dictionary containing all the TDU and Striker Plate Langmuir probe data
 
+Useful lines
+pyfusion.W7X_minerva_cache.items()[0][1]['parms']['validSince']['dimensions'][0]  1504788000000000000
+pyfusion.W7X_minerva_cache.items()[0][1]['parms']['modifiedAt']['dimensions'][0]] 1504788000000000000
+
+
+
 """
 from __future__ import print_function
 from future.standard_library import install_aliases
 from collections import OrderedDict
 import json
-import sys
+import sys, glob
 import numpy as np
 if sys.version < '3.0.0':         # 'fixups' for py2 compat.
     FileNotFoundError = OSError   #  OSError is preferred over IOError in stackX
 
+import time, calendar
+
 import pyfusion
 from pyfusion.acquisition.H1.scrape_wiki import get_links
 from pyfusion.debug_ import debug_
+from get_shot_info  import get_shot_utc
 
 install_aliases()
 from urllib.request import urlopen, Request
 
 class MinervaMap(object):
-    def __init__(self):
-        fname =  "http-__archive-webapi.ipp-hgw.mpg.de_ArchiveDB_raw_Minerva_Minerva.QRP.settings_Settings_PARLOG_V17.json"
-        #'http-__archive-webapi.ipp-hgw.mpg.de_ArchiveDB_raw_Minerva_Minerva.QRP.settings_Settings_PARLOG_V11.json'
+    def __init__(self, shot):
+        # fname =  "http-__archive-webapi.ipp-hgw.mpg.de_ArchiveDB_raw_Minerva_Minerva.QRP.settings_Settings_PARLOG_V25_.json"
+        parm_URL = get_suitable_version(shot)
+        fname = sanitised_filename(parm_URL)
+
         try:
             self.parmdict = json.load(open(fname, 'rt'))
         except FileNotFoundError:
@@ -28,9 +39,7 @@ class MinervaMap(object):
 
     def get_parm(self, pseudourl=None):
         return get_parm(pseudourl, self.parmdict)
-
-        
-        
+                
     
 def get_parm(pseudourl, parmdict):
     """ Example: to get probe resistance
@@ -47,8 +56,9 @@ def get_parm(pseudourl, parmdict):
     return(subdict)
 
 
+
 def get_minerva_parms(fetcher_obj):
-    mm = MinervaMap()
+    mm = MinervaMap(fetcher_obj.shot)
     last_mod = mm.get_parm('parms/modifiedAt/values')[0]
     cal_remarks = mm.get_parm('parms/generalRemarks/values')[0] 
     print('last mod at ', last_mod, cal_remarks)
@@ -144,14 +154,71 @@ def get_signal_url(path='CBG_ECRH/A1/medium_resolution/Rf_A1'):
     raise LookupError(path + ' not found in ' + root)
 
 
+def get_PARMLOG_cache(shot):
+    """ this is very similar to get_suitable params, but uses a local file cache
+    The cache should be persistent across 'run' commands - an easy way
+    is to initialise in pyfusion.
+ """
+    Vfiles = glob.glob("*PARLOG_V[0-9]*json")
+    # put them in a dictionary as a cache - should live in an object
+    # (maybe MinervaMap, but save in pyfusion,,,, for now)
+    if not hasattr(pyfusion, 'W7X_minerva_cache'):
+        print('loading cache')
+        pyfusion.W7X_minerva_cache = dict([[fn, json.load(open(fn, 'rt'))] for fn in Vfiles])
+
+    vnumstrs = [vfile.split('PARLOG_V')[-1].split('_.json')[0] for vfile in Vfiles]
+    vnums  = np.array([int(vn) for vn in vnumstrs if vn is not None])
+    sortd = np.argsort(vnums)[::-1]
+    utcs = get_shot_utc(shot)
+    # now work down thourgh the versions and find the first where shot utc is after valid
+    for vkey in np.array(Vfiles)[sortd]:
+        debug_(pyfusion.DEBUG, 1, key='get_PARMLOG_cache', msg='reading PARLOG_V files')
+        if get_parm('parms/validSince/dimensions',pyfusion.W7X_minerva_cache[vkey])[0] < utcs[0]:
+            return(vkey)
+    return(None)    
+
+    
+def get_suitable_version(shot=[20170921,10], debug=1):
+    local_copy = get_PARMLOG_cache(shot)
+    if local_copy is not None:
+        return(local_copy)
+    
+    utcs = get_shot_utc(shot)
+    minerva_parms_url = "http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/views/Minerva/Diagnostics/LangmuirProbes/Settings/"
+    links = get_links(minerva_parms_url, debug=debug)
+    url_dict = dict([[lnk[1].strip(), lnk[0]] for lnk in links if lnk[1].strip().startswith('V')])
+    desc_order = np.argsort([int(version[1:]) for version in list(url_dict)])[::-1]
+    vers_desc = np.array(list(url_dict))[desc_order]
+    # Work down through the names until we find a file whose valid date predates the shot
+    # There is a way to define the end of validity other than implicit overriding by a
+    #   higher version number  but I don't know
+    # Do with a for loop to save looking unnecessarily deep
+    for ver in vers_desc:
+        val_url = url_dict[ver] + 'parms/validSince/'
+        daturl = val_url + '/_signal.json?from=0&upto=1606174400000000000'
+        dat = json.loads(urlopen(daturl, timeout=pyfusion.TIMEOUT).read().decode('utf-8'))
+        if debug>0:
+            print(int(1e9) * int(calendar.timegm(time.strptime(dat['values'][0], '%Y-%m-%d %H:%M:%S:%f'))),
+                  dat['dimensions'])
+        if int(dat['dimensions'][0]) < utcs[0]:
+            return(url_dict[ver])
+    return(None)
+
+def sanitised_filename(URL):
+    fname = URL.replace('/','_').replace(':','-') # + '.json'
+    return(fname)
+
+
 if __name__ == '__main__':
-    URL = sys.argv[1] if len(sys.argv) > 1 else 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/raw/Minerva/Minerva.QRP.settings/Settings_PARLOG/V17'
+    URL = sys.argv[1] if len(sys.argv) > 1 else 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/raw/Minerva/Minerva.QRP.settings/Settings_PARLOG/V27/'
+    get_PARMLOG_cache([20170927,10])
+
     parmdict = get_subtree(URL)
-    fname = URL.replace('/','_').replace(':','-') + '.json'
-    if len(list(parmdict)) < 10:
+    if len(list(parmdict['parms'])) < 5:
         print('Warning - parmdict is too short')
     if len(list(parmdict)) == 0:
         raise LookupError('No Minerva data parameters found in \n' + URL)
+    fname = sanitised_filename(URL)
     print('saving in ', fname)
     json.dump(parmdict, open(fname, 'wt'))
 

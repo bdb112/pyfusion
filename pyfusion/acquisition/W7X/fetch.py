@@ -45,6 +45,8 @@ import sys, os
 import time as tm
 
 from .get_shot_info import get_shot_utc
+from .get_shot_list import get_shot_number
+from pyfusion.acquisition.W7X.get_shot_list import get_programs 
 
 VERBOSE = pyfusion.VERBOSE
 
@@ -119,14 +121,26 @@ class W7XDataFetcher(BaseDataFetcher):
         # the format is in the acquisition properties, to avoid
         # repetition in each individual diagnostic
 
-        if self.shot[1]>1e9:  # we have start and end in UTC
-            f,t = self.shot
+        if self.shot[1]>1e9:  # we have start and end in UTC instead of shot no
+            f,t = self.shot   # need the shot and utc to get t1 to set zero t
+            actual_shot = get_shot_number([f, t])
+            progs = get_programs(actual_shot)  # need shot to look up progs 
+            #  need prog to get trigger - not tested for OP1.1
+            this_prog = [prog for prog in progs if (f >= progs[prog]['from']
+                                                    and t <= progs[prog]['upto'])]
+            if len(this_prog) is 1:
+                utc_0 = progs[this_prog[0]]['trigger']['1']
+            else:
+                utc_0 = f  # better than nothing
+
         else:
             f,t = get_shot_utc(self.shot)
             # at present, ECH usually starts 61 secs after t0
             # so it is usually sufficient to request a later start than t0
-            pre_trig_secs = self.pre_trig_secs if hasattr(self, 'pre_trig_secs') else 2
-            f = f + int(1e9* (61 - float(pre_trig_secs)))
+            pre_trig_secs = self.pre_trig_secs if hasattr(self, 'pre_trig_secs') else 0.3
+            # should get this frpm programs really
+            utc_0 = f + int(1e9* (61))
+            f = f - int(1e9 * pre_trig_secs)
         # A URL STYLE diagnostic - used for a one-off
         # this could be moved to setup so that the error info is more complete
         if hasattr(self,'url'):
@@ -219,7 +233,8 @@ class W7XDataFetcher(BaseDataFetcher):
         # this form follows the config file settings
         self.repair = int(self.repair) if hasattr(self, 'repair') else default_repair
         dimraw = np.array(dat['dimensions'])  
-        dim = dimraw - dimraw[0]
+        # adjust dim only (not dim_raw so that zero time at t1
+        dim = dimraw - utc_0
         if self.repair == 0 or self.repair == -1:
             pass # leave as is
         # need at least this clipping for Langmuir probes in Op1.1

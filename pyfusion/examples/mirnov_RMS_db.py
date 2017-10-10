@@ -135,6 +135,14 @@ print('{t} problems in {s} of {all} shots'.format(t=len(all_bad), s=len(np.uniqu
 result.close()  # get rid of any leftover results
 print('took {s:.1f} sec'.format(s=seconds()-start))
 
+import time as tm
+pfile = str('{s}_{dt}_mirnov_RMS_dbl'
+            .format(dt=tm.strftime('%Y%m%d%H%M%S'), 
+                    s=str([np.min(srange),np.max(srange)]).replace('(','').replace(')','')
+                    .replace(',','_').replace(' ','')))
+import json
+json.dump(dict(errs=errs), open(pfile+'.json','w'))
+
 """
 Examples:
 result=conn.execute('select count(*) from summ where shot> 83808 and (isweep>2 or i_sat_1>0.2 or i_sat_2>0.2 or (mirnov_coh>0.02 and im2>2000))')

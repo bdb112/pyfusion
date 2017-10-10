@@ -36,6 +36,7 @@ import os
 from lukas.PickledAssistant import lookupPosition
 from pyfusion.acquisition.W7X.mag_config import get_mag_config, plot_trim
 from pyfusion.data.fits import fitgauss, mygauss, fitmirexp, mymirexp, fitbiexp, mybiexp
+from pyfusion.debug_ import debug_
 
 #  from cycler import cycler  # not working yet
 
@@ -119,6 +120,8 @@ def get_calculated(da, diag, inds, av=np.average, x=None, Tesmooth=None, nrm=Non
     if fake_sin:
         print('fake_sin')
         sintheta = 0.01 * (6 + 55 - np.sqrt(55**2 - (0.8*np.array(x))**2))
+    if 'TDU' in da.name:
+        sintheta = 1 # ideally should have the actual angle.  Matters for limiter (weighting)
     if diag == 'Pdens':
         # this forms the product first, then averages later - is this good?
         sig = da['I0'] * (Vf + 4 * da['Te']) * sintheta
@@ -143,6 +146,7 @@ def get_calculated(da, diag, inds, av=np.average, x=None, Tesmooth=None, nrm=Non
         sig = da['ne18'] * da['Te']
 
     else:
+        print('\n','Possible diagnostics are' , list(da) + 'Pdens,Pdsmooth,pres_e'.split(','))
         raise LookupError('diagnostic {diag} not known'.format(diag=diag))
     if debug:
         plt.figure()
@@ -184,15 +188,25 @@ def LCFS_plot(da, diag, t0_utc, t_range, av=None, ax=None, xtoLCFS=1, nrm=None, 
         ll = len(inds)
         pyfusion.logging.warn('{msg} samples ({ll}) in the time range {t}'
                               .format(msg=['!No! ','too few'][ll>0], ll=ll, t=t_range))
+        
     distLCFS = []
     td = []         # td is transverse signed distance from limiter vertical midplane 
 
-    if diag in  ['ne18','Pdens','I0']:
+    if diag in  ['ne18', 'Pdens', 'I0', 'Vf']:
         exclude.extend(['LP11','LP12','L57_LP09'])
     for (c, ch) in enumerate(chans):
         LPnum = int(ch[-2:])
-        lim = 'lower' if 'L57' in ch else 'upper'
-        X, Y, Z, dLCFS = lookupPosition(LPnum, lim)
+        if 'TDU' in ch:
+            lim = ch[0:4]
+            crds = np.array(da['info']['coords'])
+            # approx finger edge as 6 tile widths past the mid point of outermost probe in both fingers
+            finger_edge_approx = (crds[9]  + crds[19])/2 + 6* (crds[1]  + crds[11] - (crds[0]  + crds[10]))/2
+            dist_to_gap = np.sqrt((((crds[c]- finger_edge_approx))**2).sum())
+            X, Y, Z, dLCFS = crds[c][0]*1e3, crds[c][1]*1e3, crds[c][2]*1e3, 1e3*dist_to_gap
+        else:
+            lim = 'lower' if 'L57' in ch else 'upper'
+            X, Y, Z, dLCFS = lookupPosition(LPnum, lim)
+            
         td.append(rot(X, Y,  2*np.pi*4/5.)[1])
         distLCFS.append(dLCFS)
 
@@ -227,6 +241,8 @@ def LCFS_plot(da, diag, t0_utc, t_range, av=None, ax=None, xtoLCFS=1, nrm=None, 
     ax.set_ylabel(diag)
     #if diag == 'Te':
     ax.set_ylim(0, ax.get_ylim()[1])
+
+    debug_(pyfusion.DEBUG, 3, key='LCFS_plot')
     return(signed_dLCFS, td, sig, ebars)
 
 def infostamp(txt, fig=None, default_kwargs=dict(horizontalalignment='right', verticalalignment='bottom', fontsize=7, x=0.99, y=0.008), **kwargs):
@@ -316,19 +332,21 @@ if axset_list is 'None':
 elif not isinstance(axset_list, (list, tuple)):
     if axset_list == 'row':
         nr = ns; nc = 2
-    elif axset_list == 'column':
+    elif 'col' in axset_list:
         nr = 2; nc = ns
     figLCFS, axs = plt.subplots(nrows=nr, ncols=nc, sharex='all', squeeze=None)
     axset_list = [[figLCFS, ax] for ax in axs]
 
 else:
-    print('assuming we have been given a valid list in unput')
+    print('assuming we have been given a valid list in input')
 
 
 print(dafile_list)
 for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_list, axset_list)):
-    da53,da57 = [DA(dafile.replace('SEG',n)) for n in ['3','7']]
-
+    if 'TDU' in dafile:
+        da53,da57 = [DA(dafile.replace('SEG',n)) for n in ['U','L']]
+    else:
+        da53,da57 = [DA(dafile.replace('SEG',n)) for n in ['3','7']]
 
     shot_number = [da53['date'][0], da53['progId'][0]]
     dev = pyfusion.getDevice(dev_name)
@@ -351,7 +369,11 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
         ax.yaxis.set_major_locator(locator)
 
 
-    xlabel = ['Horizontal distance from limiter centre (mm)','Distance outside LCFS (mm, -ve is left side)'][xtoLCFS]
+    if 'TDU' in dafile:
+        xlabel = 'Distance to pumping gap (mm) Lower TDU marked as -ve' 
+    else:
+        xlabel = ['Horizontal distance from limiter centre (mm)','Distance outside LCFS (mm, -ve is left side)'][xtoLCFS]
+
     if not 'pub' in options:
         xlabel = xlabel.replace('mm -','mm,  from lukas R. -') # add comment about source normally
     kwargs = dict(t0_utc=t0_utc, t_range=t_range, labelpoints=labelpoints, av=av, xtoLCFS=xtoLCFS)
@@ -372,6 +394,10 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
         tds.append(td)
         solds.append(sold)
         if diag1 in fits: 
+            if len(np.where(~np.isnan(sig1))[0])<10:
+                   print('*** Seg {seg}, t_range={tr}: too few non-Nans to fit: {nn}'.
+                         format(seg=seg, tr=t_range, nn=len(np.where(~np.isnan(sig1))[0])))
+                   continue
             params, cond, fitsig1 = dofit(sold, sig1, yerrs=ebar1, ax=None)
             xgridded, ygridded = interpolate([td, sold][xtoLCFS], sold)
 
@@ -408,20 +434,16 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
         maxne = max(maxne, np.nanmax(sig2))
         #1/0
     cfg, cfg_dict = get_mag_config(shot_number)
-    if 'cfg' in options and cfg_dict is not None: # and '1leg' in options and framenum == 0::
-        if '1leg' in options and framenum != 0:
-            continue
-        plot_trim(axLCTe, mag_dict=cfg_dict, aspect=2.6, size=0.06, color='g')
+    tb = 'LP t_mid' if use_t_mid else 'into ECH'
+    figLCFS.subplots_adjust(hspace=0, right=0.87)
+    # figLCFS.suptitle('shot {s}, {avname} over time {fr}-{t}s {tb}: {ind}' 
+    if cfg_dict is not None:
         ind = 13 - 12*cfg[2]/.3904
         if abs(ind - round(ind)) < .03:
             ind = int(round((ind)))
         ind = 'Ind {ind}'.format(ind=ind)
     else:
         ind = ''
-
-    tb = 'LP t_mid' if use_t_mid else 'into ECH'
-    figLCFS.subplots_adjust(hspace=0, right=0.87)
-    # figLCFS.suptitle('shot {s}, {avname} over time {fr}-{t}s {tb}: {ind}' 
     title = str('shot {s}, {avname} filter {fr}-{t}s {tb}: {ind}' 
                 .format(s=[da['date'][0], da['progId'][0]],
                         fr=t_range[0],t=t_range[1], tb=tb,
@@ -451,7 +473,15 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
         if ax == axLCne and ne_lim is not None:
             ax.set_ylim(ne_lim)
 
+        if diag2 == 'Vf':
+            ax.plot(ax.get_xlim(), [0,0], 'c', lw=0.5)
+
         #ax.set_prop_cycle(cycler('color', ['b', 'r', 'y', 'k']))
+
+    if 'cfg' in options and cfg_dict is not None: # and '1leg' in options and framenum == 0::
+        if '1leg' in options and framenum != 0:
+            continue
+        plot_trim(axLCTe, mag_dict=cfg_dict, aspect=2.6, size=0.06, color='g')
 
     figLCFS.show()
     if save_images is not 'None':

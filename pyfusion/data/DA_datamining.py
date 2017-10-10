@@ -272,7 +272,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         start_mem = report_mem(msg='init')
         # not sure if it is a good idea to accept a DA - don't allow for now.
         # why would you want to make a DA from a DA?
-        if (type(fileordict) == dict) or hasattr(fileordict,'zip'): #  or (hasattr(fileordict, 'da')): 
+        if isinstance(fileordict, dict) or hasattr(fileordict,'zip'): #  or (hasattr(fileordict, 'da')):  (isinstance(fileordict, dict) or hasattr(fileordict,'zip')
             # look for illegal chars in keys (ideally should be legal names)
             baddies = '*-()[]'   # e.g. shaun uses sqrt(ne)
             bads = [ch in '_'.join(fileordict.keys())for ch in baddies]
@@ -913,11 +913,12 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         plt.legend(prop=dict(size=sz))
         plt.show()
 
-    def plot(self, key, xkey='t', sharey=1, select=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, **kwargs):
+    def plot(self, key, xkey='t', sharey=1, select=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, ref_line=0, **kwargs):
         """ 
         Plot the member 'key' of the Dictionary of Arrays 
           masked [1] 1 show only 'unmasked' points
           ebar [1]  the number of points per errorbar - None will suppress
+        ref_line  - draw a horizontal line at value, or draw None
         """
         from matplotlib.ticker import MaxNLocator
         if sharey == 1:
@@ -973,6 +974,8 @@ Note: This is my prototype of google style python sphinx docstrings - based on
                 ax.plot(x, arr[:, ch], **kwargs)
 
             ax.yaxis.set_major_locator(locator)
+            if ref_line is not None:
+                ax.plot(ax.get_xlim(), [ref_line, ref_line], 'c', lw=0.5)
             # this worked in data/plots.py - but warning in DA_datamining
             # ax.locator_params(prune='both', axis=x)
             # but the plot doesnt overwrite axis labels for sharex='col' anyway

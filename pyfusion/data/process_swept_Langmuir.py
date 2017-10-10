@@ -249,7 +249,7 @@ Safer to type this to see the actual defaults if the code has changed:
             self.plotchar(self.v, Te, Vf, I0, linewidth=4)
             # provide brief info about algorithm and Lnorm in the title
             plt.title('Te = {Te:.1f}eV, Vf = {Vf:.1f}, Isat = {I0:.3g}, <res> = {r:.2e} {mits} {A}{p}:its '
-                      .format(Te=Te, Vf=Vf, I0=I0, r=residual, mits=mits, A=alg.upper()[0],p=Lnorm))
+                      .format(Te=Te, Vf=Vf, I0=I0, r=float(residual), mits=mits, A=alg.upper()[0],p=Lnorm))
             plt.show(block=0)
 
         return(fit_results)
@@ -743,7 +743,9 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
             compfun = int
         else:
             compfun = tuple
-        if compfun(self.shot) > compfun([20160310,999]):
+        if compfun(self.shot) > compfun([20170926,999]):
+            default_sweep = 'W7X_KEPCO_U'  # only really working after shot 50ish
+        elif compfun(self.shot) > compfun([20160310,999]):
             default_sweep = 'W7X_LTDU_LP18_U'  # 13 is dead up to 0921 at least
         else:
             default_sweep = 'W7X_L57_LP01_U'

@@ -52,6 +52,6 @@ for dateshot in shot_list:
             print(proc_kwargs)
             LP.process_swept_Langmuir(**proc_kwargs)
         except exception as reason:
-            pyfusion.logger.error('failed reading shot {shot}, seg {seg} \n{r}'
-                                  .format(shot=dateshot, seg=seg, r=reason))
+            pyfusion.logger.error('failed reading shot {shot}, segment {seg} \n{r}'
+                                  .format(shot=dateshot, seg=seg, r=str(reason)))
         #LP.process_swept_Langmuir(threshchan=0,t_comp=[0.85,0.87],filename='*2k2small')

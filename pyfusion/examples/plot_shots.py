@@ -59,7 +59,11 @@ for shot in shot_list:
 
         i = 0
 
-    plt.sca(axs[i])
+    try:
+        plt.sca(axs[i])
+    except ValueError as reason:
+        print('plot shots cannot deal with multi channel diagnostics yet',str(reason))
+        
     try:
         data = dev.acq.getdata(shot, diag)
         if data is None:

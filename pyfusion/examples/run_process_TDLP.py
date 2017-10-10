@@ -43,15 +43,20 @@ for k in replace_kw:  # override and
     proc_kwargs.update({k: replace_kw[k]})
 
 for dateshot in shot_list:
+    if tuple(dateshot) < (20170926,999):
+        vdiag = 'W7X_LTDU_LPALLU'
+    else:
+        vdiag = 'W7X_KEPCO_US'
+
     for seg in seglist:
         try:
-            LP = Langmuir_data(dateshot, lpdiag.format(s=seg),'W7X_LTDU_LPALLU')
+            LP = Langmuir_data(dateshot, lpdiag.format(s=seg),vdiag)
             if select is not None:  # selected channels
                 LP.select = select
 
             print(proc_kwargs)
             LP.process_swept_Langmuir(**proc_kwargs)
         except exception as reason:
-            pyfusion.logger.error('failed reading shot {shot}, seg {seg} \n{r}'
+            pyfusion.logger.error('failed reading shot {shot}, segment {seg} \n{r}'
                                   .format(shot=dateshot, seg=seg, r=reason))
         #LP.process_swept_Langmuir(threshchan=0,t_comp=[0.85,0.87],filename='*2k2small')

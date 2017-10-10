@@ -64,10 +64,10 @@ def get_mag_config(shot, from_db=True, ratios=True):
                 if ratios and coil is not 'NonPlanar_1':
                     currents[i] = currents[i]/currents[0] # no point rounding - still get 0.390000001
             return currents, None #  None instead of the dictionary
-    except () as reason:
+    except Exception as reason:
         print('data not found for coil {coil}, shot {shot} \n{r}'
               .format(coil=coil, shot=shot, r=reason))
-        return None
+        return None, None
 
 print(get_mag_config([20160310, 7]))
 

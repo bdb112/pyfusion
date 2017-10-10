@@ -42,7 +42,7 @@ _where = 'where date(recorded) = date() or shot > (select max(shot) from summary
 _order = ''
 _group = ''
 _limit = ''
-mrk = '-'  # can be a string using / as a separator (, is a valid mark)
+mrk = 'None'   # e.g. 's-/o-/x-/' or ['s','o-','x:'] array of str or string using / as a separator not ,
 idx = None  # defaults to [0,1]
 plabel=''  # label each point (of the first series) with this value
 maxplabels=300
@@ -76,6 +76,7 @@ def __help__():  # must be before exec() line
 exec(process_cmd_line_args())
 colors = colors.split(',') if ',' in colors else colors
 labels = labels.split(',') if ',' in labels else labels
+# mrk == 'None' will be dealt with later, when we know how many results
 
 ### all this is tricky stuff to allow for brief queries
 # fix up common mistakes - leaving out select or where
@@ -126,10 +127,15 @@ dat = OrderedDict()
 if len(xx) == 0:
     raise LookupError('no data matching\n' + qry)
 
+if mrk is 'None':
+    mrk = 's-/o-/^-/+-/*-/v-/D-/d-/p-/H-/s--/o--/^--/+--/*--/v--/D--/d--/p--/H--'
+    if len(xx) > 2000: mrk = mrk.replace('-','')
+
 for (k, key) in enumerate(xx[0].keys()):
     vals = xxt[k]
     bads = [v is None for v in vals]
-    # vals[[np.where(bads)[0]]] = np.nan
+    vals[[np.where(bads)[0]]] = np.nan
+    # now make them np arrays, of type int if shot, else let np decide (None)
     dat.update({key: np.array(vals.tolist(), dtype=[None, int]['shot' in key])})
 
 if swapwild != '':  # plot columns across x axis
@@ -182,10 +188,12 @@ ykeys = [keys[i] for i in idx[1:]] if len(idx)>1 else idx
 # ignore Nulls and nans when looking for uniques
 num_uniqs = [len(np.unique([dd for dd in dat[key] if not dd is None and not np.isnan(dd)])) for key in ykeys]
 num_uniqs = [nu if nu > 0 else np.nan for nu in num_uniqs]  # set then number to nan if it is 0 (useless key)
+# idx is a list of all the indices of variables on the y axis
 if np.nanmin(num_uniqs) < split and len(ykeys)>1:  # and so we have to use nanmin etc
-    gkey = ykeys[np.nanargmin(num_uniqs)]
+    gkey = ykeys[np.nanargmin(num_uniqs)]  # gkey is the main gouping key
     inds_list = [np.where(dat[gkey] == uval)[0] for uval in np.unique(dat[gkey])]
     label_extras = [': {gkey} = {v:.3g}'.format(gkey=gkey, v=uval) if uval is not None else ': '+gkey+' = None' for uval in np.unique(dat[gkey])]
+    # take that variable off the x, y axis list, it will be a grouping var
     idx = [i for i in idx if keys[i] != gkey]
 else:   # just one range
     inds_list = [range(len(dat[keys[idx[0]]]))]
@@ -204,11 +212,16 @@ lines = []  # prepare line list for legend picker
 # label, label_extras refers to the legend, plabel, plabels refer to the point labels.
 grouped_shots = []
 for p,(inds,labex) in enumerate(zip(inds_list, label_extras)):
-    grouped_shots.append([dat['shot'][ii] for ii in inds])
+    if 'shot' in keys:
+        grouped_shots.append([dat['shot'][ii] for ii in inds])
     # mrk can be a comma, so split using / instead
     mk = mrk.split('/')[p] if '/' in mrk else mrk
     for pp,iidx in enumerate(idx[1:]):
-        col = colors[pp] if pp < len(colors) else None
+        # if we are plotting more than one var (i.e. len(idx[1:])>1, go through colors
+        if len(idx[1:]) > 1:
+            col = colors[pp] if pp < len(colors) else None
+        else:  # use the colors to denote group as well as shapes.
+            col = colors[p]
         label = labels[p] if p < len(labels) else keys[iidx]+labex
         lin, = plt.plot(dat[keys[idx[0]]][inds], dat[keys[iidx]][inds], mk, color=col,
                         label=label,  hold=(hold or p>0 or pp>0), **plkw)

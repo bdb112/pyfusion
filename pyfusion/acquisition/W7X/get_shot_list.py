@@ -115,7 +115,26 @@ def _get_shotDA(fname):
     else:
         raise LookupError('file {f} cannot be read as a shotDA'.format(f=fname))
 
+def get_shot_number(utcs):
+    """ return the shot number covering a given time interval in ns utc (or None)
+    """ 
+    shotDA = get_shotDA()
+    # try to find its shot if it has one.
+    #    this_shot = [prog for prog in shotDA if (utcs[0] >= prog['from']
+    #                                             and utcs[0] <= prog['upto'])]
+    this_shot = [[shotDA['date'][i],shotDA['progId'][i]] for i in range(len(shotDA['date'])) if  (shotDA['start_utc'][i] <= utcs[0] and shotDA['end_utc'][i] >= utcs[0])]
+
+    if len(this_shot) is 1:
+        # return([this_shot[0]['date'], this_shot[0]['progId']])
+        #return([shotDA['date'][this_shot[0]], shotDA['progId'][this_shot[0]]])
+        return this_shot[0]
+    else:
+        return None
+    
 def get_shotDA(fname=os.path.join(this_dir, 'shotDA')):
+    """ get the DA data file containing cached copy of the shot numbers, 
+    utcs comments etc
+    """
     if os.path.splitext(fname)[-1] != '':
         return _get_shotDA(fname)
     else:

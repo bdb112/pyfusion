@@ -50,9 +50,13 @@ from pyfusion.debug_ import debug_
 
 from pyfusion.utils import process_cmd_line_args
 
-from pyfusion.data.shot_range import shot_range
-from pyfusion.acquisition.W7X.get_shot_info  import get_shot_utc
-
+try:       # this allows usage on systems without all the new url features
+    from pyfusion.data.shot_range import shot_range
+    from pyfusion.acquisition.W7X.get_shot_info  import get_shot_utc
+except ImportError as reason:
+    print('******* Warning - failed to import W7X stuff! ' + str(reason))
+    shot_range = range
+    
 _var_defaults="""
 dev_name='W7X'
 readback=False
@@ -72,6 +76,9 @@ exec(_var_defaults)
 exec(process_cmd_line_args())
 
 pyfusion.RAW=save_in_RAW  # FUDGE!!! until fixed
+if local_dir is not '':
+    if not os.path.isdir(local_dir):
+        raise LookupError('local_dir {l} not found'.format(l=local_dir))
 bads = []
 goods = []
 

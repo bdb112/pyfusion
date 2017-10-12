@@ -1,11 +1,13 @@
 # force a recompile for test purposes, and run a simple test
 # only works after a restart of ipython
+# a little more convenient to run in python until ipython debugging is needed
 import os
 import sys
 import numpy as np
 
 from pyfusion.acquisition.HeliotronJ.get_hj_modules import get_hj_modules, import_module
-# Note:  don't ask for the module name yet, make new file first!
+# Note:  don't ask for the module name yet, make new file first! because
+# asking will load the old one!
 get_hj_modules(force_recompile=True)
 
 hjmod, exe_path = get_hj_modules()
@@ -24,7 +26,7 @@ except:
 # and /data/HDISK.lst and HDISK have been copied from HeliotronJ
 # note that the original code requires that HDISK.list be in fixed format.
 #  at the moment, this gives no errors but returns all zeros?
-ierr,retdata = gethjdata.gethjdata(shot,100,'MP1',verbose=1,opt=1,ierror=1,outname='foo',outdata=x)
+ierr,isample,retdata = gethjdata.gethjdata(shot,100,'MP1',verbose=1,opt=1,ierror=1,isample=-1,outname='foo',outdata=x)
 if ierr != 0: print('ierror = ',ierr)
 if x[1] == retdata[1]: print('no new data returned in x??')
 

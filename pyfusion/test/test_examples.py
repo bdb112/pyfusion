@@ -37,6 +37,8 @@ exec(process_cmd_line_args())
 ###  THIS Needs to happen through the env! 
 os.environ['PYFUSION_DEBUG'] = str(pfdebug)
 
+os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + ':/home/bdb112/python'
+
 def look_for_flags(filename):
     with open(filename) as f:
         buff=f.readlines()

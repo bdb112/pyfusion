@@ -12,4 +12,4 @@ print('{n} rejected ({pc:.0f}%)'.format(n=wbad, pc=rejected*100))
 I0arr[wbad] = np.nan
 IUpper = np.nanmean(I0arr, axis=0)
 plt.step(range(len(IUpper)), IUpper)
-plt.show()
+plt.show(0)

@@ -9,6 +9,20 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+Version 0.88 beta
+ * This also adds HeliotronJ updates - BES1 to pyfusion.cfg and updates to libfdata.c
+ * show_valid_times (for PARMLOGs)
+ * then in previous save, (previous README was not updated)
+ * W7X/fetch now returns times wrt tzero of 61 sec (via trigger['1']), and only starts at 'pre_trig-secs' before
+ * W7X/get_shot_list.py  add get_shot_number (form utcs)
+ * DA_datamining (cleaner check of dict/obj type, ref zero line for Vf)
+ * data/process_swept_Langmuir.py - adjust voltage sweep default according to shot
+ * examples/W7X_neTe_profile.py - plot TDU data
+ * modify_cfg.py - read in Michael Endler's probe data file, so coords are real
+ * process_TDLP - defaults for sweepV
+ * sql_plot - line and marker colors more sensible order - also fiddle with use of Nans
+ * fits.py - was missing for a while, used for biexp fits in process_Langmuir
+
 Version 0.87 beta
  * W7X/fetch.py can return raw timebase in integer ns (repair=-1)
  * fix bugs in get_url_parms (numbers cancelled, so bu not evident on LP)

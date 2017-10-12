@@ -25,9 +25,12 @@ class HeliotronJDataFetcher(BaseDataFetcher):
         ##  !! really should put a wrapper around gethjdata to do common stuff          
         #  outfile is only needed if the direct passing of binary won't work
         #  with tempfile.NamedTemporaryFile(prefix="pyfusion_") as outfile:
-        ierror, getrets = gethjdata.gethjdata(self.shot,channel_length,self.path,
-                                              verbose=VERBOSE, opt=1, ierror=2,
-                                              outdata=outdata, outname='')
+        # get in two steps to make debugging easier
+        allrets = gethjdata.gethjdata(self.shot,channel_length,self.path,
+                                      verbose=VERBOSE, opt=1, 
+                                      ierror=2, isample=-1,
+                                      outdata=outdata, outname='')
+        ierror, isample, getrets = allrets
         if ierror != 0:
             raise LookupError('hj Okada style data not found for {s}:{c}'.format(s=self.shot, c=self.path))
 
@@ -42,8 +45,8 @@ class HeliotronJDataFetcher(BaseDataFetcher):
         # this is partly allowed for in savez_compressed, newload, and
         # for plotting, in the config file.
         # important that the 1e-3 be inside the Timebase()
-        output_data = TimeseriesData(timebase=Timebase(1e-3 * getrets[1::2]),
-                                 signal=Signal(getrets[2::2]), channels=ch)
+        output_data = TimeseriesData(timebase=Timebase(1e-3 * getrets[1::2][0:isample]),
+                                 signal=Signal(getrets[2::2][0:isample]), channels=ch)
         output_data.meta.update({'shot':self.shot})
         if pyfusion.VERBOSE>0: print('HJ config name',self.config_name)
         output_data.config_name = self.config_name         
@@ -69,7 +72,7 @@ ff.do_fetch()
 3/ closer to the exes:
 from pyfusion.acquisition.HeliotronJ import gethjdata2_7
 x=arange(1e6)
-gethjdata2_7.gethjdata(58000,100,'DIA135',verbose=1,opt=1,ierror=1,outname='foo',outdata=x)
+gethjdata2_7.gethjdata(58000,100,'DIA135',verbose=1,opt=1,ierror=1,isample=-1,outname='foo',outdata=x)
 array([  0.00000000e+00,   1.50000000e+02,  -1.52587891e-04, ...,
 
 and get_static_params

@@ -3,7 +3,7 @@
 #include <math.h>
 #include <strings.h>
 #include <float.h>
-#include <string.h>   // bdb added
+#include <string.h>   // <- bdb added to compile on Ubuntu
 //  two warnings remain like
 // ./libfdata.c:480:27: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]    *(buff+j)=(char)NULL;
 
@@ -11,9 +11,25 @@
 #include "helgra.h"
 
 #define HDISKFILE "/HDISK"
-// to do this properly, need to pass the cache directory name to libfdata (and the shot range)
-#define HDISKLIST "/cach/HDISK.list"   // bdb
-//#define DEBUG
+/* We modify code to look first in a local high speed disk cache implemented on Satoshi's
+   16 processor machine.  
+   It can be left in place on a normal HJ cluster node with very little loss in speed.
+   To do this properly, need to pass the cache directory name to 
+      libfdata (and the shot range) as HDISK.list does
+   I hacked the code to insert one extra entry in the list of 
+      data drives to point to the cache
+   I think we need to be careful to get the latest list of drives and 
+        shot ranges - can check with
+           for d in /*ata ; do echo $d; ls $d/*list ;done
+   It seems to be /data/HDISK.list (2016), but the range doesn't 
+           cover 618xx?? in 2017
+   Maybe to get those files, we can make our own copy in tmp instead as below
+   Better solution is to look for an env VAR to find the file name, default to /data/HDISK/list
+*/ 
+// #define HDISKLIST "/cach/HDISK.list"   // bdb
+// #define HDISKLIST "/tmp/blackwel/HDISK.list"   // bdb - can make your own but
+#define HDISKLIST "/data/HDISK.list"   // original - bdb this the real place
+// #define DEBUG
 int debug = 0;
 
 typedef struct {
@@ -319,12 +335,19 @@ int     startshot, endshot, sshot;
                 Data_HD[i] = (char *)malloc(10);
 		// HDISK.list must be in fixed format 
         if((fp = fopen(HDISKLIST, "r")) == NULL) {
-                printf("no hdisk list\n");
+                printf(HDISKLIST);
+                printf("\nNo hdisk list !!!! \n");
                 return 1;
         }
            
-		// Add the a phantom local directory at the head of the list, so it looks there first for local caching
-// to do this properly, need to pass the cache directory name to libfdata (and the shot range).  still use phantom at head of HDISK.list, but need a python script to make a valid HDISK file for the cache
+	/* Add the a phantom local directory at the head of the list, so it 
+	   looks there first for local caching
+	   To do this properly, need to pass the cache directory name to 
+	   libfdata (and the shot range).  With phantom at head of 
+	   HDISK.list, still need a python script to make a valid 
+	   HDISK file (the long one, connecting shots with dates hence dirs) 
+	   for the local cache.
+	*/
 		l1 = 0;
 		memcpy(&sdisklist[l1].dir_name[0], "/cach 54000 99999   " , sizeof(Hdisklist));    //bdb          
                 sdisklist[l1].lf1 = '\0';

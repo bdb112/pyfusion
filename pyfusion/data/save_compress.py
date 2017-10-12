@@ -17,7 +17,7 @@ usable before)
 
 may 2016 - version 104 works around an error caused by W7X corrupted timebases (all 0s and nans)
 """
-from numpy import max, std, array, min, sort, diff, unique, size, mean, mod,\
+from numpy import max, std, array, min, sort, diff, size, mean, mod,\
     log10, int16, int8, uint16, uint8
 import numpy as np
 
@@ -41,16 +41,20 @@ except:
 
 from numpy import savez_compressed
 
-def discretise_array(arrin, eps=0, bits=0, maxcount=0, verbose=None, delta_encode=False):
+def discretise_array(arrin, eps=0, bits=0, maxcount=0, verbose=None, delta_encode=False, unique=False):
     """
     Return an integer array and scales etc in a dictionary 
     - the dictionary form allows for added functionaility.
     If bits=0, find the natural accuracy.  eps defaults to 3e-6, and 
     is the error relative to the largest element, as is maxerror.
+
+    unique [False] - if true, make sure that the discretised version
+    has the same number of unique values as the input.  This must be
+    true of a timebase, but not necessarily true of a signal. (and usually NOT)
     """
     verbose = pyfusion.VERBOSE if verbose is None else verbose
     if eps==0: eps=3e-6
-    if maxcount==0: maxcount=10
+    if maxcount==0: maxcount=20
     count=1
     wnan = np.where(np.isnan(arrin))[0]
     notwnan = np.where(np.isnan(arrin) == False)[0]
@@ -61,7 +65,7 @@ def discretise_array(arrin, eps=0, bits=0, maxcount=0, verbose=None, delta_encod
         arr = arrin[notwnan]
 
     ans=try_discretise_array(arr, eps=eps,bits=bits, verbose=verbose, 
-                             delta_encode=delta_encode)
+                             delta_encode=delta_encode, unique=unique)
     initial_deltar=ans['deltar']
     # try to identify the timebase, because they have the largest ratio of value to
     #  step size, and are the hardest to discretise in presence of repn err.
@@ -79,17 +83,23 @@ def discretise_array(arrin, eps=0, bits=0, maxcount=0, verbose=None, delta_encod
             if verbose>2: print("timebase: trying an integer x power of ten")
             ans=try_discretise_array(arr, eps=eps,bits=bits, 
                                      deltar=initial_deltar, verbose=verbose, 
-                                     delta_encode=delta_encode)
+                                     delta_encode=delta_encode, unique=unique)
             initial_deltar=ans['deltar']
 
-    while (ans['maxerror']>eps) and (count<maxcount):
+    while ((ans['maxerror']>eps) or 
+           (unique and len(np.unique((ans['iarr']))) != len(arr))) :
         count+=1
+        if (count>maxcount):
+            raise ValueError('Failed to discretise signal: > {m} iterations'
+                             .format(m=maxcount))
         # have faith in our guess, assume problem is that step is
         # not the minimum.  e.g. arr=[1,3,5,8] 
         #          - min step is 2, natural step is 1
-        ans=try_discretise_array(arr, eps=eps,bits=bits,
-                                 deltar=initial_deltar/count, verbose=verbose,
-                                 delta_encode=delta_encode)
+        # deltar is decreased each iteration geometrically now
+        ans = try_discretise_array(arr, eps=eps,bits=bits,
+                                   deltar=initial_deltar*(0.5**count),
+                                   verbose=verbose, delta_encode=delta_encode,
+                                   unique=unique)
         
     if verbose>0: print("integers from %d to %d, delta=%.5g" % (\
             min(ans['iarr']), max(ans['iarr']), ans['deltar']) )    
@@ -108,7 +118,7 @@ def discretise_array(arrin, eps=0, bits=0, maxcount=0, verbose=None, delta_encod
     return(ans)
 #    return(ans.update({'count':count})) # need to add in count
 
-def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encode=False):
+def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encode=False, unique=False):
     """
     Return an integer array and scales etc in a dictionary 
     - the dictionary form allows for added functionality.
@@ -116,9 +126,10 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encod
     """
     if verbose>2: import pylab as pl
     if eps==0: eps=1e-6
-    mono= (diff(arr)>0).all()  # maybe handy later? esp. debugging
+    mono = (diff(arr)>0).all()  # maybe handy later? esp. debugging
     if deltar is None: 
-        data_sort=unique(arr)
+        # don't sort if the data is a timebase (unique)
+        data_sort = arr if unique else np.unique(arr) 
         diff_sort=sort(diff(data_sort))  # don't want uniques because of noise
         if size(diff_sort) == 0: diff_sort = [0]  # in case all the same
     # with real representation, there will be many diffs ~ eps - 1e-8 
@@ -246,7 +257,7 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
     Note: changed to parent_element=array(0) by default - not sure what this is!
     """
     from numpy import remainder, mod, min, max, \
-        diff, mean, unique, append
+        diff, mean, append
     from pyfusion.debug_ import debug_
 
     debug_(pyfusion.DEBUG, 2, key='discretise_signal')
@@ -269,7 +280,9 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
                                                 "cumsum(dic['rawsignal'])",
                                                 dat['deltar']))
 # saving bit probably should be separated
-    tim=discretise_array(timebase,eps=eps,verbose=verbose)
+    if verbose>0:
+        print('====== Now discretize timebase========')
+    tim=discretise_array(timebase,eps=eps,verbose=verbose, unique=True)
     rawtimebase=tim['iarr']
     timebaseexpr=str("timebase=%g+%s*%g" % (tim['minarr'], "tim['iarr']",
                                             tim['deltar']))

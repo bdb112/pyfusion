@@ -1,23 +1,32 @@
 """ Summarise time validity data in the W7X minerva PARMLOG files
-not working yet.
+    Not sure if there is an implied expiration time?, also puzzled why valid since always matches mod time?
 """
 import numpy as np
 import matplotlib.pyplot as plt
 
 import pyfusion
-from pyfusion.acquisition.W7X.get_url_parms import get_suitable_version
+from pyfusion.acquisition.W7X.get_url_parms import get_suitable_version, get_parm
 
+# force the cache to be filled
 get_suitable_version()
-modtimes_list = [[pdict[0],                                               # path
-                  int(pdict[1]['parms']['modifiedAt']['dimensions'][0]),  # mod
-                  int(pdict[1]['parms']['validSince']['dimensions'][0])]  # valid
-                 for pdict in pyfusion.W7X_minerva_cache.items()]
-modtimes = np.array(modtimes_list[1:3]).T
+vers = list(pyfusion.W7X_minerva_cache)
+# alternative form:  int(pdict[1]['parms']['validSince']['dimensions'][0])]  # valid
+modtimes_list = [[get_parm('parms/modifiedAt/dimensions', pdict)[0],    # [0] -> mod
+                  get_parm('parms/validSince/dimensions', pdict)[0],    # [1] -> valid
+                  get_parm('parms/validSince/dimensions', pdict)[1]]    # [2] -> valid - to??
+                  for pdict in [pyfusion.W7X_minerva_cache[ver] for ver in vers]]
+modtimes = np.array(modtimes_list).T
 
-by_mod = np.argsort(modtimes[1])
+by_mod = np.argsort(modtimes[0])
+# see  http://arogozhnikov.github.io/2015/09/29/NumpyTipsAndTricks1.html
+ind = np.argsort(by_mod)  # argsort(argsort()) is an amazing way to get the plotting order!
+t0 = np.min(modtimes[1])
 
-t0 = np.min(modtimes[2])
-
-plt.plot(modtimes[2][by_mod])
-
+plt.barh(bottom=ind, left=modtimes[1]-t0,
+         tick_label = [ver.split('G_')[1].split('_.')[0] for ver in vers],
+         width=modtimes[2]-modtimes[1],  # could clip, but might be misleading
+         height=0.8, align='center',color='cyan')
+plt.xlim(0, 2*31*24*3600e9) # ~two months
+plt.title('validSince tuple in order of modification time')
+plt.plot(modtimes[0]-t0, ind, 'or')
 plt.show()

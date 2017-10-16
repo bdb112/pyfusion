@@ -253,7 +253,7 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
 def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, filename=None, coloraxis='now is clim!', clim=None, xlim=None, ylim=None, noverlap=0,NFFT=None, suptitle='shot {shot}', title=None, sharey=True, sharex=True, n_columns=None, raw_names=False, hspace=None, labelfmt="{short_name} {units}", filldown=False,hold=None,**kwargs):
     """    Plot a spectrogram 
       NFFTs
-      noverlap
+      noverlap  (integer - number of samples overlapped, float - 1.0 -> half nFFT)
       windowfn (p.window.hanning)
       coloraxis - gets from pyfusion.conf.get('Plots')
 
@@ -337,12 +337,17 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
                                      sharex = axlead_x)
                     axlead = axn
     
+            noverlap = noverlap if isinstance(noverlap, int) else int(round(NFFT/(1 + 1./(1e-6 + noverlap))))
+                
             (specarr, freqs, t, im) = \
                 axn.specgram(input_data.signal.get_channel(chan_num),
                              NFFT=NFFT, noverlap=noverlap,
                              Fs=input_data.timebase.sample_freq/ffact,
                              window=windowfn, xextent=xextent, **kwargs)
             # Used be (incorrectly coloraxis)
+            if pyfusion.VERBOSE>2:
+                print('data/plot_spectrogram: noverlap={no}, {nt} time segs, {nf} freqs'
+                      .format(no=noverlap, nt=len(t), nf=len(freqs)))
             if xlim is not None:
                 axn.set_xlim(xlim)
             if ylim is not None:

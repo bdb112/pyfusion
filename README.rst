@@ -9,6 +9,14 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+Version 0.89 beta
+ * W7X/fetch.py, base.py - return error reason via self.errmsg
+ * W7X/find_shot_times.py add debug info, plot, fix exception logic, make part compatible with cached da ta (diff_dimraw)
+ * show_valid_times - put comment and data on the bar plot
+ * acquisition/base.py - as above, and add exceptions kwd to getdata
+ * data/plots.py spegram - deal with integer and float noverlap
+ * save_to_local.py - implement find_shot_times, improve exception handling
+
 Version 0.88 beta
  * This also adds HeliotronJ updates - BES1 to pyfusion.cfg and updates to libfdata.c
  * show_valid_times (for PARMLOGs)

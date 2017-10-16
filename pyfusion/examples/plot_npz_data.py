@@ -20,4 +20,8 @@ else:
     # originally tested if '/bin' in argv[0], but this fails for run ~/bin/plot.. under ipython
     block_me = not hasattr(sys, 'ps1')
     print('block_me = {b}, args={a}'.format(b=block_me, a=sys.argv))
+    if 'params' in list(dat):
+        import pprint
+        pprint.pprint(dat['params'], indent=4)
+
     plt.show(block=block_me)

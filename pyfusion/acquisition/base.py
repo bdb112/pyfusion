@@ -7,8 +7,10 @@ from __future__ import print_function
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy import ndarray, shape
+from pyfusion import config
 from pyfusion.conf.utils import import_setting, kwarg_config_handler, \
      get_config_as_dict, import_from_str, NoSectionError
+
 from pyfusion.data.timeseries import Signal, Timebase, TimeseriesData
 from pyfusion.data.base import Coords, Channel, ChannelList, get_coords_for_channel
 from pyfusion.debug_ import debug_
@@ -187,7 +189,8 @@ def update_with_valid_config(fetcher):
                 from pyfusion.acquisition.W7X.get_shot_list import get_programs 
                 progs = get_programs()
                 for prog in progs:
-                    if fetcher.shot >= progs[prog]['from'] and fetcher.shot <= progs[prog]['upto']:
+                    # take the from utc for both comparisons in case the data is long
+                    if fetcher.shot[0] >= progs[prog]['from'] and fetcher.shot[0] <= progs[prog]['upto']:
                         actual_shot = [int(i) for i in prog.split('.')]
                 if actual_shot is None: # we haven't found a match
                     # return True, but if it is before 0223, warn
@@ -268,13 +271,15 @@ class BaseAcquisition(object):
             self.__dict__.update(get_config_as_dict('Acquisition', config_name))
         self.__dict__.update(kwargs)
 
-    def getdata(self, shot, config_name=None, interp={}, **kwargs):
+    def getdata(self, shot, config_name=None, interp={}, exceptions=None, **kwargs):
         """Get the data and return prescribed subclass of BaseData.
         
         :param shot: shot number
         :param config_name: ?? bdb name of a fetcher class in the configuration file
         :param interp: dictionary specifying interpolation method, grid
             methods are 'linear', 'linear_minmax' (W7X,H1) - NOT YET IMPL..
+        :param exceptions - a list of exceptions to catch - None will 
+            default to (LookupError) or () if pyfusion.DEBUG>3
         :returns: an instance of a subclass of \
         :py:class:`~pyfusion.data.base.BaseData` or \
         :py:class:`~pyfusion.data.base.BaseDataSet`
@@ -298,7 +303,9 @@ class BaseAcquisition(object):
         keyword arguments, and the result of the ``fetch`` method of the
         fetcher class is returned.
         """
-        from pyfusion import config
+        if exceptions is None:
+            exceptions = (LookupError) if pyfusion.DEBUG<3 else ()
+
         # if there is a data_fetcher arg, use that, otherwise get from config
         if config_name.lower() == 'none':
             return(None)
@@ -325,12 +332,12 @@ class BaseAcquisition(object):
         ## Problem:  no check to see if it is a diag of the right device!??
         # enable stopping here on error to allow traceback if DEBUG>2
         # there is similar code elsewhere - check if is duplication
-        exceptions = (LookupError) if pyfusion.DEBUG<3 else ()
+
         try:
             d = fetcher_class(self, shot, interp=interp,
                               config_name=config_name, **kwargs).fetch()
         except exceptions as reason:
-            print(str(reason))
+            print('Exception: ' + str(reason))
             return None
         if d is not None:
             d.history += "\n:: shot: {s} :: config: {c}".format(s=shot, c=config_name)
@@ -402,9 +409,13 @@ class BaseDataFetcher(object):
 
     def error_info(self, step=None):
         """ return specific information about error to aid interpretation - e.g for mds, path
-        The dummy return should be replaced in the specific routines
+        The dummy return should be replaced in the specific routines, or
+        the info passed through self.errmsg
         """
-        return('(further info not provided by %s)' % (self.acq.acq_class))
+        if hasattr(self, 'errmsg'):
+            return(self.errmsg)
+        else:
+            return('(further info not provided by %s)' % (self.acq.acq_class))
 
     def fetch(self):
         """Always use  this to fetch the data,  so that :py:meth:`setup`
@@ -463,6 +474,7 @@ class BaseDataFetcher(object):
             try:
                 self.setup()
             except exception as details:
+                print('Exception: ' + str(details))
                 traceback.print_exc()
                 raise LookupError("{inf}\n{details}".format(inf=self.error_info(step='setup'),details=details))
             try:

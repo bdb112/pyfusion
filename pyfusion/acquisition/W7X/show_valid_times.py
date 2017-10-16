@@ -9,7 +9,7 @@ from pyfusion.acquisition.W7X.get_url_parms import get_suitable_version, get_par
 
 # force the cache to be filled
 get_suitable_version()
-vers = list(pyfusion.W7X_minerva_cache)
+vers = np.array(list(pyfusion.W7X_minerva_cache))
 # alternative form:  int(pdict[1]['parms']['validSince']['dimensions'][0])]  # valid
 modtimes_list = [[get_parm('parms/modifiedAt/dimensions', pdict)[0],    # [0] -> mod
                   get_parm('parms/validSince/dimensions', pdict)[0],    # [1] -> valid
@@ -29,4 +29,8 @@ plt.barh(bottom=ind, left=modtimes[1]-t0,
 plt.xlim(0, 2*31*24*3600e9) # ~two months
 plt.title('validSince tuple in order of modification time')
 plt.plot(modtimes[0]-t0, ind, 'or')
+for v, ver in enumerate(vers[by_mod]):
+    plt.text(0, v, get_parm('parms/generalRemarks/values', pyfusion.W7X_minerva_cache[ver])[0])
+    plt.text(0, v - 0.4, get_parm('parms/validSince/values', pyfusion.W7X_minerva_cache[ver])[0])
+
 plt.show()

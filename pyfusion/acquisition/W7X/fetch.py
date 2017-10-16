@@ -352,7 +352,8 @@ class W7XDataFetcher(BaseDataFetcher):
                 self.acq.access = None
 
         if self.acq.access is False:
-            raise LookupError('URL for {d} in {s} is probably not accessible or the\n '\
+            self.errmsg=str('URL for {d} in {s} is probably not accessible or the\n '\
                               'necessary software (dnspython or nslookup/grep) is not installed.\n'\
                               'Set pyfusion.LAST_DNS_TEST=-1 to skip test'
                               .format(d=self.config_name, s=self.shot))
+            raise LookupError(self.errmsg)

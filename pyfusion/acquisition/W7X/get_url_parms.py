@@ -30,7 +30,7 @@ class MinervaMap(object):
     def __init__(self, shot):
         # fname =  "http-__archive-webapi.ipp-hgw.mpg.de_ArchiveDB_raw_Minerva_Minerva.QRP.settings_Settings_PARLOG_V25_.json"
         parm_URL = get_suitable_version(shot)
-        fname = sanitised_filename(parm_URL)
+        fname = sanitised_json_filename(parm_URL)
 
         try:
             self.parmdict = json.load(open(fname, 'rt'))
@@ -162,8 +162,8 @@ def get_PARMLOG_cache(shot):
     Vfiles = glob.glob("*PARLOG_V[0-9]*json")
     # put them in a dictionary as a cache - should live in an object
     # (maybe MinervaMap, but save in pyfusion,,,, for now)
-    if not hasattr(pyfusion, 'W7X_minerva_cache'):
-        print('loading cache')
+    if not hasattr(pyfusion, 'W7X_minerva_cache') or pyfusion.W7X_minerva_cache is None:
+        print('loading pyfusion.W7X_minerva_cache ..')
         pyfusion.W7X_minerva_cache = dict([[fn, json.load(open(fn, 'rt'))] for fn in Vfiles])
 
     vnumstrs = [vfile.split('PARLOG_V')[-1].split('_.json')[0] for vfile in Vfiles]
@@ -182,7 +182,7 @@ def get_suitable_version(shot=[20170921,10], debug=1):
     local_copy = get_PARMLOG_cache(shot)
     if local_copy is not None:
         return(local_copy)
-    
+    # effectively an else...
     utcs = get_shot_utc(shot)
     minerva_parms_url = "http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/views/Minerva/Diagnostics/LangmuirProbes/Settings/"
     links = get_links(minerva_parms_url, debug=debug)
@@ -204,8 +204,12 @@ def get_suitable_version(shot=[20170921,10], debug=1):
             return(url_dict[ver])
     return(None)
 
-def sanitised_filename(URL):
-    fname = URL.replace('/','_').replace(':','-') # + '.json'
+def sanitised_json_filename(URL):
+    if (not URL.endswith('.json')) and (not URL.endswith('/')):
+        URL += '/'
+    fname = URL.replace('/','_').replace(':','-')
+    if not fname.lower().endswith('.json'):
+         fname += '.json'
     return(fname)
 
 
@@ -218,7 +222,7 @@ if __name__ == '__main__':
         print('Warning - parmdict is too short')
     if len(list(parmdict)) == 0:
         raise LookupError('No Minerva data parameters found in \n' + URL)
-    fname = sanitised_filename(URL)
+    fname = sanitised_json_filename(URL)
     print('saving in ', fname)
     json.dump(parmdict, open(fname, 'wt'))
 

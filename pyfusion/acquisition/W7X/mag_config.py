@@ -70,7 +70,3 @@ def get_mag_config(shot, from_db=True, ratios=True):
         return None, None
 
 print(get_mag_config([20160310, 7]))
-
-
-
-

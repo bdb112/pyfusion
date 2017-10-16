@@ -241,7 +241,9 @@ errs = dict(shot=[])  # error list for the shot overall (i.e. if tree is not fou
 for diag in diags.keys():
     errs.update({diag:[]})  # error list for each diagnostic
 
-print('If off-line, set pyfusion.TIMEOUT=0 to prevent long delays')
+print("""If off-line, set pyfusion.TIMEOUT=0 to prevent long delays
+The search for valid shot numbers will take a while.  about 2 mins as of 10/2017  
+""")
 
 
 start = seconds()
@@ -249,6 +251,7 @@ dev=pyfusion.getDevice(devname)  # 'H1Local')
 from pyfusion.data.shot_range import shot_range as expand_shot_range
 srange = ((20160309,1), (20160310,99))
 srange = ((20160101,1), (20160310,99))
+srange = ((20160101,1), (20171110,99))
 #srange = ((20160202,1), (20160202,99))
 if 'W7' in devname:
     srange = expand_shot_range(*srange)

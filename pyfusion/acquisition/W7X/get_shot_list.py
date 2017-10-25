@@ -45,7 +45,9 @@ import json
 #from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
 
 def get_programs(shot=None, json_file='/data/datamining/local_data/W7X/json/all_programs.json'):
-    """ (data.utc[0] - progs['programs'][-1]['trigger']['6'][0])/1e9 is the start of ECH
+    """ 
+    get the program for a shot, or reload the caches (shot = None or -1)
+    (data.utc[0] - progs['programs'][-1]['trigger']['6'][0])/1e9 is the start of ECH
     Looks like '5' works better for 0309.052
     The original file was downloaded manually in three chunks.  
     http://archive-webapi.ipp-hgw.mpg.de/ has more details on downloading by machine
@@ -54,9 +56,10 @@ def get_programs(shot=None, json_file='/data/datamining/local_data/W7X/json/all_
     http://archive-webapi.ipp-hgw.mpg.de/programs.json
     http://archive-webapi.ipp-hgw.mpg.de/programs.json?from=1505174400000000000&upto=1505260799999999999
     """
-    progs = json.load(open(json_file))
     programs = {}
-    if shot is None or shot is -1:
+
+    if (shot is None or shot is -1) and os.path.exists(json_file):
+        progs = json.load(open(json_file))
         for p in progs['programs']:
             programs.update({p['id']: p})
 

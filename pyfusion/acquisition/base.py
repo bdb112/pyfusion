@@ -463,7 +463,7 @@ class BaseDataFetcher(object):
 
         if self.no_cache: 
             if pyfusion.VERBOSE>0:
-                print('** Skipping cache search as no_cache is set')
+                print('** Skipping cache search as no_cache is set in pyfusion.cfg')
             tmp_data = None 
         else:
             tmp_data = try_fetch_local(self, chan)  # If there is a local copy, get it
@@ -518,8 +518,13 @@ class BaseDataFetcher(object):
                 if pyfusion.VERBOSE>0: print('Comparing params in base.py',self_params,'\n', data.params)
                 if self_params['DMD'] != data.params['DMD']:
                     # below was raise Exception but really should be replace with nans?
-                    print(('conflicting DMD from npz on {s}, {d}: {dmd1}, {dmd2}'.
-                                     format(s=self.shot, d=self.config_name, dmd1=self_params['DMD'], dmd2=data.params['DMD'])))
+                    pyfusion.utils.warn(('conflicting DMD from npz on {s}, {d}: {dmd1}, {dmd2}'.
+                           format(s=self.shot, d=self.config_name, dmd1=self_params['DMD'], dmd2=data.params['DMD'])))
+                if 'cal_date' in tmp_data.params:
+                    if tmp_data.params['cal_date'] != cal_info['cal_date']:
+                        pyfusion.utils.warn('Calibration out of date in npz file')
+                else:
+                    print("can't check cal_date")
             else: 
                 if pyfusion.VERBOSE>-1 and 'W7X' in self.acq.acq_class: 
                     print("Can't check DMD on {s}, {d}".format(s=self.shot, d=self.config_name))
@@ -549,6 +554,7 @@ class BaseDataFetcher(object):
             data.channels.units = gain_units.split()[-1]
         else:
             data.channels.units = data.units if hasattr(data,'units') else ' '
+        print(method, end=' - ')
         if method == 'specific':  # don't pull down if we didn't setup
             self.pulldown()
 

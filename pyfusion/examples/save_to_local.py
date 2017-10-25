@@ -50,6 +50,7 @@ from pyfusion.data.save_compress import discretise_signal as savez_new
 import pyfusion.utils
 from pyfusion.debug_ import debug_
 from pyfusion.utils import process_cmd_line_args
+from pyfusion.utils.time_utils import utc_ns
 
 try:       # this allows usage on systems without all the new url features
     from pyfusion.data.shot_range import shot_range
@@ -121,6 +122,7 @@ for shot_number in shot_list:
     if find_kws != {}:
         utc_shot_number = find_shot_times(shot=shot_number, **find_kws)
         print('Using threshold detection: {kws}'.format(kws=find_kws))
+        pyfusion.RAW = save_in_RAW  # bdb kludge - fix and remove
     else:
         utc_shot_number = None
         
@@ -202,7 +204,7 @@ for shot_number in shot_list:
                         if hasattr(data, 'params'):  # add the other params
                             params.update(data.params)
                         print('cal_info')
-                        if hasattr(data, 'cal_info'):  # add the cal_date
+                        if hasattr(data, 'cal_info'):  # add the cal_date and comment
                             params.update(data.cal_info)
 
                         signal = data.signal

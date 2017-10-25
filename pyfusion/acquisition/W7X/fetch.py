@@ -171,7 +171,7 @@ class W7XDataFetcher(BaseDataFetcher):
         # fix up erroneous ECH alias mapping if ECH - only 6 work if I don't
         #  Hopefully at some point in the future, they will fix it.
         # this implementation is kludgey but proves the principle
-        if 'Rf' in url or 'MainCoils' in url:
+        if 'Rf' in url or 'MainCoils' in url or 'ControlCoils' in url or 'TrimCoils' in url:
             from pyfusion.acquisition.W7X.get_url_parms import get_signal_url
             # replace the main middle bit with the expanded one from the GUI
             tgt = url.split('KKS/')[1].split('/scaled')[0]

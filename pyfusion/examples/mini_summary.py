@@ -95,6 +95,7 @@ def mini_dump(list, filename='mini_summary_{0}_{1}.pickle'):
 ###########################
 # Functions to process data
 def Peak(x,t):
+    """ 98th percentile """
     return np.sort(x)[int(0.98*len(x))]
 
 def Special():
@@ -167,14 +168,16 @@ diags = dict(IPlanar_A = [Float, 'W7X_IPlanar_A', Average, 1],
              ITrim_3 = [Float, 'W7X_ITrim_3', Average, 1],
              ITrim_4 = [Float, 'W7X_ITrim_4', Average, 1],
              ITrim_5 = [Float, 'W7X_ITrim_5', Average, 1],
-             ECH_Rf_A1 = [Float, 'W7X_ECH_Rf_A1', Average, 1],
-             ECH_Rf_B1 = [Float, 'W7X_ECH_Rf_B1', Average, 1],
-             ECH_Rf_C1 = [Float, 'W7X_ECH_Rf_C1', Average, 1],
-             ECH_Rf_D1 = [Float, 'W7X_ECH_Rf_D1', Average, 1],
-             ECH_Rf_A5 = [Float, 'W7X_ECH_Rf_A5', Average, 1],
-             ECH_Rf_B5 = [Float, 'W7X_ECH_Rf_B5', Average, 1],
-             ECH_Rf_C5 = [Float, 'W7X_ECH_Rf_C5', Average, 1],
-             ECH_Rf_D5 = [Float, 'W7X_ECH_Rf_D5', Average, 1],
+             TotECH = [Float, 'W7X_TotECH', Peak, 1],
+             # partial, and needs more care peak or average (spikes?)
+             #ECH_Rf_A1 = [Float, 'W7X_ECH_Rf_A1', Average, 1],
+             #ECH_Rf_B1 = [Float, 'W7X_ECH_Rf_B1', Average, 1],
+             #ECH_Rf_C1 = [Float, 'W7X_ECH_Rf_C1', Average, 1],
+             #ECH_Rf_D1 = [Float, 'W7X_ECH_Rf_D1', Average, 1],
+             #ECH_Rf_A5 = [Float, 'W7X_ECH_Rf_A5', Average, 1],
+             #ECH_Rf_B5 = [Float, 'W7X_ECH_Rf_B5', Average, 1],
+             #ECH_Rf_C5 = [Float, 'W7X_ECH_Rf_C5', Average, 1],
+             #ECH_Rf_D5 = [Float, 'W7X_ECH_Rf_D5', Average, 1],
              
              imain = [Float, 'W7X_INonPlanar_1', Average, 1],)
 

@@ -393,7 +393,7 @@ Args:
                 continue
             leakage = input_leakage
             cname = chan.config_name
-            sweepV = self.vcorrfull.signal[self.vlookup[self.vassoc[c]]][0:FFT_size]
+            sweepV = self.vcorrfull[self.vassoc[c]][0:FFT_size]
             sweepQ = hilbert(sweepV)
             self.sweepQ.append(sweepQ)  # save for synchronising segments (it is smoothed)
 
@@ -417,8 +417,8 @@ Args:
 
             #print('leakage compensation factor = {r:.2e} + j{i:.2e}'
             #      .format(r=np.real(comp), i=np.imag(comp)))
-            print('{u}sing computed the leakage comp factor = {m:.2e} e^{p:.2f}j'
-                  .format(u = ["Not u", "U"][leakage is None],
+            print('{ch}: {u}sing the computed leakage conductance = {m:.2e} e^{p:.2f}j'
+                  .format(u = ["Not u", "U"][leakage is None], ch=chan.name,
                           m=np.abs(comp), p=np.angle(comp)))
             if leakage is None:
                 leakage = [np.real(comp), np.imag(comp)]
@@ -459,13 +459,16 @@ Args:
                                                        Vpp=Vpp, clip_level_minus=clip_level_minus, verbose=self.verbose)
 
     def fit_swept_Langmuir_seg_multi(self, m_seg, i_seg, v_seg, clipfact=5,  initial_TeVfI0=None, fit_params=None, plot=None):
+        if len(v_seg.timebase) != len(i_seg.timebase):
+            pyfusion.logging.warn('Unequal timebases {vl}, {il}'.format(vl=len(v_seg.timebase), il=len(i_seg.timebase)))
+            return(None)
         if self.select is None:
             self.select = range(len(self.i_chans))
         res = []
         for (c, chan) in enumerate(i_seg.channels):
             if self.select is not None and c not in self.select:
                 continue
-            v = v_seg.signal[self.vlookup[self.vassoc[c]]]
+            v = v_seg[self.vassoc[c]]
             i = i_seg.signal[c]
             im = m_seg.signal[c]
             result = self.fit_swept_Langmuir_seg_chan(im, i, v, i_seg, channame=chan.config_name, clipfact=clipfact,  initial_TeVfI0=initial_TeVfI0, fit_params=fit_params, plot=plot)
@@ -726,29 +729,32 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
 
         # if you want just one voltage channel, at the moment, you still
         # need it to be a multi-channel diag. (to simplify this code).
-        self.v_chans = [ch.config_name for ch in self.vmeasfull.channels]
+        self.v_chans = [ch for ch in self.vmeasfull.keys()]  # this works for single and multi diags
 
         # want to say self.vmeas[ch].signal where ch is the imeas channel name
         self.vlookup = {}
         for (c, vch) in  enumerate(self.v_chans):
             self.vlookup[vch] = c
 
-        self.vassoc = []  # list of sweepVs associated with each i channel
-                          # one per i channel - these refer to their 
-                          # respective self.v_chans
-                          # for OP1.1, only a few V chans were recorded and 
-                          # in practice only two channels are necessary.  
-        default_sweep = 'NO SWEEP'
+        self.vassoc = []    # list of sweepVs associated with each i channel
+        # one per i channel - these refer to their
+        # respective self.v_chans
+        # for OP1.1, only a few V chans were recorded and
+        # in practice only two channels are necessary.
+
+        default_sweep = self.v_chans[0] if len(self.v_chans) == 1 else 'NO SWEEP'
         if np.isscalar(self.shot):
             compfun = int
         else:
             compfun = tuple
-        if compfun(self.shot) > compfun([20170926,999]):
-            default_sweep = 'W7X_KEPCO_U'  # only really working after shot 50ish
-        elif compfun(self.shot) > compfun([20160310,999]):
-            default_sweep = 'W7X_LTDU_LP18_U'  # 13 is dead up to 0921 at least
-        else:
-            default_sweep = 'W7X_L57_LP01_U'
+        if default_sweep is 'NO SWEEP':
+            if compfun(self.shot) > compfun([20170926, 999]):
+                default_sweep = 'W7X_KEPCO_U'  # only really working after shot 50ish
+                # default_sweep = 'W7X_UTDU_LP18_U'  # only really working after shot 50ish
+            elif compfun(self.shot) > compfun([20160310, 999]):
+                default_sweep = 'W7X_LTDU_LP18_U'  # 13 is dead up to 0921 at least
+            else:
+                default_sweep = 'W7X_L57_LP01_U'
 
         for ch in self.i_chans:
             cd = get_config_as_dict('Diagnostic', ch)
@@ -791,7 +797,7 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         debug_(self.debug, 3, key='process_loop')
         for mseg, iseg, vseg in self.segs:
             # print('len vseg', len(vseg.signal[0]))
-            if len(vseg.signal[0]) < dtseg//5:  # skip short segments
+            if len(vseg.timebase) < dtseg//5:  # skip short segments
                 continue
 
             print(np.round(np.mean(mseg.timebase),4), end='s: ')  # midpoint    

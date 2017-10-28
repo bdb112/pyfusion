@@ -916,9 +916,15 @@ Note: This is my prototype of google style python sphinx docstrings - based on
     def plot(self, key, xkey='t', sharey=1, select=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, ref_line=0, **kwargs):
         """ 
         Plot the member 'key' of the Dictionary of Arrays 
+        kwargs:
           masked [1] 1 show only 'unmasked' points
           ebar [1]  the number of points per errorbar - None will suppress
-        ref_line  - draw a horizontal line at value, or draw None
+          ref_line [None]  - draw a horizontal line at value, or draw None
+        A mask of True will allow that point to be seen. 
+        Examples:
+          da.plot('Te') 
+          da.plot('Te', ebar=10, marker='o')  # plot with 'o's, show every 10th error bar
+          da.plot('mask')                     # to see mask = 1 == show, 0 is suppress
         """
         from matplotlib.ticker import MaxNLocator
         if sharey == 1:

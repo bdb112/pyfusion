@@ -5,7 +5,7 @@ import pyfusion
 from pyfusion.debug_ import debug_
 from matplotlib import pyplot as plt
 
-def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.4, margin=[.3,.4], debug=0, exceptions=(LookupError)):
+def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin=[.3,.4], debug=0, exceptions=(LookupError)):
     """ return the actual interesting times in utc for a given shot, 
     based on the given diag.  Use raw data to allow for both 1 and 10 ohm resistors (set above common mode sig)
     """
@@ -36,19 +36,35 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.4, margin
         data.timebase = data.params['diff_dimraw'].cumsum()
 
     tb = data.timebase
-    wbig = np.where(np.abs(data.signal) > np.abs(threshold))[0]
-    if len(wbig) < 5:
-        pyfusion.utils.warn('Too few points above threshold on shot {shot}'.format(shot=str(shot)))
+    tsamplen = tb[-1] - tb[0]
+    for trial in range(40):
+        wbig = np.where(np.abs(data.signal) > np.abs(threshold))[0]
+        times = np.array([tb[wbig.min()], tb[wbig.max()]], dtype=np.int64)
+        # fract_samples > 0.2 fract time avoids influence of spikes
+        fract_time = (times[1] - times[0])/float(tsamplen)
+        fract_samples = len(wbig)/float(len(tb))
+        if debug>0: print(trial, threshold, fract_time, fract_samples)
+        if fract_time > 0.95 and fract_samples/fract_time>0.1:
+            threshold *= 1.2
+            continue
+        if fract_time < 0.1 or fract_samples/fract_time < 0.1:
+            threshold *= 0.9
+            continue
+        break
+    else:  # went through the whole loop (i.e. without success)
+        pyfusion.utils.warn('Too few/many points above threshold on shot {shot}'.format(shot=str(shot)))
         return None
-    times = np.array([tb[wbig.min()] - margin[0]*1e9, tb[wbig.max()] + margin[1]*1e9], dtype=np.int64)
-    print('shot length={dt}, {times}'
-          .format(dt=np.diff(times)/1e9, times=(times - tb[0])/1e9))
+    timesplus = np.array([times[0] - margin[0]*1e9, times[1] + margin[1]*1e9], dtype=np.int64)
+    print('shot length={dt}, {timesplus}'
+          .format(dt=np.diff(times)/1e9, timesplus=(timesplus - tb[0])/1e9))
     if debug>0:
+        plt.figure()  # need a new fig whilever we plt in absolute times
         data.plot_signals()
-        plt.plot(times,[threshold, threshold],'o--r')
-        plt.plot(times,[-threshold, -threshold],'o--r')
+        plt.plot(timesplus, [threshold, threshold],'o--r')
+        plt.plot(timesplus, [-threshold, -threshold],'o--r')
+        plt.xlim(2*timesplus - times)  # double margin for plot
         plt.show()
-    return(times)
+    return(timesplus)
 
 if __name__ == "__main__":
     print(find_shot_times([20170913, 27], debug=1))

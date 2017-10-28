@@ -22,6 +22,7 @@ import pyfusion
 from pyfusion.acquisition.H1.scrape_wiki import get_links
 from pyfusion.debug_ import debug_
 from get_shot_info  import get_shot_utc
+from pyfusion.utils.time_utils import utc_ns
 
 install_aliases()
 from urllib.request import urlopen, Request
@@ -95,6 +96,9 @@ def get_minerva_parms(fetcher_obj):
     # gain and params are in string representation in the OP1.1, so do the same here
     if fetcher_obj.config_name.endswith('I'):
         rs = electronics['modeResistor']['values'][0]
+        if utc_ns(last_mod) < utc_ns('20171124'):
+            pyfusion.utils.warn('fudgeing gain correction until resistances corrected')
+            rs += 1.
         gainstr = str(1/(rs*electronics['driverElectronicTotalGain']['values'][0])) + ' A'
     else:
         modeFactor = electronics['modeFactor']['values'][0]

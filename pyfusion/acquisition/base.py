@@ -337,6 +337,7 @@ class BaseAcquisition(object):
             d = fetcher_class(self, shot, interp=interp,
                               config_name=config_name, **kwargs).fetch()
         except exceptions as reason:
+            pyfusion.utils.warn('Exception: ' + str(reason))
             print('Exception: ' + str(reason))
             return None
         if d is not None:

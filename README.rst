@@ -9,6 +9,21 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+Version 0.90 beta - significant improvements for W7X
+ * re-enable pyfusion.COLORS, including initializing form env var
+ * ad8d+: means changes including form ad8d
+ * ad8d+: big improvements to find_shot_times - use minmax reduction, auto-threshold, ignore spikes
+ * get_url_params - fudge +1 ohm gain correction
+ * better harmonic testing in LPextra
+ * process_swept_Langmuir - clean up vsweep access, allow a sinlge (non multi) diag.
+ * check_W7X_timebase_repair - use a nice FFT size
+ * utils/time_utils - many more formats auto detected, add utc_GMT (inverse transform)
+ * ad8d+ fetch.py ControCoils and TrimCoils included in auto url
+ * ad8d+ get_shot_list - works with and without cache
+ * ad8d+ acquisition/base - include cal_date, comment
+ * ad8d+ Add Ctl, IP, WDIA to minisummary
+ * ad8d+ fix TrimCoils, add ControlCoils to pyfusion.cfg
+
 Version 0.89 beta
  * W7X/fetch.py, base.py - return error reason via self.errmsg
  * W7X/find_shot_times.py add debug info, plot, fix exception logic, make part compatible with cached da ta (diff_dimraw)

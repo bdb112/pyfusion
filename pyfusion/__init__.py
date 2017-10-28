@@ -136,6 +136,9 @@ LAST_DNS_TEST = int(os.getenv('PYFUSION_LAST_DNS_TEST',
 NSAMPLES = int(os.getenv('PYFUSION_NSAMPLES',
                     config.get('global','NSAMPLES',vars={'NSAMPLES':'0'})))
 
+COLORS = int(os.getenv('PYFUSION_COLORS',
+                    config.get('global','COLORS',vars={'COLORS':'0'})))
+
 root_dir = os.path.split(os.path.abspath( __file__ ))[0]
 
 # cache control is likely to be computer dependent
@@ -155,6 +158,7 @@ except:
     from numpy import dtype as npdtype
     prec_med=npdtype('float32')
 
+"""  this now looks at PYFUSION_COLORS as well
 # warning - may need to move this earlier - for some reason the fftw3 import 
 # doesn't work if it is ahead of this one.
 try:
@@ -162,6 +166,7 @@ try:
 except:
     if VERBOSE>0: print('colors not in config file - no color!')
     COLORS=None
+"""
 
 # 
 default_fft_type = 'default numpy'

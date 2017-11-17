@@ -9,6 +9,16 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+Version 0.91 beta -  W7X manos, current fixes, mini_summary, standalone_events
+ * find_shot_times - optimise - use raw data to allow for 1 and 10 ohm, iterate level, test list in __main__
+ * get_shot_list - add get_standalone
+ * acquisition/base.py add params to outputdata so we can retrieve gain_used - but really want Rs
+ * save_compress - bug foxed in maxerr
+ * examples/mini_summary  adapt for W7X, a few fixes
+ * save to local some fixes in find_kws, record a short seg anyway of no threshold found
+ * pyfusion.cfg - add seral manometers AEH11,21,31,41, AEI30, also changes to coils, trim - why?
+ * time_utils.py  - more general, more formats auto detected
+
 Version 0.90 beta - significant improvements for W7X
  * re-enable pyfusion.COLORS, including initializing form env var
  * ad8d+: means changes including form ad8d

@@ -213,7 +213,7 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encod
     remainck=mod((arr-min(arr))/deltar, 1)
 
 # remain is relative to unit step, need to scale back down, over whole array
-    maxerr=max(abs(remain))*deltar/max(arr)
+    maxerr=max(abs(remain))*deltar/(max(arr) - min(arr))
 # not clear what the max expected error is - small for 12 bits, gets larger quicly
     if (verbose>2) and maxerr<eps: print("appears to be successful")
     if verbose>0: print('maximum error with eps = %g, is %g, %.3g x eps' % (eps,maxerr,maxerr/eps))

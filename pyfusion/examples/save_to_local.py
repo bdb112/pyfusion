@@ -81,7 +81,7 @@ exec(_var_defaults)
 exec(process_cmd_line_args())
 
 pyfusion.RAW=save_in_RAW  # FUDGE!!! until fixed
-if time_range is not None and fund_kws is not {}:
+if time_range is not None and len(find_kws) > 0:
     raise ValueError('Cannot specify both time_range and find_kws')
 
 if local_dir is not '':
@@ -124,8 +124,11 @@ for shot_number in shot_list:
         print('Using threshold detection: {kws}'.format(kws=find_kws))
         pyfusion.RAW = save_in_RAW  # bdb kludge - fix and remove
     else:
-        utc_shot_number = None
-        
+        if 'W7X' in dev.name and shot_number[0]>1e9:
+            utc_shot_number = shot_number
+        else:
+            utc_shot_number = None
+            
     for diag in diag_list:
         if 'W7' in diag and 'LP' in diag:
             print('override delta encode time')
@@ -149,17 +152,21 @@ for shot_number in shot_list:
                 # diagnostic basis.  Previously one bad killed the shot
                 # There is some redundant code left over in outer try/ex loop
                 try:
-                    if (time_range is not None  # time range specified in secs
+                    this_time_range = time_range
+                    # check for failed attempt to find shot times.
+                    if len(find_kws) > 0 and utc_shot_number is None:
+                        this_time_range = [-0.15,0.3] # enough to see problem
+                    if (this_time_range is not None  # time range specd in secs
                         and 'W7X' in dev.name and shot_number[0]<1e9):
                         utc = get_shot_utc(shot_number)
-                        utc_shot_number = [int(utc[0] + (61 + time_range[0])*1e9),
-                                           int(utc[0] + (61 + time_range[1])*1e9)]
+                        utc_shot_number = [int(utc[0] + (61 + this_time_range[0])*1e9),
+                                           int(utc[0] + (61 + this_time_range[1])*1e9)]
 
                     elif utc_shot_number is not None: #  
                         pass  # nothing more to do
 
                     else:
-                        utc_shot_number = shot_number
+                        raise Exception('should not get here - time_range and find_times inconsistency')
 
                     data = dev.acq.getdata(utc_shot_number, diag_chan, no_cache=compress_local==False, exceptions=())
                     print(diag_chan, shot_number, end=' - ')
@@ -229,6 +236,7 @@ pfile = str('{s}_{dt}_save_local'
                     .replace(',','_').replace(' ','')))
 
 print('See bads for {l} errors, also goods ({g}), and in {pfile}'.format(l=len(bads), g=len(goods), pfile=pfile))
+if pyfusion.RAW == 0: print('remeber to reset pyfusion.RAW')
 try:
     json.dump(dict(bads=bads, goods=goods), open(pfile+'.json','w'))
 except:

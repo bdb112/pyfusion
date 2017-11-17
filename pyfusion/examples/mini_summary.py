@@ -43,12 +43,13 @@ from sqlalchemy import create_engine
 
 devname = 'W7X'
 if 'W7' in devname:
-    sqlfilename = '/W7X_mag_OP1_1.sqlite'
+    sqlfilename = 'W7X_mag_OP1_1.sqlite'
 else:
-    sqlfilename = '/H1.sqlite'
+    sqlfilename = 'H1.sqlite'
 
 dbpath = os.path.dirname(__file__)
-engine=create_engine('sqlite:///'+ dbpath + sqlfilename, echo=False)
+dbfile = os.path.join(dbpath, sqlfilename)
+engine=create_engine('sqlite:///'+ dbfile, echo=False)
 #engine = create_engine('mysql://127.0.0.1/bdb112', echo=False)
 """
 from sqlalchemy.interfaces import PoolListener
@@ -71,7 +72,7 @@ conn = engine.connect()
 import numpy as np
 
 from sqlalchemy import Table, Column, Integer, String, Float, MetaData#, ForeignKey
-
+from pyfusion.data.shot_range import shot_range as expand_shot_range
 
 # simple method - use a fixed interval : typical H-1 [0.01, 0.05]
 # here 
@@ -94,7 +95,7 @@ def mini_dump(list, filename='mini_summary_{0}_{1}.pickle'):
 
 ###########################
 # Functions to process data
-def Peak(x,t):
+def Peak(x,t=None):
     """ 98th percentile """
     return np.sort(x)[int(0.98*len(x))]
 
@@ -103,14 +104,16 @@ def Special():
     pass
 
 
-def Std(x, t):
+def Std(x, t=None):
     return(np.std(x))
 
 def Average(x,t=None):
 # should really to an average over an interval
-    if t is None: t = x.timebase
+    if t is None:
+        t = x.timebase
+        x = x.signal
     w = np.where((t>interval[0]) & (t>interval[1]))[0]
-    return np.average(x.signal[w])
+    return np.average(x[w])
 
 def Integral(x,t):
 # should really include dt
@@ -126,12 +129,19 @@ metadata = MetaData()
 
 if len(sys.argv)>1:
     try:
-        srange = eval(sys.argv[1])
-    except:
-        raise ValueError("Input was\n{inp}\nProbably need quotes:\n  Example:\n  run pyfusion/examples/mini_summary 'range(88600,88732)'"
-                         .format(inp=sys.argv))
+        srange = sys.argv[1]
+        srange = eval(srange)
+        expand_shot_range(*srange)
+    except Exception as reason:
+        raise ValueError("{r}: \nInput was\n{inp}\nProbably need quotes:\n  Example:\n  run pyfusion/examples/mini_summary 'range(88600,88732)' or  [[20171018,19],[20171018,21]] - no quotes needed if square brackets"
+                         .format(r=reason, inp=sys.argv))
 else:
     srange = range(88600,88732)
+    srange = ((20160309,1), (20160310,99))
+    srange = ((20160101,1), (20160310,99))
+    srange = ((20160101,1), (20171110,99))
+    #srange = ((20160202,1), (20160202,99))
+    srange = ((20171018,19),(20171018,20))
 
 
 MDS_diags = dict(im1 = [Float, '.operations.magnetsupply.lcu.setup_main.i1', Value],
@@ -181,6 +191,8 @@ diags = dict(IPlanar_A = [Float, 'W7X_IPlanar_A', Average, 1],
              TotECH = [Float, 'W7X_TotECH', Peak, 1],
              WDIA_TRI = [Float, 'W7X_WDIA_TRI', Peak, 1],
              IP_CONT = [Float, 'W7X_ROG_CONT', Peak, 1],
+             V_SWEEP_RMS = [Float, 'W7X_KEPCO_U', Std, 1],
+             V_SWEEP_AVG = [Float, 'W7X_KEPCO_U', Average, 1],
              # partial, and needs more care peak or average (spikes?)
              #ECH_Rf_A1 = [Float, 'W7X_ECH_Rf_A1', Average, 1],
              #ECH_Rf_B1 = [Float, 'W7X_ECH_Rf_B1', Average, 1],
@@ -242,7 +254,7 @@ ins=summ.insert()  # not sure why this is needed?
 result=conn.execute('select count(*) from summ')
 n = result.fetchone()[0]
 if n> 0:
-    ans = input('database is populated with {n} entries:  Continue?  (y/N)'.format(n=n))
+    ans = input('database {dbfile} is populated with {n} entries:  Continue?  (y/N)'.format(n=n, dbfile=dbfile))
     if len(ans)==0 or ans.lower()[0] == 'n':
         print("Example\n>>> conn.execute('select * from summ order by shot desc limit 1').fetchone()")
         sys.exit()
@@ -250,7 +262,7 @@ shots = 0
 
 # set these both to () to stop on errors
 shot_exception = () # Exception # () to see message - catches and displays all errors
-node_exception = () # Exception # ()  ditto for nodes.
+node_exception = Exception # ()  ditto for nodes.
 
 errs = dict(shot=[])  # error list for the shot overall (i.e. if tree is not found)
 for diag in diags.keys():
@@ -263,11 +275,6 @@ The search for valid shot numbers will take a while.  about 2 mins as of 10/2017
 
 start = seconds()
 dev=pyfusion.getDevice(devname)  # 'H1Local')
-from pyfusion.data.shot_range import shot_range as expand_shot_range
-srange = ((20160309,1), (20160310,99))
-srange = ((20160101,1), (20160310,99))
-srange = ((20160101,1), (20171110,99))
-#srange = ((20160202,1), (20160202,99))
 if 'W7' in devname:
     srange = expand_shot_range(*srange)
 else:
@@ -305,13 +312,13 @@ for sh in srange: # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,8889
                     tb = data.timebase
                 else:
                     tb = None
-                val = valfun(data)
+                val = valfun(data.signal, tb)
                 if dp is not None:
                     val = round(val, dp)
                 
                 datdic.update({diag:val})
-            except Exception, reason:
-                #print sh,node,reason
+            except node_exception, reason:
+                print sh,node,reason
                 errs[diag].append(sh)
 
         """         

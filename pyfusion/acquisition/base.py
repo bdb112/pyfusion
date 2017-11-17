@@ -530,6 +530,7 @@ class BaseDataFetcher(object):
                 if pyfusion.VERBOSE>-1 and 'W7X' in self.acq.acq_class: 
                     print("Can't check DMD on {s}, {d}".format(s=self.shot, d=self.config_name))
 
+        data.gain_used = sgn
         data.meta.update({'shot':self.shot})
         if hasattr(data,'comment'):  # extract comment if there
             print('!data item {cn} already has comment {c}'
@@ -597,7 +598,7 @@ class MultiChannelFetcher(BaseDataFetcher):
         return [i[1] for i in channel_list]
     
     def fetch(self):
-        """Fetch each  channel and combine into  a multichannel instance
+        """ Multi-channel fetcher: Fetch each  channel and combine into  a multichannel instance
         of :py:class:`~pyfusion.data.timeseries.TimeseriesData`.
 
         :rtype: :py:class:`~pyfusion.data.timeseries.TimeseriesData`
@@ -618,10 +619,11 @@ class MultiChannelFetcher(BaseDataFetcher):
             t_range = [float(self.t_min), float(self.t_max)]
         else:
             t_range = []
+        params = {}  # will be added to output data, to include gain, really want Rs too
         for chan in ordered_channel_names:
             
             sgn = 1
-            if chan[0]=='-': sgn = -sgn
+            if chan[0]=='-': sgn = -sgn  # this allows flipping sign in the multi chan config
             bare_chan = (chan.split('-'))[-1]
             ch_data = self.acq.getdata(self.shot, bare_chan)
             if len(t_range) == 2:
@@ -630,8 +632,10 @@ class MultiChannelFetcher(BaseDataFetcher):
             if ch_data is None:
                 print('skipping ', chan)
                 continue
+            
+            params.update({chan: dict(params=ch_data.params, gain_used=ch_data.gain_used, config_name=ch_data.config_name)})
             channels.append(ch_data.channels)
-            # two tricky things here - tmp.data.channels only gets one channel hhere
+            # two tricky things here - tmp.data.channels only gets one channel here
             # Config_name for a channel is attached to the multi part -
             # We need to move it to the particular channel 
             # Was  channels[-1].config_name = chan
@@ -715,6 +719,7 @@ class MultiChannelFetcher(BaseDataFetcher):
                                      channels=channels)
         #output_data.meta.update({'shot':self.shot})
         output_data.meta.update(meta_dict)
+        output_data.params = params
         output_data.comment = self.comment if hasattr(self, 'comment') else ''
         print('output_data.comment: [' ,output_data.comment, ']')
         #if not hasattr(output_data,'utc'):

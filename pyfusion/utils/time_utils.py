@@ -7,11 +7,13 @@ def utc_ns(s, fmt=None):
     """
     #   time.strptime('20160302.14:55','%Y%m%d.%H:%M'
     if isinstance(s, (list, tuple)):
-        return([utc_ns(s[0]), utc_ns(s[1])])
+        return([utc_ns(elt) for elt in s])
     if fmt is not None:
         pass  # use it!
+    elif len(s) == 20 and len(s.split(' ')[0]) != 4:
+        fmt = '%d %b %Y %H:%M:%S'
     elif len(s) > 18:
-        fmt = '%Y-%m-%d %H:%M:%S:%f'
+        fmt = '%Y-%m-%d %H:%M:%S:%f' if '-' in s else '%Y%m%d %H:%M:%S.%f'
     elif len(s) == 17:
         fmt = '%Y%m%d %H:%M:%S'
     elif len(s) == 15:

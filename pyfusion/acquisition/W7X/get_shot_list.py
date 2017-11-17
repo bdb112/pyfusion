@@ -23,7 +23,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys, json, time, os, calendar
 import pyfusion
-
+from pyfusion.utils.time_utils import utc_ns, utc_GMT
 
 from future.standard_library import install_aliases
 install_aliases()
@@ -147,6 +147,38 @@ def get_shotDA(fname=os.path.join(this_dir, 'shotDA')):
                 return(ret)
         raise LookupError('shotDA file {fname} not found'.format(fname=fname))
 
+def get_standalone(utc_from=utc_ns('20100101'), utc_upto=utc_ns('21000101'), fname = os.path.join(this_dir,'all_standalone.txt'), as_shot_list=True, dt=1, start=3):
+    """ given a text file all_standalone.txt, return either
+           an OrderedDict containing comment, event, leader for each key (ascii time)
+           or if as_shot_list ==  True
+           a time ordered shot list in utc_ns form, with delay of start, and length of dt
+           Ken is asking if there is a programmatic way...
+    """
+    with open(fname) as fp:
+        stdalbuf = fp.readlines()
+        from collections import OrderedDict
+        stdal = OrderedDict()
+    for buf in stdalbuf:
+        buf = buf.strip()
+        if buf == '':
+            continue
+        toks = buf.split('QRP', 1)  # maxsplit=1
+        key = toks[0].strip()
+        if utc_ns(key) < utc_from or utc_ns(key) > utc_upto:
+            continue
+        subtoks = toks[1].split(' ', 1)
+        event = 'QRP' + subtoks[0]
+        comment = subtoks[1].split('Session Leader')
+        if len(comment) == 2:
+            comment, leader = comment
+        else:
+            leader = ''
+        stdal.update({key: dict(event=event, comment=comment, leader=leader)})
+    if as_shot_list:
+        stdal = np.sort([utc_ns(key) for key in stdal])
+        stdal = [[ns + int(start*1e9), ns + int((start + dt)*1e9)] for ns in stdal]
+    return(stdal)
+
 def test_pickles(from_file='/pyfusion/acquisition/W7X/shotDA.pickle', to_file='/tmp/x{v}.pickle'):
     """ aim to test compatibility of shotDA.pickle between python versions 
     not yet implemented - may discard if we use json files.
@@ -157,7 +189,46 @@ def test_pickles(from_file='/pyfusion/acquisition/W7X/shotDA.pickle', to_file='/
     pickle.dump(shotDA, open(to_file+'2','wb'),protocol=2)
     pickle.dump(shotDA, open(to_file+'1','wb'),protocol=1)
 
-#### main ########
+
+def reduce(f, t, delta=4000):
+    """ combine adjacent segments
+    reduce([11,9,7,1],  [12,10,8,3], delta=1) 
+`        (array([7, 1]), array([12,  3]))
+    """
+    froms = [f.pop(0)]
+    tos = [t.pop(0)]
+    while len(f)>0:
+        while froms[-1] == t[0] + delta:
+            froms[-1] = f.pop(0)
+            t.pop(0)
+            if len(f) == 0:
+                break
+        if len(f) == 0:
+            break
+        froms.append(f.pop(0))
+        tos.append(t.pop(0))
+    return(np.array(froms, dtype=np.int64), np.array(tos, dtype=np.int64))
+
+def get_segments(seg_list_file=None, reduced=1):
+    """
+    plot(get_segments()['froms'],(get_segments()['upto']-get_segments()['froms'])/1e9,',') ; ylim(-1,10)
+    """
+    
+    if seg_list_file is None:
+        seg_list_file = os.path.join(this_dir, 'seg_list.json')
+        seg_dict = json.load(open(seg_list_file,'r'))
+        seg_list = seg_dict['seg_list']
+        
+    froms = [int(seg['href'].split('from=')[1].split('&upto=')[0]) for seg in seg_list]
+    upto =  [int(seg['href'].split('upto=')[1].strip()) for seg in seg_list]
+    if reduced:
+        froms, upto = reduce(froms, upto)
+    return(dict(froms=froms, upto=upto))
+
+
+        
+    
+    #### main ########
 if __name__ == "__main__":
     _var_defaults="""
 fr_UTC = '20150101 00:00:00'

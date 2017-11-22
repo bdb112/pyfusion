@@ -410,6 +410,7 @@ Args:
             ns = len(w_comp)
             wind = np.blackman(ns)
             offset = np.mean(wind * imeas[w_comp])/np.mean(wind)
+            Voffset = np.mean(wind * sweepV[w_comp])/np.mean(wind)
             sweepVFT = np.fft.fft(AC(sweepV[w_comp]) * wind)
             imeasFT = np.fft.fft(AC(imeas[w_comp]) * wind)
             ipk = np.argmax(np.abs(sweepVFT)[0:ns//2])  # avoid the upper one
@@ -417,9 +418,9 @@ Args:
 
             #print('leakage compensation factor = {r:.2e} + j{i:.2e}'
             #      .format(r=np.real(comp), i=np.imag(comp)))
-            print('{ch}: {u}sing the computed leakage conductance = {m:.2e} e^{p:.2f}j'
+            print('{ch}: DC {DCl:9.2e}, {u}sing the computed leakage conductance = {m:.2e} e^{p:5.2f}j'
                   .format(u = ["Not u", "U"][leakage is None], ch=chan.name,
-                          m=np.abs(comp), p=np.angle(comp)))
+                          m=np.abs(comp), p=np.angle(comp), DCl=float(offset/Voffset)))
             if leakage is None:
                 leakage = [np.real(comp), np.imag(comp)]
             elif np.isscalar(leakage):
@@ -431,10 +432,10 @@ Args:
             # put signals back into rdata (original was copied by reduce_time)
             # overwrite - is this OK?
             self.iprobefull.signal[c] = self.iprobefull.signal[c]*0.  # clear it
-            # sweepV has a DC component! beware
+            # sweepV has a DC component! that should not be removed - beware!
             self.iprobefull.signal[c][0:comlen] = self.imeasfull.signal[c][0:comlen]-offset \
                                         - sweepV[0:comlen] * leakage[0] - sweepQ[0:comlen] * leakage[1]
-            # remove DC cpt (including that from the compensation sweepV)
+            # remove DC cpt from I (including that just added from the compensation sweepV)
             offset = np.mean(wind * self.iprobefull.signal[c][w_comp])/np.mean(wind)
             self.iprobefull.signal[c][0:comlen] -= offset
 

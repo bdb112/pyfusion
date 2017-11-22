@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 # a script file to show Roman Zagórski <roman.zagorski@ifpilm.pl> what the effect of the different profile assumotions is
 # 25mm wscl=25 /3.0 ## 40mm – same as below, but use wscl=40, and /2.1
 # I used 224_30 as the reference as I obtained the fact values using this shot.  I see that
 # when I sent the data to Uwe for the NF paper, I used 0309_17 (see marfe5_20mm.pdf)  why??
 
 # choose one of these
+#_PYFUSION_TEST_@@script
 plt.rcParams['figure.figsize']=[10,14]
 sys.path.append('/home/bdb112/python')
 from copy import deepcopy

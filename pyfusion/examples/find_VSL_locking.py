@@ -6,7 +6,7 @@
 # Also, can delete any uninteresting shots and save the remainder as pngs 
 # from pyfusion.visual import window_manager, sp, tog
 # window_manager.save('103')
-
+#_PYFUSION_TEST_@@SCRIPT
 
 from pyfusion.data.convenience import whr, btw
 

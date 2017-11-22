@@ -51,14 +51,15 @@ if add_corruption:
 fd = data
 # this is a workaround for clipped sweep signals, but it slows time response
 if fft:
-    FFT_size = nice_FFT_size(len(data.timebase), -1)
+    FFT_size = nice_FFT_size(len(data.timebase)-1, -1) # 1 less to allow rounding err in reduce time
     data = data.reduce_time([data.timebase[0], data.timebase[FFT_size]])
  
     fd = data.filter_fourier_bandpass(passband=[100,900], stopband=[50,950])
     print('filtered data length is ',len(fd.timebase))
 
-phc = analytic_phase(data.signal[0]) - fsamp*2*pi*data.timebase
-fsamp += np.diff(phc).mean()/np.diff(data.timebase).mean()/(2*pi)
+phc = analytic_phase(data[data.keys()[0]]) - fsamp*2*pi*data.timebase
+ends = len(phc)/100
+fsamp += np.diff(phc)[ends:-ends].mean()/np.diff(data.timebase).mean()/(2*pi)
 
 
 # maybe should be in data/plots.py, but config_name not fully implemented
@@ -81,13 +82,3 @@ if 'W7X' in data.keys()[0]:
         ax.plot(tbcheck - data.timebase)
         ax.set_yscale('symlog', linthreshy=1e-6)
 plt.show(block)
-
-
-
-
-
-
-
-
-
-

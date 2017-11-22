@@ -83,6 +83,8 @@ else:
 # use alphabetical order as a reference
 alpha_order = np.argsort([os.path.split(f)[-1] for f in filelist])
 filelist = [filelist[i] for i in alpha_order]
+if len(filelist) == 0:
+    raise LookupError('No files found matching {wi}'.format(wi=filewild))
 print('First alphabetically is ' + filelist[0] + '\n')
 orig_order = np.arange(0, len(filelist))
 
@@ -180,7 +182,7 @@ print('Python {pv}, Pyfusion {pfv} {date}'.format(pv=sys.version[0:20], pfv=pyfu
 for i, ll in enumerate(out_list):
     print('{o:03d} {dt:5.2f} {fn:30s}: {msg}'
           .format(o=orig_order[i], dt=ll[3], fn='/'.join(ll[0].split('/')[-2:]),
-                  msg=[b'', b'OK! '][ll[-1] == 0] + [ll[1][-77:].replace(b'\n', b' ')][0]))
+                  msg=[b'Err ', b'OK! '][ll[-1] == 0] + [ll[1][-77:].replace(b'\n', b' ')][0]))
 
 print('{g} good, {e} errors out of {t} not skipped'.format(e=len(err_files), t=total, g=total-len(err_files)))
 

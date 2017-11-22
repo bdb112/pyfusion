@@ -236,7 +236,7 @@ pfile = str('{s}_{dt}_save_local'
                     .replace(',','_').replace(' ','')))
 
 print('See bads for {l} errors, also goods ({g}), and in {pfile}'.format(l=len(bads), g=len(goods), pfile=pfile))
-if pyfusion.RAW == 0: print('remeber to reset pyfusion.RAW')
+if pyfusion.RAW == 0: print('remember to reset pyfusion.RAW')
 try:
     json.dump(dict(bads=bads, goods=goods), open(pfile+'.json','w'))
 except:

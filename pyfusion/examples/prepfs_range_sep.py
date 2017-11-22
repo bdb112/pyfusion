@@ -4,6 +4,10 @@ Like prepfs_range, but separate jobs and files for each shot
 job controller for preprocessing pyfusion flucstruc data.  Replaces 
 do_range script, so that a nice argument form can be used, and eventually 
 multi-processing.
+
+
+_PYFUSION_TEST_@@/tmp --exe='gen_fs_bands.py n_samples=None df=2e3 seg_dt=15e-3 max_bands=3' --shot_range=[50639]  --overlap=2 --diag_name=MP2010 --time_range=[1,1.01]
+
 """
 from warnings import warn
 import subprocess

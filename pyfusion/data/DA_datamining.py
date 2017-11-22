@@ -913,18 +913,29 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         plt.legend(prop=dict(size=sz))
         plt.show()
 
-    def plot(self, key, xkey='t', sharey=1, select=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, ref_line=0, **kwargs):
+    def plot(self, key, xkey='t', sharey=1, select=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, ref_line=0, style=None, axlist=None, **kwargs):
         """ 
         Plot the member 'key' of the Dictionary of Arrays 
         kwargs:
           masked [1] 1 show only 'unmasked' points
           ebar [1]  the number of points per errorbar - None will suppress
           ref_line [None]  - draw a horizontal line at value, or draw None
+          style - 'step' will use step plots (automatic for showing the mask)
+          axlist a list of axes so that data can be overplotted - see below
+
         A mask of True will allow that point to be seen. 
         Examples:
           da.plot('Te') 
           da.plot('Te', ebar=10, marker='o')  # plot with 'o's, show every 10th error bar
           da.plot('mask')                     # to see mask = 1 == show, 0 is suppress
+
+        # example of overplotting:
+        from pyfusion.data.DA_datamining import Masked_DA, DA
+        da=DA('LP/LP20171018_19_UTDU_2k8.npz')
+        da21=DA('/tmp/LP20171018_19_UTDU_2k8_lsq_lpf21.npz')
+        ax=da.plot('mask')            # new plot
+        da21.plot('mask',axlist=ax)   # data overplotted for comparison
+
         """
         from matplotlib.ticker import MaxNLocator
         if sharey == 1:
@@ -939,6 +950,8 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         else:
             arr = self[key]
 
+        style = 'step' if style is None and key == 'mask' else style
+        print(style)
         x = np.array(self[xkey])
         nchans = np.shape(arr)[1]
         if nchans > 20: 
@@ -955,7 +968,11 @@ Note: This is my prototype of google style python sphinx docstrings - based on
             labs = self.infodict['channels']
         else:
             labs = [str(ch for ch in range(nchans))]
-        fig, axs = plt.subplots(nvis, 1, squeeze=1, sharey=sharey, sharex=sharex)
+        if axlist is not None:
+            axs = axlist
+            fig = plt.gcf()
+        else:
+            fig, axs = plt.subplots(nvis, 1, squeeze=1, sharey=sharey, sharex=sharex)
         if nvis == 1:
             axs = [axs]
         # 3 bins -> 4 ticks max
@@ -977,7 +994,8 @@ Note: This is my prototype of google style python sphinx docstrings - based on
                 kwargs.update(dict(errorevery=ebar, elinewidth=elinewidth, mew=elinewidth))
                 ax.errorbar(x, arr[:, ch], yerr=yerr[:, ch], **kwargs)
             else:
-                ax.plot(x, arr[:, ch], **kwargs)
+                plotter = ax.step if style == 'step' else ax.plot
+                plotter(x, arr[:, ch], **kwargs)
 
             ax.yaxis.set_major_locator(locator)
             if ref_line is not None:

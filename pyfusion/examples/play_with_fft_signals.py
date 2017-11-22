@@ -34,7 +34,7 @@ for shot in shot_range:
         if plot:
             pl.semilogy(fs[0:2000],hold=0)
             pl.title('shot %d, %s' % (shot, diag_name))
-            if not(pl.isinteractive()): pl.show()
+            if not(pl.isinteractive()): pl.show(0)
 
 
         nsamp=len(sig)

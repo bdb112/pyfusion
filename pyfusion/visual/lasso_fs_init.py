@@ -16,7 +16,8 @@ import pyfusion
 #from pyfusion.datamining.clustering.core import get_fs_in_set, FluctuationStructure, ClusterDataSet
 from matplotlib.widgets import Lasso
 import matplotlib.mlab
-from matplotlib.nxutils import points_inside_poly
+#from matplotlib.nxutils import points_inside_poly
+from matplotlib.path import Path
 from matplotlib.colors import colorConverter
 from matplotlib.collections import RegularPolyCollection
 
@@ -67,7 +68,8 @@ class LassoManager:
         self.ind = None
 
     def callback(self, verts):
-        ind = nonzero(points_inside_poly(self.xys, verts))[0]
+        path = Path(verts)
+        self.ind = nonzero(path.contains_points(self.xys))[0]
         if pyfusion.VERBOSE>2: print len(self.xys)
         if pyfusion.VERBOSE>0: 
             print("Try to match the following points to %d fs in list:" % (len(self.fs_list)))
@@ -88,7 +90,7 @@ class LassoManager:
         fsfarr = array(self.fs_list['freq'])
         if pyfusion.VERBOSE>5:
             print("xarr = %s, fsfarr = %s, fstarr=%s, ind = %s" % (xarr, fsfarr, fstarr, ind))
-        for i in ind:
+        for i in self.ind:
             match = (abs(xarr[i] - fstarr) + abs(yarr[i] - fsfarr))< 1e-3
             matchinds = match.nonzero()[0]
             if pyfusion.VERBOSE>5: print("matches", matchinds)
@@ -101,7 +103,7 @@ class LassoManager:
         self.canvas.draw_idle()
         self.canvas.widgetlock.release(self.lasso)
         del self.lasso
-        self.ind = ind
+
     def onpress(self, event):
         if self.canvas.widgetlock.locked(): return
         if event.inaxes is None: return
@@ -162,7 +164,7 @@ def lasso_fs_init( fs_list, ax=None, all=True, plkwargs={}, matchkwargs={}, max_
     if lass_man != None: lass_man.canvas.mpl_disconnect(lass_man.cid)
     lman = LassoManager(ax, data, fs_list, plkwargs,max_collection=max_collection)
     lass_man = lman
-    show()
+    show(0)
     print('"lasso" your points - lasso_fs_disconnect() to restore normal graphics')
     return(lman)
 

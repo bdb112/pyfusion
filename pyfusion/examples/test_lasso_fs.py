@@ -9,6 +9,7 @@ plot_points=0    suppress plotting of points
 fs_lst           an list of flucstrucs to restrict attention to
 show_svs
 maxpts           the maximum number of fluctstrucs read
+_PYFUSION_TEST_@@PRE@from pyfusion.data.DA_datamining import da ; dd=da()
 """
 import pyfusion
 import pylab as pl
@@ -28,9 +29,15 @@ exec(pyfusion.utils.process_cmd_line_args())
 # in a real application, need to be more discriminating
 # probably should use the same subset as has been plotted.
 # this is simply acheived by supplying the fs_lst
-dds = {} # subset
-for key in dd.keys():
-    dds.update({key:dd[key][ind]})
+try:
+    ind
+except NameError:
+    dds = dd
+else:
+    dds = {} # subset
+    for key in dd.keys():
+        dds.update({key:dd[key][ind]})
+
 if fs_lst is None:
 #    fsqry = pyfusion.session.query(FluctuationStructure).limit(maxpts)
 #    if fsqry.count() == 0: raise LookupError('No fs found in current database')

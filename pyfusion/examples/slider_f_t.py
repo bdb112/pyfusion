@@ -111,5 +111,4 @@ def update(val):
 sl_shot.on_changed(update)
 sl_scale.on_changed(update)
 
-show()
-
+show(0)

@@ -1,4 +1,5 @@
 # The Initial paste
+#_PYFUSION_TEST_@@SCRIPT
 %run pyfusion/examples/cluster_info.py
 figure();co.plot_clusters_phase_lines()
 figure();co.plot_kh_freq_all_clusters();ylim(0,80)

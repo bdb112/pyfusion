@@ -6,9 +6,18 @@ pyfusion - python code for data mining plasma fluctuations
    - unicode problem in reading cached data (even self generated)
    
  *  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.  Partial fix - don't allow local_saves from local cache (only works on machines with acccess to the archivedB. F further problem to the above workaround - RAW  to be enforced independently of pyfusion.RAW, otherwise pyfusion.RAW is set (to 1) after any save_local - for now, just save in a separate process.
+ * possible problem with tests - new convention to return None for data not found may suppress real errors, making tests look too good
 
 Most recent update: 
 
+Version 0.92 beta -  a few fine-tuning fixes
+ * process_swept_Langmuir/extra careful delete of harmonics, add DC conductance output
+ * check_W7X_timebase_repair - improved auto freq, allow for rounding in reduce_time
+ * improve test_examples, fix a few - now 79 good, 26 errors
+ * kill bug for single _U channels in get_url_parms
+ * step plot, overplot instructions in DA_datamining
+ * bring lasso example/utils up to date
+ 
 Version 0.91 beta -  W7X manos, current fixes, mini_summary, standalone_events
  * find_shot_times - optimise - use raw data to allow for 1 and 10 ohm, iterate level, test list in __main__
  * get_shot_list - add get_standalone

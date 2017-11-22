@@ -26,6 +26,7 @@ Note: quoting!! escape with \'\"  and \"\'
 python pyfusion/examples/prepfs_time_mp.py . --time_range='[0,.1]' --MP=4 --shot=87200 --dev_name='H1Local' --diag_name="H1ToroidalAxial"
 #complicated
 wait_for_MDS_data tree=mirnov shot=${sht} path='.ACQ132_8:INPUT_01' && python pyfusion/examples/prepfs_time_mp.py . --exe='gen_fs_bands.py n_samples=None df=1e3  max_bands=3 dev_name=H1Local' --shot=[${sht}] --diag_name="H1ToroidalAxial" --overlap=2.5 --exception=Exception --debug=0 --seg_dt=0.0005 --time_range=[0,0.06]
+_PYFUSION_TEST_@@ /tmp --time_range='[0.5,.6]' --MP=3 --dev_name=LHD --shot=50639
 """
 from warnings import warn
 import numpy as np

@@ -25,7 +25,8 @@ run pyfusion/examples/gen_fs_bands.py dev_name='HeliotronJ' diag_name='Heliotron
 
 Note: quoting!! escape with \'\"  and \"\'
 time run  pyfusion/examples/prepfs_range_mp.py . --MP=2  --exe='gen_fs_bands.py n_samples=None df=1e3  max_bands=3' --shot_range=[27233] --time_range=\'\"MP1\"\' --seg_dt=0.5e-3 --overlap=2.5
-_PYFUSION_TEST_@/tmp --shot_range=[27233] --seg_dt=0.01
+_PYFUSION_TEST_@@ /tmp/ --shot_range=[27233] --seg_dt=0.01 --time_range=[0.1,0.15]
+
 """
 from warnings import warn
 import subprocess

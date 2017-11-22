@@ -62,13 +62,15 @@ def get_minerva_parms(fetcher_obj):
     mm = MinervaMap(fetcher_obj.shot)
     last_mod = mm.get_parm('parms/modifiedAt/values')[0]
     cal_remarks = mm.get_parm('parms/generalRemarks/values')[0] 
-    print('last mod at ', last_mod, cal_remarks)
+    print('last mod at ', last_mod, cal_remarks, end='\t')
     adcs = list(mm.get_parm('parms/probes/{mn}'.format(mn=fetcher_obj.minerva_name)))
     if len(adcs) == 0:
         raise LookupError('No adcs found for {minerva_name} on {shot}'
                           .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot))
     elif len(adcs) == 1:
         if fetcher_obj.config_name.endswith('I'):
+            adc = adcs[0]
+        elif fetcher_obj.config_name.endswith('U'):
             adc = adcs[0]
         else:
             raise LookupError('No monitor on ' + fetcher_obj.config_name)
@@ -95,6 +97,10 @@ def get_minerva_parms(fetcher_obj):
     adc_no = int(adc[3:])
     # gain and params are in string representation in the OP1.1, so do the same here
     if fetcher_obj.config_name.endswith('I'):
+        if 'modeResistor' not in electronics:
+            raise LookupError('current not recorded for {mn} on {shot}, adc {adc}'
+                              .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot, adc=adc))
+
         rs = electronics['modeResistor']['values'][0]
         if utc_ns(last_mod) < utc_ns('20171124'):
             pyfusion.utils.warn('fudgeing gain correction until resistances corrected')
@@ -111,7 +117,7 @@ def get_minerva_parms(fetcher_obj):
     
     fetcher_obj.params = "CDS=82,DMD={dmd},ch={ch}".format(dmd=dmd, ch=chan_no)
     debug_(pyfusion.DEBUG, 1, key='MinervaName', msg='leaving MinervaName')
-    print('rs={rs}, overall gain={gain}, params={params}'
+    print('rs={rs}, overall gain={gain}, params={params}\t'
           .format(rs=rs, gain=fetcher_obj.gain, params=fetcher_obj.params))
     return(fetcher_obj, dict(cal_date=last_mod, cal_comment=cal_remarks))
 

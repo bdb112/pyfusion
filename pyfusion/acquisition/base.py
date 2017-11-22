@@ -271,7 +271,7 @@ class BaseAcquisition(object):
             self.__dict__.update(get_config_as_dict('Acquisition', config_name))
         self.__dict__.update(kwargs)
 
-    def getdata(self, shot, config_name=None, interp={}, exceptions=None, **kwargs):
+    def getdata(self, shot, config_name=None, interp={}, quiet=0, exceptions=None, **kwargs):
         """Get the data and return prescribed subclass of BaseData.
         
         :param shot: shot number
@@ -337,8 +337,9 @@ class BaseAcquisition(object):
             d = fetcher_class(self, shot, interp=interp,
                               config_name=config_name, **kwargs).fetch()
         except exceptions as reason:
-            pyfusion.utils.warn('Exception: ' + str(reason))
-            print('Exception: ' + str(reason))
+            if pyfusion.VERBOSE-quiet >= 0:
+                pyfusion.utils.warn('Exception: ' + str(reason))
+                print('Exception: ' + str(reason))
             return None
         if d is not None:
             d.history += "\n:: shot: {s} :: config: {c}".format(s=shot, c=config_name)

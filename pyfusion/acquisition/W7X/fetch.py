@@ -215,7 +215,8 @@ class W7XDataFetcher(BaseDataFetcher):
         try:
             # dat = json.load(urlopen(url,timeout=pyfusion.TIMEOUT)) works
             # but follow example in
-            #    http://webservices.ipp-hgw.mpg.de/docs/howtoREST.html#python, 
+            #    http://webservices.ipp-hgw.mpg.de/docs/howtoREST.html#python
+            #  Some extracts in examples/howtoREST.py
             dat = json.loads(urlopen(url,timeout=pyfusion.TIMEOUT).read().decode('utf-8'))
         except socket.timeout:
             # should check if this is better tested by the URL module

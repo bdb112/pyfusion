@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 
 # this changes the behaviour of warnings
@@ -5,37 +6,41 @@ import warnings
 import pyfusion
 
 # this could run slower in python2 (used to be xrange)
-def find_last_shot(fun, range=[1, 200000], ex=True, quiet=False):
-    """ find the last shot for which fun(shot) does not return an error
+hlp = 'We require that low limit is present, and upper is not: '
+def find_last_shot(fun, srange=None, ex=True, quiet=False):
+    """ Find the last shot for which fun(shot) does not return None
         Actually more general than this.  Only tested for low lim yes, uplim no
-        
+        seems to not suppress error messages after the first run
+    Note: uses a primitive search - inefficient
+
     >>> def myfun(shot): return(shot <= 12345)
     >>> find_last_shot(myfun, quiet=True)
     12345
     """
-
+    srange = [1, 200000] if srange is None else srange
     def mid(low, high):
         return(int((low+high)/2))
 
     def quiet_call(fun, arg, ex=True):
         try:
             res = fun(arg)
-        except Exception:
-            if (ex):  # if we are watching for exceptions, return False if we get one
-                res = False
-        if res is False and (not quiet): print('.'),
-        return(res)
+        except Exception as reason:
+            # print(str(reason))
+            if (ex):  # if we are watching for exceptions, return None if we get one
+                res = None
+        if res is None and (not quiet): print('.',end='')
+        return(res is not None)
         
 
     maxits = 1000 # safety valve
 
-    low = min(range)
-    high = max(range)
+    low = min(srange)
+    high = max(srange)
     if not quiet_call(fun, low): 
-        raise ValueError('low limit of {l} not there'.format(l=low)) 
+        raise ValueError(hlp + 'low limit of {l} not there'.format(l=low)) 
 
     if quiet_call(fun, high): 
-        raise ValueError('upper limit of {u} is there'.format(u=high)) 
+        raise ValueError(hlp + 'upper limit of {u} is there'.format(u=high)) 
 
     shot = mid(low, high)
     while (1):
@@ -160,7 +165,13 @@ if pyfusion.COLORS != None:
         (red, normal) = ('***','***')  # make error prominent if no colours
 
     def my_show(message, category, filename, lineno, file=None, line=None):
-        orig_show(red + message.message + normal, 
+        if hasattr(message, 'message'):
+            msg = message.message
+            print('Ok')
+        else:
+            print('warning - my_show/warn called with a simple string')
+            msg = message
+        orig_show(red + msg + normal, 
                   category, filename, lineno, file, line)
 
     warnings.showwarning = my_show    

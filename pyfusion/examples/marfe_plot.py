@@ -8,6 +8,7 @@ _var_defaults = """
 dev_name = "W7X"
 diag_name = "W7X_L53_LP01_I"
 shot_number = [20160218, 5]
+# assumes the LP file is /docs/home/bdb112/pyfusion/working/pyfusion/LP/LPXXXXL53.npz, 57.npz
 """
 exec(_var_defaults)
 

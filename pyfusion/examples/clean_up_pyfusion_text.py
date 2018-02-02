@@ -63,7 +63,7 @@ if fileglob is None:
 
 for filename in np.sort(glob.glob(fileglob)):
 
-    ext = os.path.splitext(filename)
+    ext = os.path.splitext(filename)[1]
     if ext == 'gz':
         FileReader = gzip.open
     elif ext == 'bz2':

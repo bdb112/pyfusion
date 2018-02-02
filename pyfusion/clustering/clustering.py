@@ -14,6 +14,9 @@ from sklearn import mixture
 from scipy.cluster import vq
 from scipy.stats.distributions import vonmises
 from scipy.stats.distributions import norm
+import pyfusion
+from pyfusion.debug_ import debug_
+
 import sys
 if sys.version < "3":
     import cPickle as pickle
@@ -904,6 +907,75 @@ class clustering_object():
         fig.canvas.draw(); fig.show()
         return fig, ax
 
+##INS :    def plot_clusters_polarisations(self, decimati
+## BEWARE - probably ignores angle calibration! must update with https://github.com/shaunhaskey/pyfusion/blob/SH_branch/pyfusion/clustering/clustering.py#L1109
+    def plot_clusters_polarisations(self, 
+                                    coil_numbers=None, decimate=None, polar_plot=None, y_axis=None, pub_fig=None, fig_name=None, inc_title=None, energy=None, plot_amps=None, plot_distance=None, angle_error=None,
+                                    decimation=1, single_plot = False, kappa_cutoff = None, cumul_sum = False, cluster_list = None, ax = None, colours = None, scatter_kwargs = None):
+        '''Plot all the phase lines for the clusters
+        Good clusters will show up as dense areas of line
+
+        SH: 9May2013
+        '''
+        
+        if coil_numbers is not None:
+            print('coil_numbers guessed')
+            coil_numbers = range(16)
+        if decimate is not None:
+            print('decimation assumed')
+            decimation = decimate
+
+        if scatter_kwargs == None: scatter_kwargs = {'s':100, 'alpha':0.05,'linewidth':'1'}
+        ax_supplied = False if ax==None else True
+        cluster_list_tmp = list(set(self.cluster_assignments))
+        suptitle = self.settings.__str__().replace("'",'').replace("{",'').replace("}",'')
+        n_clusters = len(cluster_list_tmp)
+        if cluster_list==None:  cluster_list = cluster_list_tmp
+        debug_(pyfusion.DEBUG, 2, key='enter polarisation')
+        if single_plot:
+            if not ax_supplied: fig, ax = pt.subplots(); ax = [ax]*n_clusters
+            if colours == None: colours = ['r','k','b','y','m']*10
+        else:
+            if not ax_supplied: fig, ax = make_grid_subplots(n_clusters, sharex = True, sharey = True)
+            if colours == None: colours = ['k']*n_clusters
+        if kappa_cutoff!=None:
+            averages = np.average(self.cluster_details["EM_VMM_kappas"],axis=1)
+            cluster_list = np.arange(len(averages))[averages>kappa_cutoff]
+        marker_list = ['o' for i in colours]
+        means = []
+        count = 0
+        axes_list = []
+        for cluster in cluster_list:
+            print('cluster', str(cluster))
+            current_items = self.cluster_assignments==cluster
+            if np.sum(current_items)>10:
+                print('current_items', len(current_items))
+                coil_col_array = int(np.sum(current_items))*[3*coil_numbers]
+                coil_num_array = int(np.sum(current_items))*[[i for i in coil_numbers for j in [0,1,2]]]
+                tmp = np.abs(self.feature_obj.misc_data_dict['naked_coil'][current_items,:])
+                tmp2 = self.feature_obj.misc_data_dict['freq'][current_items]
+                tmp /= np.sqrt(np.sum(tmp**2, axis = 1))[:,np.newaxis]
+                plot_ax = ax[cluster] if not ax_supplied else ax[count]
+                # ALL 3 CPTS COLOURED SPEARATELY
+                plot_ax.scatter(coil_num_array, np.sqrt(tmp[:]**2), c=np.array(coil_col_array)%3/4., marker=marker_list[count], cmap=None, norm=None, zorder=0, rasterized=True)
+                #plot_ax.scatter(tmp[:,1], np.sqrt(tmp[:,0]**2 + tmp[:,2]**2), c=colours[count], marker=marker_list[count], cmap=None, norm=None, zorder=0, rasterized=True)
+                #plot_ax.scatter(tmp[:,0], tmp2, c=colours[count], marker=marker_list[count], cmap=None, norm=None, zorder=0, rasterized=True,alpha = 0.1)
+                # two cpts "polar style"
+                plot_ax.scatter(tmp[:,1], tmp[:,0], c=colours[count], marker=marker_list[count], cmap=None, norm=None, zorder=0, rasterized=True)
+                print(np.mean(np.sum(tmp**2, axis = 1)))
+                axes_list.append(plot_ax)
+                count+=1
+        ax[0].set_xlim([0,self.cluster_details['EM_VMM_means'].shape[1]])
+        #if not cumul_sum: ax[0].set_ylim([0, 1]); ax[0].set_xlim([0,1])
+        debug_(pyfusion.DEBUG, 1, key='mid polarisation')
+        for i in ax:i.grid(True)
+        if not ax_supplied:
+            fig.subplots_adjust(hspace=0, wspace=0,left=0.05, bottom=0.05,top=0.95, right=0.95)
+            fig.suptitle(suptitle.replace('_','-'), fontsize = 8)
+            fig.canvas.draw(); fig.show()
+            return fig, ax
+        
+
     def plot_clusters_amp_lines(self,decimation=1, linewidth=0.05):
         '''Plot all the phase lines for the clusters
         Good clusters will show up as dense areas of line
@@ -1234,6 +1306,9 @@ class clusterer_wrapper(clustering_object):
             self.cluster_assignments, self.cluster_details = tmp.cluster_assignments, tmp.cluster_details
         self.settings['method']=method
         #self.cluster_details['header']='testing'
+
+##INS  1194:def normalise_covariances(cov_mat, geom = True):
+##INS   1206:def pearson_covariances(cov_mat):
 
 ###############################################################
 def show_covariances(gmm_covars_tmp, clim=None,individual=None,fig_name=None):
@@ -2342,6 +2417,8 @@ def test_von_mises_fits():
     ax[1].plot(mu_record,mu_best_fit,'.')
     ax[1].plot(mu_record,mu_record,'-')
     fig.canvas.draw(); fig.show()
+
+##INS def generate_artificial_covar_data(n_clusters
 
 def generate_artificial_data(n_clusters, n_dimensions, n_instances, prob=None, method='vonMises', means=None, variances=None, random_means_bounds = [-np.pi,np.pi], random_var_bounds = [0.05,5]):
     '''Generate a dummy data set n_clusters : number of separate

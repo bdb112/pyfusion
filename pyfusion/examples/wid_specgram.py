@@ -20,6 +20,7 @@ Notes for pyfusion v1 version:
    tricky options for shot selector list not implemented - just shot_list
    show signals button not yet implemented
 Needs process_cmd_line_args.py, in python path (e.g. ~/python dir)
+_PYFUSION_TEST_@@foverlap=0
 """
 
 """ Comments on code development:

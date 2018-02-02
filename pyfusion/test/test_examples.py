@@ -1,6 +1,8 @@
 """ walk through the examples folder and run them according to comments contained - if any
 e.g.
 _PYFUSION_TEST_@@diag_name="DIA135"
+Highly recommended to run in a VNC desktop so that the focus is not stolen on each test
+  -- so far, with xfce, should use xterm to allow copy (assuming vnccong is up
 
 To test an old checkout with the extra files needed
 clone_pyfusion  # ( an alias)
@@ -28,6 +30,7 @@ pfdebug=0 # normally set pyfusion.DEBUG to 0 regardless
 newest_first=1 # if True, order the files so the last edited is first.
 max_sec=2
 stop_on_error=False
+maxwidth=90 # was 77  # maximum width of error message in summary display
 """
 
 exec(_var_defaults)
@@ -180,9 +183,12 @@ last_one = this_one + start
 print()
 print('Python {pv}, Pyfusion {pfv} {date}'.format(pv=sys.version[0:20], pfv=pyfusion.VERSION, date=ctime()))
 for i, ll in enumerate(out_list):
+    exception_lines = list({lin[0:maxwidth] for lin in ll[1].split('\n') if 'Error:' in lin})  # set comprehension elim. dups
+    elines = ' '.join(exception_lines) if len(exception_lines) > 0 else ll[1]
+    elines = elines + ll[1].split(exception_lines[0])[1][0:maxwidth-len(elines)] if len(elines) < maxwidth and len(exception_lines)>0 else elines
     print('{o:03d} {dt:5.2f} {fn:30s}: {msg}'
           .format(o=orig_order[i], dt=ll[3], fn='/'.join(ll[0].split('/')[-2:]),
-                  msg=[b'Err ', b'OK! '][ll[-1] == 0] + [ll[1][-77:].replace(b'\n', b' ')][0]))
+                  msg=[b'Err ', b'OK! '][ll[-1] == 0] + [elines[-maxwidth:].replace(b'\n', b' ')][0]))
 
 print('{g} good, {e} errors out of {t} not skipped'.format(e=len(err_files), t=total, g=total-len(err_files)))
 

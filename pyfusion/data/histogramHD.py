@@ -65,10 +65,12 @@ class CoordHD():
         self.d[indices] = val
 
 
-# This version uses strings as indicies, and doesn't check bounds on the fly
-# Instead there is a check_bounds rouitine which can be run after the fact  
-# each index may span up to 255.      
 class CoordHDs():
+    """ Implement a very sparse multi-dimensional array using a dictionary
+    This version uses strings as indices, and doesn't check bounds on the fly
+    Instead there is a check_bounds routine which can be run after the fact
+    Each index may span up to 255.
+    """
     def __init__(self, dims, debug=0):
         self.dims = dims
         self.d = {}
@@ -76,12 +78,14 @@ class CoordHDs():
 
     def get(self, indices):
         """ string version doesn't require the tuple notation (*)  """
-        if self.debug>0: print('get indices', indices)
-        if indices not in self.d: return(0)
+        if self.debug > 0:
+            print('get indices', indices)
+        if indices not in self.d:
+            return(0)
         return(self.d[indices])
     
     def set(self, indices, val):
-        """ set(inds,49.)  """
+        """ d.set(inds,49.)  """
         self.d[indices] = val
 
 

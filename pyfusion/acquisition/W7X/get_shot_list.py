@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import sys, json, time, os, calendar
 import pyfusion
 from pyfusion.utils.time_utils import utc_ns, utc_GMT
+from pyfusion.debug_ import debug_
 
 from future.standard_library import install_aliases
 install_aliases()
@@ -133,7 +134,8 @@ def get_shot_number(utcs):
         return this_shot[0]
     else:
         return None
-    
+
+
 def get_shotDA(fname=os.path.join(this_dir, 'shotDA')):
     """ get the DA data file containing cached copy of the shot numbers, 
     utcs comments etc
@@ -147,37 +149,48 @@ def get_shotDA(fname=os.path.join(this_dir, 'shotDA')):
                 return(ret)
         raise LookupError('shotDA file {fname} not found'.format(fname=fname))
 
-def get_standalone(utc_from=utc_ns('20100101'), utc_upto=utc_ns('21000101'), fname = os.path.join(this_dir,'all_standalone.txt'), as_shot_list=True, dt=1, start=3):
+
+def get_standalone(event=None, utc_from=None, utc_upto=None, fname=os.path.join(this_dir, 'all_standalone.txt'), as_shot_list=True, dt=1, start=6):
     """ given a text file all_standalone.txt, return either
            an OrderedDict containing comment, event, leader for each key (ascii time)
            or if as_shot_list ==  True
            a time ordered shot list in utc_ns form, with delay of start, and length of dt
            Ken is asking if there is a programmatic way...
     """
+    if utc_from is None:
+        utc_from = utc_ns('20100101')
+    if utc_upto is None:
+        utc_upto = utc_ns('21000101')
+
     with open(fname) as fp:
         stdalbuf = fp.readlines()
         from collections import OrderedDict
         stdal = OrderedDict()
-    for buf in stdalbuf:
+    for buf in stdalbuf[::-1]:
         buf = buf.strip()
         if buf == '':
             continue
         toks = buf.split('QRP', 1)  # maxsplit=1
-        key = toks[0].strip()
-        if utc_ns(key) < utc_from or utc_ns(key) > utc_upto:
+        asc_time = toks[0].strip()
+        if utc_ns(asc_time) < utc_from or utc_ns(asc_time) > utc_upto:
             continue
         subtoks = toks[1].split(' ', 1)
-        event = 'QRP' + subtoks[0]
+        this_event = 'QRP' + subtoks[0]
         comment = subtoks[1].split('Session Leader')
         if len(comment) == 2:
             comment, leader = comment
         else:
             leader = ''
-        stdal.update({key: dict(event=event, comment=comment, leader=leader)})
+        stdal.update({this_event: dict(asc_time=asc_time, comment=comment, leader=leader)})
+
+    debug_(pyfusion.DEBUG, 1, key='get_standalone')
+    if event is not None:
+        stdal = {event: stdal[event]}
     if as_shot_list:
-        stdal = np.sort([utc_ns(key) for key in stdal])
-        stdal = [[ns + int(start*1e9), ns + int((start + dt)*1e9)] for ns in stdal]
+        stdal = np.sort([utc_ns(dic['asc_time']) for dic in stdal.itervalues()])
+        stdal = [[ns + int(start * 1e9), ns + int((start + dt) * 1e9)] for ns in stdal]
     return(stdal)
+
 
 def test_pickles(from_file='/pyfusion/acquisition/W7X/shotDA.pickle', to_file='/tmp/x{v}.pickle'):
     """ aim to test compatibility of shotDA.pickle between python versions 
@@ -185,19 +198,19 @@ def test_pickles(from_file='/pyfusion/acquisition/W7X/shotDA.pickle', to_file='/
     """
     if '{' in to_file:
         to_file = to_file.format(v=sys.version[0:3])
-    shotDA=pickle.load(open(os.path.join(this_dir,from_file),'rb'))
-    pickle.dump(shotDA, open(to_file+'2','wb'),protocol=2)
-    pickle.dump(shotDA, open(to_file+'1','wb'),protocol=1)
+    shotDA = pickle.load(open(os.path.join(this_dir, from_file), 'rb'))
+    pickle.dump(shotDA, open(to_file+'2', 'wb'), protocol=2)
+    pickle.dump(shotDA, open(to_file+'1', 'wb'), protocol=1)
 
 
 def reduce(f, t, delta=4000):
     """ combine adjacent segments
-    reduce([11,9,7,1],  [12,10,8,3], delta=1) 
+    reduce([11,9,7,1],  [12,10,8,3], delta=1)
 `        (array([7, 1]), array([12,  3]))
     """
     froms = [f.pop(0)]
     tos = [t.pop(0)]
-    while len(f)>0:
+    while len(f) > 0:
         while froms[-1] == t[0] + delta:
             froms[-1] = f.pop(0)
             t.pop(0)
@@ -209,6 +222,7 @@ def reduce(f, t, delta=4000):
         tos.append(t.pop(0))
     return(np.array(froms, dtype=np.int64), np.array(tos, dtype=np.int64))
 
+
 def get_segments(seg_list_file=None, reduced=1):
     """
     plot(get_segments()['froms'],(get_segments()['upto']-get_segments()['froms'])/1e9,',') ; ylim(-1,10)
@@ -216,21 +230,19 @@ def get_segments(seg_list_file=None, reduced=1):
     
     if seg_list_file is None:
         seg_list_file = os.path.join(this_dir, 'seg_list.json')
-        seg_dict = json.load(open(seg_list_file,'r'))
+        seg_dict = json.load(open(seg_list_file, 'r'))
         seg_list = seg_dict['seg_list']
         
     froms = [int(seg['href'].split('from=')[1].split('&upto=')[0]) for seg in seg_list]
-    upto =  [int(seg['href'].split('upto=')[1].strip()) for seg in seg_list]
+    upto  = [int(seg['href'].split('upto=')[1].strip()) for seg in seg_list]
     if reduced:
         froms, upto = reduce(froms, upto)
     return(dict(froms=froms, upto=upto))
 
 
-        
-    
-    #### main ########
+# ##### main ###
 if __name__ == "__main__":
-    _var_defaults="""
+    _var_defaults = """
 fr_UTC = '20150101 00:00:00'
 to_UTC = '20180101 00:00:00'
 seldate=0
@@ -243,13 +255,13 @@ update=0
     exec(process_cmd_line_args())
 
     # This %s format doesn't work under Windows, and is not in the docs
-    #fr_utc = int(1e9 * int(time.strftime('%s', time.strptime(fr_UTC, '%Y%m%d %H:%M:%S'))))
+    # fr_utc = int(1e9 * int(time.strftime('%s', time.strptime(fr_UTC, '%Y%m%d %H:%M:%S'))))
     fr_utc = int(1e9) * int(calendar.timegm(time.strptime(fr_UTC, '%Y%m%d %H:%M:%S')))
     to_utc = int(1e9) * int(calendar.timegm(time.strptime(to_UTC, '%Y%m%d %H:%M:%S')))
 
     # for online access
     ArchiveDB = 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/ProjectDesc.1/ProgramLabelLog/parms/{key}/_signal.json?from={fr_utc}&upto={to_utc}'
-    #ArchiveDB = 'file:///data/databases/W7X/cache/{key}.json'  # for local files
+    # ArchiveDB = 'file:///data/databases/W7X/cache/{key}.json'  # for local files
 
     if update:
         reader = codecs.getreader("utf-8")

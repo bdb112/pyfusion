@@ -94,7 +94,7 @@ fi
 export PYTHONPATH=$PYTHONPATH:/home/bdb112/python/prl_python_h1
 
 cd $pyfparent
-if [ -d $pyfparent/pyfusion/visual ]
+if [ -d $pyfparent/pyfusion/acquisition ] # avoid old one - name was data_acq
 then echo looks OK
 else 
     echo $pyfparent/pyfusion "*** not a pyfusion installation? "

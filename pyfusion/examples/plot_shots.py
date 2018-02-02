@@ -1,9 +1,9 @@
 import pyfusion
 import matplotlib.pyplot as plt
 import numpy as np
-
+from copy import deepcopy
 from pyfusion.utils import process_cmd_line_args
-from pyfusion.data.shot_range import shot_range
+from pyfusion.data.shot_range import shot_range, is_listlike
 #_PYFUSION_TEST_@@"shot_list=shot_range([20160310,11],[20160310,15])"
 _var_defaults = """
 shot_list = [[20160310,i] for i in range(7,12)]  # can be a list of lists e.g. grouped shots
@@ -65,7 +65,7 @@ for shot in shot_list:
         print('plot shots cannot deal with multi channel diagnostics yet',str(reason))
         
     try:
-        data = dev.acq.getdata(shot, diag)
+        data = dev.acq.getdata(shot, diag, contin=True)
         if data is None:
             if None in shot_list: # stick with the grid if we have grouped shots
                 i += 1 
@@ -77,7 +77,15 @@ for shot in shot_list:
             data.plot_signals(suptitle='', **plot_sig_kws)
         else:
             data.plot_spectrogram(suptitle='', title=' ', **plot_sig_kws)
-        axs[i].set_title(str(shot),loc='left', fontsize='large')
+        shotrep = deepcopy(shot)
+        if is_listlike(shot): # for W7X, add shot details to plot based on UTC
+            onesec = 1000000000
+            if shot[0] % onesec == 0:
+                shot0 = utc_GMT(shot[0])
+                if (shot[1] - shot[0]) % onesec == 0:
+                    shotrep = shot0 + ' for ' + str((shot[1] - shot[0])/onesec) + 's'
+        axs[i].set_title(str(shotrep),loc='left',
+                         fontsize=['large','medium'][len(str(shotrep) * ncols)>40])
         maxwid = 10 if ncols>4 else 16
         axs[i].set_title(diag[-maxwid:],loc='right', fontsize='small')
         i += 1

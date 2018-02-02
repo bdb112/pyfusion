@@ -189,7 +189,7 @@ def update_with_valid_config(fetcher):
                 from pyfusion.acquisition.W7X.get_shot_list import get_programs 
                 progs = get_programs()
                 for prog in progs:
-                    # take the from utc for both comparisons in case the data is long
+                    # take the from utc for both comparisons in case the data span is long
                     if fetcher.shot[0] >= progs[prog]['from'] and fetcher.shot[0] <= progs[prog]['upto']:
                         actual_shot = [int(i) for i in prog.split('.')]
                 if actual_shot is None: # we haven't found a match
@@ -271,7 +271,7 @@ class BaseAcquisition(object):
             self.__dict__.update(get_config_as_dict('Acquisition', config_name))
         self.__dict__.update(kwargs)
 
-    def getdata(self, shot, config_name=None, interp={}, quiet=0, exceptions=None, **kwargs):
+    def getdata(self, shot, config_name=None, interp={}, quiet=0, contin=False, exceptions=None, **kwargs):
         """Get the data and return prescribed subclass of BaseData.
         
         :param shot: shot number
@@ -283,6 +283,9 @@ class BaseAcquisition(object):
         :returns: an instance of a subclass of \
         :py:class:`~pyfusion.data.base.BaseData` or \
         :py:class:`~pyfusion.data.base.BaseDataSet`
+
+        contin [False] - if True, continue with None for data
+        quiet [0] Quiet counters the effect of pyfusion.VERBOSE for this routine - net effect is VERBOSE-quiet
 
         This method needs to know which  data fetcher class to use, if a
         config_name      argument     is      supplied      then     the
@@ -337,10 +340,13 @@ class BaseAcquisition(object):
             d = fetcher_class(self, shot, interp=interp,
                               config_name=config_name, **kwargs).fetch()
         except exceptions as reason:
-            if pyfusion.VERBOSE-quiet >= 0:
-                pyfusion.utils.warn('Exception: ' + str(reason))
-                print('Exception: ' + str(reason))
-            return None
+            if contin:
+                if pyfusion.VERBOSE-quiet >= 0:
+                    pyfusion.utils.warn('Exception: ' + str(reason))
+                    print('Exception: ' + str(reason))
+                return None
+            else:
+                raise
         if d is not None:
             d.history += "\n:: shot: {s} :: config: {c}".format(s=shot, c=config_name)
 
@@ -516,12 +522,19 @@ class BaseDataFetcher(object):
             data = tmp_data
             method = 'local_npz'
             if hasattr(data, 'params') and 'DMD' in data.params:
+                # important to make sure channel mapping is the same
+                # c.f. changes in gain etc should be over-ridden with the latest values
                 self_params = eval('dict('+self.params+')')
                 if pyfusion.VERBOSE>0: print('Comparing params in base.py',self_params,'\n', data.params)
-                if self_params['DMD'] != data.params['DMD']:
+                if (self_params['DMD'] != data.params['DMD'] or
+                    self_params['ch'] != data.params['ch']):
                     # below was raise Exception but really should be replace with nans?
-                    pyfusion.utils.warn(('conflicting DMD from npz on {s}, {d}: {dmd1}, {dmd2}'.
-                           format(s=self.shot, d=self.config_name, dmd1=self_params['DMD'], dmd2=data.params['DMD'])))
+                    pyfusion.utils.warn(('conflicting DMD/ch from npz on {s}, {d}: {dmd1}/{sc}, {dmd2}{dc}'.
+                           format(s=self.shot, d=self.config_name,
+                                  dmd1=self_params['DMD'], dmd2=data.params['DMD'],
+                                  sc=self_params['ch'], dc=data.params['ch'])))
+                else:  # DMD,ch are OK, so we can overwrite the params with the latest
+                    data.params.update(self_params)
                 if 'cal_date' in tmp_data.params:
                     if tmp_data.params['cal_date'] != cal_info['cal_date']:
                         pyfusion.utils.warn('Calibration out of date in npz file')
@@ -561,6 +574,7 @@ class BaseDataFetcher(object):
         if method == 'specific':  # don't pull down if we didn't setup
             self.pulldown()
 
+        debug_(pyfusion.DEBUG, level=3, key='return_base_fetch')
         return data
 
 class MultiChannelFetcher(BaseDataFetcher):

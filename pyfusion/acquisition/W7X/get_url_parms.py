@@ -102,10 +102,14 @@ def get_minerva_parms(fetcher_obj):
                               .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot, adc=adc))
 
         rs = electronics['modeResistor']['values'][0]
-        if utc_ns(last_mod) < utc_ns('20171124'):
+        rs_used = rs*1.0  # save rs_used in npz so we can track correction method
+        if utc_ns(last_mod) < utc_ns('20171130'):
             pyfusion.utils.warn('fudgeing gain correction until resistances corrected')
-            rs += 1.
-        gainstr = str(1/(rs*electronics['driverElectronicTotalGain']['values'][0])) + ' A'
+            rs_used += 1. # original very rough way to allow for cross talk effect
+        else:
+            pyfusion.utils.warn('assuming no need to fudge rs')
+        gainstr = str(1/(rs_used*electronics['driverElectronicTotalGain']['values'][0])) + ' A'
+
     else:
         modeFactor = electronics['modeFactor']['values'][0]
         rs = None
@@ -114,11 +118,12 @@ def get_minerva_parms(fetcher_obj):
     fetcher_obj.gain = gainstr
     dmd = 180 + adc_no  # adc1 is the left most, and maps to 181_DATASTREAM
     if adc_no > 4: dmd += 4
-    
-    fetcher_obj.params = "CDS=82,DMD={dmd},ch={ch}".format(dmd=dmd, ch=chan_no)
+
+    fetcher_obj.params = str("CDS=82,DMD={dmd},ch={ch},rs={rs},rs_used={rs_used}"
+                             .format(dmd=dmd, ch=chan_no, rs=rs,rs_used=rs_used))
     debug_(pyfusion.DEBUG, 1, key='MinervaName', msg='leaving MinervaName')
-    print('rs={rs}, overall gain={gain}, params={params}\t'
-          .format(rs=rs, gain=fetcher_obj.gain, params=fetcher_obj.params))
+    print('rs_used={rs_used}, overall gain={gain}, params={params}\t'
+          .format(rs_used=rs_used, gain=fetcher_obj.gain, params=fetcher_obj.params))
     return(fetcher_obj, dict(cal_date=last_mod, cal_comment=cal_remarks))
 
 

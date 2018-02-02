@@ -7,8 +7,18 @@ pyfusion - python code for data mining plasma fluctuations
    
  *  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.  Partial fix - don't allow local_saves from local cache (only works on machines with acccess to the archivedB. F further problem to the above workaround - RAW  to be enforced independently of pyfusion.RAW, otherwise pyfusion.RAW is set (to 1) after any save_local - for now, just save in a separate process.
  * possible problem with tests - new convention to return None for data not found may suppress real errors, making tests look too good
-
+ * wid_specgram memory error for foverlap>0
 Most recent update: 
+
+Version 0.93 beta -  improvements to handling probe cross-talk and someother smaller changes
+ * get_url parms: rs_used = rs*1.0  # save rs_used in npz so we can track correction method
+ * acquisiton.base.py:  important to make sure channel mapping is the same
+ * clustering.py: crude component plot (not corrected for corrds relative to boozer)
+ * replace tupleshot with code using convenience.is_listlike()
+ * plot_shots:  for W7X, add shot details to plot based on UTC
+ * pyfusion.cfg: add LPTENI (LP 10 I)
+ * W7X.get_shot_list - clean up to PEP, add selectable shot times
+ * test_examples.py - improvements, and deal getdata with returning None add contin= arg to getdata
 
 Version 0.92 beta -  a few fine-tuning fixes
  * process_swept_Langmuir/extra careful delete of harmonics, add DC conductance output

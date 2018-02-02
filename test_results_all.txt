@@ -1,5 +1,133 @@
 Use emacs sort-columns after defining column with the region to put in order
+
 sorting simplified - 3 dig leading 0's and alpha is the standard order
+
+Python 2.7.12 (default, Dec, Pyfusion 0.9.3b (4b6d0e5 before commit) Sat Feb  3 10:11:03 2018
+000  0.65 examples/DA_info.py           : OK! 
+001  0.97 examples/DP14_mode_plot.py    : OK! 
+002  2.02 examples/N2_puff_correlation.py: OK! 0m   plt.text(x[c] + (dot_radius[c] +.001)*np.array([1,-1])[x[c]<0], z[c] + voff, ch[2:], 
+003  0.00 examples/W7X_OP1.1_LCFS.py    : OK! skip
+004  1.16 examples/W7X_analysis.py      : OK! ndim > 0 to an index will result in an error in the future   return(shotDA[item][ws]) 
+005  0.00 examples/W7X_analysis_Fri_11Mar.py: OK! script
+006  0.00 examples/W7X_get_shot_times.py: OK!   only works on w7x net
+007  0.00 examples/W7X_marfe_neTe_profiles.py: OK! script
+008  1.16 examples/W7X_neTe_profile.py  : OK! meWarning: Invalid value encountered in median for 1 results   RuntimeWarning) 
+009  0.37 examples/W7X_probe_list.py    : OK! 
+010  0.29 examples/W7X_read_json.py     : OK! 
+011  0.30 examples/__init__.py          : OK! 
+012  0.77 examples/barber_pole.py       : OK! 
+013  2.97 examples/basic_ne_scan.py     : OK! 
+014  0.38 examples/bug_report.py        : OK! 
+015  1.53 examples/channel_angle_games.py: OK! 
+016  2.83 examples/channel_spectra.py   : OK! 
+017  0.72 examples/check_DA.py          : OK! 
+018  1.84 examples/check_HD_histogram.py: OK! 
+019  3.38 examples/check_W7X_timebase_repair.py: OK! 
+020  0.35 examples/check_dw_pdt.py      : OK! 
+021  0.87 examples/check_other_data.py  : OK! 
+022  2.05 examples/check_polarity_flips.py: OK! 
+023  4.99 examples/clean_up_pyfusion_text.py: OK! 
+024  4.95 examples/clean_up_pyfusion_text_mp.py: OK! 
+025 11.74 examples/cluster_DA.py        : OK! r facecolor properties.    warnings.warn("Setting the 'color' property will override" 
+026  1.60 examples/cluster_info.py      : OK! 
+027  5.37 examples/cluster_phases_three_colour.py: OK! ] to [10 11 12 13 14 15] - i.e. cldata has different sel,  ************************** 
+028  1.23 examples/coherence_vs_time.py : OK! f fftopt > 0: new_time_range = get_optimum_time_range(input_data, new_time_range, fftopt) 
+029  0.92 examples/compare_LPdas.py     : OK! 
+030  0.64 examples/compare_analysis.py  : Err NameError: name 'files' is not defined 
+031  0.00 examples/compare_bands.py     : OK! skip
+032  0.68 examples/copy_DA.py           : Err IOError: [Errno 2] No such file or directory: '../../datamining/DA/PF2_130813_50_5X_1.5_5b
+033  0.00 examples/correct_LP_data.py   : OK! skip
+034  1.77 examples/cross_phase.py       : OK! 
+035  1.06 examples/density_cluster.py   : OK! 
+036  0.77 examples/divertor_power_profile.py: OK! 
+037  0.00 examples/example_fragments.py : OK! script
+038  2.18 examples/extract_limiter_coords.py: OK! 
+039  0.06 examples/file_finder_db.py    : Err TypeError: glob() got an unexpected keyword argument 'recursive' 
+040  0.00 examples/file_sorter.py       : OK! skip
+041  0.64 examples/find_2D_conf_scans.py: Err TypeError: 'NoneType' object has no attribute '__getitem__' 
+042  0.00 examples/find_VSL_locking.py  : OK! script
+043  0.58 examples/find_close_shot.py   : OK! 
+044  0.90 examples/find_last_data.py    : OK! 
+045  0.66 examples/flip_phase.py        : OK! 
+046  0.43 examples/fonts.py             : OK! 
+047 13.86 examples/gen_fs_bands.py      : OK! Time:  ########shot 27233: 230/1428 fs finished in 12.34/13.00 
+048  3.39 examples/gen_fs_general.py    : OK! 
+049  4.58 examples/gen_fs_local.py      : OK! 
+050  0.00 examples/get_LP_data.py       : OK! skip
+051  0.81 examples/get_basic_params.py  : Err ValueError: no good shots 
+052  1.15 examples/get_diamag.py        : OK!  result in an error in the future   sm_timebase = timebase[offset:offset+len(sm_sig)] 
+053  0.00 examples/get_wp_etc.py        : OK! skip
+054  0.02 examples/good_ones_density_cluster.py: Err SyntaxError: invalid syntax 
+055  0.00 examples/h1_mode_identify.py  : OK! script
+056  6.27 examples/h1_mode_lists.py     : OK! r facecolor properties.    warnings.warn("Setting the 'color' property will override" 
+057  1.26 examples/igetfile.py          : OK! IOError: igetfile /home/bdb112/data/datamining/cache/wp/wp@99950.dat.bz2 or .gz, .bz2 not 
+058  0.60 examples/manage_data.py       : OK! 
+059  0.00 examples/many_specs.py        : OK! skip
+060  0.98 examples/marfe_plot.py        : Err LookupError: URL for W7X_L53_LP01_I in [20160218, 5] is probably not accessible or the  ne
+061  1.30 examples/marfe_time_plot.py   : OK! 
+062  1.80 examples/medium_300.py        : OK! 
+063  0.84 examples/merge_basic_HJ_diagnostics.py: Err NameError: name 'dd' is not defined 
+064  0.82 examples/merge_basic_diagnostics.py: Err IOError: [Errno 2] No such file or directory: 'DA_file.npz' 
+065  0.67 examples/merge_h1_diagnostics.py: Err NameError: name 'dd' is not defined 
+066  0.93 examples/merge_text_pyfusion.py: OK! 
+067  0.00 examples/mini_summary.py      : OK! skip
+068  0.00 examples/mini_summary_MDS.py  : OK! skip
+069  0.00 examples/mirnov_RMS_db.py     : OK! skip
+070  0.00 examples/mode_identify_example_2012.py: OK! skip
+071  0.02 examples/mode_identify_example_from_ICPP_2010.py: Err SyntaxError: invalid syntax 
+072  0.82 examples/mode_identify_script.py: Err IndexError: list index out of range 
+073  0.06 examples/modify_cfg.py        : OK! 
+074  0.92 examples/multi_plot.py        : OK! 
+075  2.51 examples/ne_profile_preprocess.py: OK! 
+076  0.64 examples/new_mode_identify_script.py: Err ValueError: Need to choose doN=True and/or doM=True 
+077  0.02 examples/pellet_script.py     : Err SyntaxError: invalid syntax 
+078  6.82 examples/phase_histogram.py   : OK! 
+079  5.27 examples/play_with_fft_signals.py: OK! 
+080  0.63 examples/plot_DA.py           : OK! 
+081  0.00 examples/plot_LP2D.py         : OK! skip
+082  2.72 examples/plot_basic.py        : OK! 
+083  0.00 examples/plot_both_LP2D.py    : OK! skip
+084  7.51 examples/plot_correlation.py  : OK! 
+085  0.32 examples/plot_json_timeseries.py: OK! 
+086  0.62 examples/plot_many.py         : Err ValueError: SCAN NOT AVAILABLE!!!!! 
+087  2.89 examples/plot_multi_movie.py  : Err IOError: [Errno 2] No such file or directory: u'/tmp/movie/H1ToroidalAxial_97419.png' 
+088  1.92 examples/plot_ne_profile.py   : OK! 
+089  0.64 examples/plot_npz_data.py     : OK! 
+090  0.61 examples/plot_shot.py         : OK! 
+091  1.30 examples/plot_shots.py        : OK! 
+092  1.07 examples/plot_signals.py      : OK!  label='...' kwarg on individual plots.   warnings.warn("No labelled objects found. " 
+093  2.18 examples/plot_signals_trivial.py: OK! 
+094  2.94 examples/plot_specgram.py     : OK! ************************   set_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
+095  2.61 examples/plot_svd.py          : OK! 
+096  2.65 examples/plot_svd_old.py      : OK! 
+097  3.75 examples/plot_svd_simple.py   : OK! 
+098  1.09 examples/plot_text_fft.py     : Err IOError: [Errno 2] No such file or directory: 'g:fft26_50.dat' 
+099  1.07 examples/plot_text_pyfusion.py: Err IOError: [Errno 2] No such file or directory: '/docs/home/bdb112/pyfusion/working/pyfusion
+100 12.06 examples/prepfs_range.py      : OK! 
+101  4.37 examples/prepfs_range_mp.py   : OK! 
+102  2.24 examples/prepfs_range_sep.py  : OK! 
+103  3.59 examples/prepfs_time_mp.py    : OK! 
+104  0.60 examples/process_chirps.py    : Err NameError: name 'dd' is not defined 
+105  0.97 examples/process_swept_Langmuir.py: Err AttributeError: 'list' object has no attribute 'lower' 
+106  0.38 examples/query_h1ds.py        : Err sqlalchemy.exc.NoSuchTableError: summary 
+107  3.30 examples/read_DF.py           : OK! aining open files:/data/datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags_comp5.h5...done 
+108  1.73 examples/realtime_mode.py     : Err NameError: name 'cm' is not defined 
+109  6.28 examples/restore_sin.py       : Err NameError: name 'plot' is not defined 
+110  5.57 examples/run_process_LP.py    : OK! 
+111  0.90 examples/run_process_TDLP.py  : OK! 
+112  0.89 examples/save_to_local.py     : OK! 
+113  0.80 examples/show_corruption.py   : OK! 
+114  1.32 examples/slider_f_t.py        : OK! 
+115  0.67 examples/small_300.py         : OK! 
+116  0.68 examples/small_65.py          : OK! 
+117  2.59 examples/sql_plot.py          : OK! 
+118  0.96 examples/svd_simple_rotator.py: OK! 
+119  1.45 examples/tables_extract.py    : OK! 
+120  0.87 examples/test_lasso_fs.py     : OK! 
+121  0.90 examples/testall.py           : OK! 
+122  3.66 examples/wid_specgram.py      : OK! ************************   set_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
+123  1.43 examples/write_LP_as_CSV.py   : OK! 
+79 good, 26 errors out of 105 not skipped
 
 Python 2.7.12 (default, Nov, Pyfusion 0.9.2b (be3ef71) Thu Nov 23 08:51:11 2017
 000  0.67 examples/DA_info.py           : OK! 

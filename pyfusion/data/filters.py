@@ -463,6 +463,9 @@ def sp_filter_butterworth_bandpass(input_data, passband, stopband, max_passband_
     This actually does ALL butterworth filters - just select bptype
     and use scalars instead of [x,y] for the passband.
      e.g df=data.sp_filter_butterworth_bandpass(2e3,4e3,2,20,btype='lowpass')
+    args: passband, stopband(Hz), 
+          max_passband_loss(dB), min_stopband_attenuation,
+          btype='bandpass'
     """
     # The SciPy signal processing module uses normalised frequencies, so we need to normalise the input values
     norm_passband = input_data.timebase.normalise_freq(passband)

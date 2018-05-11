@@ -59,6 +59,9 @@ def debug_(debug,level=1,key=None,msg=''):
     if isscalar(debug): debug = [debug]
     reason = None   # continue only if there is no reason to stop
     for deb in debug:
+        if type(deb) == type('abc') and deb.isdigit():
+            deb = int(deb)  # assume numbers are ints. above text NA to reals
+            
         if type(deb) == type('abc'):
             if np.max(np.char.find(key, deb)) >= 0: 
                 reason = str('debug_ string "{deb}" found in "{key}"'

@@ -149,7 +149,7 @@ for shot_number in shot_list:
 
             for diag_chan in chan_list:
                 # this try except was added to catch errors on a diagnotic by
-                # diagnostic basis.  Previously one bad killed the shot
+                # diagnostic basis.  Previously one bad killed all diags in the shot
                 # There is some redundant code left over in outer try/ex loop
                 try:
                     this_time_range = time_range

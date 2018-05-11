@@ -22,6 +22,13 @@ run pyfusion/examples/sql_plot.py 'kappa_V,\*' "_from=combsum" '_where="shot bet
 # a join on the fly
 run pyfusion/examples/sql_plot.py kh_req,kappa_V,mirnov_RMS,m02y,m04y,m06y,m08y,m10y,m12y,m13y,m14y,m16y,m05x,m06x,m02x " _where=  (summary_h1.shot between 93405 and 93437)" _from="from summary_h1 join mirnov_RMS using (shot)" mrk='o-/s-/^-'
 
+pseudo variable 'rowid' allows you to plot by occurence rather than shot, so no space on the x axis wasted for long runs
+
+# This shows double ordering in the image plot, as well as proof that the ordering is correct
+#   using 'as' in sql to plot kappas as extra mirnovs (m00x and m17x)
+  run pyfusion/examples/sql_plot.py 'kh_req,\*,(kh_req-0.72)*20 as m00x,kappa_V as m17x' "_from=combsum" '_where="shot between 100400 and 100435"' swapwild='m[0-1][0-9]x$'  _order='kappa_v,kh_req'
+
+
 """
 from sqlsoup import SQLSoup
 from sqlite3 import OperationalError
@@ -64,16 +71,20 @@ swapwild=''    # '^m.*[x,y,z]'  # if not empty, plot matching columns on the x a
 clip = None # if not None clip all values to this range
 """
 # grab the first arg if it does not contain an "="
+def __help__():  # must be before exec() line
+    print(__doc__)
+    print('local help routine for sqlplot!')
+
 exec(_var_defaults)
 if len(sys.argv) >= 2 and '=' not in sys.argv[1]:
     _select = sys.argv.pop(1)  # and pop it out
+    if 'help' in _select.lower():
+        __help__()
 
-
-def __help__():  # must be before exec() line
-    print('local help routine for sqlplot!')
 
 
 exec(process_cmd_line_args())
+
 colors = colors.split(',') if ',' in colors else colors
 labels = labels.split(',') if ',' in labels else labels
 # mrk == 'None' will be dealt with later, when we know how many results
@@ -134,7 +145,11 @@ if mrk is 'None':
 for (k, key) in enumerate(xx[0].keys()):
     vals = xxt[k]
     bads = [v is None for v in vals]
-    vals[[np.where(bads)[0]]] = np.nan
+    if np.any(bads):
+        if isinstance(vals[0], int): # so we can mark them as bad, but only if we need to 
+            vals = vals.astype(float)
+        vals[[np.where(bads)[0]]] = np.nan
+
     # now make them np arrays, of type int if shot, else let np decide (None)
     dat.update({key: np.array(vals.tolist(), dtype=[None, int]['shot' in key])})
 

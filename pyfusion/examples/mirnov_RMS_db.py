@@ -23,10 +23,16 @@ from six.moves import input
 import pyfusion
 from pyfusion.data.shot_range import shot_range
 from get_freq import mds_freq
+import shutil
+import time as tm
 
 from sqlalchemy import create_engine 
 dbpath=''
 sqlfilename = '/data/summary.db.new'
+backup_file = tm.strftime(sqlfilename+'.%Y%m%d%H%M%S')
+print('Backing up into ' + backup_file)
+shutil.copy2(sqlfilename, backup_file)
+
 engine=create_engine('sqlite:///'+ os.path.join(dbpath, sqlfilename), echo=False)
 #engine=create_engine('sqlite:///:memory:', echo=False)
 
@@ -73,7 +79,8 @@ ins = mirntab.insert()  # convenience abbrev
 result=conn.execute('select count(*) from mirnov_RMS')
 n = result.fetchone()[0]
 if n > 0:
-    ans = input('database is populated with {n} entries:  Continue?  (y/N)'.format(n=n))
+    print('database is in {fn},'.format(fn=sqlfilename)),
+    ans = input(' populated with {n} entries:  Continue?  (y/N)'.format(n=n))
     if len(ans)==0 or ans.lower()[0] == 'n':
         print("Example\n>>> conn.execute('select * from summ order by shot desc limit 1').fetchone()")
         sys.exit()

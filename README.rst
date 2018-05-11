@@ -10,6 +10,11 @@ pyfusion - python code for data mining plasma fluctuations
  * wid_specgram memory error for foverlap>0
 Most recent update: 
 
+Version 0.94 beta -  prepare for adding MAGPIEII npz support (localdata only)
+ * a few improved comments
+ * mirnov_RMS_db - back up db uniquely
+ * sql_plot.py - better comments, help, and allow for 'bad' int data
+
 Version 0.93 beta -  improvements to handling probe cross-talk and someother smaller changes
  * get_url parms: rs_used = rs*1.0  # save rs_used in npz so we can track correction method
  * acquisiton.base.py:  important to make sure channel mapping is the same

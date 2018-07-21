@@ -415,7 +415,7 @@ Args:
             imeasFT = np.fft.fft(AC(imeas[w_comp]) * wind)
             ipk = np.argmax(np.abs(sweepVFT)[0:ns//2])  # avoid the upper one
             comp = imeasFT[ipk]/sweepVFT[ipk]
-
+            self.comp.append(comp)
             #print('leakage compensation factor = {r:.2e} + j{i:.2e}'
             #      .format(r=np.real(comp), i=np.imag(comp)))
             print('{ch}: DC {DCl:9.2e}, {u}sing the computed leakage conductance = {m:.2e} e^{p:5.2f}j'
@@ -425,7 +425,8 @@ Args:
                 leakage = [np.real(comp), np.imag(comp)]
             elif np.isscalar(leakage):
                 leakage = [np.real(leakage), np.imag(leakage)]
-                
+            else:
+                leakage = [np.real(leakage[c]), np.imag(leakage[c])]
 
             # find the common length - assuming they start at the same time????
             comlen = min(len(self.imeasfull.timebase),len(self.vmeasfull.timebase),len(sweepQ))
@@ -720,7 +721,7 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
 
         self.i_chans = [ch.config_name for ch in self.imeasfull.channels]
         for ch in self.i_chans:  # only take the current channels, not U
-            if ch[-1] != 'I':
+            if self.dev.name == 'W7X' and ch[-1] != 'I':
                 raise ValueError("Warning - removal of V chans doesn't work!!!")
                 # hopefully we can ignore _U channels eventually, but not yet
                 self.i_chans.remove(ch)
@@ -767,6 +768,7 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         # self.check_crosstalk(verbose=0)  # this could be slow
 
         self.prepare_sweeps(rest_swp=rest_swp, sweep_freq=sweep_freq)
+        self.comp = []
         self.get_iprobe(leakage=leakage, t_comp=t_comp)
 
         tb = self.iprobefull.timebase

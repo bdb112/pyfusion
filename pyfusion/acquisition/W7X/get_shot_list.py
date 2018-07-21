@@ -244,7 +244,7 @@ def get_segments(seg_list_file=None, reduced=1):
 if __name__ == "__main__":
     _var_defaults = """
 fr_UTC = '20150101 00:00:00'
-to_UTC = '20180101 00:00:00'
+to_UTC = '20190101 00:00:00'
 seldate=0
 seltext=""
 update=0
@@ -258,6 +258,9 @@ update=0
     # fr_utc = int(1e9 * int(time.strftime('%s', time.strptime(fr_UTC, '%Y%m%d %H:%M:%S'))))
     fr_utc = int(1e9) * int(calendar.timegm(time.strptime(fr_UTC, '%Y%m%d %H:%M:%S')))
     to_utc = int(1e9) * int(calendar.timegm(time.strptime(to_UTC, '%Y%m%d %H:%M:%S')))
+    now =  int(1e9) * calendar.timegm(calendar.datetime.datetime.utcnow().utctimetuple())
+    if now > to_utc:
+        pyfusion.utils.warn('**** Warning - you are not capturing current data - only up to '+ to_UTC)
 
     # for online access
     ArchiveDB = 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/ProjectDesc.1/ProgramLabelLog/parms/{key}/_signal.json?from={fr_utc}&upto={to_utc}'

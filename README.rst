@@ -10,6 +10,13 @@ pyfusion - python code for data mining plasma fluctuations
  * wid_specgram memory error for foverlap>0
 Most recent update: 
 
+Version 0.95 alpha -  Prepare to merge with W7X copy of 2017, to allow adding of 2018 changes
+ * no changes needed so far for MAGPIE outside pyfusion.cfg
+ * W7X/get_shot_list.py warn if the date is later than the maximum date scanned
+ * process_swept_Langmuir.py - make comp of all channels accessible in self.comp
+        allow leakage to be input for the whole array, smarter default sweep
+ * pyfusion.cfg - add some MAGPIE diags
+
 Version 0.94 beta -  prepare for adding MAGPIEII npz support (localdata only)
  * a few improved comments
  * mirnov_RMS_db - back up db uniquely

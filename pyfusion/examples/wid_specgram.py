@@ -40,6 +40,7 @@ With gtkagg, sort of works, but doesn't update shot, and blocks
 from matplotlib.widgets import RadioButtons, Button
 import pylab as pl
 from numpy import sin, pi, ones, hanning, hamming, bartlett, kaiser, arange, blackman, cos, sqrt, log10, fft
+import string
 
 import pyfusion
 try:

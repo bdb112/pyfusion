@@ -1,4 +1,5 @@
 # trivial example to illustrate the igetfile class
+# this does not use pyfusion, so the paths are hard coded.
 
 import pylab as pl
 import os
@@ -16,7 +17,7 @@ except Exception as reason:
     pl.figure()
 try:
     # nice if we could always have it in this place (may be a soft link(
-    dat=igetfile(os.getenv('HOME')+'/data/datamining/cache/wp/wp@99950.dat.bz2',plot=1)
+    dat=igetfile(os.getenv('HOME')+'/data/datamining/cache/LHD/wp/wp@99950.dat.bz2',plot=1)
 except Exception as reason:
     print('unable to read file - maybe no files there "{r}"'.format(r=reason))
     traceback.print_exc()

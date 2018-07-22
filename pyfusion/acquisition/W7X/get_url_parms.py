@@ -21,23 +21,59 @@ import time, calendar
 import pyfusion
 from pyfusion.acquisition.H1.scrape_wiki import get_links
 from pyfusion.debug_ import debug_
-from get_shot_info  import get_shot_utc
+from .get_shot_info  import get_shot_utc
 from pyfusion.utils.time_utils import utc_ns
 
 install_aliases()
 from urllib.request import urlopen, Request
+#  https://codereview.stackexchange.com/questions/21033/flatten-dictionary-in-python-functional-style
+
+def flatten_dict(d):
+    def items():
+        for key, value in d.items():
+            if isinstance(value, dict):
+                for subkey, subvalue in flatten_dict(value).items():
+                    yield key + "." + subkey, subvalue
+            else:
+                yield key, value
+
+    return dict(items())
+
+# This (YvesgereY version separates out the key concatenation - might be more flexible
+def iteritems_nested(d):
+  def fetch (suffixes, v0) :
+    if isinstance(v0, dict):
+      for k, v in v0.items() :
+        for i in fetch(suffixes + [k], v):  # "yield from" in python3.3
+          yield i
+    else:
+      yield (suffixes, v0)
+
+  return fetch([], d)
+
+def flatten_dict_by_concatenating_keys(d) :
+  return dict( ('.'.join(ks), v) for ks, v in iteritems_nested(d))
+  #return { '.'.join(ks) : v for ks,v in iteritems_nested(d) }
+  
 
 class MinervaMap(object):
+    """ read a minerva map into a nested dictionary.  Shot can be a shot or a utc_ns
+    """
     def __init__(self, shot):
         # fname =  "http-__archive-webapi.ipp-hgw.mpg.de_ArchiveDB_raw_Minerva_Minerva.QRP.settings_Settings_PARLOG_V25_.json"
+        # special case when shot is a single utc_ns
+        if (len(np.shape(shot)) == 0) and shot > 1e9:
+            shot = [shot, shot]
+
         parm_URL = get_suitable_version(shot)
         fname = sanitised_json_filename(parm_URL)
+        self.parm_URL = parm_URL
 
         try:
             self.parmdict = json.load(open(fname, 'rt'))
         except FileNotFoundError:
-            print('run pyfusion/acquisition/W7X/get_url_parms.py  # to generate minerva cache')
-
+            print('need to run pyfusion/acquisition/W7X/get_url_parms.py  # to generate minerva cache')
+            
     def get_parm(self, pseudourl=None):
         return get_parm(pseudourl, self.parmdict)
                 
@@ -101,7 +137,7 @@ def get_minerva_parms(fetcher_obj):
             raise LookupError('current not recorded for {mn} on {shot}, adc {adc}'
                               .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot, adc=adc))
 
-        rs = electronics['modeResistor']['values'][0]
+        rs = float(electronics['modeResistor']['values'][0]) # V38 up has strings here
         rs_used = rs*1.0  # save rs_used in npz so we can track correction method
         if utc_ns(last_mod) < utc_ns('20171130'):
             pyfusion.utils.warn('fudgeing gain correction until resistances corrected')
@@ -128,7 +164,8 @@ def get_minerva_parms(fetcher_obj):
 
 
 def get_subtree(url, debug=1, level=0):
-    """ level is just for pretty printing
+    """  only works for urls
+               level is just for pretty printing 
     """
     dic = OrderedDict()   # Don't forget the parens, Boyd
     links = get_links(url, debug=0)

@@ -3,12 +3,17 @@ pyfusion - python code for data mining plasma fluctuations
 
  * python3 - basically OK - some problems 20170817:
    - python3 stops after one set of data in process_swept_Langmuir
-   - unicode problem in reading cached data (even self generated)
+   - unicode problem in reading cached data (even self generated) - try np.load(encoding='ASCII'
    
  *  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.  Partial fix - don't allow local_saves from local cache (only works on machines with acccess to the archivedB. F further problem to the above workaround - RAW  to be enforced independently of pyfusion.RAW, otherwise pyfusion.RAW is set (to 1) after any save_local - for now, just save in a separate process.
  * possible problem with tests - new convention to return None for data not found may suppress real errors, making tests look too good
  * wid_specgram memory error for foverlap>0
 Most recent update: 
+
+Version 0.96 alpha -  python 3 fixes mainly, also
+ * get_url_params: add flatten_dict to allow for print_dict
+ * python3 fixes using six. including test_examples, and the test examples
+ * also remove some duplicate lines in pyfusion.cfg
 
 Version 0.95 alpha -  Prepare to merge with W7X copy of 2017, to allow adding of 2018 changes
  * no changes needed so far for MAGPIE outside pyfusion.cfg

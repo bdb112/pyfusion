@@ -2,7 +2,7 @@
 e.g.
 _PYFUSION_TEST_@@diag_name="DIA135"
 Highly recommended to run in a VNC desktop so that the focus is not stolen on each test
-  -- so far, with xfce, should use xterm to allow copy (assuming vnccong is up
+  -- so far, with xfce, should use xterm to allow copy (assuming vncconf is up
 
 To test an old checkout with the extra files needed
 clone_pyfusion  # ( an alias)
@@ -61,7 +61,7 @@ try:
     if sub_pipe.returncode == 0:
         #gitlist = [os.path.join(os.getcwd(), pth) for pth in gitresp.split()]
         gitlist = gitresp.split()
-        gitshort = [os.path.join(os.path.split(gf)[-1]) for gf in gitlist]
+        gitshort = [os.path.join(os.path.split(gf.decode())[-1]) for gf in gitlist]
     else:
         gitlist = None    
 except Exception as reason:
@@ -98,6 +98,7 @@ if newest_first:
 
 try:  # this try is to catch ^C
     for this_one, filename in enumerate(filelist[start:]):  # [1:3] for test
+        #  print(this_one, filename)
         prerun, tmpfil = '', ''
         flags = look_for_flags(filename)
         args = ''
@@ -105,7 +106,10 @@ try:  # this try is to catch ^C
         if flags != []:
             if ('skip' in [flag.lower() for flag in flags] or
                 'script' in [flag.lower() for flag in flags]):
-                out_list.append([filename, flag.lower(), flag.lower(), 0, 0])
+                # this is fudgey to get the number of elements right
+                flag = ','.join([flag for flag in flags
+                                  if 'skip' in flag.lower() or 'script' in flag.lower()])
+                out_list.append([filename, flag.lower().encode(), b'Skipping', 0, 0])
                 continue  # this stops it from further consideration (and from being run)
             else:
                 for flag in flags:
@@ -155,7 +159,7 @@ try:  # this try is to catch ^C
         (resp, errout) = sub_pipe.communicate()
         print(errout)
         have_error = (((errout != b'')
-                       and (not 'warn' in errout.lower()))
+                       and (not b'warn' in errout.lower()))
                       or (sub_pipe.returncode != 0))
         if have_error:
             err_files.append([this_one + start, filename])
@@ -166,6 +170,7 @@ try:  # this try is to catch ^C
         total += 1
         if have_error and stop_on_error:
             break
+
 except KeyboardInterrupt as reason:
     print('KeyboardInterrupt', reason)
 
@@ -183,8 +188,8 @@ last_one = this_one + start
 print()
 print('Python {pv}, Pyfusion {pfv} {date}'.format(pv=sys.version[0:20], pfv=pyfusion.VERSION, date=ctime()))
 for i, ll in enumerate(out_list):
-    exception_lines = list({lin[0:maxwidth] for lin in ll[1].split('\n') if 'Error:' in lin})  # set comprehension elim. dups
-    elines = ' '.join(exception_lines) if len(exception_lines) > 0 else ll[1]
+    exception_lines = list({lin[0:maxwidth] for lin in ll[1].split(b'\n') if b'Error:' in lin})  # set comprehension elim. dups
+    elines = b' '.join(exception_lines) if len(exception_lines) > 0 else ll[1]
     elines = elines + ll[1].split(exception_lines[0])[1][0:maxwidth-len(elines)] if len(elines) < maxwidth and len(exception_lines)>0 else elines
     print('{o:03d} {dt:5.2f} {fn:30s}: {msg}'
           .format(o=orig_order[i], dt=ll[3], fn='/'.join(ll[0].split('/')[-2:]),

@@ -22,6 +22,11 @@ Then you can do scand[28] to see the shots, ks, and
 
 > plot(ne18_bar[scand[28]['inds']])   # assuming ne18_bar was in the sql query above
 Notice that the scan 
+#  needs plot_sql run first, so call it a script for now
+_PYFUSION_TEST_@@Skip
+XX_FUSION_TEST_@@PRE@from pyfusion.data.DA_datamining import Masked_DA, DA; da=DA(dat) ; da.extract(locals())
+
+
 """
 def span(xs):
     return([float(round(nanmin(xs),3)), float(round(nanmax(xs),3))])

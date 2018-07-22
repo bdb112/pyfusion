@@ -44,6 +44,7 @@ In b), the local dictionary is updated.  b) might be clearer to do it explicitly
 # cant deepcopy locals()
 import sys as _sys
 import os
+import six
 from six.moves import input
 
 ## put any functions you might use in the expressions here
@@ -56,8 +57,8 @@ except:
         verbose=2
         print(' process_cmd_line_args detected we are running outside of'
               ' pyfusion, verbose=%d' % verbose)
-import string
-from pylab import is_string_like
+
+# from matplotlib import is_string_like # deprecated in 2.2
 
 def list_vars(locdict, Stop, tail_msg=''):
     if '_var_defaults' in locdict:
@@ -66,7 +67,7 @@ def list_vars(locdict, Stop, tail_msg=''):
         print(locdict['_var_defaults'])
     # check the global namespace too - can't see _var_defaults when
     # running with "run -i" (but it hasn't helped).    
-    if _var_defaults in globals():
+    if '_var_defaults' in globals():
         print('\n=========== Variables, and default values =========')
         print(globals()['_var_defaults'])
     else:
@@ -85,7 +86,7 @@ def list_vars(locdict, Stop, tail_msg=''):
                 print("  %s = %s" %  (k, locdict[k]))
                 _n +=1
                 if (_n==20):
-                    # was raw_input for python2 - hopefully six.moves works for python2/3
+                    # was raw_input for python2 - six.moves works for python2/3
                     ans=input('do you want to see the rest of the local vars? (y/N/Q) ')
                     if  ans.upper()=='Q': 
                         _sys.exit()
@@ -133,8 +134,8 @@ if os.path.split(_args[0])[-1] in ['ipython']:
 else:     # argv[0] is hopefully a python script, and we don't want to parse it
     _args = _args[1:]
 
-print('pyfusion.utils.process_cmd_line_args_code')
-if 'from_runpy' in globals():
+print('Using pyfusion.utils.process_cmd_line_args_code...')
+if 'from_runpy' in globals():  # Note: this refers to runpy_cmd not the usual runpy
     _args = args_from_runpy.split(' ')
 for _expr in _args:
     if (array(_expr.upper().split('-')) == "HELP").any():
@@ -161,7 +162,7 @@ for _expr in _args:
             # if the present _lhs contains a string, try adding quotes to RHS
             # in case they were stripped by the shell.  But won't work for 
             # _lhs that are None.
-            _expr_to_exec = 'is_str = is_string_like('+_lhs+')'
+            _expr_to_exec = 'is_str = isinstance('+_lhs+', six.string_types)'
             exec(_expr_to_exec)
             if is_str and _rhs[0]!="'" and _rhs[0]!='"':
                 _expr_to_exec = _lhs+'="'+_rhs+'"'

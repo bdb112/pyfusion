@@ -15,10 +15,10 @@ sys.path.append('/home/bdb112/pyfusion/working/pyfusion/')
 from pyfusion.data.DA_datamining import DA 
 
 if len(sys.argv) < 2:
-    raise ValueError('DA_info "filename"')
+    raise Exception('Syntax is:  DA_info "filename"')
 else:
     filename = sys.argv[1]
 
 from pyfusion.data.DA_datamining import Masked_DA, DA
 da = DA(filename)
-print da['info']
+print(da['info'])

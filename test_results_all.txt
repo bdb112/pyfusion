@@ -2,6 +2,261 @@ Use emacs sort-columns after defining column with the region to put in order
 
 sorting simplified - 3 dig leading 0's and alpha is the standard order
 
+Python 3.6.5 |Anaconda, Inc, Pyfusion 0.9.5a (b'5dca5be') Sun Jul 22 17:51:59 2018
+000  0.97 examples/DA_info.py           : b'OK! '
+001  1.31 examples/DP14_mode_plot.py    : b'OK! '
+002  1.65 examples/N2_puff_correlation.py: b"Err UnicodeDecodeError: 'ascii' codec can't decode byte 0xec in position 0: ordinal not in ran"
+003  0.00 examples/W7X_OP1.1_LCFS.py    : b'OK! skip'
+004  1.11 examples/W7X_analysis.py      : b"Err TypeError: a bytes-like object is required, not 'str' "
+005  0.00 examples/W7X_analysis_Fri_11Mar.py: b'OK! script'
+006  0.00 examples/W7X_get_shot_times.py: b'OK! skip'
+007  0.00 examples/W7X_marfe_neTe_profiles.py: b'OK! script'
+008  1.51 examples/W7X_neTe_profile.py  : b"Err UnicodeDecodeError: 'ascii' codec can't decode byte 0xec in position 0: ordinal not in ran"
+009  0.52 examples/W7X_probe_list.py    : b'OK! '
+010  0.45 examples/W7X_read_json.py     : b'OK! '
+011  0.43 examples/__init__.py          : b'OK! '
+012  1.07 examples/barber_pole.py       : b'Err TypeError: must be str, not MatplotlibDeprecationWarning '
+013  1.51 examples/basic_ne_scan.py     : b"Err NameError: name 'seg' is not defined "
+014  0.50 examples/bug_report.py        : b'OK! '
+015  1.58 examples/channel_angle_games.py: b"Err KeyError: 'params is not a file in the archive' "
+016  1.48 examples/channel_spectra.py   : b"Err ModuleNotFoundError: No module named 'MDSplus' TypeError: must be str, not UserWarning  Du"
+017  1.19 examples/check_DA.py          : b'OK! '
+018  2.52 examples/check_HD_histogram.py: b'Err IndexError: only integers, slices (`:`), ellipsis (`...`), numpy.newaxis (`None`) and inte'
+019  1.73 examples/check_W7X_timebase_repair.py: b"Err UnicodeError: Unpickling a python object failed: UnicodeDecodeError('ascii', b'\\xacN{y\\x9b"
+020  0.51 examples/check_dw_pdt.py      : b'OK! '
+021  0.05 examples/check_other_data.py  : b'Err TabError: inconsistent use of tabs and spaces in indentation '
+022  1.64 examples/check_polarity_flips.py: b"Err KeyError: 'params is not a file in the archive' "
+023  6.57 examples/clean_up_pyfusion_text.py: b'OK! '
+024  6.14 examples/clean_up_pyfusion_text_mp.py: b'OK! '
+025  6.16 examples/cluster_DA.py        : b'Err TypeError: must be str, not UserWarning '
+026  1.14 examples/cluster_info.py      : b"Err NameError: name 'file' is not defined "
+027  1.26 examples/cluster_phases_three_colour.py: b"Err ameError: name 'pyfusion' is not defined ModuleNotFoundError: No module named 'dist_nogil'"
+028  1.66 examples/coherence_vs_time.py : b"Err ModuleNotFoundError: No module named 'MDSplus' TypeError: must be str, not UserWarning  Du"
+029  1.27 examples/compare_LPdas.py     : b'OK! '
+030  1.36 examples/compare_analysis.py  : b"Err NameError: name 'files' is not defined "
+031  0.00 examples/compare_bands.py     : b'OK! skip'
+032  1.62 examples/copy_DA.py           : b"Err FileNotFoundError: [Errno 2] No such file or directory: '../../datamining/DA/PF2_130813_50"
+033  0.00 examples/correct_LP_data.py   : b'OK! skip'
+034  1.82 examples/cross_phase.py       : b"Err ModuleNotFoundError: No module named 'MDSplus' TypeError: must be str, not UserWarning  Du"
+035  1.36 examples/density_cluster.py   : b"Err AttributeError: 'range' object has no attribute 'extend' "
+036  1.18 examples/divertor_power_profile.py: b'OK! '
+037  0.00 examples/example_fragments.py : b'OK! script'
+038  2.83 examples/extract_limiter_coords.py: b"Err SyntaxError: Missing parentheses in call to 'print'. Did you mean print('testing vector ro"
+039  0.21 examples/file_finder_db.py    : b'OK! '
+040  0.00 examples/file_sorter.py       : b'OK! skip'
+041  0.00 examples/find_2D_conf_scans.py: b'OK! skip'
+042  0.00 examples/find_VSL_locking.py  : b'OK! script'
+043  3.93 examples/find_close_shot.py   : b"Err UnicodeError: Unpickling a python object failed: UnicodeDecodeError('ascii', b'\\x00\\x00\\x0"
+044  1.77 examples/find_last_data.py    : b'Err ValueError: We require that low limit is present, and upper is not: low limit of 50639 not'
+045  1.52 examples/flip_phase.py        : b'OK! '
+046  0.65 examples/fonts.py             : b'Err AttributeError: Unknown property axisbg '
+047  2.19 examples/gen_fs_bands.py      : b"Err KeyError: 'params is not a file in the archive' TypeError: must be str, not UserWarning  D"
+048  2.19 examples/gen_fs_general.py    : b"Err ModuleNotFoundError: No module named 'MDSplus' TypeError: must be str, not UserWarning  Du"
+049  1.82 examples/gen_fs_local.py      : b"Err KeyError: 'params is not a file in the archive' TypeError: must be str, not UserWarning  D"
+050  0.00 examples/get_LP_data.py       : b'OK! skip'
+051  2.14 examples/get_basic_params.py  : b'Err ValueError: no good shots '
+052  2.12 examples/get_diamag.py        : b'OK! '
+053  0.00 examples/get_wp_etc.py        : b'OK! skip'
+054  0.07 examples/good_ones_density_cluster.py: b'Err SyntaxError: invalid syntax '
+055  0.00 examples/h1_mode_identify.py  : b'OK! script'
+056  1.87 examples/h1_mode_lists.py     : b"Err NameError: name 'file' is not defined "
+057  2.46 examples/igetfile.py          : b'OK! '
+058  1.00 examples/manage_data.py       : b"Err TypeError: '<' not supported between instances of 'str' and 'tuple' "
+059  0.00 examples/many_specs.py        : b'OK! skip'
+060  1.95 examples/marfe_plot.py        : b"Err UnicodeError: Unpickling a python object failed: UnicodeDecodeError('ascii', b'\\xc0\\xa4,\\x"
+061  1.74 examples/marfe_time_plot.py   : b'OK! '
+062  3.44 examples/medium_300.py        : b'OK! '
+063  2.32 examples/merge_basic_HJ_diagnostics.py: b"Err ata3_6' ImportError: Can't import Heliotron J data acquisition library, staying in exe dir"
+064  1.66 examples/merge_basic_diagnostics.py: b"Err or: [Errno 2] No such file or directory: 'DA_file.npz' NameError: name 'dd' is not defined"
+065  0.04 examples/merge_h1_diagnostics.py: b"Err ModuleNotFoundError: No module named 'MDSplus' "
+066  1.71 examples/merge_text_pyfusion.py: b'Err TypeError: must be str, not FutureWarning '
+067  0.00 examples/mini_summary.py      : b'OK! skip'
+068  0.00 examples/mini_summary_MDS.py  : b'OK! skip'
+069  0.00 examples/mirnov_RMS_db.py     : b'OK! skip'
+070  0.00 examples/mode_identify_example_2012.py: b'OK! skip'
+071  0.04 examples/mode_identify_example_from_ICPP_2010.py: b'Err SyntaxError: invalid syntax '
+072  1.80 examples/mode_identify_script.py: b'Err IndexError: list index out of range '
+073  0.19 examples/modify_cfg.py        : b"Err TypeError: a bytes-like object is required, not 'str' "
+074  1.71 examples/multi_plot.py        : b'OK! '
+075  0.04 examples/ne_profile_preprocess.py: b'Err SyntaxError: invalid syntax '
+076  0.51 examples/new_mode_identify_script.py: b"Err NameError: name 'file' is not defined "
+077  0.05 examples/pellet_script.py     : b'Err SyntaxError: invalid syntax '
+078  2.65 examples/phase_histogram.py   : b'OK! '
+079  1.84 examples/play_with_fft_signals.py: b"Err AttributeError: module 'pylab' has no attribute 'is_string_like' "
+080  1.09 examples/plot_DA.py           : b'OK! '
+081  0.00 examples/plot_LP2D.py         : b'OK! skip'
+082  1.93 examples/plot_basic.py        : b'Err TypeError: must be str, not MatplotlibDeprecationWarning '
+083  0.00 examples/plot_both_LP2D.py    : b'OK! skip'
+084  1.88 examples/plot_correlation.py  : b"Err UnicodeDecodeError: 'ascii' codec can't decode byte 0xaf in position 3: ordinal not in ran"
+085  0.62 examples/plot_json_timeseries.py: b'OK! '
+086  0.04 examples/plot_many.py         : b'Err SyntaxError: invalid syntax '
+087  2.00 examples/plot_multi_movie.py  : b"Err ModuleNotFoundError: No module named 'MDSplus' TypeError: must be str, not UserWarning  Du"
+088  0.60 examples/plot_ne_profile.py   : b"Err ModuleNotFoundError: No module named 'MDSplus' "
+089  1.17 examples/plot_npz_data.py     : b'OK! '
+090  1.06 examples/plot_shot.py         : b'OK! '
+091  1.98 examples/plot_shots.py        : b"Err UnicodeError: Unpickling a python object failed: UnicodeDecodeError('ascii', b'\\x94\\xf6\\xe"
+092  1.82 examples/plot_signals.py      : b"Err UnicodeError: Unpickling a python object failed: UnicodeDecodeError('ascii', b'\\xac@\\xdf\\x"
+093  1.90 examples/plot_signals_trivial.py: b"Err KeyError: 'params is not a file in the archive' "
+094  1.91 examples/plot_specgram.py     : b"Err KeyError: 'params is not a file in the archive' "
+095  1.94 examples/plot_svd.py          : b"Err ModuleNotFoundError: No module named 'MDSplus' TypeError: must be str, not UserWarning  Du"
+096  0.05 examples/plot_svd_old.py      : b'Err SyntaxError: invalid syntax '
+097  1.83 examples/plot_svd_simple.py   : b"Err ModuleNotFoundError: No module named 'MDSplus' TypeError: must be str, not UserWarning  Du"
+098  1.63 examples/plot_text_fft.py     : b'Err OSError: g:fft26_50.dat not found. '
+099  0.05 examples/plot_text_pyfusion.py: b'Err SyntaxError: invalid syntax '
+100  2.36 examples/prepfs_range.py      : b'OK! '
+101  2.45 examples/prepfs_range_mp.py   : b'Err TypeError: a bytes-like object is required, not \'str\' """  The above exception was the dir'
+102  2.35 examples/prepfs_range_sep.py  : b'OK! '
+103  0.37 examples/prepfs_time_mp.py    : b"Err AttributeError: module 'itertools' has no attribute 'izip' "
+104  1.35 examples/process_chirps.py    : b"Err NameError: name 'dd' is not defined "
+105  2.04 examples/process_swept_Langmuir.py: b"Err UnicodeError: Unpickling a python object failed: UnicodeDecodeError('ascii', b'\\xac\\x97\\\\\\"
+106  0.68 examples/query_h1ds.py        : b"Err r: No module named 'sqlalchemy.ext.sqlsoup' ModuleNotFoundError: No module named 'sqlsoup'"
+107  6.36 examples/read_DF.py           : b'OK! aining open files:/data/datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags_comp5.h5...done '
+108  1.00 examples/realtime_mode.py     : b"Err ModuleNotFoundError: No module named 'MDSplus' "
+109  2.40 examples/restore_sin.py       : b"Err UnicodeDecodeError: 'ascii' codec can't decode byte 0xd4 in position 0: ordinal not in ran"
+110  2.62 examples/run_process_LP.py    : b'OK! '
+111  2.04 examples/run_process_TDLP.py  : b'OK! '
+112  1.85 examples/save_to_local.py     : b'OK! '
+113  1.09 examples/show_corruption.py   : b"Err TypeError: 'zip' object is not subscriptable "
+114 19.56 examples/slider_f_t.py        : b"Err n't decode byte 0xe3 in position 190320: ordinal not i NameError: name 'dd' is not defined"
+115  1.46 examples/small_300.py         : b'OK! '
+116  1.54 examples/small_65.py          : b'OK! '
+117  0.06 examples/sql_plot.py          : b"Err ModuleNotFoundError: No module named 'sqlsoup' "
+118  0.05 examples/svd_simple_rotator.py: b'Err SyntaxError: invalid syntax '
+119  2.35 examples/tables_extract.py    : b'OK! '
+120  1.54 examples/test_lasso_fs.py     : b'Err TypeError: must be str, not MatplotlibDeprecationWarning '
+121  1.97 examples/testall.py           : b"Err ameError: name 'pyfusion' is not defined ModuleNotFoundError: No module named 'dist_nogil'"
+122  0.04 examples/wid_specgram.py      : b'Err SyntaxError: invalid syntax '
+123  2.60 examples/write_LP_as_CSV.py   : b"Err NameError: name 'file' is not defined "
+32 good, 72 errors out of 104 not skipped
+
+
+Python 2.7.12 (default, Dec, Pyfusion 0.9.5a (5dca5be) Sun Jul 22 13:23:48 2018
+000  0.85 examples/DA_info.py           : OK! 
+001  1.22 examples/DP14_mode_plot.py    : OK! 
+002  2.88 examples/N2_puff_correlation.py: OK! 0m   plt.text(x[c] + (dot_radius[c] +.001)*np.array([1,-1])[x[c]<0], z[c] + voff, ch[2:], 
+003  0.00 examples/W7X_OP1.1_LCFS.py    : OK! skip
+004  1.79 examples/W7X_analysis.py      : OK! ndim > 0 to an index will result in an error in the future   return(shotDA[item][ws]) 
+005  0.00 examples/W7X_analysis_Fri_11Mar.py: OK! script
+006  0.00 examples/W7X_get_shot_times.py: OK!   only works on w7x net
+007  0.00 examples/W7X_marfe_neTe_profiles.py: OK! script
+008  1.48 examples/W7X_neTe_profile.py  : OK! meWarning: Invalid value encountered in median for 1 results   RuntimeWarning) 
+009  0.52 examples/W7X_probe_list.py    : OK! 
+010  0.40 examples/W7X_read_json.py     : OK! 
+011  0.42 examples/__init__.py          : OK! 
+012  1.03 examples/barber_pole.py       : OK! 
+013  3.39 examples/basic_ne_scan.py     : OK! 
+014  0.64 examples/bug_report.py        : OK! 
+015  1.78 examples/channel_angle_games.py: OK! 
+016  3.31 examples/channel_spectra.py   : OK! 
+017  0.93 examples/check_DA.py          : OK! 
+018  2.61 examples/check_HD_histogram.py: OK! 
+019  4.74 examples/check_W7X_timebase_repair.py: OK! 
+020  0.39 examples/check_dw_pdt.py      : OK! 
+021  1.15 examples/check_other_data.py  : OK! 
+022  2.66 examples/check_polarity_flips.py: OK! 
+023  6.62 examples/clean_up_pyfusion_text.py: OK! 
+024  7.77 examples/clean_up_pyfusion_text_mp.py: OK! 
+025 13.05 examples/cluster_DA.py        : OK! r facecolor properties.    warnings.warn("Setting the 'color' property will override" 
+026  3.59 examples/cluster_info.py      : OK! 
+027  6.68 examples/cluster_phases_three_colour.py: OK! ] to [10 11 12 13 14 15] - i.e. cldata has different sel,  ************************** 
+028  1.82 examples/coherence_vs_time.py : OK! f fftopt > 0: new_time_range = get_optimum_time_range(input_data, new_time_range, fftopt) 
+029  1.42 examples/compare_LPdas.py     : OK! 
+030  0.99 examples/compare_analysis.py  : Err NameError: name 'files' is not defined 
+031  0.00 examples/compare_bands.py     : OK! skip
+032  1.02 examples/copy_DA.py           : Err IOError: [Errno 2] No such file or directory: '../../datamining/DA/PF2_130813_50_5X_1.5_5b
+033  0.00 examples/correct_LP_data.py   : OK! skip
+034  2.45 examples/cross_phase.py       : OK! 
+035  1.46 examples/density_cluster.py   : OK! 
+036  1.03 examples/divertor_power_profile.py: OK! 
+037  0.00 examples/example_fragments.py : OK! script
+038  2.87 examples/extract_limiter_coords.py: OK! 
+039  0.08 examples/file_finder_db.py    : Err TypeError: glob() got an unexpected keyword argument 'recursive' 
+040  0.00 examples/file_sorter.py       : OK! skip
+041  0.00 examples/find_2D_conf_scans.py: OK! skip
+042  0.00 examples/find_VSL_locking.py  : OK! script
+043  0.85 examples/find_close_shot.py   : OK! 
+044  1.24 examples/find_last_data.py    : OK! 
+045  0.90 examples/flip_phase.py        : OK! 
+046  0.58 examples/fonts.py             : OK! 
+047 10.74 examples/gen_fs_bands.py      : OK! Time:  ########shot 27233: 230/1428 fs finished in 8.79/9.64 
+048  5.28 examples/gen_fs_general.py    : OK! 
+049  6.29 examples/gen_fs_local.py      : OK! 
+050  0.00 examples/get_LP_data.py       : OK! skip
+051  1.10 examples/get_basic_params.py  : Err ValueError: no good shots 
+052  1.53 examples/get_diamag.py        : OK!  result in an error in the future   sm_timebase = timebase[offset:offset+len(sm_sig)] 
+053  0.00 examples/get_wp_etc.py        : OK! skip
+054  0.03 examples/good_ones_density_cluster.py: Err SyntaxError: invalid syntax 
+055  0.00 examples/h1_mode_identify.py  : OK! script
+056  8.24 examples/h1_mode_lists.py     : OK! r facecolor properties.    warnings.warn("Setting the 'color' property will override" 
+057  1.68 examples/igetfile.py          : OK! 
+058  0.49 examples/manage_data.py       : OK! 
+059  0.00 examples/many_specs.py        : OK! skip
+060  1.70 examples/marfe_plot.py        : OK! : 183/4, 1924 **************************   config_name=config_name, **kwargs).fetch() 
+061  1.77 examples/marfe_time_plot.py   : OK! 
+062  2.91 examples/medium_300.py        : OK! 
+063  1.50 examples/merge_basic_HJ_diagnostics.py: Err NameError: name 'dd' is not defined 
+064  1.24 examples/merge_basic_diagnostics.py: Err IOError: [Errno 2] No such file or directory: 'DA_file.npz' 
+065  0.94 examples/merge_h1_diagnostics.py: Err NameError: name 'dd' is not defined 
+066  1.33 examples/merge_text_pyfusion.py: OK! 
+067  0.00 examples/mini_summary.py      : OK! skip
+068  0.00 examples/mini_summary_MDS.py  : OK! skip
+069  0.00 examples/mirnov_RMS_db.py     : OK! skip
+070  0.00 examples/mode_identify_example_2012.py: OK! skip
+071  0.03 examples/mode_identify_example_from_ICPP_2010.py: Err SyntaxError: invalid syntax 
+072  1.23 examples/mode_identify_script.py: Err IndexError: list index out of range 
+073  0.09 examples/modify_cfg.py        : OK! 
+074  1.18 examples/multi_plot.py        : OK! 
+075  2.99 examples/ne_profile_preprocess.py: OK! 
+076  0.82 examples/new_mode_identify_script.py: Err ValueError: Need to choose doN=True and/or doM=True 
+077  0.03 examples/pellet_script.py     : Err SyntaxError: invalid syntax 
+078  3.17 examples/phase_histogram.py   : OK! 
+079  2.00 examples/play_with_fft_signals.py: OK! 
+080  0.85 examples/plot_DA.py           : OK! 
+081  0.00 examples/plot_LP2D.py         : OK! skip
+082  4.04 examples/plot_basic.py        : OK! 42: RuntimeWarning: divide by zero encountered in true_divide   1/(dy1+dy2),)) 
+083  0.00 examples/plot_both_LP2D.py    : OK! skip
+084  1.95 examples/plot_correlation.py  : OK! 
+085  0.43 examples/plot_json_timeseries.py: OK! 
+086  0.92 examples/plot_many.py         : Err ValueError: SCAN NOT AVAILABLE!!!!! 
+087  4.24 examples/plot_multi_movie.py  : Err IOError: [Errno 2] No such file or directory: u'/tmp/movie/H1ToroidalAxial_97419.png' 
+088  2.84 examples/plot_ne_profile.py   : OK! 
+089  0.92 examples/plot_npz_data.py     : OK! 
+090  0.89 examples/plot_shot.py         : OK! 
+091  1.79 examples/plot_shots.py        : OK! 
+092  1.59 examples/plot_signals.py      : OK!  label='...' kwarg on individual plots.   warnings.warn("No labelled objects found. " 
+093  3.28 examples/plot_signals_trivial.py: OK! 
+094  4.29 examples/plot_specgram.py     : OK! ************************   set_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
+095  3.30 examples/plot_svd.py          : OK! 
+096  3.14 examples/plot_svd_old.py      : OK! 
+097  3.14 examples/plot_svd_simple.py   : OK! 
+098  0.75 examples/plot_text_fft.py     : Err IOError: [Errno 2] No such file or directory: 'g:fft26_50.dat' 
+099  0.81 examples/plot_text_pyfusion.py: Err IOError: [Errno 2] No such file or directory: '/docs/home/bdb112/pyfusion/working/pyfusion
+100 11.44 examples/prepfs_range.py      : OK! 
+101  6.70 examples/prepfs_range_mp.py   : OK! 
+102  2.82 examples/prepfs_range_sep.py  : OK! 
+103  5.12 examples/prepfs_time_mp.py    : OK! 
+104  0.78 examples/process_chirps.py    : Err NameError: name 'dd' is not defined 
+105  1.27 examples/process_swept_Langmuir.py: Err AttributeError: 'list' object has no attribute 'lower' 
+106  0.54 examples/query_h1ds.py        : Err sqlalchemy.exc.NoSuchTableError: summary 
+107  5.02 examples/read_DF.py           : OK! aining open files:/data/datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags_comp5.h5...done 
+108  1.37 examples/realtime_mode.py     : Err NameError: name 'cm' is not defined 
+109  2.17 examples/restore_sin.py       : Err NameError: name 'plot' is not defined 
+110  4.38 examples/run_process_LP.py    : OK! 
+111  1.32 examples/run_process_TDLP.py  : OK! 
+112  1.19 examples/save_to_local.py     : OK! 
+113  1.08 examples/show_corruption.py   : OK! 
+114  1.92 examples/slider_f_t.py        : OK! 
+115  1.06 examples/small_300.py         : OK! 
+116  1.07 examples/small_65.py          : OK! 
+117  2.41 examples/sql_plot.py          : OK! 
+118  1.37 examples/svd_simple_rotator.py: OK! 
+119  2.04 examples/tables_extract.py    : OK! 
+120  1.11 examples/test_lasso_fs.py     : OK! 
+121  1.18 examples/testall.py           : OK! 
+122  5.50 examples/wid_specgram.py      : OK! ************************   set_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
+123  1.78 examples/write_LP_as_CSV.py   : OK! 
+81 good, 23 errors out of 104 not skipped
+
 Python 2.7.12 (default, Dec, Pyfusion 0.9.3b (4b6d0e5 before commit) Sat Feb  3 10:11:03 2018
 000  0.65 examples/DA_info.py           : OK! 
 001  0.97 examples/DP14_mode_plot.py    : OK! 

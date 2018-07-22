@@ -41,7 +41,7 @@ def utc_GMT(ns, fmt='%Y%m%d %H:%M:%S.%f'):
     if isinstance(ns, (list, tuple)):
         return([utc_GMT(n) for n in ns])
     tstrct = time.gmtime(ns/1e9)
-    if (ns % 1000000000L) == 0:
+    if (ns % 1000000000) == 0:
         fmt = fmt.replace('.%f','')
     tstrct = datetime.datetime.utcfromtimestamp(ns/1e9)
     tstrg = datetime.datetime.strftime(tstrct, fmt)

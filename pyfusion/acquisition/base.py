@@ -100,8 +100,8 @@ def try_fetch_local(input_data, bare_chan):
         input_data.localname = os.path.join(each_path, '{shot}_{bc}.npz'
                                           .format(shot=shot_str, bc=bare_chan))
         # original - data_filename %filename_dict)
-        if pyfusion.VERBOSE>2: print(each_path,input_data.localname)
         files_exist = os.path.exists(input_data.localname)
+        if pyfusion.VERBOSE>2: print('search', each_path, 'for', input_data.localname, ['No!','Found!'][files_exist])
         debug_(pyfusion.DEBUG, 3, key='try_local_fetch')
         if files_exist: 
             intmp = np.any([st in input_data.localname.lower() for st in 

@@ -4,6 +4,7 @@ from time import time as seconds
 import os
 import sys
 from warnings import warn
+import six  # just for is_string_like fix
 
 """ Note: in programming, be careful not to refer to .da[k] unnecessarily
 if it is not loaded - typically, if you plan to test it then use it,
@@ -821,7 +822,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         if debug == 0: debug = self.debug
         if varnames is None: varnames = self.da.keys()  # all variables
 
-        if plt.is_string_like(varnames):
+        if isinstance(varnames, six.string_types):
             varlist = varnames.split(',')
         else: varlist = varnames
         val_tuple = ()

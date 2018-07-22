@@ -31,7 +31,7 @@ def get_shot_info(date, shot, item='comment', quiet=False):
                           .format(shot=shot))
         
 def get_shot_utc(shot, quiet=False):
-    """ convenience routine to obtain shot utc values """
+    """ convenience routine to obtain shot utc values - return unchanged if already a utc """
     if shot[0] > 1e9: # already utcs!
         return(shot)
     return(get_shot_info(date=shot[0], shot=shot[1], item='utc', quiet=quiet))

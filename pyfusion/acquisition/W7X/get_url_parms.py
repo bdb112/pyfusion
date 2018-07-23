@@ -28,12 +28,16 @@ install_aliases()
 from urllib.request import urlopen, Request
 #  https://codereview.stackexchange.com/questions/21033/flatten-dictionary-in-python-functional-style
 
-def flatten_dict(d):
+def flatten_dict(d, level=None, sep='.'):
+    """ return a dictionary flatten to a  depth of <level> 
+    level = 0 is a noop
+    level = None returns a totally flattened dictionary
+    """
     def items():
         for key, value in d.items():
-            if isinstance(value, dict):
-                for subkey, subvalue in flatten_dict(value).items():
-                    yield key + "." + subkey, subvalue
+            if (level is None or level>0) and isinstance(value, dict):
+                for subkey, subvalue in flatten_dict(value, level=level-1 if level is not None else None, sep=sep).items():
+                    yield key + sep + subkey, subvalue
             else:
                 yield key, value
 
@@ -100,29 +104,29 @@ def get_minerva_parms(fetcher_obj):
     cal_remarks = mm.get_parm('parms/generalRemarks/values')[0] 
     print('last mod at ', last_mod, cal_remarks, end='\t')
     # go through all the channels mentioned, check mode according to I or V type
-    adc_dict = mm.get_parm('parms/probes/{mn}'.format(mn=fetcher_obj.minerva_name))
+    chan_dict = mm.get_parm('parms/probes/{mn}'.format(mn=fetcher_obj.minerva_name))
+    chans=[ch for ch in flatten_dict(chan_dict, 2,sep='/').keys() if 'channels' in ch]
     if fetcher_obj.config_name.endswith('I'):
-        adcs = [adc for adc in adc_dict if 'modeRes' in ','.join(flatten_dict(adc_dict[adc]))]
+        chans =[ch for ch,chall in
+                [(chn, flatten_dict(get_parm(chn, chan_dict)))
+                 for chn in chans] if np.any(['istor.v' in k for k in chall])]
     elif fetcher_obj.config_name.endswith('U'):
-        adcs = [adc for adc in adc_dict if 'modeFac' in ','.join(flatten_dict(adc_dict[adc]))]
-    if len(adcs) == 0:
-        raise LookupError('No suitable monitoring adcs found for {mn} on {shot}'
+        chans =[ch for ch,chall in
+                [(chn, flatten_dict(get_parm(chn, chan_dict)))
+                 for chn in chans] if np.any(['actor.v' in k for k in chall])]
+    if len(chans) == 0:
+        raise LookupError('No suitable monitoring chans found for {mn} on {shot}'
                           .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot))
-    elif len(adcs) > 1:
+    elif len(chans) > 1:
         debug_(pyfusion.DEBUG, 1, key='MinervaName', msg='leaving MinervaName')
-        raise ValueError('Too many adcs found for {mn} on {shot}'
+        raise ValueError('Too many chans found for {mn} on {shot}'
                          .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot))
     else:  # everything is fine, there is only one match.
-        adc = adcs[0]
-                
-    chans = list(mm.get_parm('parms/probes/{mn}/{adc}/channels'.format(mn=fetcher_obj.minerva_name, adc=adc)))
-    if len(chans) != 1:
-        raise LookupError('chan not found for {mn} on {shot}, adc {adc}'
-                          .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot, adc=adc))
-    chan = chans[0]
-    electronics = mm.get_parm('parms/probes/{mn}/{adc}/channels/{chan}'
-                              .format(mn=fetcher_obj.minerva_name, adc=adc, chan=chan))
-    chan_no = int(chan[7:]) - 1
+        chan = chans[0]
+
+    electronics = get_parm(chan, chan_dict)
+    adc, junk, channel = chan.split('/')
+    chan_no = int(channel[7:]) - 1
     adc_no = int(adc[3:])
     # gain and params are in string representation in the OP1.1, so do the same here
     rs_used = None  #  later we will save rs_used whether I or V

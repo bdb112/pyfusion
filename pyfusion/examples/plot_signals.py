@@ -32,6 +32,7 @@ hold=0  # 0 means erase, 1 means hold, 2 means twinx
 labeleg='False'
 t_range=[]
 t0=0
+stop=True  # if False, push on with missing data 
 """
 exec(_var_defaults)
 
@@ -47,7 +48,7 @@ if 'W7X' in dev_name:
             utc0 = data.utc[0] 
 
 dev = pyfusion.getDevice(dev_name)
-data = dev.acq.getdata(shot_number,diag_name)
+data = dev.acq.getdata(shot_number,diag_name, contin=not stop)
 if len(t_range) > 0:
     data = data.reduce_time(t_range)
 

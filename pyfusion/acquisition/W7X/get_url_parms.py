@@ -99,29 +99,22 @@ def get_minerva_parms(fetcher_obj):
     last_mod = mm.get_parm('parms/modifiedAt/values')[0]
     cal_remarks = mm.get_parm('parms/generalRemarks/values')[0] 
     print('last mod at ', last_mod, cal_remarks, end='\t')
-    adcs = list(mm.get_parm('parms/probes/{mn}'.format(mn=fetcher_obj.minerva_name)))
+    # go through all the channels mentioned, check mode according to I or V type
+    adc_dict = mm.get_parm('parms/probes/{mn}'.format(mn=fetcher_obj.minerva_name))
+    if fetcher_obj.config_name.endswith('I'):
+        adcs = [adc for adc in adc_dict if 'modeRes' in ','.join(flatten_dict(adc_dict[adc]))]
+    elif fetcher_obj.config_name.endswith('U'):
+        adcs = [adc for adc in adc_dict if 'modeFac' in ','.join(flatten_dict(adc_dict[adc]))]
     if len(adcs) == 0:
-        raise LookupError('No adcs found for {minerva_name} on {shot}'
+        raise LookupError('No suitable monitoring adcs found for {mn} on {shot}'
                           .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot))
-    elif len(adcs) == 1:
-        if fetcher_obj.config_name.endswith('I'):
-            adc = adcs[0]
-        elif fetcher_obj.config_name.endswith('U'):
-            adc = adcs[0]
-        else:
-            raise LookupError('No monitor on ' + fetcher_obj.config_name)
-
-    elif len(adcs) == 2:
-        adcs = np.sort(adcs)
-        if fetcher_obj.config_name.endswith('I'):
-            adc = adcs[0]
-        else:
-            adc = adcs[-1]
-    else:
+    elif len(adcs) > 1:
         debug_(pyfusion.DEBUG, 1, key='MinervaName', msg='leaving MinervaName')
         raise ValueError('Too many adcs found for {mn} on {shot}'
-                          .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot))
-            
+                         .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot))
+    else:  # everything is fine, there is only one match.
+        adc = adcs[0]
+                
     chans = list(mm.get_parm('parms/probes/{mn}/{adc}/channels'.format(mn=fetcher_obj.minerva_name, adc=adc)))
     if len(chans) != 1:
         raise LookupError('chan not found for {mn} on {shot}, adc {adc}'
@@ -132,6 +125,7 @@ def get_minerva_parms(fetcher_obj):
     chan_no = int(chan[7:]) - 1
     adc_no = int(adc[3:])
     # gain and params are in string representation in the OP1.1, so do the same here
+    rs_used = None  #  later we will save rs_used whether I or V
     if fetcher_obj.config_name.endswith('I'):
         if 'modeResistor' not in electronics:
             raise LookupError('current not recorded for {mn} on {shot}, adc {adc}'
@@ -144,10 +138,10 @@ def get_minerva_parms(fetcher_obj):
             rs_used += 1. # original very rough way to allow for cross talk effect
         else:
             pyfusion.utils.warn('assuming no need to fudge rs')
-        gainstr = str(1/(rs_used*electronics['driverElectronicTotalGain']['values'][0])) + ' A'
+        gainstr = str(1/(rs_used*electronics['driverElectronicTotalGain']['values'][0])) + ' A' 
 
     else:
-        modeFactor = electronics['modeFactor']['values'][0]
+        modeFactor = float(electronics['modeFactor']['values'][0])
         rs = None
         gainstr = str(1/(modeFactor*electronics['driverElectronicTotalGain']['values'][0])) + ' V'
 

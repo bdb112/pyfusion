@@ -10,6 +10,9 @@ pyfusion - python code for data mining plasma fluctuations
  * wid_specgram memory error for foverlap>0
 Most recent update: 
 
+Version 0.97 alpha -  Integrate LP diagnostic set for OP1.2b commissioning
+ * pyfusion.cfg and get_url_parms (fix dodgy voltage channel hack)
+
 Version 0.96 alpha -  python 3 fixes mainly, also
  * get_url_params: add flatten_dict to allow for print_dict
  * python3 fixes using six. including test_examples, and the test examples

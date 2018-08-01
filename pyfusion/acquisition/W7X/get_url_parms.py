@@ -213,7 +213,7 @@ def get_PARMLOG_cache(shot):
     # put them in a dictionary as a cache - should live in an object
     # (maybe MinervaMap, but save in pyfusion,,,, for now)
     if not hasattr(pyfusion, 'W7X_minerva_cache') or pyfusion.W7X_minerva_cache is None:
-        print('loading pyfusion.W7X_minerva_cache ..')
+        print('>>>>>> loading pyfusion.W7X_minerva_cache', end='..')
         pyfusion.W7X_minerva_cache = dict([[fn, json.load(open(fn, 'rt'))] for fn in Vfiles])
 
     vnumstrs = [vfile.split('PARLOG_V')[-1].split('_.json')[0] for vfile in Vfiles]
@@ -222,8 +222,9 @@ def get_PARMLOG_cache(shot):
     utcs = get_shot_utc(shot)
     # now work down thourgh the versions and find the first where shot utc is after valid
     for vkey in np.array(Vfiles)[sortd]:
-        debug_(pyfusion.DEBUG, 1, key='get_PARMLOG_cache', msg='reading PARLOG_V files')
+        debug_(pyfusion.DEBUG, 2, key='get_PARMLOG_cache', msg='reading PARLOG_V files')
         if get_parm('parms/validSince/dimensions',pyfusion.W7X_minerva_cache[vkey])[0] < utcs[0]:
+            pyfusion.utils.warn('Changing to parmlog ' + vkey)
             return(vkey)
     return(None)    
 

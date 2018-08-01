@@ -336,10 +336,12 @@ class BaseAcquisition(object):
         # enable stopping here on error to allow traceback if DEBUG>2
         # there is similar code elsewhere - check if is duplication
 
+        fetcher_class.contin = contin
         try:
             d = fetcher_class(self, shot, interp=interp,
                               config_name=config_name, **kwargs).fetch()
         except exceptions as reason:
+            debug_(pyfusion.DEBUG,1,key='failed_fetch')
             if contin:
                 if pyfusion.VERBOSE-quiet >= 0:
                     pyfusion.utils.warn('Exception: ' + str(reason))
@@ -640,7 +642,7 @@ class MultiChannelFetcher(BaseDataFetcher):
             sgn = 1
             if chan[0]=='-': sgn = -sgn  # this allows flipping sign in the multi chan config
             bare_chan = (chan.split('-'))[-1]
-            ch_data = self.acq.getdata(self.shot, bare_chan)
+            ch_data = self.acq.getdata(self.shot, bare_chan, contin=self.contin)
             if len(t_range) == 2:
                 ch_data = ch_data.reduce_time(t_range)
 

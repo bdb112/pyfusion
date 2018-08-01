@@ -10,6 +10,14 @@ pyfusion - python code for data mining plasma fluctuations
  * wid_specgram memory error for foverlap>0
 Most recent update: 
 
+ First part of an update to do get_signal_path better, and fix multi plots will missing data
+ * acq/base.py: allow plots of multi diags to preceed with Null data on same channels 
+ * dat/utils.make_title - don't use the device part of the channel name in ylabels
+ * plot_shots - try to make plot figures pop up as they go - no effect on PC
+ * print_dict_tree - save file to temp, allow exclusion of names
+
+
+
 Version 0.97 alpha -  Fix the dodgy channel fix in previous attempt, tidy the new config
   * add level limit to flatten_dict
 

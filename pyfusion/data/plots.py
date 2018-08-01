@@ -247,7 +247,7 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
         pl.savefig(filename)
     else:
         pl.show(block=0)
-    debug_(pyfusion.DEBUG, 4, key='plot_signals')
+    debug_(pyfusion.DEBUG, 2, key='plot_signals')
 
 @register("TimeseriesData")
 def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, filename=None, coloraxis='now is clim!', clim=None, xlim=None, ylim=None, noverlap=0,NFFT=None, suptitle='shot {shot}', title=None, sharey=True, sharex=True, n_columns=None, raw_names=False, hspace=None, labelfmt="{short_name} {units}", filldown=False,hold=None,**kwargs):

@@ -753,7 +753,9 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
 #########################################
 @register("TimeseriesData")
 def downsample(input_data, skip=10, chan=None, copy=False):
-    """ Good example of filter that changes the size of the data.
+    """ downsample by a factor skip default 10
+    Good example of filter that changes the size of the data.
+    
     """
     from .base import DataSet
     from .timeseries import TimeseriesData

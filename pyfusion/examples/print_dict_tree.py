@@ -2,11 +2,15 @@
 """ To (selectively) print matching lines in a flattened Minerva map dictionary
     or any other dictionary, matching python re. regexp wild_card
 
+    wild_card:
+    excl: typically used to exclude time dimension to avoid many 'spurious'
+             differences
 Example:
 run pyfusion/examples/print_dict_tree.py wild_card=".*scr.*istor.val.*" shot=[20180719,37]
 if shot is an integer that is big enough to to be a utc, assume it is
+ 
+Result is left in matches, and saved in /tmp
 
-Result is left in matches
 """
 from pyfusion.acquisition.W7X.get_url_parms import MinervaMap, flatten_dict, flatten_dict_by_concatenating_keys, iteritems_nested
 from pyfusion.utils.time_utils import utc_ns  # for convenience in terminal input
@@ -21,7 +25,7 @@ _var_defaults = """
 wild_card = 'istor.val'
 date_string =''
 shot=(20180718,37)
- 
+excl='imensions' 
 """
 # grab the first arg if it does not contain an "="
 def __help__():  # must be before exec() line
@@ -43,3 +47,6 @@ matches = rgx.findall('\n'.join(op))
 print('{lm} matches to regexp "{wc}"'.format(lm=len(matches), wc=wild_card))
 for lin in np.sort(matches):
     print(lin)
+print('see matches or /tmp/parm_URL* for more detail')
+with open('/tmp/parm_URL_{v}'.format(v=mm.parm_URL.split('_')[-2]), 'w') as fout:
+    fout.writelines('\n'.join([m for m in np.sort(matches) if not excl in m]))

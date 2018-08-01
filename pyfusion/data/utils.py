@@ -180,7 +180,7 @@ def bin2list(input_value):
             output_list.append(ind)
     return output_list
 
-def split_names(names, pad=' ',min_length=3):
+def split_names(names, pad=' ', min_length=3):
     """ Given an array of strings, return an array of the part of the string
     (e.g. channel name) that varies, and optionally the prefix and suffix.
     The array of varying parts is first in the tuple in case others are not
@@ -260,6 +260,12 @@ def make_title(formatstr, input_data, channum=None, at_dict = {}, min_length=3, 
             else:
                 name = chan.config_name
                 
+            try:
+                if 'device' in input_data.params.values()[0]['params']:
+                    device =  input_data.params.values()[0]['params']['device']
+                name = name.replace(device+'_', '')
+            except:
+                pass
         at_dict.update({'units':chan.units})
         at_dict.update({'name': name})
 # replace internal strings of non-numbers with a single .  a14_input03 -> 14.03

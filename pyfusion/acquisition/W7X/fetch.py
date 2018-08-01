@@ -234,7 +234,7 @@ class W7XDataFetcher(BaseDataFetcher):
         # this form follows the config file settings
         self.repair = int(self.repair) if hasattr(self, 'repair') else default_repair
         dimraw = np.array(dat['dimensions'])  
-        # adjust dim only (not dim_raw so that zero time at t1
+        # adjust dim only (not dim_raw so that zero time remains at t1
         dim = dimraw - utc_0
         if self.repair == 0 or self.repair == -1:
             pass # leave as is

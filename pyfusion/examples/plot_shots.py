@@ -24,7 +24,6 @@ exec(process_cmd_line_args())
 
 dev = pyfusion.getDevice(dev_name)
 
-i = 0
 axs = []
 row_widths = [len(r) for r in shot_list if np.shape(r) is not ()]
 if len(row_widths) > 0 and shot_list[0][0] < 20160000:
@@ -50,6 +49,7 @@ if nrows is None and ncols is None:
 elif nrows is None:
     nrows = 1+ncols
     
+first_time = True  #try to make mutliple plots pop up as they go -no effect on PC
 for shot in shot_list:
     if shot is None: continue
     if i >= len(axs):

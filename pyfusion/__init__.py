@@ -106,6 +106,10 @@ def reload_config():
     but this is worse - commented out.
     """
     #config = PyfusionConfigParser()
+    # can't import from this level? py3?  to do with whether this is used as a module
+    #from conf.utils import clear_config  # clear it to try to remove old defs
+
+    #clear_config()
     read_config([DEFAULT_CONFIG_FILE, USER_CONFIG_FILE, USER_ENV_CONFIG_FILE])
     #return(config)
 

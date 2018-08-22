@@ -21,8 +21,9 @@ import time, calendar
 import pyfusion
 from pyfusion.acquisition.H1.scrape_wiki import get_links
 from pyfusion.debug_ import debug_
-from .get_shot_info  import get_shot_utc
+from get_shot_info  import get_shot_utc
 from pyfusion.utils.time_utils import utc_ns
+from pyfusion.data.shot_range import shot_gte
 
 install_aliases()
 from urllib.request import urlopen, Request
@@ -70,6 +71,8 @@ class MinervaMap(object):
             shot = [shot, shot]
 
         parm_URL = get_suitable_version(shot)
+        if parm_URL is None:
+            raise LookupError('No Minerva mapping for ', shot)
         fname = sanitised_json_filename(parm_URL)
         self.parm_URL = parm_URL
 
@@ -99,7 +102,16 @@ def get_parm(pseudourl, parmdict):
 
 
 def get_minerva_parms(fetcher_obj):
-    mm = MinervaMap(fetcher_obj.shot)
+    if shot_gte([20170101,0], fetcher_obj.shot):
+        print('Warning - looking up a pre-minerva shot { shot} '.format(shot=fetcher_obj.shot))
+        # return(fetcher_obj, '')
+    try:
+        mm = MinervaMap(fetcher_obj.shot)
+    except LookupError as reason:
+        raise LookupError('No Minerva mapping for {cn} as {mn} for shot {sh} {reason}'
+                          .format(mn=fetcher_obj.minerva_name, cn=fetcher_obj.config_name,
+                                  sh=fetcher_obj.shot, reason = str(reason)))
+    
     last_mod = mm.get_parm('parms/modifiedAt/values')[0]
     cal_remarks = mm.get_parm('parms/generalRemarks/values')[0] 
     print('last mod at ', last_mod, cal_remarks, end='\t')
@@ -150,11 +162,15 @@ def get_minerva_parms(fetcher_obj):
         gainstr = str(1/(modeFactor*electronics['driverElectronicTotalGain']['values'][0])) + ' V'
 
     fetcher_obj.gain = gainstr
+    CDS = 82 # until Op1.2b
     dmd = 180 + adc_no  # adc1 is the left most, and maps to 181_DATASTREAM
-    if adc_no > 4: dmd += 4
+    if adc_no > 4:
+        dmd += 4
+        if shot_gte(fetcher_obj.shot, [20180101,0]):
+            CDS = 26147
 
-    fetcher_obj.params = str("CDS=82,DMD={dmd},ch={ch},rs={rs},rs_used={rs_used}"
-                             .format(dmd=dmd, ch=chan_no, rs=rs,rs_used=rs_used))
+    fetcher_obj.params = str("CDS={CDS},DMD={dmd},ch={ch},rs={rs},rs_used={rs_used}"
+                             .format(CDS=CDS, dmd=dmd, ch=chan_no, rs=rs,rs_used=rs_used))
     debug_(pyfusion.DEBUG, 1, key='MinervaName', msg='leaving MinervaName')
     print('rs_used={rs_used}, overall gain={gain}, params={params}\t'
           .format(rs_used=rs_used, gain=fetcher_obj.gain, params=fetcher_obj.params))
@@ -172,7 +188,7 @@ def get_subtree(url, debug=1, level=0):
         if url not in lnk or 'Remove' in name:
             continue
         if lnk.endswith('/'):
-            if debug > 0: print('recursing into ', level*'    ', lnk.replace(url,'-'), name)
+            if pyfusion.VERBOSE > 0: print('recursing into ', level*'    ', lnk.replace(url,'-'), name)
             if name in dic:
                 raise LookupError(' dictionary already contains ' + name)
             else:
@@ -187,21 +203,34 @@ def get_subtree(url, debug=1, level=0):
                 dic.update({name: dat})
     return(dic)
 
-def get_signal_url(path='CBG_ECRH/A1/medium_resolution/Rf_A1'):
-    """ return the cryptic url corresponding to the human readable form """
+def get_signal_url(path='CBG_ECRH/A1/medium_resolution/Rf_A1', filter=''):
+    """ return the cryptic url corresponding to the human readable form relative to 
+    ArchiveDB/views/KKS
+    """
     import os
     root = 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/views/KKS/'
     oneup, wantname = os.path.split(path)
     fullurl = os.path.join(root, oneup)
-    links = get_links(fullurl, debug=0)
+    if len(filter) > 0:
+        fullurl += '/' + filter
+    links = get_links(fullurl, debug=0, exceptions=Exception)
+    if links is None:
+        if "filterstart" in fullurl:
+            raise LookupError('Page not found in that time range', fullurl)
+        else:
+            raise LookupError("Page not found", fullurl)
+    debug_(pyfusion.DEBUG, 1, key="signal_url", msg="check url link list")
     for lnk, name in links:
         name = name.strip()
         if 'DATASTREAM' not in lnk or 'Remove' in name:
             continue
         if name == wantname:
             print('Found!')
+            debug_(pyfusion.DEBUG, 1, key="after_signal_url", msg="check url link list")
             return(lnk)
-    raise LookupError(path + ' not found in ' + root)
+    debug_(pyfusion.DEBUG, 1, key="after_signal_url", msg="check url link list")
+    print('>>>  ', wantname +' not in ', np.sort([n.strip() for l,n in links]))
+    raise LookupError(path + ' not found under ' + root)
 
 
 def get_PARMLOG_cache(shot):
@@ -222,7 +251,7 @@ def get_PARMLOG_cache(shot):
     utcs = get_shot_utc(shot)
     # now work down thourgh the versions and find the first where shot utc is after valid
     for vkey in np.array(Vfiles)[sortd]:
-        debug_(pyfusion.DEBUG, 2, key='get_PARMLOG_cache', msg='reading PARLOG_V files')
+        debug_(pyfusion.DEBUG, 1, key='get_PARMLOG_cache', msg='reading PARLOG_V files')
         if get_parm('parms/validSince/dimensions',pyfusion.W7X_minerva_cache[vkey])[0] < utcs[0]:
             pyfusion.utils.warn('Changing to parmlog ' + vkey)
             return(vkey)

@@ -58,7 +58,7 @@ def register(*class_names):
                 filter_reg[cl_name] = [filter_method]
             else:
                 filter_reg[cl_name].append(filter_method)
-        debug_(pyfusion.DEBUG, 2, key=['register filter', 'register'])
+        debug_(pyfusion.DEBUG, 3, key=['register filter', 'register'])
         return filter_method
     return reg_item
 
@@ -753,7 +753,7 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
 #########################################
 @register("TimeseriesData")
 def downsample(input_data, skip=10, chan=None, copy=False):
-    """ downsample by a factor skip default 10
+    """ downsample by a factor 'skip' default 10
     Good example of filter that changes the size of the data.
     
     """

@@ -84,7 +84,7 @@ class MetaMethods(type):  # type here is used in the sense type(name, bases, dic
             # Note: only executed at startup, so import pyfusion, then set DEBUG, then run
             # pyfusion.DEBUG='register' stops on all registers and metaMethods 
             if pyfusion.VERBOSE > 1: print(name)
-            debug_(pyfusion.DEBUG, 2, key=['register', 'MetaMethods'])
+            debug_(pyfusion.DEBUG, 3, key=['register', 'MetaMethods'])
             # a simple minded test - see proper implementation a little further on
             if pyfusion.VERBOSE > 1 and name == 'TimeseriesData' and hasattr(newc, 'plot_signals'):
                 print('=============>>>>>>> TimeseriesData.plot_signals doc'),
@@ -183,7 +183,7 @@ def get_coords_for_channel(channel_name=None, **kwargs):
             #if not hasattr(transform_class, 'output_coord'):
             #    raise Exception('??')
             coords_instance.load_transform(transform_class)
-    debug_(pyfusion.DEBUG,1, key=['coord','device_name'])        
+    debug_(pyfusion.DEBUG,1, key=['coord', 'device_name'])        
     return coords_instance
 
 class Channel(object):

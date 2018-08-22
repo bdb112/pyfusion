@@ -41,8 +41,9 @@ run pyfusion/examples/save_to_local.py "shot_list=shot_range([20160309,6],[20160
 
 """
 from __future__ import print_function
+from six.moves import input
 import numpy as np
-import os, pickle, json
+import os, sys, pickle, json
 import time as tm
 
 import pyfusion
@@ -52,6 +53,10 @@ from pyfusion.debug_ import debug_
 from pyfusion.utils import process_cmd_line_args
 from pyfusion.utils.time_utils import utc_ns
 
+if hasattr(pyfusion, 'NSAMPLES') and pyfusion.NSAMPLES != 0:
+    if input('pyfusion.NSAMPLES is going to decimate - are you sure?').lower()[0]!='y':
+        sys.exit(1)
+    
 try:       # this allows usage on systems without all the new url features
     from pyfusion.data.shot_range import shot_range
     from pyfusion.acquisition.W7X.get_shot_info  import get_shot_utc
@@ -111,6 +116,8 @@ def getlocalfilename(shot_number, channel_name, local_dir=''):
 # main
 if len(np.shape(shot_list))==0:
     shot_list = [shot_list]
+if len(shot_list) == 0:
+    raise LookupError('No shots in list!')
 
 if len(np.shape(diag_name)) == 0:
     diag_list = [diag_name]
@@ -130,9 +137,11 @@ for shot_number in shot_list:
             utc_shot_number = None
             
     for diag in diag_list:
-        if 'W7' in diag and 'LP' in diag:
+        if ('W7' in diag and 'LP' in diag) and shot_number[0]<20180000:
+            # Try to selectively override delta time
+            # This won't work - needs to be in a different part of the loop
             print('override delta encode time')
-            save_kwargs={"delta_encode_time":False}
+            save_kwargs={"delta_encode_time": False}
 
         diag = prefix + diag
 
@@ -166,7 +175,7 @@ for shot_number in shot_list:
                         pass  # nothing more to do
 
                     else:
-                        raise Exception('should not get here - time_range and find_times inconsistency')
+                        raise Exception('should not get here - time_range and find_times inconsistency\n perhaps this is a continuously recorded signal?')
 
                     data = dev.acq.getdata(utc_shot_number, diag_chan, no_cache=compress_local==False, exceptions=())
                     print(diag_chan, shot_number, end=' - ')

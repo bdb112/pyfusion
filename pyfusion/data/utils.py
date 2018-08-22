@@ -260,20 +260,21 @@ def make_title(formatstr, input_data, channum=None, at_dict = {}, min_length=3, 
             else:
                 name = chan.config_name
                 
-            try:
-                if 'device' in input_data.params.values()[0]['params']:
-                    device =  input_data.params.values()[0]['params']['device']
+        try:   #  remove leading W7X_  LHD_ etc from channel labels.
+            if 'device' in input_data.params.values()[0]['params']:
+                device =  input_data.params.values()[0]['params']['device']
                 name = name.replace(device+'_', '')
-            except:
-                pass
+        except:
+            pass
         at_dict.update({'units':chan.units})
         at_dict.update({'name': name})
 # replace internal strings of non-numbers with a single .  a14_input03 -> 14.03
-        short_name=''
+        short_name = ''
         last_was_number = False
-        discarded=''
+        discarded = ''
+        debug_(pyfusion.DEBUG, 1, key='make_title')
         for c in name:  # start from the first char
-            if c>='0' and c<='9': 
+            if c >= '0' and c <= '9': 
                 short_name += c
                 last_was_number=True
             else:  
@@ -289,7 +290,6 @@ def make_title(formatstr, input_data, channum=None, at_dict = {}, min_length=3, 
             else: short_name = discarded[-4:] + short_name
 
         at_dict.update({'short_name': short_name})
-
         return(formatstr.format(**at_dict))
     except exception as ex:
         warn('in make_title for format="%s", at_dict=%s' % (formatstr, at_dict),

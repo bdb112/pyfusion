@@ -17,6 +17,7 @@ from pyfusion.debug_ import debug_
 import traceback
 import sys, os
 import pyfusion  # only needed for .VERBOSE and .DEBUG
+from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
 
 def newloadv3(filename, verbose=1):
     """ This the the version that works in python 3, but can't handle Nans
@@ -91,7 +92,7 @@ def try_fetch_local(input_data, bare_chan):
 
         else:
             subdir = patt
-        debug_(pyfusion.DEBUG, 3, key='MDS style subdir', msg=each_path)
+        debug_(pyfusion.DEBUG, 4, key='MDSPlus style subdir ~path', msg=each_path)
         each_path = os.path.join(path, subdir)
         if isinstance(shot, (tuple, list, ndarray)):
             shot_str = '{s0}_{s1}'.format(s0=shot[0], s1=shot[1])
@@ -161,6 +162,7 @@ def update_with_valid_config(fetcher):
         """ Determine if this fetcher's diag definition or modified diag is valid 
         for this shot
         """
+
         def check_to_clause(shot, k, dic):
             """ check for leftover instances of to=[date, shot]
             where shot is 0 - this is very likely to be a mistake
@@ -181,24 +183,9 @@ def update_with_valid_config(fetcher):
         #   - need to formalise this, extract the code to a function?
         is_valid = True
         if valid_shots is not None:
+            shot_or_utc = fetcher.shot
             # this 15 line code block is W7X specific - how to remove to W7X?
-            if np.isscalar(fetcher.shot) or fetcher.shot[1]<1e9:
-                actual_shot = fetcher.shot
-            else:
-                actual_shot = None
-                from pyfusion.acquisition.W7X.get_shot_list import get_programs 
-                progs = get_programs()
-                for prog in progs:
-                    # take the from utc for both comparisons in case the data span is long
-                    if fetcher.shot[0] >= progs[prog]['from'] and fetcher.shot[0] <= progs[prog]['upto']:
-                        actual_shot = [int(i) for i in prog.split('.')]
-                if actual_shot is None: # we haven't found a match
-                    # return True, but if it is before 0223, warn
-                    if fetcher.shot[0]<1457599965437656661: # shotDA['start_utc'][950] - 0223
-                        pyfusion.logger.warning('Shot {s} is not found in programs - digitiser choice is not reliable'.format(s=fetcher.shot))
-                    return(True)
-            # from here on is not W7X specific
-            if np.isscalar(actual_shot):
+            if np.isscalar(shot_or_utc):
                 compfun = int
             else:
                 compfun = tuple
@@ -208,10 +195,10 @@ def update_with_valid_config(fetcher):
                 if '_' + root in fetcher.config_name:
                     if pyfusion.VERBOSE>1: print('find_valid_for_shot: key={k}, root={r} shot={s} valid={v}'
                                                  .format(k=k, r=root, s=fetcher.shot, v=valid_dict[k]))
-                    check_to_clause(actual_shot, k, valid_dict)
+                    check_to_clause(shot_or_utc, k, valid_dict)
                     # need to be both tuples or both lists for comparison to work
-                    if ('_from' in k and compfun(actual_shot) < compfun(valid_dict[k])
-                        or ('_to' in k and compfun(actual_shot) > compfun(valid_dict[k]))):
+                    if (('_from' in k and compfun(get_shot_utc(shot_or_utc)) < compfun(get_shot_utc(valid_dict[k])))
+                        or ('_to' in k and compfun(get_shot_utc(shot_or_utc)) > compfun(get_shot_utc(valid_dict[k])))):
                         is_valid = False
         debug_(pyfusion.DEBUG, 2, 'valid_shots')
         return(is_valid)
@@ -279,7 +266,7 @@ class BaseAcquisition(object):
         :param interp: dictionary specifying interpolation method, grid
             methods are 'linear', 'linear_minmax' (W7X,H1) - NOT YET IMPL..
         :param exceptions - a list of exceptions to catch - None will 
-            default to (LookupError) or () if pyfusion.DEBUG>3
+            default to (LookupError) or () if pyfusion.DEBUG>2
         :returns: an instance of a subclass of \
         :py:class:`~pyfusion.data.base.BaseData` or \
         :py:class:`~pyfusion.data.base.BaseDataSet`
@@ -341,7 +328,7 @@ class BaseAcquisition(object):
             d = fetcher_class(self, shot, interp=interp,
                               config_name=config_name, **kwargs).fetch()
         except exceptions as reason:
-            debug_(pyfusion.DEBUG,1,key='failed_fetch')
+            debug_(pyfusion.DEBUG, 1, key='failed_fetch')
             if contin:
                 if pyfusion.VERBOSE-quiet >= 0:
                     pyfusion.utils.warn('Exception: ' + str(reason))
@@ -510,9 +497,10 @@ class BaseDataFetcher(object):
 
                     # this one DOES work.
                     print(sys.exc_info())
-                    (extype, ex, tb) = sys.exc_info()
-                    for tbk in traceback.extract_tb(tb):
-                        print("Line {0}: {1}, {2}".format(tbk[1],tbk[0],tbk[2:]))
+                    if pyfusion.VERBOSE > 2:  # keep the clutter down unless verbose
+                        (extype, ex, tb) = sys.exc_info()
+                        for tbk in traceback.extract_tb(tb):
+                            print("Line {0}: {1}, {2}".format(tbk[1],tbk[0],tbk[2:]))
                 #  get what info possible
                 extra = str('shot={s}, diag={d}'
                             .format(s=self.__dict__.get('shot','?'), 

@@ -200,7 +200,34 @@ pyfusion), type::
 	   pyfusion.conf.utils.clear_config()
 	   pyfusion.read_config()
 
+Will include a clear in the reload_config convenience function - but this has been disabled because of problems with the sequence/and/or the wat to access clear.
 See :ref:`testing-config`
+
+Using translation from readable 'views/KKS' names to coda channels
+--------------------------------------------------------------
+Follow the archiveDB links down from views/KKS until the path switches to coda, then try the last non coda link with scaled/ added.
+
+From the address box:
+http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/views/KKS/CDX21_NBI_Box21/DAQ/BE000/?filterstart=1533772800000000000&filterstop=1533859199999999999
+The link name is:
+HGV_1 Monitor U 
+Remove up to KKS/ from the two joined
+http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/views/KKS/CDX21_NBI_Box21/DAQ/BE000/HGV_1 Monitor U
+get_signal_url("CDX21_NBI_Box21/DAQ/BE000/HGV_1 Monitor U")
+/scaled/
+Found!
+Out[9]: 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.31/DataModuleDesc.24119_DATASTREAM/0/HGV_1%20Monitor%20U'
+Then access the result + /scaled/ + _signal etc
+
+So the line in pyfusion.cfg is just the result + /scaled/ typically, although the presence of /signal/ will be ignored (removed)
+
+Debugging .cfg files
+--------------------
+pyfusion.DEBUG=3 is enough to suppress try/excepts so that the actual
+error is seen
+
+
+
 
 [variabletypes]
 ---------------

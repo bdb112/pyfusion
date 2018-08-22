@@ -44,8 +44,16 @@ def datelike(url, txt, minscore=5):
         return(score > minscore)
 
 
-def get_links(url='http://h1svr.anu.edu.au/wiki/Day/2010', debug=1):     # ?action=raw'
-    conn = urlopen(url)
+def get_links(url='http://h1svr.anu.edu.au/wiki/Day/2010', debug=1, exceptions=()):     # ?action=raw'
+    """ return a list of links on the page 
+    if page not found, and exceptions == Exception , return None quietly
+    if no links, return []
+    """
+    try:
+        conn = urlopen(url)
+    except exceptions as reason:
+        return None
+    
     html = conn.read()
 
     # specifying lxml is recommended by the author (by a message when it was omitted)
@@ -58,6 +66,8 @@ def get_links(url='http://h1svr.anu.edu.au/wiki/Day/2010', debug=1):     # ?acti
         if link is not None:
             linklist.append([link, tag.get_text()])
             if debug: print(linklist[-1])
+    if debug > 2:  # integrate debug_ here instead
+        1/0
     return(linklist)
 
 if __name__ == '__main__':

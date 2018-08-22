@@ -10,13 +10,22 @@ pyfusion - python code for data mining plasma fluctuations
  * wid_specgram memory error for foverlap>0
 Most recent update: 
 
- First part of an update to do get_signal_path better, and fix multi plots will missing data
- * acq/base.py: allow plots of multi diags to preceed with Null data on same channels 
+Version 0.98 beta - Finalise doing get_signal_path better, and fix multi plots will missing data. Also add MIRNOV_11 and MIRNOV_41, , W7X_NBI and fix ECH
+ * get_signal_path now recognises time period of shot
+ * W7X/fetch.py - add
+   Rf,MainCoils,ControlCoils,TrimCoils,Mirnov,InterfER,_NBI_' to the
+   list which get processed by using views/KKS url look up, add
+   error_info(), hardwire in the split to two PCS CDS=26417
+ * W7X/get_shot_info - define shot 0 to have a time of 0 time on that day and >=999 to time zero the next day - this allows valid_since to work on utcs instead of shots
+ * acq/base.py: allow plots of multi diags to preceed with Null data on same channels. Remove W7X dependency on valid_since, convert valid_since to use utcs in comparison, but shot numbers in config file
  * dat/utils.make_title - don't use the device part of the channel name in ylabels
  * plot_shots - try to make plot figures pop up as they go - no effect on PC
  * print_dict_tree - save file to temp, allow exclusion of names
-
-
+ * save_to_local - pause for confirmation if NSAMPLES is not zero
+ * pyfusion.cfg - add mirnovs, nbi, and corrections/updates as above
+ * H1/scrape_wiki.py get_links returns None for page not found, [] if no links
+ * shot_range - add inc= argument
+ * examples/calibrate_probes.py 0 beginning of script to check probe calibration
 
 Version 0.97 alpha -  Fix the dodgy channel fix in previous attempt, tidy the new config
   * add level limit to flatten_dict

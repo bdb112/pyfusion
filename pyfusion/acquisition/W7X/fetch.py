@@ -144,8 +144,12 @@ class W7XDataFetcher(BaseDataFetcher):
         # A URL STYLE diagnostic - used for a one-off
         # this could be moved to setup so that the error info is more complete
         if hasattr(self,'url'):
-            fmt = self.url+'_signal.json?from={shot_f}&upto={shot_t}'
+            fmt = self.url  # add from= further down: +'_signal.json?from={shot_f}&upto={shot_t}'
             params = {}
+            # check consistency -   # url should be literal - no params (only for fmt) - gain, units are OK as they are not params
+            if hasattr(self, 'params'):
+                pyfusion.utils.warn('URL diagnostic {n} should not have params <{p}>'
+                                    .format(n=self.config_name, p=self.params))
         else:  # a pattern-based one - used for arrays of probes
             if hasattr(self,'fmt'):  #  does the diagnostic have one?
                 fmt = self.fmt
@@ -157,27 +161,39 @@ class W7XDataFetcher(BaseDataFetcher):
 
             params = eval('dict('+self.params+')')
 
+        # Originally added to fix up erroneous ECH alias mapping if ECH - 
+        # only 6 work if I don't.  But THis seems to help with many others
+        # this implementation is kludgey but proves the principle, and
+        # means we don't have to refer to any raw.. signals
+        # would be nice if they made a formal way to do this.
         if 'upto' not in fmt:
             fmt += '_signal.json?from={shot_f}&upto={shot_t}'
+
+        params.update(shot_f=f, shot_t=t)
+        url = fmt.format(**params)  # substitute the channel params
+
+        debug_(pyfusion.DEBUG, 2, key="url", msg="middle of work on urls")
+        if np.any([nm in url for nm in 
+                   'Rf,Tower5,MainCoils,ControlCoils,TrimCoils,Mirnov,Interfer,_NBI_'
+                   .split(',')]):
+            from pyfusion.acquisition.W7X.get_url_parms import get_signal_url
+            # replace the main middle bit with the expanded one from the GUI
+            tgt = url.split('KKS/')[1].split('/scaled')[0].split('_signal')[0]
+            # construct a time filter for the shot
+            self.tgt = tgt # for the sake of error_info
+            filt = '?filterstart={shot_f}&filterstop={shot_t}'.format(**params)
+            # get the url with the filter
+            url = url.replace(tgt, get_signal_url(tgt, filt)).split('KKS/')[-1]
+            # take the filter back out - we will add the exact one later
+            url = url.replace(filt, '/')
 
         # nSamples now needs a reduction mechanism http://archive-webapi.ipp-hgw.mpg.de/
         # minmax is increasingly slow for nSamples>10k, 100k hopeless
         # should ignore the test comparing the first tow elements of the tb
-        if ('nSamples' not in fmt) and (pyfusion.NSAMPLES != 0):
-            fmt += '&reduction=minmax&nSamples={ns}'.format(ns=pyfusion.NSAMPLES)
+        if ('nSamples' not in url) and (pyfusion.NSAMPLES != 0):
+            url += '&reduction=minmax&nSamples={ns}'.format(ns=pyfusion.NSAMPLES)
 
-        params.update(shot_f=f, shot_t=t)
-        url = fmt.format(**params)
-        # fix up erroneous ECH alias mapping if ECH - only 6 work if I don't
-        #  Hopefully at some point in the future, they will fix it.
-        # this implementation is kludgey but proves the principle
-        if 'Rf' in url or 'MainCoils' in url or 'ControlCoils' in url or 'TrimCoils' in url:
-            from pyfusion.acquisition.W7X.get_url_parms import get_signal_url
-            # replace the main middle bit with the expanded one from the GUI
-            tgt = url.split('KKS/')[1].split('/scaled')[0]
-            url = url.replace(tgt, get_signal_url(tgt)).split('KKS/')[-1]
-
-        debug_(pyfusion.DEBUG, 3, key="url", msg="work on urls")
+        debug_(pyfusion.DEBUG, 2, key="url", msg="work on urls")
         # we need %% in pyfusion.cfg to keep py3 happy
         # however with the new get_signal_url, this will all disappear
         if sys.version < '3.0.0' and '%%' in url:
@@ -226,6 +242,7 @@ class W7XDataFetcher(BaseDataFetcher):
             if pyfusion.VERBOSE:
                 print('********Exception***** on {c}: {u} \n{r}'
                       .format(c=self.config_name, u=url, r=reason))
+
             raise
 
         # this form will default to repair = 2 for all LP probes.
@@ -285,6 +302,18 @@ class W7XDataFetcher(BaseDataFetcher):
         
         ###  the total shot utc.  output_data.utc = [f, t]
         return output_data
+
+    def error_info(self, step=None):
+        debug_(pyfusion.DEBUG, level=1, key='error_info',msg='entering error_info')
+        msg = ''
+        if hasattr(self,'url'):
+            msg += 'url=' + self.url
+        if hasattr(self,'tgt'):
+            msg += '\n Tried get signal path with <' + self.tgt + '>'
+        if step == 'do_fetch':
+            msg += str(" using mode [%s]" % self.fetch_mode)
+            
+        return(msg)
 
     def setup(self):
         """ record some details of the forthcoming fetch so 

@@ -1,4 +1,6 @@
 """ Return configuration information as ratios or currents
+See examples/mini_summary.py to create the db
+
 """
 import pyfusion
 from pyfusion.utils.time_utils import utc_ns

@@ -10,6 +10,7 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
     based on the given diag.  Use raw data to allow for both 1 and 10 ohm resistors (set above common mode sig)
     tricky shots are [20171025,51] # no sweep), 1025,54 - no sweep or plasma
     See the test routine when this is 'run' 
+         return None if there is a typical expected exception (e.g. LookupError)
     """
     dev_name = "W7X"
     #  diag = W7X_UTDU_LP10_I  # has less pickup than other big channels
@@ -20,7 +21,7 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
         pyfusion.NSAMPLES = 2000
         dev.acq.repair = -1
         data = dev.acq.getdata(shot, diag, exceptions=())
-    except exceptions as reason:
+    except exceptions as reason:  # return None if typical expected exception
         print('Exception suppressed: ', str(reason))
         return None
     except Exception as reason:

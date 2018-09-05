@@ -31,7 +31,7 @@ pseudo variable 'rowid' allows you to plot by occurence rather than shot, so no 
 
 """
 from sqlsoup import SQLSoup
-from sqlite3 import OperationalError
+from sqlite3 import OperationalError  # , NoSuchTableError
 from matplotlib import pyplot as plt
 from collections import OrderedDict
 import numpy as np
@@ -42,10 +42,11 @@ sys.path.append('/home/bdb112/python')
 from bdb_utils.process_cmd_line_args import process_cmd_line_args
 
 _var_defaults = """
+table = 'summ'
 _select = 'select shot, kappa_V, mirnov_RMS'
-_from = 'from summary_h1'
+_from = 'from {table} '
 # this tricky _where gets a nice default set - more complicated than normal
-_where = 'where date(recorded) = date() or shot > (select max(shot) from summary_h1) -100'
+_where = 'where date(recorded) = date() or shot > (select max(shot) from {table}) -100'
 _order = ''
 _group = ''
 _limit = ''
@@ -109,12 +110,19 @@ if _order is '':
         _order = 'order by ' + vars[0]
 
 h1db = SQLSoup(db_url)
-cols = h1db.summary_h1.c.keys()
-h1db.SUMM = h1db.summary_h1
+# Note - this infor is here now, but disappears if there is an error - save save
+tables = h1db._cache
 
+try:
+    h1db.SUMM = eval('h1db.' + table)
+except Exception as reason:
+    print(reason.__repr__(), ' tables names are ', tables)
+    raise
+
+cols = h1db.SUMM.c.keys()
 if plabel is not '':
     _select += ', ' + plabel
-qry = ' '.join([_select, _from, _where, _order, _group, _limit])
+qry = ' '.join([_select, _from.format(table=table), _where.format(table=table), _order, _group, _limit])
 try:
     res = h1db.execute(qry)
 except (OperationalError, Exception) as reason:

@@ -38,17 +38,17 @@ import pyfusion
 from six.moves import input
 
 from sqlalchemy import create_engine 
-#engine=create_engine('sqlite:///:memory:', echo=False)
-# put the file in the example (this) folder although it may be better in the acquisition/W7X folder
 
 devname = 'W7X'
 if 'W7' in devname:
-    sqlfilename = 'W7X_mag_OP1_1.sqlite'
+    sqlfilename = 'W7X_mag_OP1_2scr.sqlite'
 else:
     sqlfilename = 'H1.sqlite'
 
+# put the file in the example (this) folder although it may be better in the acquisition/W7X folder
 dbpath = os.path.dirname(__file__)
 dbfile = os.path.join(dbpath, sqlfilename)
+#engine=create_engine('sqlite:///:memory:', echo=False)
 engine=create_engine('sqlite:///'+ dbfile, echo=False)
 #engine = create_engine('mysql://127.0.0.1/bdb112', echo=False)
 """
@@ -73,6 +73,7 @@ import numpy as np
 
 from sqlalchemy import Table, Column, Integer, String, Float, MetaData#, ForeignKey
 from pyfusion.data.shot_range import shot_range as expand_shot_range
+from collections import OrderedDict as ordict
 
 # simple method - use a fixed interval : typical H-1 [0.01, 0.05]
 # here 
@@ -96,8 +97,12 @@ def mini_dump(list, filename='mini_summary_{0}_{1}.pickle'):
 ###########################
 # Functions to process data
 def Peak(x,t=None):
-    """ 98th percentile """
-    return np.sort(x)[int(0.98*len(x))]
+    """ 99th percentile """
+    return np.sort(x)[int(0.99*len(x))]
+
+def fPeak(x,t=None):
+    """ 97th percentile kinf od a filtered peak"""
+    return np.sort(x)[int(0.97*len(x))]
 
 def Special():
     # hard coded for now
@@ -142,7 +147,7 @@ else:
     srange = ((20160101,1), (20171110,99))
     #srange = ((20160202,1), (20160202,99))
     srange = ((20171018,19),(20171018,20))
-
+    srange = ((20180801,1),(20180822,999))
 
 MDS_diags = dict(im1 = [Float, '.operations.magnetsupply.lcu.setup_main.i1', Value],
              im2 = [Float, '.operations.magnetsupply.lcu.setup_main.i2', Value],
@@ -166,7 +171,8 @@ MDS_diags = dict(im1 = [Float, '.operations.magnetsupply.lcu.setup_main.i1', Val
              isweep = [Float, '.fluctuations.BPP:isweep',Std],
              mirnov_coh =  [Float, '', Special],
          )
-diags = dict(IPlanar_A = [Float, 'W7X_IPlanar_A', Average, 1],
+diags = dict(imain = [Float, 'W7X_INonPlanar_1', Average, 1], # the first will be used in the example code
+             IPlanar_A = [Float, 'W7X_IPlanar_A', Average, 1],
              IPlanar_B = [Float, 'W7X_IPlanar_B', Average, 1],
              INonPlanar_1 = [Float, 'W7X_INonPlanar_1', Average, 1],
              INonPlanar_2 = [Float, 'W7X_INonPlanar_2', Average, 1],
@@ -202,8 +208,28 @@ diags = dict(IPlanar_A = [Float, 'W7X_IPlanar_A', Average, 1],
              #ECH_Rf_B5 = [Float, 'W7X_ECH_Rf_B5', Average, 1],
              #ECH_Rf_C5 = [Float, 'W7X_ECH_Rf_C5', Average, 1],
              #ECH_Rf_D5 = [Float, 'W7X_ECH_Rf_D5', Average, 1],
-             
-             imain = [Float, 'W7X_INonPlanar_1', Average, 1],)
+             )
+
+diags = ordict(iA = [Float, 'W7X_IPlanar_A', Average, 1],
+               iB = [Float, 'W7X_IPlanar_B', Average, 1],
+               i1 = [Float, 'W7X_INonPlanar_1', Average, 1],
+               i2 = [Float, 'W7X_INonPlanar_2', Average, 1],
+               i3 = [Float, 'W7X_INonPlanar_3', Average, 1],
+               NBI4_I = [Float, 'W7X_NBI4_I', fPeak, 1],
+               NBI4_U = [Float, 'W7X_NBI4_U', fPeak, 1],
+               scr_1 = [Float, 'W7X_STDU_LP01_I', Std, 3],
+               scr_2 = [Float, 'W7X_STDU_LP02_I', Std, 3],
+               scr_3 = [Float, 'W7X_STDU_LP03_I', Std, 3],
+               scr_4 = [Float, 'W7X_STDU_LP04_I', Std, 3],
+               scr_5 = [Float, 'W7X_STDU_LP05_I', Std, 3],
+               scr_6 = [Float, 'W7X_STDU_LP06_I', Std, 3],
+               scr_7 = [Float, 'W7X_STDU_LP07_I', Std, 3],
+               scr_8 = [Float, 'W7X_STDU_LP08_I', Std, 3],
+               TotECH = [Float, 'W7X_TotECH', Peak, 1],
+               WDIA_TRI = [Float, 'W7X_WDIA_TRI', Peak, 1],
+               IP_CONT = [Float, 'W7X_ROG_CONT', Peak, 1],
+               neL = [Float, 'W7X_neL', Peak, 1],
+)
 
 xdiags = dict(imain = [Float, 'need to define in pyfusion.cfg', Value],
              im2 = [Float, '.operations.magnetsupply.lcu.setup_main.i2', Value],
@@ -342,7 +368,7 @@ for sh in srange: # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,8889
 
 from sqlalchemy import select
 # note the .c attribute of the table object (column)
-sel = select([summ.c.shot, summ.c.imain]) 
+sel = select([summ.c.shot, eval('summ.c.'+diags.keys()[0])]) 
 result = conn.execute(sel)  
 row = result.fetchone()
 print('\nsample row = {r},\n  as items {it}\n  as dict {d}\n{b} bad/missing shots'

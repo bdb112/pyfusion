@@ -7,6 +7,9 @@
              differences
 Example:
 run pyfusion/examples/print_dict_tree.py wild_card=".*scr.*istor.val.*" shot=[20180719,37]
+ modeFactor.va  actor.va will pick out volt channels
+
+
 if shot is an integer that is big enough to to be a utc, assume it is
  
 Result is left in matches, and saved in /tmp

@@ -10,6 +10,16 @@ pyfusion - python code for data mining plasma fluctuations
  * wid_specgram memory error for foverlap>0
 Most recent update: 
 
+Version 0.98 alpha - Small fixes, extra diagnostics
+ * pyfusion.cfg, fetch allow_reduction keyword to avoid cadoc bug in reduction
+ * get_url_parms
+    - control result if not found (e.g. None, error), better error messages
+	- find appropriate power supply voltage if no voltage monitor
+ * shot_range - allow a single shot argument, start working on iterator/generator
+ * mini_summary for W7X - start with rought scaper currents.
+ * sql_plot.py generalise to other databases
+ * config.sys - add NBI and scraper
+
 Version 0.98 beta - Finalise doing get_signal_path better, and fix multi plots will missing data. Also add MIRNOV_11 and MIRNOV_41, , W7X_NBI and fix ECH
  * get_signal_path now recognises time period of shot
  * W7X/fetch.py - add

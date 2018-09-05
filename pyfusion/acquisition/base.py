@@ -701,7 +701,8 @@ class MultiChannelFetcher(BaseDataFetcher):
                         data_list.append(ch_data.signal)
                     except:
                         print('####  matching error in {c} - perhaps timebase not the same as the previous channel'.format(c=ch_data.config_name))
-                        raise 
+                        if not self.contin:
+                            raise
 
         if len(data_list) == 0:
             return(None)

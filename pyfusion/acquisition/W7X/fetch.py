@@ -189,10 +189,12 @@ class W7XDataFetcher(BaseDataFetcher):
 
         # nSamples now needs a reduction mechanism http://archive-webapi.ipp-hgw.mpg.de/
         # minmax is increasingly slow for nSamples>10k, 100k hopeless
-        # should ignore the test comparing the first tow elements of the tb
-        if ('nSamples' not in url) and (pyfusion.NSAMPLES != 0):
+        # should ignore the test comparing the first two elements of the tb
+        # prevent reduction (NSAMPLES=...) to avoid the bug presently in codac
+        if (('nSamples' not in url) and (pyfusion.NSAMPLES != 0) and
+            not (hasattr(self, 'allow_reduction') and int(self.allow_reduction)==0)):
             url += '&reduction=minmax&nSamples={ns}'.format(ns=pyfusion.NSAMPLES)
-
+            
         debug_(pyfusion.DEBUG, 2, key="url", msg="work on urls")
         # we need %% in pyfusion.cfg to keep py3 happy
         # however with the new get_signal_url, this will all disappear

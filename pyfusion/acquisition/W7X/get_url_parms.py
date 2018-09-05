@@ -85,16 +85,20 @@ class MinervaMap(object):
         return get_parm(pseudourl, self.parmdict)
                 
     
-def get_parm(pseudourl, parmdict):
+def get_parm(pseudourl, parmdict, default=None):
     """ Example: to get probe resistance
     get_parm('parms/probes/upperTestDivertorUnit/Probe_2/adc1/channels/channel2/modeResistor/values', parmdict)[0]
-
+    if the path is not valid or doesn't exist, return None
     """
     if pseudourl.endswith('/'):
         pseudourl = pseudourl[0:-1]
 
     subdict = parmdict.copy()
     for key in pseudourl.split('/'):
+        if not key in subdict:
+            if pyfusion.VERBOSE>0:
+                print('*** url {pse} not found in chan_dict'.format(pse=pseudourl))
+            return default
         subdict = subdict[key]
 
     return(subdict)
@@ -171,7 +175,10 @@ def get_minerva_parms(fetcher_obj):
 
     fetcher_obj.params = str("CDS={CDS},DMD={dmd},ch={ch},rs={rs},rs_used={rs_used}"
                              .format(CDS=CDS, dmd=dmd, ch=chan_no, rs=rs,rs_used=rs_used))
-    debug_(pyfusion.DEBUG, 1, key='MinervaName', msg='leaving MinervaName')
+    PS = get_parm(chan+'/powerSupply/values', chan_dict)
+    if PS is not None:
+        fetcher_obj.params += str(',powerSupply="{PS}"'.format(PS=PS[0]))
+    debug_(pyfusion.DEBUG, 0, key='MinervaName', msg='leaving MinervaName')
     print('rs_used={rs_used}, overall gain={gain}, params={params}\t'
           .format(rs_used=rs_used, gain=fetcher_obj.gain, params=fetcher_obj.params))
     return(fetcher_obj, dict(cal_date=last_mod, cal_comment=cal_remarks))
@@ -298,6 +305,9 @@ if __name__ == '__main__':
     get_PARMLOG_cache([20170927,10])
 
     parmdict = get_subtree(URL)
+    if 'parms' not in parmdict:
+        raise LookupError("Probably couldn't find {URL}".format(URL=URL))
+    
     if len(list(parmdict['parms'])) < 5:
         print('Warning - parmdict is too short')
     if len(list(parmdict)) == 0:

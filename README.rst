@@ -8,7 +8,19 @@ pyfusion - python code for data mining plasma fluctuations
  *  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.  Partial fix - don't allow local_saves from local cache (only works on machines with acccess to the archivedB. F further problem to the above workaround - RAW  to be enforced independently of pyfusion.RAW, otherwise pyfusion.RAW is set (to 1) after any save_local - for now, just save in a separate process.
  * possible problem with tests - new convention to return None for data not found may suppress real errors, making tests look too good
  * wid_specgram memory error for foverlap>0
+
 Most recent update: 
+
+Version 0.99 beta - Add W7X MDSplus support (W7M)  to pyfusion
+ * this is a good example of what needs to be created.  Takes a few hours only.
+ * adds	 pyfusion/acquisition/W7M/__init__.py
+	 pyfusion/acquisition/W7M/acq.py
+	 pyfusion/acquisition/W7M/fetch.py
+	 pyfusion/devices/W7M/__init__.py
+	 pyfusion/devices/W7M/device.py
+ *  acquisition/base.py define a constant CONTINUE_PAST_EXCEPTION to control stopping in fetches
+ * save_compress/newload - return info about data types if verbose
+ *  save_to_local - adapt to W7M and rationalise? the conflicting time arguments test.
 
 Version 0.98 alpha - Small fixes, extra diagnostics
  * pyfusion.cfg, fetch allow_reduction keyword to avoid cadoc bug in reduction

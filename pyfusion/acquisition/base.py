@@ -19,6 +19,8 @@ import sys, os
 import pyfusion  # only needed for .VERBOSE and .DEBUG
 from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
 
+CONTINUE_PAST_EXCEPTION = 2  # level below which exceptions in fetch are continued over
+
 def newloadv3(filename, verbose=1):
     """ This the the version that works in python 3, but can't handle Nans
     Intended to replace load() in numpy
@@ -294,7 +296,7 @@ class BaseAcquisition(object):
         fetcher class is returned.
         """
         if exceptions is None:
-            exceptions = (LookupError) if pyfusion.DEBUG<3 else ()
+            exceptions = (LookupError) if pyfusion.DEBUG < CONTINUE_PAST_EXCEPTION else ()  # also in 428
 
         # if there is a data_fetcher arg, use that, otherwise get from config
         if config_name.lower() == 'none':
@@ -424,9 +426,9 @@ class BaseDataFetcher(object):
         :py:class:`~pyfusion.data.base.BaseDataSet` returned by \
         :py:meth:`do_fetch`
         """        
-        if pyfusion.DBG() > 2:
-            exception = ()  # defeat the try/except
-        else: exception = Exception
+        if pyfusion.DBG() < CONTINUE_PAST_EXCEPTION:   # need to control this also at 297
+            exception = Exception                     # defeat the try/except
+        else: exception = ()
         sgn = 1
         cal_info = {}
         chan = self.config_name
@@ -480,7 +482,7 @@ class BaseDataFetcher(object):
                     data.params = dict(comment='should really inherit all params from acq.fetch')
                 data.params.update(dict(source=self.acq.acq_class))
 
-            except exception as details:   # put None here to show exceptions.
+            except exception as details:   # put () here to show exceptions.
                                            # then replace with Exception once
                                            # "error_info" is working well
 

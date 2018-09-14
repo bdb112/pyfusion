@@ -161,21 +161,26 @@ for shot_number in shot_list:
                 # diagnostic basis.  Previously one bad killed all diags in the shot
                 # There is some redundant code left over in outer try/ex loop
                 try:
-                    this_time_range = time_range
+                    this_time_range = time_range                      # often None
                     # check for failed attempt to find shot times.
-                    if len(find_kws) > 0 and utc_shot_number is None:
-                        this_time_range = [-0.15,0.3] # enough to see problem
-                    if (this_time_range is not None  # time range specd in secs
-                        and 'W7X' in dev.name and shot_number[0]<1e9):
-                        utc = get_shot_utc(shot_number)
-                        utc_shot_number = [int(utc[0] + (61 + this_time_range[0])*1e9),
-                                           int(utc[0] + (61 + this_time_range[1])*1e9)]
-
+                    if len(find_kws) > 0:
+                        if utc_shot_number is None: #  meant to find, but failed
+                            this_time_range = [-0.15,0.3] # enough to see problem
+                    # check for conflicting arguments - time_range and find_kws
+                    if (this_time_range is not None):  # time range specd in secs
+                        if 'W7X' in dev.name:
+                            if shot_number[0] > 1e9:     # if it is a real shot
+                                raise Exception('should not get here - time_range and find_times inconsistency\n perhaps this is a continuously recorded signal?')
+                            else:
+                                utc = get_shot_utc(shot_number)
+                                utc_shot_number = [int(utc[0] + (61 + this_time_range[0])*1e9),
+                                                   int(utc[0] + (61 + this_time_range[1])*1e9)]
+                        
                     elif utc_shot_number is not None: #  
-                        pass  # nothing more to do
-
-                    else:
-                        raise Exception('should not get here - time_range and find_times inconsistency\n perhaps this is a continuously recorded signal?')
+                                pass  # nothing more to do - we have everything
+                    if 'W7M' in dev.name:
+                        utc_shot_number = shot_number  # ignore utcs for now
+                        # later should put range in roi
 
                     data = dev.acq.getdata(utc_shot_number, diag_chan, no_cache=compress_local==False, exceptions=())
                     print(diag_chan, shot_number, end=' - ')
@@ -233,6 +238,10 @@ for shot_number in shot_list:
                                   params = np.array(params),
                                   verbose=pyfusion.VERBOSE, **save_kwargs)
                         goods.append((shot_number,diag_chan))
+                except IOError as reason:
+                    if 'No space' in str(reason):
+                        print('IO Error - no space')
+                        sys.exit(1)
                 except exceptions as chan_reason:
                     bads.append((shot_number, diag_chan, chan_reason.__repr__()))
             # redundant goods.append((shot_number,'whole thing'))

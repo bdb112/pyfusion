@@ -13,8 +13,9 @@ from pyfusion.data.save_compress import newload
 if len(sys.argv) < 2:
     print('plot_npz_data "filename"')
 else:
-    filename = sys.argv[1]
-    dat = newload(filename)
+    filename = sys.argv.pop(1)
+    verbose = 0 if len(sys.argv) < 2 else int(sys.argv[1])
+    dat = newload(filename, verbose=verbose)
     plt.plot(dat['timebase'], dat['signal'])
     # hold if called from a bin directory - otherwise (e.g. interactive) don't
     # originally tested if '/bin' in argv[0], but this fails for run ~/bin/plot.. under ipython
@@ -24,4 +25,9 @@ else:
         import pprint
         pprint.pprint(dat['params'], indent=4)
 
+    try:
+        print('timebase is {0}, signal is {1}'
+              .format(dat['timebasetype'], dat['signaltype']))
+    except:
+        print('Error looking at data types - maybe need pyfusion.VERBOSE > 0 or plot_npz_data <file> 1 ')
     plt.show(block=block_me)

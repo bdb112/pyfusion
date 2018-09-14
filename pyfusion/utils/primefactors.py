@@ -166,7 +166,7 @@ def nice_FFT_size(n, max_iterations=None, fft_type='numpy'):
             lowest_cost = cost
             best_n = nn
 
-    print('(best) cost estimate for FFT length {n} = {c:.2f}, {a} above'
+    print('(best) cost estimate for FFT length {n:,d} = {c:.2f}, {a} above'
           .format(n=best_n, c=lowest_cost, a=best_n - n))
     return(best_n)
 

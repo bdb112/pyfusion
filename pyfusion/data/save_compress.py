@@ -351,6 +351,12 @@ def newload(filename, verbose=verbose):
               dic['parent_element']}
 
     if 'params' in dic: retdic.update({"params": dic['params'].tolist()})
+    if (len(signal) > 5e5) and (verbose > 0):
+        print('Need to call with verbose>0 to see type of large data files')
+    else:
+      if 'rawsignal' in dic: retdic.update(dict(signaltype=type(dic['rawsignal'][0])))
+      if 'rawtimebase' in dic: retdic.update(dict(timebasetype=type(dic['rawtimebase'][0])))
+         
     return(retdic)
 
     # return({"signal":signal, "timebase":timebase, "parent_element": dic['parent_element']})

@@ -134,9 +134,15 @@ def get_minerva_parms(fetcher_obj):
         raise LookupError('No suitable monitoring chans found for {mn} on {shot}'
                           .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot))
     elif len(chans) > 1:
-        debug_(pyfusion.DEBUG, 1, key='MinervaName', msg='leaving MinervaName')
-        raise ValueError('Too many chans found for {mn} on {shot}'
-                         .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot))
+        debug_(pyfusion.DEBUG, 2, key='MinervaName', msg='leaving MinervaName')
+        if fetcher_obj.config_name.endswith('U'):
+            print('Warning - more than one channel{ch} - will allow for voltages (sweep)'
+                  .format(ch=fetcher_obj.config_name))
+            chan = chans[0]
+        else:
+            raise ValueError('Too many chans found for {mn} on {shot}'
+                             .format(mn=fetcher_obj.minerva_name, shot=fetcher_obj.shot))
+
     else:  # everything is fine, there is only one match.
         chan = chans[0]
 
@@ -178,7 +184,7 @@ def get_minerva_parms(fetcher_obj):
     PS = get_parm(chan+'/powerSupply/values', chan_dict)
     if PS is not None:
         fetcher_obj.params += str(',powerSupply="{PS}"'.format(PS=PS[0]))
-    debug_(pyfusion.DEBUG, 0, key='MinervaName', msg='leaving MinervaName')
+    debug_(pyfusion.DEBUG, 1, key='MinervaName', msg='leaving MinervaName')
     print('rs_used={rs_used}, overall gain={gain}, params={params}\t'
           .format(rs_used=rs_used, gain=fetcher_obj.gain, params=fetcher_obj.params))
     return(fetcher_obj, dict(cal_date=last_mod, cal_comment=cal_remarks))

@@ -306,6 +306,9 @@ class W7XDataFetcher(BaseDataFetcher):
         return output_data
 
     def error_info(self, step=None):
+        """ this puts the device specific info into a string form (mds) to 
+        be returned to the generic caller.
+        """
         debug_(pyfusion.DEBUG, level=1, key='error_info',msg='entering error_info')
         msg = ''
         if hasattr(self,'url'):

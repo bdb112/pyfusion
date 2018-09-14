@@ -15,6 +15,8 @@ dev_name = 'W7X'
 plot_sig_kws = dict()
 nrows=None  #  3
 ncols=None  #  4
+maxrows = 6
+maxcols = 8
 t_range = []
 sharex='all'
 sharey='all'
@@ -32,8 +34,9 @@ dev = pyfusion.getDevice(dev_name)
 
 i = 0
 axs = None
+# try to keep grouped shots in columns
 row_widths = [len(r) for r in shot_list if np.shape(r) is not ()]
-if len(row_widths) > 0 and shot_list[0][0] < 20160000:
+if len(row_widths) > 0 and shot_list[0][0] < 20160000:  # only for int shots so far
     print('Detected a grouped shot list - matching ncols and nrows to it.')
     ncols = np.max(row_widths)
     nrows = len(shot_list)
@@ -51,8 +54,8 @@ if nrows is None and ncols is None:
         nrows = len(shot_list)
         ncols = 1
     else:
-        nrows = int(np.sqrt(len(shot_list)) * 1.2)
-        ncols = int(np.sqrt(len(shot_list)) * 1.4)
+        nrows = min(maxrows, int(np.sqrt(len(shot_list)) * 1.2))
+        ncols = min(maxcols, int(np.sqrt(len(shot_list)) * 1.4))
 elif nrows is None:
     nrows = 1+ncols
     

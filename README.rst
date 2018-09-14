@@ -11,6 +11,10 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+Version 0.99 alpha - adapt process_Langmuir to bridge probe data
+ * data/process_swept_Langmuir.py add comments, allow skipping compensation, t_offs to shift the voltage sweep in time, add clip_vprobe
+ * also add boxcar.py and mini_summary_MAGPIEII 
+
 Version 0.99 beta - Add W7X MDSplus support (W7M)  to pyfusion
  * this is a good example of what needs to be created.  Takes a few hours only.
  * adds	 pyfusion/acquisition/W7M/__init__.py

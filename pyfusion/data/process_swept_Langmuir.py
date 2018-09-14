@@ -57,7 +57,7 @@ sets t_zero, and tweaks the Nan coverage
 Args: 
   da: a dictionary of arrays (DA) file.
   locs: a dictionary containing the variable dtprobe, usually locals()
-   
+  suppress_ne - comma delimited list of channels whose ne we don't believe e.g. area changed
     """
     if locs is None:
         raise ValueError('Need two args, first is an open da, second is locals()) containing variable dtprobe')
@@ -378,8 +378,10 @@ Args:
     def get_iprobe(self, leakage=None, t_comp=None):
         """ The main purpose is to subtract leakage currents
         Will use the full data, as the t_range is meant to be plasma interval
-        returns a copy of the measured courremt, overwritten with the
-        corrected iprobe
+        returns (by setting self.iprobefull) a copy of the measured current, 
+        overwritten with the corrected current iprobe (so it stays a signal)
+
+        sets self.iprobefull, self.sweepQ   and also appends to self.comp
         """
         # obtain leakage estimate
         if t_comp is None:
@@ -389,6 +391,8 @@ Args:
         self.sweepQ = []  # will keep these for synchronous sampling
         input_leakage = leakage
         for (c, chan) in enumerate(self.imeasfull.channels):
+            if np.all(t_comp == [0,0]): # skip compensation,AND DC correction - not so good
+                return
             if self.select is not None and c not in self.select:
                 continue
             leakage = input_leakage
@@ -404,16 +408,18 @@ Args:
             w_comp = np.where((tb>=t_comp[0]) & (tb<=t_comp[1]))[0]
             if len(w_comp) < 2000:
 
-                raise ValueError('Not enough points {wc} t_comp - try {tt}'
+                raise ValueError('Not enough points {wc} in t_comp for leakage est. - try {tt}'
                     .format(tt=np.round([tb[0], tb[0] + t_comp[1]-t_comp[0]],3),
                             wc=len(w_comp)))
             ns = len(w_comp)
             wind = np.blackman(ns)
             offset = np.mean(wind * imeas[w_comp])/np.mean(wind)
+            # Voffset is only used later in deducing cross-talk at DC
             Voffset = np.mean(wind * sweepV[w_comp])/np.mean(wind)
             sweepVFT = np.fft.fft(AC(sweepV[w_comp]) * wind)
             imeasFT = np.fft.fft(AC(imeas[w_comp]) * wind)
-            ipk = np.argmax(np.abs(sweepVFT)[0:ns//2])  # avoid the upper one
+            ipk = np.argmax(np.abs(sweepVFT)[0:ns//2])  # avoid the upper peak
+            # ipk is the index of the FFT max
             comp = imeasFT[ipk]/sweepVFT[ipk]
             self.comp.append(comp)
             #print('leakage compensation factor = {r:.2e} + j{i:.2e}'
@@ -440,7 +446,7 @@ Args:
             offset = np.mean(wind * self.iprobefull.signal[c][w_comp])/np.mean(wind)
             self.iprobefull.signal[c][0:comlen] -= offset
 
-    def prepare_sweeps(self, rest_swp='auto', sweep_freq=500, Vpp=90*2, clip_level_minus=-88):
+    def prepare_sweeps(self, rest_swp='auto', sweep_freq=500, t_offs=3, Vpp=90*2, clip_level_minus=-88):
         """ extracts sweep voltage data for all probes,
         call restore_sin if necessary
         Initially, the voltage data is assumed to be in a dictionary
@@ -452,10 +458,11 @@ Args:
             rest_swp = self.shot > [20160310, 0]  and  self.shot < [20160310, 99] 
             print ('* Automatically setting rest_swp to {r} *'.format(r=rest_swp))
 
-        if rest_swp:
-            from pyfusion.data.restore_sin import restore_sin
         self.vcorrfull = self.vmeasfull.copy()
-        if rest_swp:
+        if t_offs != 0:
+            self.vcorrfull.signal[t_offs:] = self.vcorrfull.signal[:-t_offs]
+        if rest_swp:  # last minute import reduces dependencies for those who don't need it
+            from pyfusion.data.restore_sin import restore_sin
             for (c, sig) in enumerate(self.vmeasfull.signal):
                 self.vcorrfull.signal[c] = restore_sin(self.vmeasfull, chan=c, sweep_freq=sweep_freq,
                                                        Vpp=Vpp, clip_level_minus=clip_level_minus, verbose=self.verbose)
@@ -508,16 +515,16 @@ Args:
         good = find_clipped([v, im], clipfact=clipfact)
         wg = np.where(good)[0]
         if (~good).any():  # if any bad
-            if len(wg) < 0.3 * len(v) or len(wg) < 32:  # was (~good).all():
-                print('{t:.3f}s suppressing all!*** {a}'
-                      .format(a=len(good),t=np.average(segtb)))
+            if len(wg) < 0.3 * len(v) or len(wg) < 20:  # was (~good).all():
+                print('{t:.5f}s suppressing all !*** {a} *************************8'
+                      .format(a=len(wg),t=np.average(segtb)))
                 if fit_params.get('esterr', False):
                     return([3*[None], None, None, None, None, 3*[None]]) # incl dummy errsa
                 else:
                     return([3*[None], None, None, None, None])
 
             elif self.verbose > 0 or len(wg) < 0.9 * len(v):
-                print('{t:.3f}s suppress clipped {b}/{a}'
+                print('{t:.5f}s suppress clipped {b}/{a}'
                       .format(b=len(np.where(~good)[0]), a=len(good), t=np.average(segtb)))
 
         # [[Te, Vf, I0], res, its]
@@ -527,8 +534,10 @@ Args:
         if (plot >= 2) and len(self.figs) < 8:  # 20 really slows down
             # best to open in another session.
             interval = str('{t}'.format(t=[round(segtb[0], 6), round(segtb[-1], 6)]))
-            fig, axs = plt.subplots(nrows=1 + (plot >= 3), ncols=1, squeeze=0,\
-                                    num='{i} {c}{s}'.format(i=interval, c=channame, s=self.actual_params['suffix']))
+            titbar ='{i} {c}{s}'.format(i=interval, c=channame, s=self.actual_params['suffix'])
+            if plot == 6:  # 4 suppresses bar to allow many - self.plot=4 gets promoted to 6 here
+                titbar = None
+            fig, axs = plt.subplots(nrows=1 + (plot >= 3), ncols=1, squeeze=0, num=titbar)
 
             self.figs.append(fig)
             if plot >= 3:
@@ -650,7 +659,7 @@ Args:
             da.da['ne18'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
-    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr=1, lpf=None), initial_TeVfI0=dict(Te=50, Vf=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, clip_iprobe = None, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, sweep_freq=500, defaults=dict(sweep_freq=500, dtseg=4e-3), suffix=''):
+    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr=1, lpf=None), initial_TeVfI0=dict(Te=50, Vf=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, clip_iprobe = None, clip_vprobe=None, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, sweep_freq=500, t_offs=None, defaults=dict(sweep_freq=500, dtseg=4e-3), suffix=''):
         """ 
 Process the I, V probe data in the Langmuir_data object
 
@@ -666,10 +675,14 @@ Args:
   threshchan: the current channel number (base 0) used to detect plasma start.
   overlap: degree of overlap of the analysed segments: 1 is no overlap, 2 means half the segment is common
     to neighboring data.
+  t_offs: shift of timebase in samples to allow for bridge probe - default 0
   dtseg: The length of a segment over shich analysis is performed, either in seconds (float) or samples (int)
   rest_swp: Restore clipped sweep V if True.  If None, for March 10 only.
   leakage: A complex conductance to represent the crosstalk between voltage and current channels.  If None
     it is automatically calculated for the interval t_comp.  To set to zero, use [0,0] 
+clip_iprobe = e.g. [-0.015, .02]  # used to check if a resistive term is affecting Te
+clip_vprobe = [,]  # used to reduce emphasis on isat
+
 
 Returns:
     A DA object as described above
@@ -688,7 +701,6 @@ plot >= 4  : ditto + all I-V iterations
 Can send parameters through the init or process - either way they are all 
    recorded in actual_params
 
-clip_iprobe = [-0.015, .02]  # used to check if a resistive term is affecting Te
 
 Start by processing in the ideal order: - logical, but processes more data than necessary
 fix up the voltage sweep
@@ -711,17 +723,19 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         self.actual_params.update(dict(i_diag=self.i_diag, v_diag=self.v_diag))
         # and do it for actuals too
         for k in self.actual_params:
-            if k not in 'amu,clipfact,clip_iprobe,dtseg,filename,initial_TeVfI0,leakage,overlap,plot,rest_swp,suffix,t_comp,t_range,threshold,threshchan,fit_params,v_diag,i_diag,return_data,sweep_freq,defaults'.split(','):
+            if k not in 'amu,clipfact,clip_iprobe,clip_vprobe,dtseg,filename,initial_TeVfI0,leakage,overlap,plot,rest_swp,suffix,t_comp,t_range,t_offs,threshold,threshchan,fit_params,v_diag,i_diag,return_data,sweep_freq,defaults'.split(','):
                 raise ValueError('Unknown actual_params key ' + k)
 
         self.actual_params.update(dict(i_diag_utc=self.imeasfull.utc, pyfusion_version=pyfusion.VERSION))
         self.amu = amu
+        toffs = 3 if t_offs is None and 'BRIDGE' in self.i_diag else 0
         if not isinstance(self.imeasfull.channels, (list, tuple, np.ndarray)):
             self.imeasfull.channels = [self.imeasfull.channels]
 
         self.i_chans = [ch.config_name for ch in self.imeasfull.channels]
+        # A multi diag may contain voltage channels - let's discard them
         for ch in self.i_chans:  # only take the current channels, not U
-            if self.dev.name == 'W7X' and ch[-1] != 'I':
+            if self.dev.name.startswith == 'W7' and ch[-1] != 'I':
                 raise ValueError("Warning - removal of V chans doesn't work!!!")
                 # hopefully we can ignore _U channels eventually, but not yet
                 self.i_chans.remove(ch)
@@ -767,7 +781,7 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         # prepare_sweeps will populate self.vcorrfull
         # self.check_crosstalk(verbose=0)  # this could be slow
 
-        self.prepare_sweeps(rest_swp=rest_swp, sweep_freq=sweep_freq)
+        self.prepare_sweeps(rest_swp=rest_swp, sweep_freq=sweep_freq, t_offs=t_offs)
         self.comp = []
         self.get_iprobe(leakage=leakage, t_comp=t_comp)
 
@@ -798,21 +812,27 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         if self.debug>0: print('Use {n} segments'.format(n=len(self.segs)))
         self.fitdata = []
         debug_(self.debug, 3, key='process_loop')
-        for mseg, iseg, vseg in self.segs:
+        for imseg, iseg, vseg in self.segs:
             # print('len vseg', len(vseg.signal[0]))
             if len(vseg.timebase) < dtseg//5:  # skip short segments
                 continue
 
-            print(np.round(np.mean(mseg.timebase),4), end='s: ')  # midpoint    
+            print(np.round(np.mean(imseg.timebase),4), end='s: ')  # midpoint    
             if clip_iprobe is not None:
-                print('fudge hard clipping')
+                print('fudge hard I clipping', end=' ')
                 # have to clip the raw signal, because that is where the decision is made
-                # but we have to do it AFTER isage is extracted, becuause the leakage
-                # will make the clipping uneven (a sinusoidal top) - so clip isge too
+                # but we have to do it AFTER iseg is extracted, becuause the leakage
+                # will make the clipping uneven (a sinusoidal top) - so clip iseg too
                 iseg.signal = np.clip(iseg.signal, *clip_iprobe)
-                mseg.signal = iseg.signal.copy()
+                imseg.signal = iseg.signal.copy()  # isn't this in the wrong order?
 
-            self.fitdata.append(self.fit_swept_Langmuir_seg_multi(mseg, iseg, vseg, clipfact=clipfact, initial_TeVfI0=initial_TeVfI0, fit_params=fit_params, plot=plot))
+            if clip_vprobe is not None:
+                print('fudge hard V clipping', end=' ')
+                vseg.signal = np.clip(vseg.signal, *clip_vprobe)
+                #vmseg.signal = vseg.signal.copy()  # need to implement, but mainly for graphics
+                vmseg = vseg.copy()  # need to implement, but mainly for graphics
+
+            self.fitdata.append(self.fit_swept_Langmuir_seg_multi(imseg, iseg, vseg, clipfact=clipfact, initial_TeVfI0=initial_TeVfI0, fit_params=fit_params, plot=plot))
         # note: fitter.actual_fparams only records the most recent!
         self.actual_params.pop('fit_params') # only want the ACTUAL ones.
         self.actual_params['actual_fit_params'] = self.fitter.actual_fparams
@@ -821,8 +841,10 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
                 fmt = 'LP{s0}_{s1}_'
                 if 'L5' in self.i_diag:
                     fmt += 'L5' + self.i_diag.split('L5')[1][0]
-                if 'TDU' in self.i_diag:
+                elif 'TDU' in self.i_diag:
                     fmt += self.i_diag.split('TDU')[0][-1] + 'TDU'
+                elif 'BRIDGE' in self.i_diag:
+                    fmt += self.i_diag.split('BRIDGE')[0][-1] + 'BLP'
                 filename = filename.replace('*',fmt+'_')
                 if filename.endswith('_'):  # remove ending _
                     filename = filename[0:-1]

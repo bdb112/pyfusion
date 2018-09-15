@@ -8,8 +8,10 @@ This version assumes that all required sweep data are in a multi-channel diagnos
 
 See main README.rst for more recent changes 
  - see also the docs of the main method :py:meth:`~Langmuir_data.process_swept_Langmuir`
- - The convenience script examples/run_process_Langmuir runs a list of shots for both limiter segments 
-with suitable inputs
+ - The convenience script examples/run_process_Langmuir (run_process_TDLP.py etc)
+   runs a list of shots for both limiter segments with suitable inputs
+
+See also get_LP_data for tweaking fit algorithms - grabs v/i data from plots to play with
 
     Example of step by step operation and tuning:
 
@@ -284,6 +286,38 @@ def tryone(var, data, mrk='r', w=4):
     plotchar(v, Te, Vf, I0, linewidth=w)
 
 
+def find_sat_level(i_probe, debug=1):
+    """ Initially written to find the saturation of electrons, but will work for ions 
+    if we flip the sign
+    If this is not found, return None
+    """
+    if debug:
+        print('find sat level')
+    label = 'find_sat level'
+    cnts,bins = np.histogram(i_probe, bins=20)
+    wneg = np.where(bins < 0)[0]
+    wneg = wneg[:-2]  # chop out the last one - the one closest to zero in case it has some isat
+    maxnegidx = np.argmax(cnts[wneg])
+    if cnts[maxnegidx] < 5: # peak is too low to expect a meaningful result 
+        return(None)
+    wnegsml = np.where((wneg > maxnegidx) & (cnts[wneg] < cnts[wneg[maxnegidx]]/3.))[0]
+    if debug > 1:
+        plt.figure()
+        plt.hist(i_probe, bins=20)
+        plt.plot(bins[wneg[wnegsml]], cnts[wneg[wnegsml]],'ro')
+        plt.title('analysis of ' + label.replace('(','<'))
+    # the first bin in this 'smaller' current set (1 +  gives the RhS of it)
+    try:
+        cutoff = bins[1 + wneg[wnegsml]][0]
+    except IndexError as reason:
+        if debug > 0:
+            print('Error in wned/wnegsml lookup ' + str(reason))
+        return(None)
+    return(cutoff, np.nan)
+
+
+    return None
+
 def find_clipped(sigs, clipfact):
     """ look for digitizer or amplifier saturation in all raw
     signals, and return offending indices.  Detecting digitizer saturation
@@ -452,7 +486,7 @@ Args:
         Initially, the voltage data is assumed to be in a dictionary
         """
         if self.debug > 0:
-            print('entering prepare_sweeps ', len(self.vmeasfull.signal[0]))
+            print('entering prepare_sweeps ', len(self.imeasfull.signal[0]))
         if str(rest_swp).lower() == 'auto':
             # bug: was wrong 0309,0 - but didn't affect any data I sent
             rest_swp = self.shot > [20160310, 0]  and  self.shot < [20160310, 99] 
@@ -535,8 +569,9 @@ Args:
             # best to open in another session.
             interval = str('{t}'.format(t=[round(segtb[0], 6), round(segtb[-1], 6)]))
             titbar ='{i} {c}{s}'.format(i=interval, c=channame, s=self.actual_params['suffix'])
-            if plot == 6:  # 4 suppresses bar to allow many - self.plot=4 gets promoted to 6 here
+            if plot == 4:  # 4 suppresses bar to allow many - self.plot=4 gets promoted to 6 here
                 titbar = None
+            print(plot, 6)
             fig, axs = plt.subplots(nrows=1 + (plot >= 3), ncols=1, squeeze=0, num=titbar)
 
             self.figs.append(fig)
@@ -604,6 +639,10 @@ Args:
 
         if self.fitter.fit_params.get('esterr',False):
             lookup.extend([(8, 'eTe'), (9, 'eVf'), (10, 'eI0') ])
+
+        lookup.extend([(1+np.max([l[0] for l in lookup]), 'esat_clip')])
+        if len(np.unique([l[0] for l in lookup])) != np.shape(self.fitdata[0])[1]:
+            debug_(0, 0, key='process_loop')
 
         for (ind, key) in lookup:
             if key not in dd:
@@ -818,12 +857,24 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
                 continue
 
             print(np.round(np.mean(imseg.timebase),4), end='s: ')  # midpoint    
+            esat_clip = None
             if clip_iprobe is not None:
-                print('fudge hard I clipping', end=' ')
+                if len(np.shape(clip_iprobe)) == 0: # this means we want saturation clipping
+                    this_clip_iprobe = find_sat_level(iseg.signal[0], debug=self.debug)
+                    print('Found saturation level of ', this_clip_iprobe)
+                    if this_clip_iprobe is None:
+                        #break doesn't work - really need to drop two out
+                        this_clip_iprobe = [np.nan,np.nan]
+                        esat_clip = this_clip_iprobe[0]
+
+                else:
+                    print('fudge hard I clipping', end=' ')
+                    this_clip_iprobe = clip_iprobe
+                    
                 # have to clip the raw signal, because that is where the decision is made
-                # but we have to do it AFTER iseg is extracted, becuause the leakage
+                # but we have to do it AFTER iseg is extracted, because the leakage
                 # will make the clipping uneven (a sinusoidal top) - so clip iseg too
-                iseg.signal = np.clip(iseg.signal, *clip_iprobe)
+                iseg.signal = np.clip(iseg.signal, *this_clip_iprobe)
                 imseg.signal = iseg.signal.copy()  # isn't this in the wrong order?
 
             if clip_vprobe is not None:
@@ -833,7 +884,10 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
                 vmseg = vseg.copy()  # need to implement, but mainly for graphics
 
             self.fitdata.append(self.fit_swept_Langmuir_seg_multi(imseg, iseg, vseg, clipfact=clipfact, initial_TeVfI0=initial_TeVfI0, fit_params=fit_params, plot=plot))
+            #self.fitdata[-1].append(dict(esat_clip = esat_clip))
+            self.fitdata[-1][0].append(esat_clip)
         # note: fitter.actual_fparams only records the most recent!
+        
         self.actual_params.pop('fit_params') # only want the ACTUAL ones.
         self.actual_params['actual_fit_params'] = self.fitter.actual_fparams
         if filename is not None:            

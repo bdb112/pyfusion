@@ -56,8 +56,15 @@ if test:
                            for i in range(len(lfnoise))],axis=0)
 
 else:
-    fig = plt.gcf()
-    label = fig.get_label()
+    (labs_nums) = zip(plt.get_figlabels(),plt.get_fignums())
+    for lab in labs_nums:
+        label, num = lab
+        if '[' in label:
+            fig = plt.figure(label)
+            mgr = plt.get_current_fig_manager()
+            mgr.window.tkraise()
+            break
+
     print('found "' + label + '"', end='')
     if label.startswith('['):
         print()
@@ -89,6 +96,22 @@ if i_probe is None or v is None:
 
 LPcharax = plt.gca()
 
+cnts,bins = np.histogram(i_probe, bins=20)
+wneg = np.where(bins < 0)[0]
+maxnegidx = np.argmax(cnts[wneg])
+wnegsml = np.where((wneg > maxnegidx) & (cnts[wneg] < cnts[wneg[maxnegidx]]/3.))[0]
+if debug:
+    plt.figure()
+    plt.hist(i_probe, bins=20)
+    plt.plot(bins[wneg[wnegsml]], cnts[wneg[wnegsml]],'ro')
+    plt.title('analysis of ' + label.replace('(','<'))
+cutoff = bins[wneg[wnegsml]][0]
+if debug:
+    plt.show()  # block
+
+input('CR to continue')
+
+# figure()  # write on current fig.
 fig, [axt, axfit] = plt.subplots(2, 1)
 ft = np.fft.rfft(i_probe)
 

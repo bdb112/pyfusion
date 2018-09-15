@@ -294,22 +294,24 @@ def find_sat_level(i_probe, debug=1):
     if debug:
         print('find sat level')
     label = 'find_sat level'
-    cnts,bins = np.histogram(i_probe, bins=20)
-    wneg = np.where(bins < 0)[0]
-    wneg = wneg[:-2]  # chop out the last one - the one closest to zero in case it has some isat
-    maxnegidx = np.argmax(cnts[wneg])
-    if cnts[maxnegidx] < 5: # peak is too low to expect a meaningful result 
-        return(None)
-    wnegsml = np.where((wneg > maxnegidx) & (cnts[wneg] < cnts[wneg[maxnegidx]]/3.))[0]
-    if debug > 1:
-        plt.figure()
-        plt.hist(i_probe, bins=20)
-        plt.plot(bins[wneg[wnegsml]], cnts[wneg[wnegsml]],'ro')
-        plt.title('analysis of ' + label.replace('(','<'))
-    # the first bin in this 'smaller' current set (1 +  gives the RhS of it)
-    try:
+    try:  # put the whole thing in try/except - should really try to track errors
+        cnts,bins = np.histogram(i_probe, bins=20)
+        wneg = np.where(bins < 0)[0]
+        wneg = wneg[:-2]  # chop out the last one - the one closest to zero in case it has some isat
+        maxnegidx = np.argmax(cnts[wneg])
+        if cnts[maxnegidx] < 5: # peak is too low to expect a meaningful result 
+            return(None)
+        wnegsml = np.where((wneg > maxnegidx) & (cnts[wneg] < cnts[wneg[maxnegidx]]/3.))[0]
+        if debug > 1:
+            plt.figure()
+            plt.hist(i_probe, bins=20)
+            plt.plot(bins[wneg[wnegsml]], cnts[wneg[wnegsml]],'ro')
+            plt.title('analysis of ' + label.replace('(','<'))
+        # the first bin in this 'smaller' current set (1 +  gives the RhS of it)
+        #try:
         cutoff = bins[1 + wneg[wnegsml]][0]
-    except IndexError as reason:
+    #except IndexError as reason:
+    except Exception as reason:
         if debug > 0:
             print('Error in wned/wnegsml lookup ' + str(reason))
         return(None)
@@ -493,7 +495,7 @@ Args:
             print ('* Automatically setting rest_swp to {r} *'.format(r=rest_swp))
 
         self.vcorrfull = self.vmeasfull.copy()
-        if t_offs != 0:
+        if t_offs is not None:
             self.vcorrfull.signal[t_offs:] = self.vcorrfull.signal[:-t_offs]
         if rest_swp:  # last minute import reduces dependencies for those who don't need it
             from pyfusion.data.restore_sin import restore_sin

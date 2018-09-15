@@ -2,13 +2,17 @@
 """ To (selectively) print matching lines in a flattened Minerva map dictionary
     or any other dictionary, matching python re. regexp wild_card
 
-    wild_card:
+    Can be used to compare two complete PARLOGs - use wild_card="\w"  (any alphanumeric or _)
+        then use diff, qdiff to compare.
+
+    wild_card: uses full re syntax  e.g.   .*foo.* is equivalent to foo
     excl: typically used to exclude time dimension to avoid many 'spurious'
              differences
 Example:
 run pyfusion/examples/print_dict_tree.py wild_card=".*scr.*istor.val.*" shot=[20180719,37]
  modeFactor.va  actor.va will pick out volt channels
 
+run pyfusion/examples/print_dict_tree.py shot=(20180712,6) wild_card="Probe_POWER_SUPPLY_1.*actor.*"
 
 if shot is an integer that is big enough to to be a utc, assume it is
  
@@ -50,6 +54,7 @@ matches = rgx.findall('\n'.join(op))
 print('{lm} matches to regexp "{wc}"'.format(lm=len(matches), wc=wild_card))
 for lin in np.sort(matches):
     print(lin)
-print('see matches or /tmp/parm_URL* for more detail')
-with open('/tmp/parm_URL_{v}'.format(v=mm.parm_URL.split('_')[-2]), 'w') as fout:
+tmpfile = '/tmp/parm_URL_{v}'.format(v=mm.parm_URL.split('_')[-2])
+print('see matches or {tmpfile} for more detail'.format(tmpfile=tmpfile))
+with open(tmpfile, 'w') as fout:
     fout.writelines('\n'.join([m for m in np.sort(matches) if not excl in m]))

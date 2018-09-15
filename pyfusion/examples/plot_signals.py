@@ -32,7 +32,7 @@ hold=0  # 0 means erase, 1 means hold, 2 means twinx
 labeleg='False'
 t_range=[]
 t0=0
-stop=True  # if False, push on with missing data 
+stop=True  # if False, push on with missing data  - only makes sense for multi channel
 """
 exec(_var_defaults)
 
@@ -49,6 +49,9 @@ if 'W7X' in dev_name:
 
 dev = pyfusion.getDevice(dev_name)
 data = dev.acq.getdata(shot_number,diag_name, contin=not stop)
+if data is None:
+    raise LookupError('data not found for {d} on shot {sh}'
+                      .format(d=diag_name, sh=shot_number))
 if len(t_range) > 0:
     data = data.reduce_time(t_range)
 

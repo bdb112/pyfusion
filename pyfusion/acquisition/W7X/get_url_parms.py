@@ -35,6 +35,7 @@ def flatten_dict(d, level=None, sep='.'):
     level = None returns a totally flattened dictionary
     """
     def items():
+        # somehow this function prevents a proper traceback - so I put a check a few lines below.
         for key, value in d.items():
             if (level is None or level>0) and isinstance(value, dict):
                 for subkey, subvalue in flatten_dict(value, level=level-1 if level is not None else None, sep=sep).items():
@@ -42,9 +43,11 @@ def flatten_dict(d, level=None, sep='.'):
             else:
                 yield key, value
 
+    if d is None:
+        raise ValueError('dictionary to be flattened is empty')
     return dict(items())
 
-# This (YvesgereY version separates out the key concatenation - might be more flexible
+# This (YvesgereY stack overflow version separates out the key concatenation - might be more flexible)
 def iteritems_nested(d):
   def fetch (suffixes, v0) :
     if isinstance(v0, dict):
@@ -109,6 +112,7 @@ def get_minerva_parms(fetcher_obj):
     if shot_gte([20170101,0], fetcher_obj.shot):
         print('Warning - looking up a pre-minerva shot { shot} '.format(shot=fetcher_obj.shot))
         # return(fetcher_obj, '')
+
     try:
         mm = MinervaMap(fetcher_obj.shot)
     except LookupError as reason:
@@ -121,6 +125,9 @@ def get_minerva_parms(fetcher_obj):
     print('last mod at ', last_mod, cal_remarks, end='\t')
     # go through all the channels mentioned, check mode according to I or V type
     chan_dict = mm.get_parm('parms/probes/{mn}'.format(mn=fetcher_obj.minerva_name))
+    if chan_dict is None:
+        raise LookupError('\n Minerva name {mn} not found in {mmURL}'
+                          .format(mn=fetcher_obj.minerva_name, mmURL=mm.parm_URL))
     chans=[ch for ch in flatten_dict(chan_dict, 2,sep='/').keys() if 'channels' in ch]
     if fetcher_obj.config_name.endswith('I'):
         chans =[ch for ch,chall in
@@ -171,6 +178,9 @@ def get_minerva_parms(fetcher_obj):
         rs = None
         gainstr = str(1/(modeFactor*electronics['driverElectronicTotalGain']['values'][0])) + ' V'
 
+    if hasattr(fetcher_obj, 'gain'):
+        pyfusion.utils.warn('Overriding gain {g} from config file in {nm} - conflict??'
+                            .format(nm=fetcher_obj.config_name, g=str(fetcher_obj.gain)))
     fetcher_obj.gain = gainstr
     CDS = 82 # until Op1.2b
     dmd = 180 + adc_no  # adc1 is the left most, and maps to 181_DATASTREAM

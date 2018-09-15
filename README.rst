@@ -11,7 +11,14 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
-* add electron saturation finder. Also update get_LP_data
+ * add electron saturation finder: find_sat_level . Also update get_LP_data.py
+ * get_shot_list: add selshot keyword
+ * get_url_parms - add check for null dict input to flatten_dict 
+   otherwise traceback fails.  Also warn about dual values for gain in
+   minvera channels
+ * process_swept_Langmuir - protect find_sat_level
+ * print_dict_tree - examples
+
 
 Version 0.99 alpha - adapt process_Langmuir to bridge probe data
  * data/process_swept_Langmuir.py add comments, allow skipping compensation, t_offs to shift the voltage sweep in time, add clip_vprobe

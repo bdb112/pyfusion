@@ -326,6 +326,7 @@ class BaseAcquisition(object):
         # there is similar code elsewhere - check if is duplication
 
         fetcher_class.contin = contin
+
         try:
             d = fetcher_class(self, shot, interp=interp,
                               config_name=config_name, **kwargs).fetch()
@@ -637,7 +638,7 @@ class MultiChannelFetcher(BaseDataFetcher):
                 ch_data = ch_data.reduce_time(t_range)
 
             if ch_data is None:
-                print('skipping ', chan)
+                print('>>>>>>>>> Skipping ', chan)
                 continue
             
             params.update({chan: dict(params=ch_data.params, gain_used=ch_data.gain_used, config_name=ch_data.config_name)})

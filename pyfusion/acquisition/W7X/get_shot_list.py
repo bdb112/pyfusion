@@ -2,6 +2,15 @@
 """ By extracting all progId, comments and dates, in ProjectDesc,
 create a table to connect shots, dates and times.
 
+Then with keywords seldate, selshot, seltext, print the selected shot information
+
+e.g.         # to show all shots 21 (handy to see dates with data taken)
+  run pyfusion/acquisition/W7X/get_shot_list.py selshot=21
+  run pyfusion/acquisition/W7X/get_shot_list.py seldate=20180911
+  run pyfusion/acquisition/W7X/get_shot_list.py seltext='std'
+
+Note that comments (case insensitive) are not used much anymore
+
 Would be nice to have scenId and segId, but the relationship is not 1:1
 To find segment 1 in scenario 2, shot xx need to find the utc range of shot xx,
 find the scenarios in that utc, select 2, then find the segments within the
@@ -247,6 +256,7 @@ fr_UTC = '20150101 00:00:00'
 to_UTC = '20190101 00:00:00'
 seldate=0
 seltext=""
+selshot=0
 update=0
 """
 
@@ -300,7 +310,7 @@ update=0
     else:
         shotDA = get_shotDA()
 
-    if seldate is 0 and seltext is "":
+    if seldate == 0 and seltext == "" and selshot == 0:
         seldate = max(shotDA['date'])
     if seltext != "":
         # this doesn't work
@@ -310,13 +320,18 @@ update=0
             if seltext.lower() in com.lower():
                 selected.append(i)
 
-    else:
+    elif seldate > 0:
         selected = np.where(seldate == shotDA['date'])[0]
+    elif selshot > 0:
+        selected = np.where(selshot == shotDA['progId'])[0]
+    else:
+        raise ValueError('Must have selshot, seldate, or seltext non 0/""')
 
     for i in selected:
-        print(u'<<< {dtm}, {progId}, {tm} {dt}\n{cmt} >>>' 
+        print(u'<<< {dtm}, {progId}, {tm} {dt}{nl}{cmt} >>>' 
               .format(dtm=shotDA['date'][i],progId=shotDA['progId'][i],
                       tm=time.asctime(time.gmtime(shotDA['end_utc'][i]/1e9)),
                       dt=1e-9*(shotDA['end_utc'][i]-shotDA['start_utc'][i]),
-                      cmt=shotDA['comment'][i].replace('\n',' ')))
+                      cmt=shotDA['comment'][i].replace('\n',' '),
+                      nl = '\n' if len(shotDA['comment'][i]) > 50 else ' '))
 

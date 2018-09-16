@@ -6,11 +6,16 @@ from pyfusion.debug_ import debug_
 from matplotlib import pyplot as plt
 
 def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin=[.3,.4], debug=0, duty_factor=0.12, exceptions=(LookupError)):
-    """ return the actual interesting times in utc for a given shot, 
-    based on the given diag.  Use raw data to allow for both 1 and 10 ohm resistors (set above common mode sig)
-    tricky shots are [20171025,51] # no sweep), 1025,54 - no sweep or plasma
-    See the test routine when this is 'run' 
-         return None if there is a typical expected exception (e.g. LookupError)
+    """ Return the actual interesting times in utc for a given shot, 
+    based on the given diag.  Use raw data to allow for both 1 and 10 ohm 
+      resistors (set above common mode sig)
+    Tricky shots are [20171025,51] # no sweep), 1025,54 - no sweep or plasma
+    See the test routine in __main__ when this is 'run' 
+         
+    Returns None if there is a typical expected exception (e.g. LookupError)
+    Occasional problem using a probe signal if startup is delayed - try ECRH
+    Would be good to make sure the start was before t1, but this code
+    does not access t1 at the moment.
     """
     dev_name = "W7X"
     #  diag = W7X_UTDU_LP10_I  # has less pickup than other big channels
@@ -37,8 +42,9 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
                     
     if not isinstance(data.timebase[1], int) and hasattr(data, 'params') and 'diff_dimraw' in data.params:
         data.timebase = data.params['diff_dimraw'].cumsum()
-    if len(np.unique(np.diff(data.timebase)))>1:
-        duty_factor = min(duty_factor * 4,0.9)  # minmax reduction requires a high DF than a fully sampled local cache
+    if len(np.unique(np.diff(data.timebase)))>1: # test for minmax reduction
+        # requires a high DF than a fully sampled signal
+        duty_factor = min(duty_factor * 4,0.9)
         
     tb = data.timebase
     tsamplen = tb[-1] - tb[0]

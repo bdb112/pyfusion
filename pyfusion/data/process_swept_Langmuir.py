@@ -385,6 +385,8 @@ Args:
         plot:  can be set later in process_langmuir
         params: if set, can cause the process step to be executed after loading
 """
+        if pyfusion.NSAMPLES != 0:
+            raise ValueError("doesn't make sense to use minmax decimation here")
         self.dev = pyfusion.getDevice(dev_name)
         self.shot = shot
         self.verbose = verbose
@@ -398,7 +400,7 @@ Args:
         self.figs = []
         self.suffix = ''  # this gets put at the end of the fig name (title bar)
 
-        self.imeasfull = self.dev.acq.getdata(shot, i_diag)
+        self.imeasfull = self.dev.acq.getdata(shot, i_diag, contin=True)
         self.vmeasfull = self.dev.acq.getdata(shot, v_diag)
         comlen = min(len(self.vmeasfull.timebase), len(self.imeasfull.timebase))
         FFT_size = nice_FFT_size(comlen-2, -1)
@@ -495,7 +497,7 @@ Args:
             print ('* Automatically setting rest_swp to {r} *'.format(r=rest_swp))
 
         self.vcorrfull = self.vmeasfull.copy()
-        if t_offs is not None:
+        if t_offs is not None and t_offs is not 0:
             self.vcorrfull.signal[t_offs:] = self.vcorrfull.signal[:-t_offs]
         if rest_swp:  # last minute import reduces dependencies for those who don't need it
             from pyfusion.data.restore_sin import restore_sin
@@ -642,7 +644,7 @@ Args:
         if self.fitter.fit_params.get('esterr',False):
             lookup.extend([(8, 'eTe'), (9, 'eVf'), (10, 'eI0') ])
 
-        lookup.extend([(1+np.max([l[0] for l in lookup]), 'esat_clip')])
+        # lookup.extend([(1+np.max([l[0] for l in lookup]), 'esat_clip')])
         if len(np.unique([l[0] for l in lookup])) != np.shape(self.fitdata[0])[1]:
             debug_(0, 0, key='process_loop')
 
@@ -653,6 +655,15 @@ Args:
 
         # fudge t_mid is not a vector...should fix properly
         dd['t_mid'] = dd['t_mid'][:, 0]
+        try:
+            import getpass
+            username = getpass.getuser()
+        except:
+            if hasattr(os, 'getlogin'):
+                username = os.getlogin()
+            else:
+                username='?'
+                
         dd['info'] = dict(params=self.actual_params,
                           coords=[self.coords[ic] for ic in self.select],
                           #area=[self.area[ic] for ic in self.select], # needs to be in npz file etc first
@@ -662,7 +673,7 @@ Args:
                                     for chn in
                                     [self.i_chans[ic] for ic in self.select]],
                           orig_name = os.path.split(filename)[-1],
-                          username = os.getlogin())
+                          username = username)
         
         da = DA(dd)
         da.masked = Masked_DA(['Te', 'I0', 'Vf', 'ne18', 'Ie_Ii'], baseDA=da)
@@ -805,7 +816,10 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         else:
             compfun = tuple
         if default_sweep is 'NO SWEEP':
-            if compfun(self.shot) > compfun([20170926, 999]):
+
+            if compfun(self.shot) > compfun([20171231, 999]):
+                default_sweep = 'W7X_PSUP2_U'  # 
+            elif compfun(self.shot) > compfun([20170926, 999]):
                 default_sweep = 'W7X_KEPCO_U'  # only really working after shot 50ish
                 # default_sweep = 'W7X_UTDU_LP18_U'  # only really working after shot 50ish
             elif compfun(self.shot) > compfun([20160310, 999]):
@@ -887,7 +901,11 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
 
             self.fitdata.append(self.fit_swept_Langmuir_seg_multi(imseg, iseg, vseg, clipfact=clipfact, initial_TeVfI0=initial_TeVfI0, fit_params=fit_params, plot=plot))
             #self.fitdata[-1].append(dict(esat_clip = esat_clip))
-            self.fitdata[-1][0].append(esat_clip)
+            #if the record lengths are different None is returned - spit it out.
+            if self.fitdata[-1] is None:
+                self.fitdata.pop()
+            #else:  # beware - the esat_clip is a channel thing - needs to be inside!
+            #    self.fitdata[-1][0].append(esat_clip)
         # note: fitter.actual_fparams only records the most recent!
         
         self.actual_params.pop('fit_params') # only want the ACTUAL ones.

@@ -51,12 +51,12 @@ def lpfilter(t, i, v, lpf, debug=1, plot=0):
         t=t[0:-1]
     ftv = np.fft.rfft(v)
     fundind = np.argmax(ftv)
-    absftvlow = np.abs(ftv[1:20])  # exclude DC
+    absftvlowf = np.abs(ftv[1:20])  # exclude DC
     for hh in [2,3]:
-        if (hh*fundind - 1) < len(absftvlow):
-            absftvlow[hh*fundind - 1] = 0  #  zero out 2nd, 3rd harm of sweep (remember: shift by 1)
+        if (hh*fundind - 1) < len(absftvlowf):
+            absftvlowf[hh*fundind - 1] = 0  #  zero out 2nd, 3rd harm of sweep (remember: shift by 1)
     # /100 is fooled by 2ndH 0309.52 L57 and /70 by 20171018.19
-    wothers = np.where(absftvlow > np.max(absftvlow)/100.)[0]  
+    wothers = np.where(absftvlowf > np.max(absftvlowf)/70.)[0]  
     if len(wothers) == 1:
         ncycles = wothers[0] + 1  # we excluded DC - so 0 is fundamental
     else:
@@ -64,14 +64,14 @@ def lpfilter(t, i, v, lpf, debug=1, plot=0):
         msg = str('Not a clear number of cycles - assuming 1 [{harms}] - {ng} found'
                   .format(ng = len(wothers),
                           harms=', '.join(['{h}'.format(h=round(h/100,1)) 
-                                           for h in absftvlow][0:4])))
+                                           for h in absftvlowf][0:4])))
         # scale absft by 100 to make the numbers readable
         if pyfusion.DEBUG>0:
-            whdesc = np.argsort(absftvlow[wothers])[::-1]
+            whdesc = np.argsort(absftvlowf[wothers])[::-1]
             print('[harm of sweep: n] absfts: {n_abs}'
                   .format(n_abs=', '.join(['[h {hrm:.2f}:({wh})] {absft:.1f}'
                                            .format(wh=wh, hrm=(wh+1.)/fundind,
-                                                   absft=absftvlow[wh]/100)
+                                                   absft=absftvlowf[wh]/100)
                                            for  wh in whdesc[0:6]])))
         ncycles = 1
         pyfusion.logging.warn(msg)

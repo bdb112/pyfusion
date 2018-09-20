@@ -443,7 +443,11 @@ class BaseDataFetcher(object):
             from pyfusion.acquisition.W7X.get_url_parms import get_minerva_parms
             debug_(pyfusion.DEBUG, level=2, key='MinervaName')
             self, cal_info = get_minerva_parms(self)
-
+            # add the power supply in
+            params_dict = eval('dict('+self.params+')')
+            if 'powerSupply' in params_dict:
+                self.vsweep = 'W7X_PSUP{n}_U'.format(n=params_dict['powerSupply'][-1])
+                
         if pyfusion.RAW == 0:
             gain_units = "1 arb"  # default to gain 1, no units
             if hasattr(self,'gain'):
@@ -538,6 +542,8 @@ class BaseDataFetcher(object):
                     print("Can't check DMD on {s}, {d}".format(s=self.shot, d=self.config_name))
 
         data.gain_used = sgn
+        if hasattr(self, 'vsweep'):
+            data.vsweep = self.vsweep
         data.meta.update({'shot':self.shot})
         if hasattr(data,'comment'):  # extract comment if there
             print('!data item {cn} already has comment {c}'
@@ -654,6 +660,9 @@ class MultiChannelFetcher(BaseDataFetcher):
                 channels[-1].config_name = ch_data.config_name                
             else:
                 channels[-1].config_name = 'fix_me'
+            # in general we have to move the attributes we need from the channel to the channel in the multi-diag
+            if hasattr(ch_data,'vsweep'):
+                channels[-1].vsweep = ch_data.vsweep 
             meta_dict.update(ch_data.meta)
             # tack on the data utc
             ch_data.signal.utc = ch_data.utc

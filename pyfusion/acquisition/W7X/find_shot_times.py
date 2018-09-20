@@ -3,6 +3,7 @@ from __future__ import print_function
 import numpy as np
 import pyfusion
 from pyfusion.debug_ import debug_
+from pyfusion.utils import wait_for_confirmation
 from matplotlib import pyplot as plt
 
 def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin=[.3,.4], debug=0, duty_factor=0.12, exceptions=(LookupError)):
@@ -22,6 +23,11 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
     dev = pyfusion.getDevice(dev_name)
     nsold = pyfusion.NSAMPLES
     pyfusion.RAW = 1  # allow for both 10 and 1 ohm sensing resistors
+    # This should include a test for interactive use, so big save jobs
+    # don't stall here
+    if margin[0]<0:
+        wait_for_confirmation('You will not save t1? with margin={m}\n {h}(n/q/y)'
+                              .format(m=str(margin),h=__doc__))
     try:
         pyfusion.NSAMPLES = 2000
         dev.acq.repair = -1

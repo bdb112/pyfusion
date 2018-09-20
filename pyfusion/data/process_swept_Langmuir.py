@@ -508,6 +508,7 @@ Args:
     def fit_swept_Langmuir_seg_multi(self, m_seg, i_seg, v_seg, clipfact=5,  initial_TeVfI0=None, fit_params=None, plot=None):
         if len(v_seg.timebase) != len(i_seg.timebase):
             pyfusion.logging.warn('Unequal timebases {vl}, {il}'.format(vl=len(v_seg.timebase), il=len(i_seg.timebase)))
+            debug_(self.debug, 1, key='Unequal_timebases')
             return(None)
         if self.select is None:
             self.select = range(len(self.i_chans))
@@ -644,7 +645,9 @@ Args:
         if self.fitter.fit_params.get('esterr',False):
             lookup.extend([(8, 'eTe'), (9, 'eVf'), (10, 'eI0') ])
 
-        # lookup.extend([(1+np.max([l[0] for l in lookup]), 'esat_clip')])
+        clip_iprobe = self.actual_params['clip_iprobe']
+        if len(self.fitdata[-1]) == 1 and clip_iprobe is not None and len(np.shape(clip_iprobe)) == 0:
+            lookup.extend([(1+np.max([l[0] for l in lookup]), 'esat_clip')])
         if len(np.unique([l[0] for l in lookup])) != np.shape(self.fitdata[0])[1]:
             debug_(0, 0, key='process_loop')
 
@@ -827,11 +830,19 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
             else:
                 default_sweep = 'W7X_L57_LP01_U'
 
-        for ch in self.i_chans:
-            cd = get_config_as_dict('Diagnostic', ch)
-            # TODO(bdb): use of default_sweep should generate a warning
-            self.vassoc.append(cd.get('sweepv', default_sweep))
+        for ch in self.i_chans: # find the matching index to the multichannel diag (have I done this earlier?)
+            mcdnum = [n for n in range(len(self.imeasfull.channels)) if self.imeasfull.channels[n].name == ch]
+            if len(mcdnum) != 1:
+                raise LookupError('Channel {ch} not in {i_diag}'.format(ch=ch, i_diag=i_diag))
+            if hasattr(self.imeasfull.channels[mcdnum[0]], 'vsweep'):
+                vsweep_diag = self.imeasfull.channels[mcdnum[0]].vsweep
+            else:
+                cd = get_config_as_dict('Diagnostic', ch)
+                # TODO(bdb): use of default_sweep should generate a warning
+                vsweep_diag = cd.get('sweepv', default_sweep)
+            self.vassoc.append(vsweep_diag)
 
+        debug_(self.debug, 1, key='after get associated')
         # first do the things that are better done on the whole data set.
         # prepare_sweeps will populate self.vcorrfull
         # self.check_crosstalk(verbose=0)  # this could be slow
@@ -904,8 +915,9 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
             #if the record lengths are different None is returned - spit it out.
             if self.fitdata[-1] is None:
                 self.fitdata.pop()
-            #else:  # beware - the esat_clip is a channel thing - needs to be inside!
-            #    self.fitdata[-1][0].append(esat_clip)
+            # beware - the esat_clip is a channel thing - needs to be inside!
+            if len(self.fitdata[-1]) == 1 and clip_iprobe is not None and len(np.shape(clip_iprobe)) == 0:
+                self.fitdata[-1][0].append(esat_clip)
         # note: fitter.actual_fparams only records the most recent!
         
         self.actual_params.pop('fit_params') # only want the ACTUAL ones.

@@ -4,29 +4,68 @@ import numpy as np
 # this changes the behaviour of warnings
 import warnings
 import pyfusion
+from six.moves import input
+import sys
+
+
+def wait_for_confirmation(msg):
+    """
+    The following test assumes you will type y<CR>y<CR>
+
+    >>> wait_for_confirmation('happy? (ynq)')
+    happy? (ynq): ?'y'
+    >>> wait_for_confirmation('foo')
+    foo: ?'y'
+
+    
+    """
+    ip = input(msg + ': ?')
+    ip = ip.strip()
+    if len(ip) >= 1:
+        ip = ip.lower()[0]
+        
+    msg = msg.replace('(', '[').replace(')', ']')
+    msgtoks = msg.split('[')
+    if len(msgtoks) == 1:  # no instructions, so assume default is to quit
+        default = 'q'
+    else:
+        default = msgtoks[1][0]
+
+    if len(ip) == 0:
+        action = default
+    elif ip in 'nq':
+        action = 'q'
+    else:
+        action = ip
+    
+    if action == 'q':
+        sys.exit()
+    else:
+        return(ip)
 
 # this could run slower in python2 (used to be xrange)
 hlp = 'We require that low limit is present, and upper is not: '
-def find_last_shot(fun, srange=None, ex=True, quiet=False):
+def find_last_shot(fun, srange=None, watch_for_ex=True, quiet=True):
     """ Find the last shot for which fun(shot) does not return None
         Actually more general than this.  Only tested for low lim yes, uplim no
         seems to not suppress error messages after the first run
     Note: uses a primitive search - inefficient
 
-    >>> def myfun(shot): return(shot <= 12345)
-    >>> find_last_shot(myfun, quiet=True)
+    >>> def myfun(shot): return([None, 1][shot <= 12345])
+    >>> find_last_shot(myfun, quiet=True,watch_for_ex=False)
     12345
+
     """
     srange = [1, 200000] if srange is None else srange
     def mid(low, high):
         return(int((low+high)/2))
 
-    def quiet_call(fun, arg, ex=True):
+    def quiet_call(fun, arg, watch_for_ex=True):
         try:
             res = fun(arg)
         except Exception as reason:
             # print(str(reason))
-            if (ex):  # if we are watching for exceptions, return None if we get one
+            if (watch_for_ex):  # if we are watching for exceptions, return None if we get one
                 res = None
         if res is None and (not quiet): print('.',end='')
         return(res is not None)
@@ -36,10 +75,10 @@ def find_last_shot(fun, srange=None, ex=True, quiet=False):
 
     low = min(srange)
     high = max(srange)
-    if not quiet_call(fun, low): 
+    if not quiet_call(fun, low,watch_for_ex=watch_for_ex): 
         raise ValueError(hlp + 'low limit of {l} not there'.format(l=low)) 
 
-    if quiet_call(fun, high): 
+    if quiet_call(fun, high, watch_for_ex=watch_for_ex): 
         raise ValueError(hlp + 'upper limit of {u} is there'.format(u=high)) 
 
     shot = mid(low, high)

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from pyfusion.debug_ import debug_
 import sys, os
 import time as tm
@@ -37,14 +38,29 @@ class W7MDataFetcher(BaseDataFetcher):
         """ record some details of the forthcoming fetch so
         that the calling routine in base can give useful error messages
         """
-        debug_(pyfusion.DEBUG, level=1, key='W7M_setup',msg='entering W7X MDS SETUP')
         self.msgs = ''
         self.fetch_mode = 'thin'
         
+        debug_(pyfusion.DEBUG, level=1, key='W7M_setup',msg='entering W7X MDS SETUP')
         self.conn = MDS.Connection(self.acq.server)
+        print(' path was' , self.conn.get("getenv('qrp_path')"), end=': ')
+        self.conn.get('setenv("qrp_path=qrp-server::/w7x/new/qrp;/w7x/vault/qrp")')
+        print(' now' , self.conn.get("getenv('qrp_path')"))
         try:
-            mdsshot = (self.shot[0] - 20000000) * 1000 + self.shot[1]
-            self.conn.openTree(self.tree, mdsshot)
+            if 'BRIDGE' in self.config_name:
+                catch_exception = Exception
+            else:
+                catch_exception = ()
+            try:
+                mdsshot = (self.shot[0] - 20000000) * 1000 + self.shot[1]
+                self.msgs += 'try shot ' + str(mdsshot)
+                self.conn.openTree(self.tree, mdsshot)
+            except catch_exception as reason2:
+                print('not found - try for a Lukas test shot')
+                mdsshot = (self.shot[0] - 20000000) * 100 + self.shot[1]
+                self.msgs += 'try shot ' + str(mdsshot)
+                self.conn.openTree(self.tree, mdsshot)
+
             if hasattr(self, 'roi'):
                 ROI = self.roi
             elif hasattr(self.acq, 'roi'):

@@ -215,7 +215,7 @@ def update_with_valid_config(fetcher):
         else:
             # replace W7X_ with W7XM1_  etc
             fetcher.__dict__.update(get_config_as_dict('Diagnostic', fetcher.config_name.replace(devshort, devshort+Mod)))
-            if pyfusion.VERBOSE>3: print('### >> Loading config from {m} -> {d}\n'.format(m=Mod, d=fetcher.__dict__))
+            if pyfusion.VERBOSE>-1: print('### >> Loading config from {m} -> {d}\n'.format(m=Mod, d=fetcher.__dict__))
 
     else:  # here if we complete the for loop - it is an error
         raise LookupError(config_name)

@@ -17,6 +17,8 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
     Occasional problem using a probe signal if startup is delayed - try ECRH
     Would be good to make sure the start was before t1, but this code
     does not access t1 at the moment.
+
+    debug=1 or more plots the result.
     """
     dev_name = "W7X"
     #  diag = W7X_UTDU_LP10_I  # has less pickup than other big channels
@@ -77,6 +79,10 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
         break
     else:  # went through the whole loop (i.e. without success)
         pyfusion.utils.warn('Too few/many points above threshold on shot {shot}'.format(shot=str(shot)))
+        if debug>1:
+            plt.figure()
+            data.plot_signals()
+            plt.show()
         return None
     timesplus = np.array([times[0] - margin[0]*1e9, times[1] + margin[1]*1e9], dtype=np.int64)
     print('{sh}: shot length={dt}, {timesplus}'

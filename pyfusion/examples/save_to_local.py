@@ -57,6 +57,8 @@ if hasattr(pyfusion, 'NSAMPLES') and pyfusion.NSAMPLES != 0:
     if input('pyfusion.NSAMPLES is going to decimate - are you sure?').lower()[0]!='y':
         sys.exit(1)
     
+pyfusion.reload_config()  # needed for W7M hacks - e.g if ROI is set specially
+
 try:       # this allows usage on systems without all the new url features
     from pyfusion.data.shot_range import shot_range
     from pyfusion.acquisition.W7X.get_shot_info  import get_shot_utc
@@ -130,6 +132,16 @@ for shot_number in shot_list:
         utc_shot_number = find_shot_times(shot=shot_number, **find_kws)
         print('Using threshold detection: {kws}'.format(kws=find_kws))
         pyfusion.RAW = save_in_RAW  # bdb kludge - fix and remove
+        if utc_shot_number is None:
+            utc_shot_number = np.array([0, int(3e8)]) # default to first 300ms (in ns rel to t1)
+        if dev_name == 'W7M':  # kludge set roi to control the time range
+            if shot[0] < 990000:  # test shot
+                mds_utc_offs = 0
+            else:
+                mds_utc_offs = get_shot_utc(shot_number)[0] + int(60*1e9)  # bdb kludgey - fix!!
+
+            dev.acq.roi = ' '.join([str(tn) for tn in (utc_shot_number-mds_utc_offs).tolist() + [100]])
+
     else:
         if 'W7X' in dev.name and shot_number[0]>1e9:
             utc_shot_number = shot_number
@@ -171,7 +183,7 @@ for shot_number in shot_list:
                         if 'W7X' in dev.name:
                             if shot_number[0] > 1e9:     # if it is a real shot
                                 raise Exception('should not get here - time_range and find_times inconsistency\n perhaps this is a continuously recorded signal?')
-                            else:
+                            else:  # a time range in seconds
                                 utc = get_shot_utc(shot_number)
                                 utc_shot_number = [int(utc[0] + (61 + this_time_range[0])*1e9),
                                                    int(utc[0] + (61 + this_time_range[1])*1e9)]
@@ -180,7 +192,7 @@ for shot_number in shot_list:
                                 pass  # nothing more to do - we have everything
                     if 'W7M' in dev.name:
                         utc_shot_number = shot_number  # ignore utcs for now
-                        # later should put range in roi
+                        # time has already been converted to roi and updatede in config (line 135)
 
                     data = dev.acq.getdata(utc_shot_number, diag_chan, no_cache=compress_local==False, exceptions=())
                     print(diag_chan, shot_number, end=' - ')

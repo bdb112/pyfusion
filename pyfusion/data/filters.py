@@ -108,6 +108,11 @@ def get_optimum_time_range(input_data, new_time_range, try_more=0.0002):
 
     # obtain indices of the beginning and end times - not sure of precision effects.
     nt_args = searchsorted(input_data.timebase, new_time_range)
+    if nt_args[0] == nt_args[1]:
+        raise LookupError('No samples in {dr} in the requested new time range {tr}'
+                          .format(tr = str(new_time_range),
+                                  dr=str([input_data.timebase.min(),
+                                          input_data.timebase.max()])))
     # try for try_more more points (as a fraction of the timebase)
     # extension is in seconds
     if abs(try_more) == 1:

@@ -39,13 +39,14 @@ if 'W7' in dev_name:
         if 'data' in locals() and hold !=0:
             utc0 = data.utc[0] 
 
+xdiag, ydiag = diag_name.split(',')
+
 if time_range != []:
-    if len(time_range) == 2:
-        time_range += [2e-5 + 1e-7]  # assume downsampling
+    if len(time_range) == 2 and 'APPROX' in ydiag:
+        time_range += [2e-5 + 1e-7]  # assume downsampling if only two nums
     ROI = ' '.join([str('{t:.6f}'.format(t=t)) for t in time_range])
 pyfusion.config.set('Acquisition:W7M','ROI', ROI)
 dev = pyfusion.getDevice(dev_name)
-xdiag, ydiag = diag_name.split(',')
 
 dev.no_cache = True
 xdata = dev.acq.getdata(shot_number, xdiag, contin=not stop)
@@ -54,10 +55,10 @@ for dat in [xdata, ydata]:
     if dat is None:
         raise LookupError('data not found for {d} on shot {sh}'
                           .format(d=dat, sh=shot_number))
-"""if len(t_range) > 0:  
-    notimp()
-    data = data.reduce_time(time_range)
-"""
+if len(time_range) == 2:  
+    xdata = xdata.reduce_time(time_range)
+    ydata = ydata.reduce_time(time_range)
+
 
 if hold == 0: plt.figure()
 
@@ -72,6 +73,15 @@ if 'W7X' in dev_name:
 
 xarr = xdata.signal
 yarr = -ydata.signal
+
+"""  Not needed now I have implemented valid
+if 'APPROX_I' in ydiag and tuple(shot_number) > (20180912,15) and dev_name == 'W7M' and :
+    print('================ Applying gain factor 10 ===============')
+    yarr = yarr * 10.
+"""
+
+if len(xdata.signal) < period + np.abs(offs):
+    raise LookupError('Not enough samples to average {l}'.format(l=len(xdata.signal)))
 fig, axs = plt.subplots(1, 2)
 axs[0].plot(xarr, yarr, ',', **plotkws)
 
@@ -93,7 +103,7 @@ if len(time_range) > 0:
 else:
     tr = ROI
 # desc = 'test' if tuple(shot) < 1e8 else 'program'
-desc = 'program'
+desc = ydiag + ' program'
 fig.suptitle(desc + ': ' + str(shot_number) + ': ' + tr, size='x-large')
 
 

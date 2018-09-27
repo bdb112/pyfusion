@@ -28,6 +28,8 @@ class W7MDataFetcher(BaseDataFetcher):
         output_data = TimeseriesData(timebase=Timebase(1e-9*timedata),
                                      signal = scl * Signal(sig), channels=ch)
         output_data.meta.update({'shot': self.shot})
+        if hasattr(self, 'mdsshot'):  # intended for checks - not yet used.
+            output_data.mdsshot = self.mdsshot
         output_data.config_name = self.config_name
         output_data.utc = [timedata[0], timedata[-1]]
         #output_data.units = dat['units'] if 'units' in dat else ''
@@ -46,6 +48,7 @@ class W7MDataFetcher(BaseDataFetcher):
         print(' path was' , self.conn.get("getenv('qrp_path')"), end=': ')
         self.conn.get('setenv("qrp_path=qrp-server::/w7x/new/qrp;/w7x/vault/qrp")')
         print(' now' , self.conn.get("getenv('qrp_path')"))
+        # valid_shots is not read in yet here
         try:
             if 'BRIDGE' in self.config_name:
                 catch_exception = Exception
@@ -61,6 +64,7 @@ class W7MDataFetcher(BaseDataFetcher):
                 self.msgs += 'try shot ' + str(mdsshot)
                 self.conn.openTree(self.tree, mdsshot)
 
+            self.mdsshot = mdsshot  # try to save mdsshot so valid works - not used
             if hasattr(self, 'roi'):
                 ROI = self.roi
             elif hasattr(self.acq, 'roi'):
@@ -68,8 +72,13 @@ class W7MDataFetcher(BaseDataFetcher):
             else:
                 ROI = None
                 
-            if ROI is not None:        
-                tr_ns = [long(float(t) * 1e9) for t in ROI.split()] 
+            if ROI is not None:  # adjust according to ROI in sec or ns_utc
+                if float(ROI.split()[0]) > 100:
+                    fact = 1
+                else:
+                    fact=1e9
+                    
+                tr_ns = [long(float(t) * fact) for t in ROI.split()] 
                 context = 'settimecontext({0}Q,{1}Q,{2}Q)'.format(*tr_ns)
                 self.conn.get(context)
 

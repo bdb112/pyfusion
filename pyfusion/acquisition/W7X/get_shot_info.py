@@ -33,7 +33,13 @@ def get_shot_info(date, shot, item='comment', quiet=False):
         if quiet:
             return(None)
         else:
-            raise LookupError('program {s} not found on day {d}'.format(s=shot,d=date))
+            msg = 'program {s} not found on day {d}'.format(s=shot,d=date)
+            from pyfusion import DEBUG
+            if DEBUG != 0:
+                raise LookupError(msg)
+            else:
+                print('Warning: ' + msg)
+                return(None)
 
     else:
         raise LookupError('more than one match? to shot {shot}'

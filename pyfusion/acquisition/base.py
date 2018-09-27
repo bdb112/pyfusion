@@ -90,7 +90,10 @@ def try_fetch_local(input_data, bare_chan):
                         raise LookupError("Can't parse {d} as a MDS style subdir"
                                           .format(d=patt))
                     continue
-                subdir += revshot[ord(ch) - ord('a')]
+                if (ord(ch) - ord('a')) < len(revshot):
+                    subdir += revshot[ord(ch) - ord('a')]
+                else:
+                    print('working with MDSplus W7M test shot?')
 
         else:
             subdir = patt
@@ -159,6 +162,7 @@ def update_with_valid_config(fetcher):
     and update the fetcher with its dictionary info
        see config/'Valid Shots' in the reference docs
     This code was extracted into a function
+    It is called very early in the base.py code - the  _init_() phase
     """
     def valid_for_shot(fetcher):
         """ Determine if this fetcher's diag definition or modified diag is valid 
@@ -184,6 +188,13 @@ def update_with_valid_config(fetcher):
         # another example of inheritance via pyfusion.cfg 
         #   - need to formalise this, extract the code to a function?
         is_valid = True
+
+        # check for an MDSplus W7M test shot 18... - normal W7M is 2018....
+        if np.shape(fetcher.shot) != () and fetcher.shot[0] < 990000:  
+            valid_shots = None # don't check as the check will find no shot at the moment
+            pyfusion.utils.warn('ignoring valid_since data assumed for MDS test {sh}'
+                                     .format(sh=str(fetcher.shot)))
+
         if valid_shots is not None:
             shot_or_utc = fetcher.shot
             # this 15 line code block is W7X specific - how to remove to W7X?

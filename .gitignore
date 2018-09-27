@@ -14,5 +14,5 @@ NOTES
 # benchmark profile stats
 pyfusion/test/benchmarks/stats
 
-pyfusion/acquisition/W7X/shot_DA.*
+pyfusion/acquisition/W7X/shotDA.*
 pyfusion.egg-info

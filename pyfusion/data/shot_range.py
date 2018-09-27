@@ -27,7 +27,8 @@ def shot_range(shot_from, shot_to=None, inc=1):
         inp = input(' Assume you want just one shot in a list? (y/nq) ')
         if len(inp) > 0 and inp[0].lower() in 'nq':
             raise ValueError('Need two shots to define a range')
-        else:
+        else: # assume we want to know if the single shot doens't exist
+            get_shot_utc(shot_from, quiet=False)
             shot_to = next_shot(shot_from, inc=inc)
             
     shot = shot_from

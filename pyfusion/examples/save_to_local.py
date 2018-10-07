@@ -135,7 +135,7 @@ for shot_number in shot_list:
         if utc_shot_number is None:
             utc_shot_number = np.array([0, int(3e8)]) # default to first 300ms (in ns rel to t1)
         if dev_name == 'W7M':  # kludge set roi to control the time range
-            if shot[0] < 990000:  # test shot
+            if shot_number[0] < 990000:  # test shot
                 mds_utc_offs = 0
             else:
                 mds_utc_offs = get_shot_utc(shot_number)[0] + int(60*1e9)  # bdb kludgey - fix!!

@@ -41,7 +41,7 @@ class W7MDataFetcher(BaseDataFetcher):
         that the calling routine in base can give useful error messages
         """
         self.msgs = ''
-        self.fetch_mode = 'thin'
+        self.fetch_mode = 'thin '
         
         debug_(pyfusion.DEBUG, level=1, key='W7M_setup',msg='entering W7X MDS SETUP')
         self.conn = MDS.Connection(self.acq.server)
@@ -56,11 +56,12 @@ class W7MDataFetcher(BaseDataFetcher):
                 catch_exception = ()
             try:
                 mdsshot = (self.shot[0] - 20000000) * 1000 + self.shot[1]
-                self.msgs += 'try shot ' + str(mdsshot)
+                self.msgs += '..try shot ' + str(mdsshot) + '..'
                 self.conn.openTree(self.tree, mdsshot)
             except catch_exception as reason2:
                 print('not found - try for a Lukas test shot')
-                mdsshot = (self.shot[0] - 20000000) * 100 + self.shot[1]
+                #mdsshot = (self.shot[0] - 20000000) * 100 + self.shot[1]
+                mdsshot = (self.shot[0] - 0) * 100 + self.shot[1]
                 self.msgs += 'try shot ' + str(mdsshot)
                 self.conn.openTree(self.tree, mdsshot)
 

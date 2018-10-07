@@ -83,6 +83,10 @@ special consideration such as quotes, avoiding spaces within arguments::
   # run a simple plot script - these data are compact, no need for caching
   run pyfusion/examples/plot_signals.py  dev_name='W7X' diag_name='W7X_TotECH'  shot_number=[20160308,40]
 
+  # W7X mdsplus test shots
+  test shots ONLY are stored as 6 dig shot numbers [180907, 6] and are
+  not check for valid_since
+
   # A pickle file for OP1.1 (acquisition/W7-X/shotDA.pickle) is included
   # if the 'update' above doesn't work (there are still some unicode/py3 issues).
 

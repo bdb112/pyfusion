@@ -41,6 +41,7 @@ from scipy.optimize import leastsq
 import time
 from pyfusion.debug_ import debug_
 from pyfusion.utils.primefactors import nice_FFT_size
+from pyfusion.utils import boxcar, rotate
 from pyfusion.conf.utils import get_config_as_dict
 
 debug = 0
@@ -537,16 +538,18 @@ Args:
         """Lowish level routine - takes care of i clipping and but not
         leakage or restoring sweep.
 
+        m_seg is the segment of measured current before compensation (for clip checks)
         Returns fitted params including error
     """
         # Note that we check the RAW current for clipping
-        try:  # this relative import doesn't work when process is run (for test)
+        try:  # this relative import doesn't work when process_Lang is run (for test)
             from pyfusion.data.LPextra import lpfilter, estimate_error
         except ValueError:
             from pyfusion.data.LPextra import lpfilter, estimate_error
 
-        lpf = fit_params['lpf'] if fit_params is not None and 'lpf' in fit_params else None
-            
+        lpf = fit_params.get('lpf', None)
+        cycavg = fit_params.get('cycavg', None)
+
         segtb = i_segds.timebase
         v, i, im = v_sig.copy(), i_sig.copy(), m_sig.copy()     # for fit
         # v_n, i_n, im_n = v * np.nan, i * np.nan, im * np.nan,   # for nan plots
@@ -595,12 +598,22 @@ Args:
 
         #res = LPfit(v, i, plot=(debug > 1),maxits=100)
         if lpf is not None:
+            # We filter i only because our Vs are usually clean enough
             i = lpfilter(segtb, i, v, lpf=lpf, debug=self.debug, plot=self.plot)
             # check if i has been truncated to an even number by real fft - 
             if wg[-1] >= len(i):  # if so, truncate the other pieces
                 wg = wg[0:-1]
                 v = v[0:-1]
                 segtb = segtb[0:-1]
+        if cycavg is not None:
+            i = boxcar(i, period=cycavg[0], maxnum=cycavg[1])
+            v = boxcar(v, period=cycavg[0], maxnum=cycavg[1])
+            v = rotate(v, offs=cycavg[2])
+            # for simplizity use boxcar (max=1) to get the right segtb size an offset
+            segtb = boxcar(segtb,  period=cycavg[0], maxnum=1)
+            # need to re-do wg as any of the averaged cycles could force a nan
+            wg = np.where(~np.isnan(i))[0]
+            
         if (plot >= 2) and len(self.figs) < 8:
             plt.sca(axs[0, 0])  # ready for VI curve
 
@@ -638,6 +651,7 @@ Args:
             dd[key] = np.zeros([nt,nc], dtype=np.uint16)
 
         # make all the f32 arrays - note - ne is just I0 for now - fixed below
+        # lookup is a list to help sort out the list of results from the fit
         lookup = [(0, 't_mid'), (1, 'Te'), (2, 'Vf'), (3, 'I0'), 
                   (4, 'resid'), (5, 'nits'), (6, 'maxits'), (7, 'Ie_Ii'),
                   (3, 'ne18')]
@@ -645,6 +659,7 @@ Args:
         if self.fitter.fit_params.get('esterr',False):
             lookup.extend([(8, 'eTe'), (9, 'eVf'), (10, 'eI0') ])
 
+         # clip_iprobe should be a fit_params so that it can work at the seg_chan level
         clip_iprobe = self.actual_params['clip_iprobe']
         if len(self.fitdata[-1]) == 1 and clip_iprobe is not None and len(np.shape(clip_iprobe)) == 0:
             lookup.extend([(1+np.max([l[0] for l in lookup]), 'esat_clip')])
@@ -772,8 +787,12 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         self.actual_params = locals().copy()
         # try to catch mispelling, variables in the wrong place
         for k in fit_params:
-            if k not in 'Lnorm,cov,esterr,alg,xtol,ftol,lpf,maxits,track_ratio'.split(','):
+            if k not in 'Lnorm,cov,esterr,alg,xtol,ftol,lpf,maxits,track_ratio,cycavg'.split(','):
                 raise ValueError('Unknown fit_params key ' + k)
+
+        if cycavg is not None and clip_iprobe is not None:
+            raise ValueError("Can't use clip_iprobe with cycavg at present")
+
         self.actual_params.pop('self')
         self.actual_params.update(dict(i_diag=self.i_diag, v_diag=self.v_diag))
         # and do it for actuals too
@@ -880,7 +899,7 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         debug_(self.debug, 3, key='process_loop')
         for imseg, iseg, vseg in self.segs:
             # print('len vseg', len(vseg.signal[0]))
-            if len(vseg.timebase) < dtseg//5:  # skip short segments
+            if len(vseg.timebase) < dtseg:  # //5:  # skip short segments - was //5 why?
                 continue
 
             print(np.round(np.mean(imseg.timebase),4), end='s: ')  # midpoint    
@@ -896,6 +915,9 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
 
                 else:
                     print('fudge hard I clipping', end=' ')
+                    # This should only be used to simulate problems.
+                    # However it usually works to force points outside the
+                    # range to be ignored - but not always - esp. with cycavg
                     this_clip_iprobe = clip_iprobe
                     
                 # have to clip the raw signal, because that is where the decision is made
@@ -904,7 +926,7 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
                 iseg.signal = np.clip(iseg.signal, *this_clip_iprobe)
                 imseg.signal = iseg.signal.copy()  # isn't this in the wrong order?
 
-            if clip_vprobe is not None:
+            if clip_vprobe is not None: # fudge hard clipping - only for simulating problems
                 print('fudge hard V clipping', end=' ')
                 vseg.signal = np.clip(vseg.signal, *clip_vprobe)
                 #vmseg.signal = vseg.signal.copy()  # need to implement, but mainly for graphics
@@ -996,15 +1018,21 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
             
 # quick test code - just 'run' this file
 if __name__ == '__main__':
+    import sys
     #LP = Langmuir_data([20160310, 9], 'W7X_L57_LP01_04','W7X_L5UALL') # 4 chans
     #LP = Langmuir_data([20160310, 9], 'W7X_L53_LPALLI','W7X_L5UALL') # lower
     #LP = Langmuir_data([20160309, 7], 'W7X_L57_LPALLI','W7X_L5UALL') # upper
     #LP = Langmuir_data([20160302, 12], 'W7X_L57_LPALLI','W7X_L5UALL') # bad tb?
     #LP = Langmuir_data([20160310, 9], 'W7X_L57_LP01_02','W7X_L5UALL') #quickest
     # the following, using ([20160310, 9], 'W7X_L57_LP01_02) gives one nice char
-    LP= Langmuir_data([20160309,10], 'W7X_L57_LPALLI','W7X_L5UALL')
-    # and another char spoilt by a change in i_electron between cycles
-    results = LP.process_swept_Langmuir(rest_swp=1,t_range=[0.91,0.93],t_comp=[0.05,0.1],threshchan=0,plot=3, return_data=True)
+
+    if len(sys.argv) < 2:
+        LP = Langmuir_data([20160309,10], 'W7X_L57_LPALLI','W7X_L5UALL')
+        # and another char spoilt by a change in i_electron between cycles
+        results = LP.process_swept_Langmuir(rest_swp=1,t_range=[0.91,0.93],t_comp=[0.05,0.1],threshchan=0,plot=3, return_data=True)
+    elif sys.argv[1] == 'BRIDGE':
+        LP = Langmuir_data([20180927,30], 'W7M_BRIDGE_ALLI','W7M_BRIDGE_V1', dev_name='W7M')
+        LP.process_swept_Langmuir(t_comp=[0,0], t_range=[1.0,1.001],dtseg=2000, threshchan=-1,initial_TeVfI0=dict(Te=20,Vf=1,I0=None),fit_params=dict(cycavg=[200,10,-4]))
 
 """
 Testing synchronisation using dead reckoning.

@@ -1,5 +1,9 @@
-""" from plot_signal.py 
+""" Adapted from plot_signal.py - see bdbs_MDSplus_W7X/plot_lissa_smoothed.py for built-in test data.
+
+run pyfusion/examples/plot_xy.py dev_name='W7X' shot_number=[180907,6] time_range=[0,0.01,.0000001] period=259.4 offs=-6 marker='-+'
+
 run pyfusion/examples/plot_xy.py dev_name='W7X' shot_number=[20180911,24] diag_names=W7M_BRIDGE_V1,W7M_BRIDGE_APPROX_I
+
 """
 import pyfusion
 from pyfusion.utils import boxcar, rotate
@@ -22,9 +26,9 @@ stop=True  # if False, push on with missing data  - only makes sense for multi c
 offs = -4
 period = 200
 maxcyc = 100
+marker = '.r'
 """
 exec(_var_defaults)
-
 from  pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
@@ -84,30 +88,35 @@ if len(xdata.signal) < period + np.abs(offs):
     raise LookupError('Not enough samples to average {l}'.format(l=len(xdata.signal)))
 fig, axs = plt.subplots(1, 2)
 axs[0].plot(xarr, yarr, ',', **plotkws)
-
 bckwargs = dict(maxnum=maxcyc, period=period)
-xbc = boxcar(sig=xarr, **bckwargs)
+xbc, numused = boxcar(sig=xarr, return_numused=True, **bckwargs)
 ybc = boxcar(sig=yarr, **bckwargs)
 
+print('Now overlay one cycle')
 xbcreal = boxcar(sig=xarr, period=period, maxnum=1)
 ybcreal = boxcar(sig=yarr, period=period, maxnum=1)
 
 axs[1].plot(xbcreal, ybcreal, '.', label='real time, no delay', markersize=4, **plotkws)
-axs[1].plot(xbc, ybc, '.', label='{nc} cyc., no delay'.format(nc=maxcyc), markersize=4, **plotkws)
-axs[1].plot(rotate(xbc, offs), ybc, '.r', label='{nc} cyc., vdel {ns}ns'
-            .format(nc = maxcyc, ns=offs*-100), **plotkws)
+axs[1].plot(xbc, ybc, '.', label='{nc} cyc., no delay'.format(nc=numused), markersize=4, **plotkws)
+axs[1].plot(rotate(xbc, offs), ybc, marker, label='{nc} cyc., vdel {ns}ns'
+            .format(nc = numused, ns=offs*-100), **plotkws)
 axs[0].set_xlabel('V')
 axs[0].set_ylabel('A')  #  avoids interference
 if len(time_range) > 0:
-    tr = str(np.round([time_range[0], time_range[1]], 8))
+    tr ='[{0}]'.format(', '.join([str(np.round(t,8))
+                                  for t in [xdata.timebase[0], xdata.timebase[-1]]]))
 else:
     tr = ROI
-# desc = 'test' if tuple(shot) < 1e8 else 'program'
-desc = ydiag + ' program'
-fig.suptitle(desc + ': ' + str(shot_number) + ': ' + tr, size='x-large')
-
+tr += str(' per = {p:.2f}'.format(p=period))    
+desc = 'test' if tuple(shot_number) < tuple([990000]) else 'program'
+fig.suptitle(ydiag + ' ' + desc + ': ' + str(shot_number) + ': ' + tr,
+             size='large')
 
 """
+useful trick to get_suptitle()
+gcf().get_children()[-1].get_text()
+
+
 data.plot_signals(suptitle='shot {shot}: '+diag_name, t0=t0, sharey=sharey, downsamplefactor=max(1, decimate),
                   fun=fun, fun2=fun2, labeleg=labeleg, **plotkws)
 """

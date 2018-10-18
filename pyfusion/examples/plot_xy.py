@@ -43,8 +43,12 @@ if 'W7' in dev_name:
         if 'data' in locals() and hold !=0:
             utc0 = data.utc[0] 
 
-xdiag, ydiag = diag_name.split(',')
-
+xdiag, ydiag = diag_name.split(',', 1)
+if ',' in ydiag:
+    ydiag, wdiag = ydiag.split(',')
+else:
+    wdiag = None
+    
 if time_range != []:
     if len(time_range) == 2 and 'APPROX' in ydiag:
         time_range += [2e-5 + 1e-7]  # assume downsampling if only two nums
@@ -55,13 +59,20 @@ dev = pyfusion.getDevice(dev_name)
 dev.no_cache = True
 xdata = dev.acq.getdata(shot_number, xdiag, contin=not stop)
 ydata = dev.acq.getdata(shot_number, ydiag, contin=not stop)
-for dat in [xdata, ydata]:
+datlist = [xdata, ydata]
+if wdiag is not None:
+    wdata = dev.acq.getdata(shot_number, wdiag, contin=not stop)
+    datlist.append(wdata)
+
+for dat in datlist:
     if dat is None:
         raise LookupError('data not found for {d} on shot {sh}'
                           .format(d=dat, sh=shot_number))
 if len(time_range) == 2:  
-    xdata = xdata.reduce_time(time_range)
-    ydata = ydata.reduce_time(time_range)
+    for dat in datalist:
+        dat.reduce_time(time_range, copy=False)
+#   xdata = xdata.reduce_time(time_range)
+#   ydata = ydata.reduce_time(time_range)
 
 
 if hold == 0: plt.figure()
@@ -87,7 +98,8 @@ if 'APPROX_I' in ydiag and tuple(shot_number) > (20180912,15) and dev_name == 'W
 if len(xdata.signal) < period + np.abs(offs):
     raise LookupError('Not enough samples to average {l}'.format(l=len(xdata.signal)))
 fig, axs = plt.subplots(1, 2)
-axs[0].plot(xarr, yarr, ',', **plotkws)
+w = np.where(wdata.signal > 0.1) if wdata is not None else range(len(xdata))
+axs[0].plot(xarr[w], yarr[w], ',', **plotkws)
 bckwargs = dict(maxnum=maxcyc, period=period)
 xbc, numused = boxcar(sig=xarr, return_numused=True, **bckwargs)
 ybc = boxcar(sig=yarr, **bckwargs)

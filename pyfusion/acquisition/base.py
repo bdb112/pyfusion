@@ -560,7 +560,21 @@ class BaseDataFetcher(object):
             print('!data item {cn} already has comment {c}'
                   .format(cn=data.config_name, c=data.comment))
         data.comment = self.comment if hasattr(self, 'comment') else ''
-        data.signal = sgn * data.signal
+        # a single argument function - no spaces allowed, data is self_signal
+        # e.g. expr = -10/self_signal
+        if hasattr(self, 'expr'):
+            if len(self.expr.split()) < 2:
+                raise ValueError('expr must have units')
+            expr, units = self.expr.split()
+            data.signal = eval(expr.replace('self_signal','data.signal'))
+            data.channels.units = units
+        else:
+            data.signal = sgn * data.signal
+            if len(gain_units.split()) > 1:
+                data.channels.units = gain_units.split()[-1]
+            else:
+                data.channels.units = data.units if hasattr(data,'units') else ' '
+        
         # if full_scale is set in the config, wipe out (np.nan) points exceeding 2x
         if hasattr(self, 'full_scale'):
             wbad = np.where(np.abs(data.signal) > 2 * float(self.full_scale))[0]
@@ -576,10 +590,6 @@ class BaseDataFetcher(object):
         if pyfusion.VERBOSE>0: 
             print("base.py: data.config_name", data.config_name)
         data.channels.config_name=data.config_name
-        if len(gain_units.split()) > 1:
-            data.channels.units = gain_units.split()[-1]
-        else:
-            data.channels.units = data.units if hasattr(data,'units') else ' '
         print(method, end=' - ')
         if method == 'specific':  # don't pull down if we didn't setup
             self.pulldown()

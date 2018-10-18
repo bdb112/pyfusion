@@ -236,7 +236,7 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
 
     if hspace != None:  # adjust vertical spacing between plots
         pl.gcf().subplotpars.hspace = hspace
-        pl.gcf().subplotpars.bottom = 0.04 + hspace
+        pl.gcf().subplotpars.bottom = hspace + 0.08 # was 0.04
         extratop = 0.01
         if suptitlestr != '': extratop += 0.04
         pl.gcf().subplots_adjust(top = 1-(hspace+extratop)) # allow a little room for title

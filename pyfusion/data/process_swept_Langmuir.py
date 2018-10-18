@@ -790,7 +790,8 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
             if k not in 'Lnorm,cov,esterr,alg,xtol,ftol,lpf,maxits,track_ratio,cycavg'.split(','):
                 raise ValueError('Unknown fit_params key ' + k)
 
-        if cycavg is not None and clip_iprobe is not None:
+        if (fit_params.get('cycavg', None) is not None and
+            clip_iprobe is not None):
             raise ValueError("Can't use clip_iprobe with cycavg at present")
 
         self.actual_params.pop('self')

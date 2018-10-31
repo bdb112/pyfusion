@@ -71,17 +71,21 @@ def myiden2(t,y):
     return(t,y)
 
 @register("TimeseriesData")
-def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspace=None, sharey=False, sharex=True,ylim=None, xlim=None, marker='None', decimate=0, markersize=2,linestyle=True,labelfmt="{short_name} {units}", filldown=True, suptitle='shot {shot}',raw_names=False,labeleg='False',color='b', t0=0, fun=myiden, scale=1, fun2=None, **kwargs):
+def plot_signals(input_data, filename=None, downsamplefactor=1, n_columns=1, hspace=None, sharey=False, sharex=True, ylim=None, xlim=None, marker='None', markersize=2, linestyle=True, labelfmt="{short_name} {units}", filldown=True, suptitle='shot {shot}',raw_names=False, labeleg='False',color='b', t0=0, fun=myiden, scale=1, offset=0, fun2=None, **kwargs):
     """ 
-    Plot a figure full of signals using n_columns[1], 
-        sharey [=1 or 'all']  "gangs" y axes  - sim for sharex - sharex=None stops this
+    Plot a figure full of signals using n_columns[1], or just one signal
+        sharey [=1 or 'all']  "gangs" y axes  - sim. for sharex - sharex=None stops this
         sharey: 2 gangs all but first (top) axis
         x axes are ganged by default: see Note:
 
-    downsamplefactor = 1
+    downsamplefactor = 1 # 10 plots 1/10th of the data.
+    color
+    marker
+    linestyle
+    markersize
     n_columns = 1
-    decimate = 0
     scale = 1  # only works if fun2 is None
+    offset = 0  # plots offset + scale * sig
     fun, fun2: optionally plot a function of the signal.  fun= refers
     to a function of one variable.  fun2 is a function (t,x), such as
     one that returns a different timebase (diff should do this)
@@ -111,8 +115,8 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
         raise ValueError('''sharey was set to the function all()! - use sharey=1 or "sharey='all'"''')
 
     if pyfusion.VERBOSE > 1: print(fun, fun2)
-    if scale != 1 and fun2 is not None:
-        raise ValueError('need fun2 to be None so that scale works')
+    if ((scale != 1) or (offset != 0)) and fun2 is not None:
+        raise ValueError('need fun2 to be None so that scale/offset works')
     import pylab as pl
     n_rows = input_data.signal.n_channels() # doesn't work with fftd data
     n_rows = int(round(0.49+(n_rows/float(n_columns))))
@@ -181,13 +185,13 @@ def plot_signals(input_data, filename=None, downsamplefactor=1,n_columns=1, hspa
                           linestyle=linestyle, label = lab, color=color)
             KWargs.update(kwargs)
 
-            if fun2 is not None:  # can't easily accommodate 'scale' here
+            if fun2 is not None:  # can't easily accommodate 'scale/offset' here
                 pl.plot(*fun2(input_data.timebase[::downsamplefactor]-t0, 
                               input_data.signal.get_channel(
                                   chan_num)[::downsamplefactor]),**KWargs)
             else:
                 pl.plot(input_data.timebase[::downsamplefactor]-t0, 
-                        scale * fun(input_data.signal.get_channel(
+                        offset + scale * fun(input_data.signal.get_channel(
                             chan_num)[::downsamplefactor]),**KWargs)
 
 # this old code was no faster

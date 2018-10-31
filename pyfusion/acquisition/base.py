@@ -562,6 +562,7 @@ class BaseDataFetcher(object):
         data.comment = self.comment if hasattr(self, 'comment') else ''
         # a single argument function - no spaces allowed, data is self_signal
         # e.g. expr = -10/self_signal
+        debug_(pyfusion.DEBUG, level=2, key='expr')
         if hasattr(self, 'expr'):
             if len(self.expr.split()) < 2:
                 raise ValueError('expr must have units')

@@ -99,6 +99,11 @@ def try_fetch_local(input_data, bare_chan):
             subdir = patt
         debug_(pyfusion.DEBUG, 4, key='MDSPlus style subdir ~path', msg=each_path)
         each_path = os.path.join(path, subdir)
+        # implement shot[1] < 1 for MDSplus test shots - the only
+        # sacrifice is that we can't use shot[1] 0 to be the latest
+        # but we could still use shot =[0,0] to be the latest.
+
+        # for now, allow - in file names - later we could replace '-' with 'M'
         if isinstance(shot, (tuple, list, ndarray)):
             shot_str = '{s0}_{s1}'.format(s0=shot[0], s1=shot[1])
         else:
@@ -441,7 +446,7 @@ class BaseDataFetcher(object):
         if pyfusion.DBG() < CONTINUE_PAST_EXCEPTION:   # need to control this also at 297
             exception = Exception                     # defeat the try/except
         else: exception = ()
-        sgn = 1
+        oldsgn = 1  # this wasn't relevant - only relevant for multi diags
         cal_info = {}
         chan = self.config_name
         if chan[0]=='-': #sgn = -sgn
@@ -460,21 +465,41 @@ class BaseDataFetcher(object):
                 self.vsweep = 'W7X_PSUP{n}_U'.format(n=params_dict['powerSupply'][-1])
                 
         if pyfusion.RAW == 0:
-            gain_units = "1 arb"  # default to gain 1, no units
-            if hasattr(self,'gain'):
-                gain_units = self.gain
-            elif hasattr(self.acq, 'gain'):
-                gain_units = self.acq.gain
+            #  Implement a single argument function - no spaces allowed,
+            #  data is self_signal, will ignore gain
+            # e.g. expr = -10/self_signal
+            debug_(pyfusion.DEBUG, level=2, key='expr')
+            if hasattr(self, 'expr'):
+                if len(self.expr.split()) < 2:
+                    raise ValueError('expr must have units')
+                expr, units = self.expr.split()
+                gain = None
+            else:
+                expr = None
+                gain_units = "1 arb"  # default to gain 1, no units
+                if hasattr(self,'gain'):
+                    gain_units = self.gain
+                elif hasattr(self.acq, 'gain'):
+                    gain_units = self.acq.gain
+                gain = float(gain_units.split()[0])
+                if len(gain_units.split()) > 1:
+                    units = gain_units.split()[-1]
+                else:
+                    units = ' ' #data.channels.units = data.units if hasattr(data,'units') else ' '
+                if hasattr(self, 'fixup_gain'):
+                    print('************ fixup_gain ***************')
+                    gain *= float(self.fixup_gain)
         else:
-            gain_units = "1 raw"
+            gain_units = '1 raw'
+            gain, units = gain_units.split()
+            gain = float(gain)
+            expr = None
 
-        if hasattr(self, 'fixup_gain'):
-            print('************ fixup_gain ***************')
-            gain_units = str(float(gain_units.split()[0]) * float(self.fixup_gain))\
-                         + ' ' + gain_units.split()[-1]
-            
-        sgn *= float(gain_units.split()[0])
-        if pyfusion.VERBOSE > 0: print('Gain factor', sgn, self.config_name)
+        if pyfusion.VERBOSE > 0:
+            if expr is None:
+                print('Gain factor', gain, self.config_name)
+            else:
+                print('Transforming using', expr, self.config_name)
 
         if self.no_cache: 
             if pyfusion.VERBOSE>0:
@@ -484,7 +509,7 @@ class BaseDataFetcher(object):
             tmp_data = try_fetch_local(self, chan)  # If there is a local copy, get it
 
         if tmp_data is None:
-            self.gain = gain_units  # not needed by fetch - just to be consistent
+            self.gain = gain  # not needed by fetch - just to be consistent
             method = 'specific'
             try:
                 self.setup()
@@ -552,7 +577,7 @@ class BaseDataFetcher(object):
                 if pyfusion.VERBOSE>-1 and 'W7X' in self.acq.acq_class: 
                     print("Can't check DMD on {s}, {d}".format(s=self.shot, d=self.config_name))
 
-        data.gain_used = sgn
+        data.gain_used = gain_units if gain is not None else expr
         if hasattr(self, 'vsweep'):
             data.vsweep = self.vsweep
         data.meta.update({'shot':self.shot})
@@ -560,22 +585,12 @@ class BaseDataFetcher(object):
             print('!data item {cn} already has comment {c}'
                   .format(cn=data.config_name, c=data.comment))
         data.comment = self.comment if hasattr(self, 'comment') else ''
-        # a single argument function - no spaces allowed, data is self_signal
-        # e.g. expr = -10/self_signal
-        debug_(pyfusion.DEBUG, level=2, key='expr')
-        if hasattr(self, 'expr'):
-            if len(self.expr.split()) < 2:
-                raise ValueError('expr must have units')
-            expr, units = self.expr.split()
+        if expr is not None:
             data.signal = eval(expr.replace('self_signal','data.signal'))
-            data.channels.units = units
         else:
-            data.signal = sgn * data.signal
-            if len(gain_units.split()) > 1:
-                data.channels.units = gain_units.split()[-1]
-            else:
-                data.channels.units = data.units if hasattr(data,'units') else ' '
+            data.signal = gain * data.signal
         
+        data.channels.units = units
         # if full_scale is set in the config, wipe out (np.nan) points exceeding 2x
         if hasattr(self, 'full_scale'):
             wbad = np.where(np.abs(data.signal) > 2 * float(self.full_scale))[0]

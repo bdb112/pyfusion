@@ -1,3 +1,9 @@
+"""
+create a simple table in simple array
+_PYFUSION_TEST_@@shot_range='get_shot_range([20180911,24], [20180911,26])'
+
+"""
+
 from __future__ import print_function
 import pyfusion
 import numpy as np       
@@ -8,11 +14,13 @@ import sys
 sys.path.append('/home/bdb112/python')
 from pyfusion.utils.process_cmd_line_args import process_cmd_line_args
 
+
 _var_defaults = """
 dev_name = 'W7M'
 stop = 0
 diag_name = 'W7M_BRIDGE_VDIFF'
 shot_range = get_shot_range([20180911,24], [20180912,99])
+time_range = [.9, 1]
 """
 
 def __help__():  # must be before exec() line
@@ -29,6 +37,9 @@ for shot in shot_range:
     dat = dev.acq.getdata(shot, diag_name, contin=not stop)
     if dat is None:
         continue
+
+    if time_range is not []:
+        dat.reduce_time(time_range, copy=False)
 
     indmaxall = np.argmax(dat.signal)
     ind95 = np.argsort(dat.signal)[int(len(dat.signal) * 0.98)]

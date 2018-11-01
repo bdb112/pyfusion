@@ -10,7 +10,7 @@ sql_plot kappa_h,ne18_bar mrk=o  # ne vs k_h for the last day or 100 shots
 
 Note: need to quote spaces carefully - also plkw if using the dict() form
 run ~/python/sql_plot.py _select='select kappa_ABB,ne18_bmax' _where='where shot between 101000 and 200000' plabel='shot' "plkw=dict(color='g')"
-_PYFUSION_TEST_@@block=0
+_PYFUSION_TEST_@@block=0 table='summary_h1'
 
 Example showing the swap feature - plot selected columns in kind of alphabetical order labelled with the first column (kappa_V)
 >> run pyfusion/examples/sql_plot.py 'kappa_V, \*' "_from=combsum" '_where="shot between 92647 and 92658"' swap=1
@@ -30,6 +30,7 @@ pseudo variable 'rowid' allows you to plot by occurence rather than shot, so no 
 
 
 """
+from six.moves import input
 from sqlsoup import SQLSoup
 from sqlite3 import OperationalError  # , NoSuchTableError
 from matplotlib import pyplot as plt
@@ -110,13 +111,16 @@ if _order is '':
         _order = 'order by ' + vars[0]
 
 h1db = SQLSoup(db_url)
-# Note - this infor is here now, but disappears if there is an error - save save
-tables = h1db._cache
+# Note - this info. is here now, but disappears if there is an error - save
+tables = list(h1db._cache)
+print(tables if len(tables) > 0 else ' possibly no tables in ' + db_url + " although this doesn't mean anything sometimes")
+if len(tables) == 0 and block == 1:
+    input('Continue?')
 
 try:
     h1db.SUMM = eval('h1db.' + table)
 except Exception as reason:
-    print(reason.__repr__(), ' tables names are ', tables)
+    print(reason.__repr__(), ' table names are ', tables)
     raise
 
 cols = h1db.SUMM.c.keys()

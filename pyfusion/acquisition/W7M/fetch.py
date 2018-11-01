@@ -54,14 +54,17 @@ class W7MDataFetcher(BaseDataFetcher):
                 catch_exception = Exception
             else:
                 catch_exception = ()
-            try:
+                
+            # implement shot[1] < 1 for MDSplus test shots - the only
+            # sacrifice is that we can't use shot[1] 0 to be the latest
+            # but we could still use shot =[0,0] to be the latest.
+            if self.shot[1] > 0:  # standard shot
                 mdsshot = (self.shot[0] - 20000000) * 1000 + self.shot[1]
                 self.msgs += '..try shot ' + str(mdsshot) + '..'
                 self.conn.openTree(self.tree, mdsshot)
-            except catch_exception as reason2:
-                print('not found - try for a Lukas test shot')
-                #mdsshot = (self.shot[0] - 20000000) * 100 + self.shot[1]
-                mdsshot = (self.shot[0] - 0) * 100 + self.shot[1]
+            else: # MDS two digit test shot
+                print('try for a Lukas test shot')
+                mdsshot = (self.shot[0] - 0) * 100 - self.shot[1]
                 self.msgs += 'try shot ' + str(mdsshot)
                 self.conn.openTree(self.tree, mdsshot)
 

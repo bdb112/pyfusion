@@ -3,7 +3,8 @@
 run pyfusion/examples/plot_xy.py dev_name='W7X' shot_number=[180907,6] time_range=[0,0.01,.0000001] period=259.4 offs=-6 marker='-+'
 
 run pyfusion/examples/plot_xy.py dev_name='W7X' shot_number=[20180911,24] diag_names=W7M_BRIDGE_V1,W7M_BRIDGE_APPROX_I
-
+# at the moment time_range does not help for retrieved data
+_PYFUSION_TEST_@@time_range=[4.6,4.6001]  
 """
 import pyfusion
 from pyfusion.utils import boxcar, rotate
@@ -60,7 +61,9 @@ dev.no_cache = True
 xdata = dev.acq.getdata(shot_number, xdiag, contin=not stop)
 ydata = dev.acq.getdata(shot_number, ydiag, contin=not stop)
 datlist = [xdata, ydata]
-if wdiag is not None:
+if wdiag is None:
+    wdata = None
+else:
     wdata = dev.acq.getdata(shot_number, wdiag, contin=not stop)
     datlist.append(wdata)
 
@@ -98,7 +101,7 @@ if 'APPROX_I' in ydiag and tuple(shot_number) > (20180912,15) and dev_name == 'W
 if len(xdata.signal) < period + np.abs(offs):
     raise LookupError('Not enough samples to average {l}'.format(l=len(xdata.signal)))
 fig, axs = plt.subplots(1, 2)
-w = np.where(wdata.signal > 0.1) if wdata is not None else range(len(xdata))
+w = np.where(wdata.signal > 0.1) if wdata is not None else range(len(xdata.timebase))
 axs[0].plot(xarr[w], yarr[w], ',', **plotkws)
 bckwargs = dict(maxnum=maxcyc, period=period)
 xbc, numused = boxcar(sig=xarr, return_numused=True, **bckwargs)

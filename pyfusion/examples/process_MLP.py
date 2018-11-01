@@ -1,5 +1,8 @@
 """ This is the first working version with little selectivity over what analysis is done.
 plots=0,  debug=0 has the least overhead but still slow even for 0.1 seconds
+_PYFUSION_TEST_@@time_range=[4.6,4.6001]
+
+
 """
 import pyfusion
 from matplotlib import pyplot as plt
@@ -143,4 +146,4 @@ for i in range(min(numshades, len(starts))):
                             facecolor=fillcol, edgecolor='lightgray',label=["'steady' area","_"][i>0]))
 
 axt.legend(loc='best',prop={'size': 'small'})
-plt.show()
+plt.show(block=0)

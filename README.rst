@@ -11,7 +11,20 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
-Version 0.99
+Version 0.991 Op1.2b
+ * Add expr to pyfusion.cfg for simple single argument arbitrary
+     functions, remove old unused sgn code in single diagnostic
+     (previous minor version didn't integrate gain and expr and RAW)
+ * Add examples/process_MLP, plot_xy
+ * Implements MDSplus test shots (two shot digs - YYMMDDSS), also in save_to_local
+     change pyfusion numbering of MDSplus test shots to negative (and 0)
+ * Allow for thin MDS path setting, smarter ROI, skip valid_since for MDSplus
+ * Fixes, clarification for process_swept_Langmuir, clean up boxcar
+     change numbering of MDSplus test shots to negative (and 0)
+ * Add process_MLP
+ * pyfusion.cfg - add MLP_I, U, TE, VF, I, ERR also extra BRIDGE with valid_since
+
+Version 0.99    git 21356efd
  * process_swept_Langmuir - add electron saturation finder: find_sat_level
    update get_LP_data.py with window selection, raise etc, use to develop esat finder
    protect find_sat_level which is only for a single channel so far

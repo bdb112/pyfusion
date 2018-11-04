@@ -109,9 +109,13 @@ for name, g in order.items():
 
 fits = []
 IV_plots = 0
+vrange = [vp_grouped.min(), vp_grouped.max()]
+vspan = np.abs(np.diff(vrange))
+vrange = [vrange[0] - vspan/5, vrange[1] + vspan/10]
+
 for tbg, ipg, vpg in zip(tb_grouped, ip_grouped, vp_grouped):
     guess = (max(vpg) - min(vpg))/3, vpg[order['Vf'] - order[mode]- sat_set + 1], np.mean(np.abs(ipg))
-    (Te, Vf, i0), flag = leastsq(residuals, guess, args=(ipg, vpg))
+    (Te, Vf, i0), flag = leastsq(residuals, guess, args=(ipg, vpg),maxfev=40)
     if debug > 2:
         print('{f}: dV = {dV:.2f}, Te={Te:.2f}, Vf={Vf:.2f}, i0={i0:.3f},'  # offs={offs:.2f}, i_imbalance={im:.1f}%'
               .format(f=flag, dV=vp[0] - vp[-1], Te=Te, Vf=Vf, i0=i0))  # offs=offs, im = 100*i_p.mean()/np.max(np.abs(i_p))))
@@ -120,13 +124,15 @@ for tbg, ipg, vpg in zip(tb_grouped, ip_grouped, vp_grouped):
         if IV_plots == 0:
             fig,axc = plt.subplots(1,1)
         IV_plots += 1
-        vv = np.linspace(-90, 50, 1000)
+        vv = np.linspace(vrange[0], vrange[1], 1000)
         axc.plot(vpg, ipg, 'o')  #, label='After {n} iters'.format(n=nits))
         axc.plot(axc.get_xlim(), [0, 0], 'lightgray')
         print(Te, Vf, i0)
         print(ipg)
-        axc.plot(vv, LPchar(vv, Te, Vf, i0), label='fitted LP char')
-        axc.legend(loc='best')
+        axc.plot(vv, LPchar(vv, Te, Vf, i0),
+                 label='fitted LP char {tm:.4f}s, Te={te:.0f}, Vf={vf:.1f}'
+                 .format(tm=fits[-1][0], te=fits[-1][1], vf=fits[-1][2]))
+        axc.legend(loc='best',prop={'size': 'small'})
 
 
 fits = np.array(fits, dtype=np.float32)

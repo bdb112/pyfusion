@@ -141,13 +141,14 @@ for shot_number in shot_list:
                 mds_utc_offs = get_shot_utc(shot_number)[0] + int(60*1e9)  # bdb kludgey - fix!!
 
             dev.acq.roi = ' '.join([str(tn) for tn in (utc_shot_number-mds_utc_offs).tolist() + [100]])
-
+        debug_(pyfusion.DEBUG,2, key='W7M_save')
     else:
         if 'W7X' in dev.name and shot_number[0]>1e9:
             utc_shot_number = shot_number
         else:
             utc_shot_number = None
             
+    print('dev.acq.roi = {dar}'.format(dar=dev.acq.roi),end=': ')
     for diag in diag_list:
         if ('W7' in diag and 'LP' in diag) and shot_number[0]<20180000:
             # Try to selectively override delta time
@@ -191,8 +192,11 @@ for shot_number in shot_list:
                     elif utc_shot_number is not None: #  
                                 pass  # nothing more to do - we have everything
                     if 'W7M' in dev.name:
+                        # use current ROI - crude!
+                        debug_(pyfusion.DEBUG, 1, key='W7M_save')
                         utc_shot_number = shot_number  # ignore utcs for now
-                        # time has already been converted to roi and updatede in config (line 135)
+                        # time has already been converted to roi and updated
+                        #  in pyfusion.config (line 135? I can't see it)
 
                     data = dev.acq.getdata(utc_shot_number, diag_chan, no_cache=compress_local==False, exceptions=())
                     print(diag_chan, shot_number, end=' - ')

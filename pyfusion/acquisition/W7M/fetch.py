@@ -63,8 +63,8 @@ class W7MDataFetcher(BaseDataFetcher):
                 self.msgs += '..try shot ' + str(mdsshot) + '..'
                 self.conn.openTree(self.tree, mdsshot)
             else: # MDS two digit test shot
-                print('try for a Lukas test shot')
-                mdsshot = (self.shot[0] - 0) * 100 - self.shot[1]
+                print('try for a Lukas test shot:  18NNNNSS')
+                mdsshot = (self.shot[0] - 20000000) * 100 - self.shot[1]
                 self.msgs += 'try shot ' + str(mdsshot)
                 self.conn.openTree(self.tree, mdsshot)
 

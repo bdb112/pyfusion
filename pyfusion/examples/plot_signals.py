@@ -42,7 +42,8 @@ exec(process_cmd_line_args())
 # save the start utc if there is already a 'data' object (***need to run -i to keep)
 if 'W7X' in dev_name:
     if 'utc0' in locals() and utc0 is not None:
-        print('using previous utc')
+        pyfusion.utils.warn("using previous utc - can give trouble for data after 2016 - don't use run -i")
+        print("***** using previous utc - can give trouble for data after 2016 ")
     else:
         if 'data' in locals() and hold !=0:
             utc0 = data.utc[0] 

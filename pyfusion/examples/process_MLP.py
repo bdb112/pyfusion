@@ -37,7 +37,9 @@ vp_data = dev.acq.getdata(shot_number, 'W7M_MLP_U')
 isat_data = dev.acq.getdata(shot_number, 'W7M_MLP_IS')
 ck_data = dev.acq.getdata(shot_number, 'W7M_MLP_CK')
 err_data = dev.acq.getdata(shot_number, 'W7M_MLP_ERR')
-if time_range is not None:
+# if time range has a 3rd element, it is an ROI, and the bounds have been set
+#  assuming we are not using an npz.
+if time_range is not None and len(time_range) == 2:
     for dat in [ip_data, vp_data, isat_data, ck_data, err_data]:
         dat.reduce_time(time_range, copy=False)
 
@@ -115,7 +117,7 @@ vrange = [vrange[0] - vspan/5, vrange[1] + vspan/10]
 
 for tbg, ipg, vpg in zip(tb_grouped, ip_grouped, vp_grouped):
     guess = (max(vpg) - min(vpg))/3, vpg[order['Vf'] - order[mode]- sat_set + 1], np.mean(np.abs(ipg))
-    (Te, Vf, i0), flag = leastsq(residuals, guess, args=(ipg, vpg),maxfev=40)
+    (Te, Vf, i0), flag = leastsq(residuals, guess, args=(ipg, vpg), maxfev=40)
     if debug > 2:
         print('{f}: dV = {dV:.2f}, Te={Te:.2f}, Vf={Vf:.2f}, i0={i0:.3f},'  # offs={offs:.2f}, i_imbalance={im:.1f}%'
               .format(f=flag, dV=vp[0] - vp[-1], Te=Te, Vf=Vf, i0=i0))  # offs=offs, im = 100*i_p.mean()/np.max(np.abs(i_p))))

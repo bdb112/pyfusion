@@ -46,6 +46,7 @@ import sys as _sys
 import os
 import six
 from six.moves import input
+import string
 
 ## put any functions you might use in the expressions here
 from numpy import arange, array, sort

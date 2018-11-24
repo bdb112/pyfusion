@@ -34,11 +34,13 @@ from numpy import exp, cos, sin
 import os
 import pyfusion
 from pyfusion.utils.time_utils import utc_ns
+from pyfusion.utils import wait_for_confirmation
 import pyfusion.conf as conf
 from scipy.fftpack import hilbert
 from pyfusion.data import amoeba
 from scipy.optimize import leastsq
 import time
+# from pyfusion.data.LPextra  # imported as needed
 from pyfusion.debug_ import debug_
 from pyfusion.utils.primefactors import nice_FFT_size
 from pyfusion.utils import boxcar, rotate
@@ -280,7 +282,7 @@ def tryone(var, data, mrk='r', w=4):
     tryone([Te,Vf,I0],dict(v=sweepV,i=iprobe))
     """
     # tryone([25,-15, .02],dict(i=iprobe, v=sweepV))
-    print(-error_fun(var, data))
+    print('-err fun', -error_fun(var, data))
     Te, Vf, I0 = var
     v = data['v']
     i = data['i']
@@ -521,7 +523,7 @@ Args:
             i = i_seg.signal[c]
             im = m_seg.signal[c]
             result = self.fit_swept_Langmuir_seg_chan(im, i, v, i_seg, channame=chan.config_name, clipfact=clipfact,  initial_TeVfI0=initial_TeVfI0, fit_params=fit_params, plot=plot)
-            if fit_params.get('esterr', False):             
+            if fit_params.get('esterr', None) is not None:             
                 [Te, ne, I0], resid, nits, maxits, Ie_Ii, errest = result
                 eTe, ene, eI0 = errest
             else:
@@ -529,7 +531,7 @@ Args:
 
             t_mid = np.average(i_seg.timebase)
             res_list = [t_mid, Te, ne, I0, resid, nits, maxits, Ie_Ii]
-            if fit_params.get('esterr', False):             
+            if fit_params.get('esterr', None) is not None:
                 res_list.extend( [eTe, ene, eI0])
             res.append(res_list)
         return(res)
@@ -560,7 +562,7 @@ Args:
             if len(wg) < 0.3 * len(v) or len(wg) < 20:  # was (~good).all():
                 print('{t:.5f}s suppressing all !*** {a} *************************8'
                       .format(a=len(wg),t=np.average(segtb)))
-                if fit_params.get('esterr', False):
+                if fit_params.get('esterr', None) is not None:
                     return([3*[None], None, None, None, None, 3*[None]]) # incl dummy errsa
                 else:
                     return([3*[None], None, None, None, None])
@@ -571,15 +573,17 @@ Args:
 
         # [[Te, Vf, I0], res, its]
         if plot is None:
-            # plot in detail only if there are 20 figures or less
-            plot = self.plot + 2*((len(list(self.segs))*len(self.imeasfull.channels)) < 8)
+            # plot in detail only if there are 8 figures or less
+            fmax = 8 if os.name == 'posix' else 20  # windows doesn't slow down much
+            # should consider plt.get_fignums()
+            plot = self.plot + 2*(fmax > (len(list(self.segs))*len(self.imeasfull.channels)))
         if (plot >= 2) and len(self.figs) < 8:  # 20 really slows down
             # best to open in another session.
             interval = str('{t}'.format(t=[round(segtb[0], 6), round(segtb[-1], 6)]))
             titbar ='{i} {c}{s}'.format(i=interval, c=channame, s=self.actual_params['suffix'])
             if plot == 4:  # 4 suppresses bar to allow many - self.plot=4 gets promoted to 6 here
                 titbar = None
-            print(plot, 6)
+            if self.debug > 0: print('plot={p}'.format(p=plot),  end=': ')
             fig, axs = plt.subplots(nrows=1 + (plot >= 3), ncols=1, squeeze=0, num=titbar)
 
             self.figs.append(fig)
@@ -587,11 +591,15 @@ Args:
                 # these labels help find the data
                 axs[1, 0].plot(segtb, i, 'b', lw=.2, label='i_probe')
                 axs[1, 0].plot(segtb[wg], i[wg], 'b.')
+                axs[1, 0].set_ylabel('i_probe', color='b')
                 axv = axs[1, 0].twinx()
-                axv.set_ylabel('sweep V')
+                ylab = 'sweep V'
+                if cycavg is not None and cycavg[2] is not 0:
+                    ylab += ' (no shift)'
+                axv.set_ylabel(ylab, color='r')
                 axv.plot(segtb, v, 'r', lw=.2, label='v')
                 axv.plot(segtb[wg], v[wg], 'r.')
-            plt.sca(axs[1, 0])  # ready to be overlaid by filtered I
+                plt.sca(axs[1, 0])  # ready to be overlaid by filtered I
 
             fig.suptitle('{shot} {tr} {d}:{c}'
                          .format(tr=interval, shot=self.shot, d=self.i_diag, c=channame))
@@ -606,12 +614,12 @@ Args:
                 v = v[0:-1]
                 segtb = segtb[0:-1]
         if cycavg is not None:
-            i = boxcar(i, period=cycavg[0], maxnum=cycavg[1])
+            i = boxcar(i, period=cycavg[0], maxnum=cycavg[1], debug=debug)
             v = boxcar(v, period=cycavg[0], maxnum=cycavg[1])
             v = rotate(v, offs=cycavg[2])
-            # for simplizity use boxcar (max=1) to get the right segtb size an offset
-            segtb = boxcar(segtb,  period=cycavg[0], maxnum=1)
-            # need to re-do wg as any of the averaged cycles could force a nan
+            # for simplicity use boxcar (max=1) to get the right segtb size and offset
+            segtb = boxcar(segtb, period=cycavg[0], maxnum=1)
+            # need to re-do wg as any of the averaged cycles could have forced a nan
             wg = np.where(~np.isnan(i))[0]
             
         if (plot >= 2) and len(self.figs) < 8:
@@ -628,10 +636,9 @@ Args:
         Ie_Ii = (I0-Imaxsmoothed)/I0
         result.append(Ie_Ii)
         #  print(Te, result)
-        if fit_params.get('esterr', False):
-            if fit_params['esterr'] != 'cov':
-                self.pcov = None  # signal routine not to use covariance    
-            result.append(estimate_error(self, result, debug=self.debug))
+        if fit_params.get('esterr', None) is not None:
+            #if fit_params['esterr'] != 'cov':
+            result.append(estimate_error(self, result, debug=self.debug, method=fit_params['esterr']))
         return(result)
 
     def write_DA(self, filename):
@@ -656,7 +663,7 @@ Args:
                   (4, 'resid'), (5, 'nits'), (6, 'maxits'), (7, 'Ie_Ii'),
                   (3, 'ne18')]
 
-        if self.fitter.fit_params.get('esterr',False):
+        if self.fitter.fit_params.get('esterr', None) is not None:
             lookup.extend([(8, 'eTe'), (9, 'eVf'), (10, 'eI0') ])
 
          # clip_iprobe should be a fit_params so that it can work at the seg_chan level
@@ -729,7 +736,7 @@ Args:
             da.da['ne18'][:, c] = fact/A * da['I0'][:, c]/np.sqrt(da['Te'][:, c])
         da.save(filename)
 
-    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr=1, lpf=None), initial_TeVfI0=dict(Te=50, Vf=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, clip_iprobe = None, clip_vprobe=None, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, sweep_freq=500, t_offs=None, defaults=dict(sweep_freq=500, dtseg=4e-3), suffix=''):
+    def process_swept_Langmuir(self, t_range=None, t_comp=[0, 0.1], fit_params = dict(maxits=200, alg='leastsq',esterr='cov', lpf=None), initial_TeVfI0=dict(Te=50, Vf=15, I0=None), dtseg=4e-3, overlap=1, rest_swp='auto', clipfact=5, clip_iprobe = None, clip_vprobe=None, leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, plot_DA=False, return_data=False, sweep_freq=500, t_offs=0, defaults=dict(sweep_freq=500, dtseg=4e-3), suffix='', debug=None):
         """ 
 Process the I, V probe data in the Langmuir_data object
 
@@ -752,10 +759,11 @@ Args:
     it is automatically calculated for the interval t_comp.  To set to zero, use [0,0] 
 clip_iprobe = e.g. [-0.015, .02]  # used to check if a resistive term is affecting Te
 clip_vprobe = [,]  # used to reduce emphasis on isat
-
+  debug = [None - use the existing value]
+  plot_DA - plot the DA in figer(plot_DA)
 
 Returns:
-    A DA object as described above
+    (if return_results) A list of results - can save a DA object as described above if a filename is given
 
 Raises:
     ValueError:
@@ -763,10 +771,11 @@ Raises:
 
 
 ==> results[time,probe,quantity]
-plot = 1   : V-I and data if there are not too many.
+plot = 1   : V-I and time data but only if there are not too many.
 plot >= 2  : V-I curves
 plot >= 3  : ditto + time plot
 plot >= 4  : ditto + all I-V iterations
+  ** note - value will remain once set.
 
 Can send parameters through the init or process - either way they are all 
    recorded in actual_params
@@ -783,6 +792,10 @@ Faster order - reduces time range earlier: (maybe implement later)
 detect plasma time range with quick and dirty method
 restrict time range, but keep pre-shot data accessible for evaluation of success of removal
         """
+        if debug is not None:
+            self.debug = debug
+        if plot is not None:
+            self.plot = plot
         self.figs = []  # reset the count of figures used to stop too many plots
         self.actual_params = locals().copy()
         # try to catch mispelling, variables in the wrong place
@@ -798,12 +811,15 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         self.actual_params.update(dict(i_diag=self.i_diag, v_diag=self.v_diag))
         # and do it for actuals too
         for k in self.actual_params:
-            if k not in 'amu,clipfact,clip_iprobe,clip_vprobe,dtseg,filename,initial_TeVfI0,leakage,overlap,plot,rest_swp,suffix,t_comp,t_range,t_offs,threshold,threshchan,fit_params,v_diag,i_diag,return_data,sweep_freq,defaults'.split(','):
+            if k not in 'amu,clipfact,clip_iprobe,clip_vprobe,dtseg,filename,initial_TeVfI0,leakage,overlap,plot,plot_DA,rest_swp,suffix,t_comp,t_range,t_offs,threshold,threshchan,fit_params,v_diag,i_diag,return_data,sweep_freq,defaults,debug'.split(','):
                 raise ValueError('Unknown actual_params key ' + k)
 
         self.actual_params.update(dict(i_diag_utc=self.imeasfull.utc, pyfusion_version=pyfusion.VERSION))
         self.amu = amu
-        toffs = 3 if t_offs is None and 'BRIDGE' in self.i_diag else 0
+        t_offs = 3 if t_offs is None and 'BRIDGE' in self.i_diag else t_offs
+        if t_offs != 0 and 'cycavg' in fit_params:
+            wait_for_confirmation('Do you really want t_offs = {t_offs} and cycavg = {cycavg}'
+                                  .format(t_offs=t_offs, cycavg=fit_params['cycavg']))
         if not isinstance(self.imeasfull.channels, (list, tuple, np.ndarray)):
             self.imeasfull.channels = [self.imeasfull.channels]
 
@@ -862,11 +878,27 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
                 vsweep_diag = cd.get('sweepv', default_sweep)
             self.vassoc.append(vsweep_diag)
 
-        debug_(self.debug, 1, key='after get associated')
+        debug_(self.debug, 2, key='after get associated')
         # first do the things that are better done on the whole data set.
         # prepare_sweeps will populate self.vcorrfull
         # self.check_crosstalk(verbose=0)  # this could be slow
 
+        # Check that the substitutions in the filename won't cause an error
+        # at the last minute so it can be fixed BEFORE a long computation.
+        parm_dict = dict(s0=self.shot[0], s1=self.shot[1], i_diag=self.i_diag,
+                         t_start=t_range[0], dtseg=dtseg)
+
+        if filename is not None and '}' in filename:
+            try:
+                testname = filename.format(**parm_dict)
+            except KeyError as reason:
+                print(str(reason), ' filename variables are ',
+                      str(parm_dict).replace(', ','\n'))
+                raise ValueError('Unknown filename variable {v}: known variables are '
+                                 + ', '.join(list(parm_dict))
+                                 .format(v=str(reason)))
+            
+        # begin crunching 
         self.prepare_sweeps(rest_swp=rest_swp, sweep_freq=sweep_freq, t_offs=t_offs)
         self.comp = []
         self.get_iprobe(leakage=leakage, t_comp=t_comp)
@@ -875,9 +907,10 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         # the 3000 below tries to avoid glitches from Hilbert at both ends
         #w_plasma = np.where((np.abs(self.iprobefull.signal[threshchan]) > threshold) & (tb > tb[3000]) &(tb < tb[-3000]))[0]
         # only look at electron current - bigger (shot 0309.52 LP53 has a positive spike at 2s)
-        w_plasma = np.where((-self.iprobefull.signal[threshchan] > threshold) & (tb > tb[3000]) &(tb < tb[-3000]))[0]
         
         if t_range is None:
+            w_plasma = np.where((-self.iprobefull.signal[threshchan] > threshold) &
+                                (tb > tb[3000]) &(tb < tb[-3000]))[0]
             t_range = [tb[w_plasma[0]], tb[w_plasma[-1]]]
 
         self.t_range = t_range
@@ -958,82 +991,45 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
                 if filename.endswith('_'):  # remove ending _
                     filename = filename[0:-1]
             if '{' in filename:
-                filename = filename.format(s0=self.shot[0], s1=self.shot[1], i_diag=self.i_diag)
+                filename = filename.format(**parm_dict)
             print('writing {fn}'.format(fn=filename))
             # Lukas had trouble with this in python 3
             self.write_DA(filename)
             
+        if plot_DA and filename is not None:
+            from pyfusion.data.DA_datamining import Masked_DA, DA
+            self.da = DA(filename, load=True)
+            # overplot if plot_DA > 1 on figure(plot_DA)
+            axlist = plt.figure(plot_DA).gca() if plot_DA > 1 else None
+            self.da.plot('Te', axlist=axlist, label_fmt='{{lab}}: Te {dt}'.format(dt=dtseg))
+
         if return_data:
             return(self.fitdata)
-            
-    def process_constant_Langmuir(self, t_range=None, t_comp=[0, 0.1], leakage=None, threshold=0.01, threshchan=12, filename=None, amu=1, plot=None, return_data=False, suffix=''):
-        '''
-        This function should analyse the shots with constant Voltage, usually measuring I_sat. It will try to use as much of process_swept_Langmuir as possible and the pyfusion environment.
-        '''
-        self.figs = []  # reset the count of figures used to stop too many plots
-        self.amu = amu
-        if not isinstance(self.imeasfull.channels, (list, tuple, np.ndarray)):
-            self.imeasfull.channels = [self.imeasfull.channels]
 
-        self.i_chans = [ch.config_name for ch in self.imeasfull.channels]
-        for ch in self.i_chans:  # only take the current channels, not U
-            if ch[-1] != 'I':
-                raise ValueError("Warning - removal of V chans doesn't work!!!")
-                # hopefully we can ignore _U channels eventually, but not yet
-                self.i_chans.remove(ch)
-
-        self.coords = [ch.coords.w7_x_koord for ch in self.imeasfull.channels]
-        self.get_iprobe(leakage=leakage, t_comp=t_comp)
-        tb = self.iprobefull.timebase
-        # the 3000 below tries to avoid glitches from Hilbert at both ends
-        # only look at electron current - bigger (shot 0309.52 LP53 has a positive spike at 2s)
-        w_plasma = np.where((-self.iprobefull.signal[threshchan] > threshold) & (tb > tb[3000]) &(tb < tb[-3000]))[0]
-        
-        if t_range is None:
-            t_range = [tb[w_plasma[0]], tb[w_plasma[-1]]]
-
-        self.t_range = t_range
-        if t_range is not None:
-            self.imeas = self.imeasfull.reduce_time(t_range)
-            self.iprobe = self.iprobefull.reduce_time(t_range)
-        else:
-            self.imeas = self.imeasfull
-            self.iprobe = self.iprobefull
-        if self.debug>0: print('Using {n} segments'.format(n=len(self.segs)))
-        debug_(self.debug, 3, key='process_loop')
-        if filename is not None:            
-            if  '*' in filename:
-                fmt = 'LP{s0}_{s1}_'
-                if 'L5' in self.i_diag:
-                    fmt += 'L5' + self.i_diag.split('L5')[1][0]
-                filename = filename.replace('*',fmt+'_')
-                if filename.endswith('_'):  # remove ending _
-                    filename = filename[0:-1]
-            if '{' in filename:
-                filename = filename.format(s0=self.shot[0], s1=self.shot[1], i_diag=self.i_diag)
-            print('writing {fn}'.format(fn=filename))
-            self.write_DA(filename)
-            
-        if return_data:
-            return(self.iprobe)
+    # def process_constant_Langmuir removed 11/2018 -  not used, and confusing to
+    # have two procedures so similar
             
 # quick test code - just 'run' this file
+
+
 if __name__ == '__main__':
     import sys
-    #LP = Langmuir_data([20160310, 9], 'W7X_L57_LP01_04','W7X_L5UALL') # 4 chans
-    #LP = Langmuir_data([20160310, 9], 'W7X_L53_LPALLI','W7X_L5UALL') # lower
-    #LP = Langmuir_data([20160309, 7], 'W7X_L57_LPALLI','W7X_L5UALL') # upper
-    #LP = Langmuir_data([20160302, 12], 'W7X_L57_LPALLI','W7X_L5UALL') # bad tb?
-    #LP = Langmuir_data([20160310, 9], 'W7X_L57_LP01_02','W7X_L5UALL') #quickest
+    # LP = Langmuir_data([20160310, 9], 'W7X_L57_LP01_04','W7X_L5UALL') # 4 chans
+    # LP = Langmuir_data([20160310, 9], 'W7X_L53_LPALLI','W7X_L5UALL') # lower
+    # LP = Langmuir_data([20160309, 7], 'W7X_L57_LPALLI','W7X_L5UALL') # upper
+    # LP = Langmuir_data([20160302, 12], 'W7X_L57_LPALLI','W7X_L5UALL') # bad tb?
+    # LP = Langmuir_data([20160310, 9], 'W7X_L57_LP01_02','W7X_L5UALL') #quickest
     # the following, using ([20160310, 9], 'W7X_L57_LP01_02) gives one nice char
+    # and another char spoilt by a change in i_electron between cycles
 
     if len(sys.argv) < 2:
-        LP = Langmuir_data([20160309,10], 'W7X_L57_LPALLI','W7X_L5UALL')
-        # and another char spoilt by a change in i_electron between cycles
-        results = LP.process_swept_Langmuir(rest_swp=1,t_range=[0.91,0.93],t_comp=[0.05,0.1],threshchan=0,plot=3, return_data=True)
+        # LP = Langmuir_data([20160309, 10], 'W7X_L57_LPALLI', 'W7X_L5UALL')
+        LP = Langmuir_data([20160309, 10], 'W7X_L57_LP01_04', 'W7X_L5UALL')
+        results = LP.process_swept_Langmuir(rest_swp=1, t_range=[0.91,0.92], t_comp=[0.05,0.1], threshchan=0, plot=3, return_data=True)
     elif sys.argv[1] == 'BRIDGE':
+        print(' Very short file')
         LP = Langmuir_data([20180927,30], 'W7M_BRIDGE_ALLI','W7M_BRIDGE_V1', dev_name='W7M')
-        LP.process_swept_Langmuir(t_comp=[0,0], t_range=[1.0,1.001],dtseg=2000, threshchan=-1,initial_TeVfI0=dict(Te=20,Vf=1,I0=None),fit_params=dict(cycavg=[200,10,-4]))
+        results = LP.process_swept_Langmuir(t_comp=[0,0], t_range=[1.0,1.001],dtseg=2000, threshchan=-1,initial_TeVfI0=dict(Te=20,Vf=1,I0=None),fit_params=dict(cycavg=[200,10,-4]),return_data=True)
 
 """
 Testing synchronisation using dead reckoning.

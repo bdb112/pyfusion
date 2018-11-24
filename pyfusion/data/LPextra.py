@@ -4,10 +4,9 @@ from matplotlib import pyplot as plt
 import pyfusion
 from pyfusion.debug_ import debug_
 
-def estimate_error(self, result, debug=1):
-    if self.fitter.pcov is None:
+def estimate_error(self, result, method='trace', debug=1):
+    if method == 'trace' or self.fitter.pcov is None:
         # Use the values in fitter.trace to backtrack the convergence
-        meth = 'trace'
         trace = self.fitter.trace
         atrace = np.array(trace)  # array version - need both
         final_res = trace[-1][1]
@@ -16,10 +15,13 @@ def estimate_error(self, result, debug=1):
             pyfusion.logging.warn('insufficient convergence to estimate errors')
             return(3 * [np.nan])
         ifrom = wgt[-1]
+        if debug > 0:
+            print('looking back {n} iterations'.format(n=len(trace) - ifrom), end=': ')
         vals = np.array([elt[0].tolist() for elt in trace[ifrom:]])
+        # average excursion
         est_errs = [(np.max(x)-np.min(x))/2. for x in vals.T]
     else:
-        meth = 'cov'
+        method = 'cov'
         pcov = self.fitter.pcov
         s_sq = self.fitter.s_sq
         if s_sq>0 and pcov is not None:
@@ -35,10 +37,10 @@ def estimate_error(self, result, debug=1):
               error.append( 0.00 )
         est_errs = np.array(error)
 
-    errs = str('{meth} esterrs {e}'
+    errs = str('{method} esterrs {e}'
                .format(e=', ' .join(['{v:.2g}'.format(v=v) for v in est_errs],),
-                       meth = meth))
-    if debug>1: print(errs)
+                       method = method))
+    if debug > 0: print(errs)
     return(est_errs)
 
 
@@ -54,7 +56,7 @@ def lpfilter(t, i, v, lpf, debug=1, plot=0):
     absftvlowf = np.abs(ftv[1:20])  # exclude DC
     for hh in [2,3]:
         if (hh*fundind - 1) < len(absftvlowf):
-            absftvlowf[hh*fundind - 1] = 0  #  zero out 2nd, 3rd harm of sweep (remember: shift by 1)
+            absftvlowf[hh*fundind - 1] = 0  # zero out 2nd, 3rd harm of sweep (remember: shift by 1)
     # /100 is fooled by 2ndH 0309.52 L57 and /70 by 20171018.19
     wothers = np.where(absftvlowf > np.max(absftvlowf)/70.)[0]  
     if len(wothers) == 1:
@@ -114,7 +116,7 @@ def lpfilter(t, i, v, lpf, debug=1, plot=0):
         extra += '\n'
     extra += ' [' + harms + ']'
     if debug>1:
-        print(extra)
+        print(extra, end=': ')
         print(len(i_filt), len(v))
 
     debug_(debug, 3, key='lpfilter')

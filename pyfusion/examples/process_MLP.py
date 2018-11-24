@@ -10,6 +10,26 @@ import numpy as np
 from leastsq_Langmuir import leastsq, residuals, LPchar
 from collections import OrderedDict as Ordict
 
+def olap(double=1, gp=None):
+    """ Double the size of each group - this starts to duplicate after 1 iteration 
+        A more efficient and correct way (but looks a little messy - is to use for 
+           loops using indices instead of a for-each structure
+        Could be recursive, but no need, also tricky as the state (double) needs to be passed
+    """
+    while double > 0:
+        numg, npoints = np.shape(gp)
+        print(double, npoints)
+        gp_dup = np.tile(gp, 2)
+        gp_dup_flat = np.reshape(gp_dup, [2*numg*npoints])
+        gp = np.reshape(gp_dup_flat[npoints:-npoints], [numg-1, 2*npoints])
+        if len(gp[2]) > len(np.unique(gp[2])):
+            un = len(np.unique(gp[2]))
+            print('Warning - {un} unique - duplicating {pc:.0f}% of the points'
+                  .format(un=un, pc=100. * (len(gp[2]) - un)/len(gp[2])))
+        double -= 1
+    return(gp)
+
+
 _var_defaults=""" """
 shot_number = [20181018, 6]
 ROI = '4.6 4.601 1e-7'
@@ -22,6 +42,8 @@ mode = 'Te'     # Te, Isat, Vf
 plots = 0  # controls plot complexity
 maxlen = 20000  # limit detailed plots unless plots > 0
 order = dict(Isat=0, Te=1, Vf=2)
+double=1
+delay = None  # only affects the error mean value
 
 exec(_var_defaults)
 from  pyfusion.utils import process_cmd_line_args
@@ -35,13 +57,15 @@ dev = pyfusion.getDevice("W7M")
 ip_data = dev.acq.getdata(shot_number, 'W7M_MLP_I')
 vp_data = dev.acq.getdata(shot_number, 'W7M_MLP_U')
 isat_data = dev.acq.getdata(shot_number, 'W7M_MLP_IS')
-ck_data = dev.acq.getdata(shot_number, 'W7M_MLP_CK')
+# Not much use to run without CK, but at least get it so that slopes can be calculated
+ck_data = dev.acq.getdata(shot_number, 'W7M_MLP_CK', contin=True)
 err_data = dev.acq.getdata(shot_number, 'W7M_MLP_ERR')
 # if time range has a 3rd element, it is an ROI, and the bounds have been set
 #  assuming we are not using an npz.
 if time_range is not None and len(time_range) == 2:
     for dat in [ip_data, vp_data, isat_data, ck_data, err_data]:
-        dat.reduce_time(time_range, copy=False)
+        if dat is not None:
+            dat.reduce_time(time_range, copy=False)
 
 if (len(ip_data.timebase) > maxlen) and plots > 1:
     wait_for_confirmation('Detailed plots of {n} points will be slow!'
@@ -60,6 +84,8 @@ dt = np.diff(tb).mean()
 thr = ck_data.signal.mean()
 w = np.where(ck_data.signal > thr) # falling_edges are the transitions
 falling_edges = w[0][np.where(np.diff(w[0]) > 2)[0]]
+if len(falling_edges) == 0:
+    raise LookupError('No data in window')
 w = np.where(ck_data.signal < thr) # rising for the safe measurement period
 rising_edges = w[0][np.where(np.diff(w[0]) > 2)[0]]
 if falling_edges[0] < rising_edges[0]:  # make sure first is a rise
@@ -77,7 +103,7 @@ vp_means = [np.mean(vps[starts[i]:ends[i]]) for i, st in enumerate(starts)]
 tb_means = [np.mean(tb[starts[i]:ends[i]]) for i, st in enumerate(starts)]
 # err signal needs care as there is contamination due to the round trip delay
 # and to a lesser extent, the prompt signal.
-delay = int(600e-9/dt)
+delay = int(600e-9/dt) if delay is None else delay
 err_means = [np.mean(err_sig[starts[i]+delay:ends[i]]) for i, st in enumerate(starts)]
 
 axt.plot(tb_means, -1 * np.array(ip_means), 'or', label='mean(-ip): c.f. isat', markersize=8)
@@ -88,10 +114,12 @@ if debug > 0:
         raise ValueError('need plots >= 1 or fewer than {ml:,} points for detailed errors'
                          .format(ml = maxlen))
     axt.plot(tb[w], -ips[w], '.m', label='-ip(t) during clock', markersize=3)
+    axt.plot(tb, -ips, 'm', label='-ip(t)', lw=0.15)
     for i, st in enumerate(starts):
         axt.plot(tb[starts[i]:ends[i]], -ips[starts[i]:ends[i]], '.r', markersize=6,
                  label=['-ip(t) used in mean', '_'][i > 0])
 num_sets = len(ip_means) // 3
+# trial grouping - will find I sat, then regroup with ISat first
 ip_grouped = np.reshape(ip_means[0:num_sets * 3], [num_sets, 3])
 sat_set = np.argmax(-np.sum(ip_grouped, axis=0))
 this_set = sat_set + order[mode]
@@ -109,6 +137,14 @@ for name, g in order.items():
         i1 = cyc * 3  + gcorr + this_set
         axt.plot(tb[starts[i1]+delay:ends[i1]], err_sig[starts[i1]+delay:ends[i1]],lw=2, color=col)
 
+if double > 0:
+#    for gp in [ip_grouped, vp_grouped, tb_grouped, err_grouped]:
+#        gp = olap(double=double, gp=gp)
+    ip_grouped = olap(double=double, gp=ip_grouped)
+    vp_grouped = olap(double=double, gp=vp_grouped)
+    tb_grouped = olap(double=double, gp=tb_grouped)
+    err_grouped = olap(double=double, gp=err_grouped)
+
 fits = []
 IV_plots = 0
 vrange = [vp_grouped.min(), vp_grouped.max()]
@@ -116,11 +152,12 @@ vspan = np.abs(np.diff(vrange))
 vrange = [vrange[0] - vspan/5, vrange[1] + vspan/10]
 
 for tbg, ipg, vpg in zip(tb_grouped, ip_grouped, vp_grouped):
-    guess = (max(vpg) - min(vpg))/3, vpg[order['Vf'] - order[mode]- sat_set + 1], np.mean(np.abs(ipg))
-    (Te, Vf, i0), flag = leastsq(residuals, guess, args=(ipg, vpg), maxfev=40)
+    guess = [(max(vpg) - min(vpg))/3.0,
+             vpg[order['Vf'] - order[mode]- sat_set + 1], np.mean(np.abs(ipg))]
+    (Te, Vf, i0), flag = leastsq(residuals, guess, args=(ipg, vpg),maxfev=40)
     if debug > 2:
         print('{f}: dV = {dV:.2f}, Te={Te:.2f}, Vf={Vf:.2f}, i0={i0:.3f},'  # offs={offs:.2f}, i_imbalance={im:.1f}%'
-              .format(f=flag, dV=vp[0] - vp[-1], Te=Te, Vf=Vf, i0=i0))  # offs=offs, im = 100*i_p.mean()/np.max(np.abs(i_p))))
+              .format(f=flag, dV=vpg[0] - vpg[-1], Te=Te, Vf=Vf, i0=i0))  # offs=offs, im = 100*i_p.mean()/np.max(np.abs(i_p))))
     fits.append([tbg[0], Te, Vf, i0])
     if (debug > 0) and (IV_plots < numplots):
         if IV_plots == 0:

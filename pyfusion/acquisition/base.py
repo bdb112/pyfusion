@@ -768,7 +768,7 @@ class MultiChannelFetcher(BaseDataFetcher):
                     data_list.insert(i,data_list.pop(i)[0:ltb])
 
         signal = Signal(data_list)
-        print(shape(signal))
+        print(' x '.join(['{s:,}'.format(s=sh) for sh in shape(signal)]))
 
         output_data = TimeseriesData(signal=signal, timebase=common_tb,
                                      channels=channels)

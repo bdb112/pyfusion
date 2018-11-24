@@ -91,6 +91,7 @@ def plot_signals(input_data, filename=None, downsamplefactor=1, n_columns=1, hsp
     one that returns a different timebase (diff should do this)
     if fun2 is given (a function of t and sig), then fun is ignored 
 
+
         labelfmt["{short_name} {units}"] controls the channel labels.  
             The default ignores the shot and uses an abbreviated form of the channel name.  
             If the short form is very short, it becomes a y label.

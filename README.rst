@@ -11,6 +11,22 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+Version 0.992 Op1.2b
+ * examples/plot_tdu_pflux - makes a page of plots from the  prelim_anal LP data
+ * examples/plot_DA_alpha to merge multiple Langmuir runs and plot with alpha according to to error size
+ * examples/process_MLP.py - add kludgely overlap feature, bug in initial value of vp
+ * data/DA_datamining.py - tidy, verbose=-1 now quietens, add inds to sort plot order and label_fmt to .plot 
+ * data/LPextra.py allow trace to work in both leastsq and amoeba, more info msg
+ * data/process_swept_Langmuir - delete process_const (not used) remove pcov=None kludge in communicating with LPextra, allow trace to work in both leastsq and amoeba, detect double delays (cycavg, t_offs) add plotDA feature, check filename at start for errors (see parm_dict
+ * boxcar - optionally process time (tim=) as well to allow sampling scope effect.
+ * visual/window_manager.py much improved - can place windows in a grid, will deal withwindows than just have numbers. (order...) Also list matching windows
+
+ * fetch.py - fix minus typ MDSplus test shot
+ * examples/plot_signals.py warning about use of previous utc - probably should remove feature!
+ * pyfusion.cfg remove redundant BRIDGE_V1, add BRIDGE_ALLI
+ * save_to_local - more info, comments
+ * process_MLP, boxcar - add time option, crude overlap of fit data, better operation with time_range/ROI
+
 Version 0.991 Op1.2b
  * Add expr to pyfusion.cfg for simple single argument arbitrary
      functions, remove old unused sgn code in single diagnostic

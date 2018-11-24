@@ -108,7 +108,7 @@ def mylen(ob):
 try:
     import psutil
 
-    def report_mem(prev_values=None,msg=None):
+    def report_mem(prev_values=None, msg=None, verbose=0):
         """ Show status of phy/virt mem, and if given previous values, 
         report differences
         requires the psutil module - avail in apt-get, but I used pip
@@ -129,15 +129,18 @@ try:
             vm =psutil.virtmem_usage().free # avail_virtmem()
 
         tim = seconds()
-        print('{msg}{pm:.3g} GB phys mem, {vm:.3g} GB virt mem avail'
-              .format(msg=msg, pm=pm/1e9, vm=vm/1e9)),
+        if verbose > -1:
+            print('{msg}{pm:.3g} GB phys mem, {vm:.3g} GB virt mem avail'
+                  .format(msg=msg, pm=pm/1e9, vm=vm/1e9)),
 
         if prev_values is None:
-            print()
+            if verbose > -1:
+                print()
         else:
-            print('- dt={dt:.2g}s, used {pm:.2g} GB phys, {vm:.2g} GB virt'
-                  .format(pm=(prev_values[0] - pm)/1e9,
-                          vm=(prev_values[1] - vm)/1e9, dt = tim-prev_values[2]))
+            if verbose > -1:
+                print('- dt={dt:.2g}s, used {pm:.2f} GB phys, {vm:.2g} GB virt'
+                      .format(pm=(prev_values[0] - pm)/1e9,
+                              vm=(prev_values[1] - vm)/1e9, dt = tim-prev_values[2]))
         return((pm,vm,tim))
 except ImportError:
     print('need psutil to get useful info about memory usage')
@@ -240,7 +243,7 @@ Args:
     loadtxt(dtype=...) command. The filename is processed for env vars ~/ etc,
     but sometimes this seems to substitute the path of the DA module? (bug)
   load: 1 will immediately load into memory, 0 will defer load allowing 
-    some operations (but slowly) without ocnsuming memory.
+    some operations (but slowly) without consuming memory.
   mainkey: The main key, not necessarily a unique identifier - e.g it 
     can be shot.
   limit: Decimates the data when loaded into memory (via load=1). It is 
@@ -270,7 +273,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         self.verbose = verbose
         self.loaded = False
         
-        start_mem = report_mem(msg='init')
+        start_mem = report_mem(msg='init', verbose=self.verbose)
         # not sure if it is a good idea to accept a DA - don't allow for now.
         # why would you want to make a DA from a DA?
         if isinstance(fileordict, dict) or hasattr(fileordict,'zip'): #  or (hasattr(fileordict, 'da')):  (isinstance(fileordict, dict) or hasattr(fileordict,'zip')
@@ -376,7 +379,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         else:
             indtmp = self.da['indx']
             if (len(indtmp) != len(self.da[self.mainkey]) or
-                (min(indtmp) != 0) or np.max(np.diff(indtmp))>1):
+                (min(indtmp) != 0) or (len(indtmp) > 1 and np.max(np.diff(indtmp))>1)):
                 print("**** warning - index is not montonic from 0 ***** ")
 
         self.infodict.update({'mainkey':self.mainkey}) # update in case it has changed
@@ -385,7 +388,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
 
 
 
-        start_mem = report_mem(start_mem)
+        start_mem = report_mem(start_mem, verbose=self.verbose)
     #shallow_copy = try:if da.copy
 
 ## emulate a dictionary for convenience. See https://docs.python.org/3/reference/datamodel.html?emulating-container-types#emulating-container-types
@@ -431,6 +434,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         a range od shots. 
       See also append_to_DA_file to add an extra variable
         """
+        # check keys to make sure they match
         for k in self.da.keys():
             if k not in dd.keys():
                 raise KeyError('key {k} not in dd keys: {keys}'
@@ -441,8 +445,9 @@ Note: This is my prototype of google style python sphinx docstrings - based on
                                   .format(k=k, keys=self.da.keys()))
         for k in self.da.keys():
             if hasattr(dd[k],'keys'):  # check if the dd entry [k] is itself a dict
-                print('dd entry {k} is a dictionary with keys {ks}'
-                      .format(k=k, ks=dd[k].keys()))
+                if self.verbose > -1:
+                    print('Info: dd entry {k} is a dictionary with keys {ks}'
+                          .format(k=k, ks=dd[k].keys()))
                 for kk in self.da[k]:
                     if kk in dd.keys():  # if it is there, append
                         self.da[k][kk] = np.append(self.da[k][kk], dd[k][kk])
@@ -565,9 +570,9 @@ Note: This is my prototype of google style python sphinx docstrings - based on
                 print(quest)
 
         if self.loaded == 0: self.load()
-        start_mem = report_mem(msg='copying')
+        start_mem = report_mem(msg='copying', verbose=self.verbose)
         cpy = deepcopy(self.da)
-        report_mem(start_mem)
+        report_mem(start_mem, verbose=self.verbose)
         return(cpy)
 
     def info(self, verbose=None):
@@ -665,7 +670,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
   
         
     def load(self, sel=None):
-        start_mem = report_mem(msg='load')
+        start_mem = report_mem(msg='load', verbose=self.verbose)
         st = seconds()
         if sel is None: # the arg overrides the object value
             sel = self.sel
@@ -707,7 +712,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         self.da = dd
         self.update({'info': self.infodict}, check=False)
         if self.verbose: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
-        report_mem(start_mem)
+        report_mem(start_mem, verbose=self.verbose)
         return(True)
 
 
@@ -805,20 +810,20 @@ Note: This is my prototype of google style python sphinx docstrings - based on
 
         e.g. if da is a dictionary or arrays
         da = DA('mydata.npz')
-        da.extract('shot,beta')
+        da.extract(varnames='shot,beta')
         plot(shot,beta)
 
-        (shot,beta,n_e) = da.extract(['shot','beta','n_e'], \
+        (shot,beta,n_e) = da.extract(varnames=['shot','beta','n_e'], \
                                       inds=np.where(da['beta']>3)[0])
         # makes a tuple of 3 arrays of data for high beta.  
         Note   syntax of where()! It is evaluted in your variable space.
                to extract one var, need trailing "," (tuple notation) e.g.
-                    (allbeta,) = D54.extract('beta',locals())
+                    (allbeta,) = D54.extract(locals(), 'beta')
                which can be abbreviated to
-                    allbeta, = D54.extract('beta',locals())
+                    allbeta, = D54.extract(locals(), 'beta')
         
         """
-        start_mem = report_mem(msg='extract')
+        start_mem = report_mem(msg='extract', verbose=self.verbose)
         if debug == 0: debug = self.debug
         if varnames is None: varnames = self.da.keys()  # all variables
 
@@ -857,7 +862,9 @@ Note: This is my prototype of google style python sphinx docstrings - based on
                 # used to refer to da[k] twice - two reads if npz
                 # if masking is enabled and it is a legitimate key for masking, use the masked version
                 if masked and hasattr(self, 'masked') and k in self.masked.keys():
-                    print('extracting masked values for {k} - use masked=0 to get raw values'.format(k=k))
+                    if self.verbose > -1:
+                        print('extracting masked values for {k} - '
+                              'use masked=0 to get raw values'.format(k=k))
                     dak = self.masked[k]
                 else:
                     dak = self.da[k]      # We know we want it - let's
@@ -881,7 +888,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
                     dictionary.update({k: sel_vals})
             else: print('variable {k} not found in {ks}'.
                         format(k=k, ks = np.sort(self.da.keys())))
-        report_mem(start_mem)
+        report_mem(start_mem, verbose=self.verbose)
         if dictionary is False:
             return(val_tuple)
 
@@ -914,7 +921,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         plt.legend(prop=dict(size=sz))
         plt.show()
 
-    def plot(self, key, xkey='t', sharey=1, select=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, ref_line=0, style=None, axlist=None, **kwargs):
+    def plot(self, key, xkey='t', label_fmt='{lab}', sharey=1, select=None, inds=None, sharex='col', masked=1, ebar=1, marker='', elinewidth=0.3, ref_line=0, style=None, axlist=None, **kwargs):
         """ 
         Plot the member 'key' of the Dictionary of Arrays 
         kwargs:
@@ -923,6 +930,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
           ref_line [None]  - draw a horizontal line at value, or draw None
           style - 'step' will use step plots (automatic for showing the mask)
           axlist a list of axes so that data can be overplotted - see below
+          inds - an array to sort the plot order
 
         A mask of True will allow that point to be seen. 
         Examples:
@@ -950,6 +958,9 @@ Note: This is my prototype of google style python sphinx docstrings - based on
             arr = self.masked[key]
         else:
             arr = self[key]
+
+        if inds is None:
+            inds = range(len(arr))
 
         style = 'step' if style is None and key == 'mask' else style
         print(style)
@@ -989,14 +1000,14 @@ Note: This is my prototype of google style python sphinx docstrings - based on
             if np.isnan(arr[:, ch]).all():  # all nans confuses sharey
                 ax.plot(x, x*0)
             # grab the common features to both plots in a dict to simplify
-            kwargs.update(dict(marker=marker, label=labs[ch]))
+            kwargs.update(dict(marker=marker, label=label_fmt.format(lab=labs[ch])))
             if ebar is not None and 'e'+key in self.da:
                 yerr = self.da['e'+key]
                 kwargs.update(dict(errorevery=ebar, elinewidth=elinewidth, mew=elinewidth))
-                ax.errorbar(x, arr[:, ch], yerr=yerr[:, ch], **kwargs)
+                ax.errorbar(x[inds], arr[inds, ch], yerr=yerr[inds, ch], **kwargs)
             else:
                 plotter = ax.step if style == 'step' else ax.plot
-                plotter(x, arr[:, ch], **kwargs)
+                plotter(x[inds], arr[inds, ch], **kwargs)
 
             ax.yaxis.set_major_locator(locator)
             if ref_line is not None:

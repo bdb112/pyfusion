@@ -5,6 +5,7 @@ locally, and that all files for that shot will be processed - e.g. if the prepro
 import subprocess
 import sys
 import pylab as pl
+from matplotlib import cm
 import numpy as np
 from numpy import where
 import pyfusion as pf

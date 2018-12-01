@@ -96,54 +96,68 @@ def regenerate_dim(x):
     cnts, vals = histo(x, bins=200)[0:2]
     # ignore the two end bins - hopefully there will be very few there
     wmin = np.where(cnts[1:-1] < np.max(cnts[1:-1]))[0]
-    if len(wmin)>0:
-        print('**********\n*********** Gap in data > {p:.2f}%'.format(p=100*len(wmin)/float(len(cnts))))
+    if len(wmin) > 0:
+        print('**********\n*********** Gap in data > {p:.2f}%'.format(p=100 * len(wmin) / float(len(cnts))))
     x01111 = np.ones(len(x))  # x01111 will be all 1s except for the first elt.
     x01111[0] = 0
     errcnt = np.sum(bigcounts) + np.sum(np.sort(counts)[::-1][1:])
-    if errcnt>0 or (pyfusion.VERBOSE > 0): 
+    if errcnt > 0 or (pyfusion.VERBOSE > 0):
         msg = str('** repaired length of {l:,}, dtns={dtns:,}, {e} erroneous utcs'
-              .format(l=len(x01111), dtns=dtns, e=errcnt))
+                  .format(l=len(x01111), dtns=dtns, e=errcnt))
 
-    fixedx = np.cumsum(x01111)*dtns
-    wbad = np.where((x - fixedx)>1e8)[0]
+    fixedx = np.cumsum(x01111) * dtns
+    wbad = np.where((x - fixedx) > 1e8)[0]
     fixedx[wbad] = np.nan
-    debug_(pyfusion.DEBUG, 3, key="repair", msg="repair of W7-X scrambled Langmuir timebase") 
+    debug_(pyfusion.DEBUG, 3, key="repair", msg="repair of W7-X scrambled Langmuir timebase")
     return(fixedx, msg)
-    
+
 
 class W7XDataFetcher(BaseDataFetcher):
     """Fetch the W7X data using urls"""
 
     def do_fetch(self):
-        # my W7X shots are of the form from_utc, to_utc 
+        # In this revision, the only changes are - allow for self.time_range,
+        #   variable names f, t changed to f_u, t_u and comment fixes, 
+        # in preparation for including time_range and other cleanups.
+
+        # My W7X shots are either of the form from_utc, to_utc,
         #  or date (8dig) and shot (progId)
         # the format is in the acquisition properties, to avoid
         # repetition in each individual diagnostic
 
-        if self.shot[1]>1e9:  # we have start and end in UTC instead of shot no
-            f,t = self.shot   # need the shot and utc to get t1 to set zero t
-            actual_shot = get_shot_number([f, t])
-            progs = get_programs(actual_shot)  # need shot to look up progs 
+        if self.shot[1] > 1e9 or hasattr(self.time_range) and self.time_range is not None:
+            # we have start and end in UTC instead of shot no
+            # need the shot and utc to get t1 to set zero t
+            if hasattr(self.time_range) and self.time_range is not None:
+                actual_shot = self.shot
+                f_u = None # set to None to make sure we don't use it
+            else:
+                f_u, t_u = self.shot
+                actual_shot = get_shot_number([f_u, t_u])
+
+            progs = get_programs(actual_shot)  # need shot to look up progs
             #  need prog to get trigger - not tested for OP1.1
-            this_prog = [prog for prog in progs if (f >= progs[prog]['from']
-                                                    and t <= progs[prog]['upto'])]
+            this_prog = [prog for prog in progs if (f_u >= progs[prog]['from'] and
+                                                    t_u <= progs[prog]['upto'])]
             if len(this_prog) is 1:
                 utc_0 = progs[this_prog[0]]['trigger']['1']
             else:
-                utc_0 = f  # better than nothing
-
+                utc_0 = f_u  # better than nothing
+            if f_u is None: # shorthand for have time range
+                f_u = utc_0 + int(1e9 * 61 + time_range[0])
+                f_t = utc_0 + int(1e9 * 61 + time_range[1])
+            
         else:
-            f,t = get_shot_utc(self.shot)
+            f_u, t_u = get_shot_utc(self.shot)
             # at present, ECH usually starts 61 secs after t0
             # so it is usually sufficient to request a later start than t0
             pre_trig_secs = self.pre_trig_secs if hasattr(self, 'pre_trig_secs') else 0.3
-            # should get this frpm programs really
-            utc_0 = f + int(1e9* (61))
-            f = f - int(1e9 * pre_trig_secs)
+            # should get this from programs really
+            utc_0 = f_u + int(1e9 * (61))
+            f_u = f_u - int(1e9 * pre_trig_secs)
         # A URL STYLE diagnostic - used for a one-off
         # this could be moved to setup so that the error info is more complete
-        if hasattr(self,'url'):
+        if hasattr(self, 'url'):
             fmt = self.url  # add from= further down: +'_signal.json?from={shot_f}&upto={shot_t}'
             params = {}
             # check consistency -   # url should be literal - no params (only for fmt) - gain, units are OK as they are not params
@@ -151,17 +165,17 @@ class W7XDataFetcher(BaseDataFetcher):
                 pyfusion.utils.warn('URL diagnostic {n} should not have params <{p}>'
                                     .format(n=self.config_name, p=self.params))
         else:  # a pattern-based one - used for arrays of probes
-            if hasattr(self,'fmt'):  #  does the diagnostic have one?
+            if hasattr(self, 'fmt'):  # does the diagnostic have one?
                 fmt = self.fmt
-            elif hasattr(self.acq,'fmt'):  # else use the acq.fmt
+            elif hasattr(self.acq, 'fmt'):  # else use the acq.fmt
                 fmt = self.acq.fmt
-            else:  #  so far we have no quick way to check the server is online
+            else:  # so far we have no quick way to check the server is online
                 raise LookupError('no fmt - perhaps pyfusion.cfg has been '
                                   'edited because the url is not available')
 
-            params = eval('dict('+self.params+')')
+            params = eval('dict(' + self.params + ')')
 
-        # Originally added to fix up erroneous ECH alias mapping if ECH - 
+        # Originally added to fix up erroneous ECH alias mapping if ECH -
         # only 6 work if I don't.  But THis seems to help with many others
         # this implementation is kludgey but proves the principle, and
         # means we don't have to refer to any raw.. signals
@@ -169,11 +183,11 @@ class W7XDataFetcher(BaseDataFetcher):
         if 'upto' not in fmt:
             fmt += '_signal.json?from={shot_f}&upto={shot_t}'
 
-        params.update(shot_f=f, shot_t=t)
+        params.update(shot_f=f_u, shot_t=t_u)
         url = fmt.format(**params)  # substitute the channel params
 
         debug_(pyfusion.DEBUG, 2, key="url", msg="middle of work on urls")
-        if np.any([nm in url for nm in 
+        if np.any([nm in url for nm in
                    'Rf,Tower5,MainCoils,ControlCoils,TrimCoils,Mirnov,Interfer,_NBI_'
                    .split(',')]):
             from pyfusion.acquisition.W7X.get_url_parms import get_signal_url
@@ -192,18 +206,18 @@ class W7XDataFetcher(BaseDataFetcher):
         # should ignore the test comparing the first two elements of the tb
         # prevent reduction (NSAMPLES=...) to avoid the bug presently in codac
         if (('nSamples' not in url) and (pyfusion.NSAMPLES != 0) and
-            not (hasattr(self, 'allow_reduction') and int(self.allow_reduction)==0)):
+            not (hasattr(self, 'allow_reduction') and int(self.allow_reduction) == 0)):
             url += '&reduction=minmax&nSamples={ns}'.format(ns=pyfusion.NSAMPLES)
-            
+
         debug_(pyfusion.DEBUG, 2, key="url", msg="work on urls")
         # we need %% in pyfusion.cfg to keep py3 happy
         # however with the new get_signal_url, this will all disappear
         if sys.version < '3.0.0' and '%%' in url:
-            url = url.replace('%%','%')
+            url = url.replace('%%', '%')
 
         if 'StationDesc.82' in url:  # fix spike bug in scaled QRP data
             url = url.replace('/scaled/', '/unscaled/')
-            
+
         if pyfusion.CACHE:
             # needed for improperly configured cygwin systems: e.g.IPP Virual PC
             # perhaps this should be executed at startup of pyfusion?
@@ -218,15 +232,15 @@ class W7XDataFetcher(BaseDataFetcher):
             # appears to be a feature! http://stackoverflow.com/questions/7857416/file-uri-scheme-and-relative-files
             # /home/bdb112/pyfusion/working/pyfusion/archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.82/DataModuleDesc.181_DATASTREAM/7/Channel_7/scaled/_signal.json?from=1457626020000000000&upto=1457626080000000000&nSamples=10000
             # url = url.replace('http://','file:///home/bdb112/pyfusion/working/pyfusion/')
-            url = url.replace('http://','file:/'+os.getcwd()+'/')
+            url = url.replace('http://', 'file:/' + os.getcwd() + '/')
             if 'win' in os.sys.platform:
                 # weven thoug it seems odd, want 'file:/c:\\cygwin\\home\\bobl\\pyfusion\\working\\pyfusion/archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.82/DataModuleDesc.192_DATASTREAM/4/Channel_4/scaled/_signal.json@from=147516863807215960&upto=1457516863809815961'
-                url= url.replace('?','@')
+                url = url.replace('?', '@')
             # nicer replace - readback still fails in Win, untested on unix systems
             print('now trying the cached copy we just grabbed: {url}'.format(url=url))
         if pyfusion.VERBOSE > 0:
             print('======== fetching url over {dt:.1f} secs  =========\n[{u}]'
-                  .format(u=url, dt=(params['shot_t'] - params['shot_f'])/1e9))
+                  .format(u=url, dt=(params['shot_t'] - params['shot_f']) / 1e9))
 
         # seems to take twice as long as timeout requested.
         # haven't thought about python3 for the json stuff yet
@@ -302,7 +316,7 @@ class W7XDataFetcher(BaseDataFetcher):
         debug_(pyfusion.DEBUG, 2, key='W7XDataFetcher')
         output_data.params = params
         
-        ###  the total shot utc.  output_data.utc = [f, t]
+        ###  the total shot utc.  output_data.utc = [f_u, t_u]
         return output_data
 
     def error_info(self, step=None):

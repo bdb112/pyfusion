@@ -10,6 +10,7 @@ from pyfusion.utils.time_utils import utc_GMT, utc_ns
 # maybe check the file timestamp.
 def get_shot_info(date, shot, item='comment', quiet=False):
     """ return utc values for a given shot and date 
+    The utc values correspond to the very start and end times, not the plasma times
     We define shot 0 to be midnight (i.e. 00am) and shot >=999 to be 
        midnight the next day (i.e. 24:00 today) for use in valid_since
 

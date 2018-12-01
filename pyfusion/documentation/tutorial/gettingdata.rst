@@ -34,6 +34,27 @@ and::
 
 
 
+Typical Call chain:
+~~~~~~~~~~~~~~~~~~~
+acq.getdata -> fetcher_class.fetch(), chosen according to kwargs or diagn .cfg file
+This always goes via base.fetch() because it isn't overridden in specific fetch.py
+base.fetch then calls:
+
+        -> fetcher_class.setup(),  fetcher_class do_fetch() and pull_down
+
+An exception is the Multichannel fetcher_class, which is dealt with inside 
+base.py.  The same getdata function is used  (as Multi doesn't override 
+getdata) which then calls the multi channel's fetch function,
+which calls the getdata in the base.py as above on each channel.
+
+This means that any arguments aimed at getdata in the multidiag have
+to be passed as attributes, because fetch doesn't have arguments - (why?)
+A benefit of the attribute method is that it could be set in the
+diagnostic config, although to be really useful, it would need to be
+an acq attribute - good for debugging by restricting the time_range of
+all diagnostics.
+
+
 Pre-loading of data acquisition system during Device instantiation.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -61,7 +82,7 @@ Where ``h1.acq`` is simply a shortcut to ``h1.acquisition``. The connection to t
 
 
 Data acquisition via getdata
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^b
 
 In our original example::
  

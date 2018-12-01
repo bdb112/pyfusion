@@ -5,6 +5,7 @@ _PYFUSION_TEST_@@time_range=[4.6,4.6001]
 
 """
 import pyfusion
+from pyfusion.debug_ import debug_
 from matplotlib import pyplot as plt
 import numpy as np
 from leastsq_Langmuir import leastsq, residuals, LPchar
@@ -44,6 +45,8 @@ maxlen = 20000  # limit detailed plots unless plots > 0
 order = dict(Isat=0, Te=1, Vf=2)
 double=1
 delay = None  # only affects the error mean value
+iters = 10    # number of charlie iters
+first_save = iters - 1  # default is to save just the final point
 
 exec(_var_defaults)
 from  pyfusion.utils import process_cmd_line_args
@@ -95,8 +98,8 @@ if len(rising_edges) > len(falling_edges):
 ns = falling_edges[1] - falling_edges[0]
 print('\nperiod of 2x clock = {ns} samples, complete cycle in {us:.1f}us'
       .format(ns=ns, us=ns*3*(tb[1]-tb[0])*1e6))
-starts = rising_edges
-ends = falling_edges
+starts = rising_edges + 1  #  seems to select a better range 
+ends = falling_edges + 1 
 
 ip_means = [np.mean(ips[starts[i]:ends[i]]) for i, st in enumerate(starts)]
 vp_means = [np.mean(vps[starts[i]:ends[i]]) for i, st in enumerate(starts)]
@@ -111,13 +114,17 @@ axt.plot(tb_means, np.array(vp_means)/200, '.g', label='mean(vp(t))/200')
 
 if debug > 0:
     if (plots < 1) and (len(tb) > maxlen):
-        raise ValueError('need plots >= 1 or fewer than {ml:,} points for detailed errors'
+        print('need plots >= 1 or fewer than {ml:,} points for detailed errors'
                          .format(ml = maxlen))
-    axt.plot(tb[w], -ips[w], '.m', label='-ip(t) during clock', markersize=3)
-    axt.plot(tb, -ips, 'm', label='-ip(t)', lw=0.15)
-    for i, st in enumerate(starts):
-        axt.plot(tb[starts[i]:ends[i]], -ips[starts[i]:ends[i]], '.r', markersize=6,
-                 label=['-ip(t) used in mean', '_'][i > 0])
+    else:
+        axt.plot(tb[w], -ips[w], '.m', label='-ip(t) during clock', markersize=3)
+        if plots > 0:
+            axt.plot(tb, -ips, 'm', label='-ip(t)', lw=0.15)
+            axt.plot(tb, vps/200, 'g', label='vp(t)/200', lw=0.15)
+
+        for i, st in enumerate(starts):
+            axt.plot(tb[starts[i]:ends[i]], -ips[starts[i]:ends[i]], '.r', markersize=6,
+                     label=['-ip(t) used in mean', '_'][i > 0])
 num_sets = len(ip_means) // 3
 # trial grouping - will find I sat, then regroup with ISat first
 ip_grouped = np.reshape(ip_means[0:num_sets * 3], [num_sets, 3])
@@ -145,33 +152,34 @@ if double > 0:
     tb_grouped = olap(double=double, gp=tb_grouped)
     err_grouped = olap(double=double, gp=err_grouped)
 
-fits = []
 IV_plots = 0
 vrange = [vp_grouped.min(), vp_grouped.max()]
 vspan = np.abs(np.diff(vrange))
 vrange = [vrange[0] - vspan/5, vrange[1] + vspan/10]
 
+fits = []
 for tbg, ipg, vpg in zip(tb_grouped, ip_grouped, vp_grouped):
-    guess = [(max(vpg) - min(vpg))/3.0,
-             vpg[order['Vf'] - order[mode]- sat_set + 1], np.mean(np.abs(ipg))]
-    (Te, Vf, i0), flag = leastsq(residuals, guess, args=(ipg, vpg),maxfev=40)
+    guess = [(max(vpg) - min(vpg)) / 3.0,
+             vpg[order['Vf'] - order[mode] - sat_set], np.mean(np.abs(ipg))]
+    # 40 was not enough for about 10% of the fits.  100 misses a few too
+    (Te, Vf, i0), flag = leastsq(residuals, guess, args=(ipg, vpg), maxfev=100)
     if debug > 2:
         print('{f}: dV = {dV:.2f}, Te={Te:.2f}, Vf={Vf:.2f}, i0={i0:.3f},'  # offs={offs:.2f}, i_imbalance={im:.1f}%'
               .format(f=flag, dV=vpg[0] - vpg[-1], Te=Te, Vf=Vf, i0=i0))  # offs=offs, im = 100*i_p.mean()/np.max(np.abs(i_p))))
     fits.append([tbg[0], Te, Vf, i0])
     if (debug > 0) and (IV_plots < numplots):
         if IV_plots == 0:
-            fig,axc = plt.subplots(1,1)
+            fig, axfit = plt.subplots(1, 1)
         IV_plots += 1
         vv = np.linspace(vrange[0], vrange[1], 1000)
-        axc.plot(vpg, ipg, 'o')  #, label='After {n} iters'.format(n=nits))
-        axc.plot(axc.get_xlim(), [0, 0], 'lightgray')
+        axfit.plot(vpg, ipg, 'o')  # label='After {n} iters'.format(n=nits))
+        axfit.plot(axfit.get_xlim(), [0, 0], 'lightgray')
         print(Te, Vf, i0)
         print(ipg)
-        axc.plot(vv, LPchar(vv, Te, Vf, i0),
+        axfit.plot(vv, LPchar(vv, Te, Vf, i0),
                  label='fitted LP char {tm:.4f}s, Te={te:.0f}, Vf={vf:.1f}'
                  .format(tm=fits[-1][0], te=fits[-1][1], vf=fits[-1][2]))
-        axc.legend(loc='best',prop={'size': 'small'})
+        axfit.legend(loc='best',prop={'size': 'small'})
 
 
 fits = np.array(fits, dtype=np.float32)
@@ -190,5 +198,69 @@ for i in range(min(numshades, len(starts))):
     axt.add_patch(Rectangle(lleft, tb[ends[i]]-tb[starts[i]] , ylims[1]-ylims[0],
                             facecolor=fillcol, edgecolor='lightgray',label=["'steady' area","_"][i>0]))
 
+len_flat = np.product(np.shape(ip_grouped))
+ip_flat = ip_grouped.reshape([len_flat])
+vp_flat = vp_grouped.reshape([len_flat])
+tb_flat = tb_grouped.reshape([len_flat])
+# Apply charlie's algoirthm
+isat_c = -ip_flat[0]  # assume isat is the first state - fix!
+te_c = 15.
+vf_c = 0.
+from numpy import exp
+from numpy import log as ln
+# for (ipf, vpf, tbf) in zip(ip_flat, vp_flat, tb_flat):
+isat_C = []
+vf_C = []
+te_C = []
+tb_C = []
+# Use the algorithm in Charlie xx APS 2018 poster (typo corrected)
+# About 6x faster (with iters=10) than leasqt with maxfev=100
+for i in range(0, len(ip_flat), 3):
+    tb_c = tb_flat[i + 2]
+    for itr in range(iters):
+        # print(tb_c, isat_c, te_c, vf_c)
+        debug_(pyfusion.DEBUG, 0, key='charlie iter')
+        a1 = (vp_flat[i + 0] - vf_c) / te_c
+        isat_c = ip_flat[i + 0] / (exp(a1) - 1)
+        a2 = ip_flat[i + 1] / isat_c
+        te_c = (vp_flat[i + 1] - vf_c) / ln(a2 + 1)
+        a3 = ip_flat[i + 2] / isat_c
+        vf_c = vp_flat[i + 2] - te_c * ln(a3 + 1)
+        # axt.plot(tb_c, isat_c, '*r', markersize=20)
+        if itr >= first_save:
+            isat_C.append(isat_c)
+            te_C.append(te_c)
+            vf_C.append(vf_c)
+            tb_C.append(tb_c)
+plt.step(tb_C, isat_C, where='pre', label='CCFE-MIT FPGA')
+
+            
 axt.legend(loc='best',prop={'size': 'small'})
+
 plt.show(block=0)
+
+
+"""
+run pyfusion/examples/process_MLP.py  shot_number=[20181018,41] time_range=[0.56,0.5605] mode='Isat' plots=2 double=0 first_save=0
+te_f = fits[:,1]
+plt.figure()
+plt.plot(te_f.repeat(iters), label='lsq fitted Te', color='c', lw=3)
+plot(np.array(te_C),'r', label='CCFE-MIT',lw=1.5)
+plt.legend(loc='best')
+plt.xlabel('iterations')
+plt.ylabel('Te eV')
+
+
+
+ # compare MLP isat with charlie fit 
+run pyfusion/examples/process_MLP.py  shot_number=[20181018,41] time_range=[0.55029,0.55068] mode='Isat' plots=0 double=0 debug=0
+axt=gca()
+axt.step(tb_C, isat_C, where='mid',color='r',label='I_sat fitted')
+run pyfusion/examples/plot_signals.py dev_name=W7M diag_name=W7M_MLP_IS "plotkws=dict(marker='.',scale=1.2,offset=-.1, label='MLP Isat')" fun2=None shot_number=[20181018,41] hold=1
+xlim(0.55029, 0.55068)
+ylim(0,.5)
+plt.rc('font', size=18)
+
+
+"""
+

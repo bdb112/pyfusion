@@ -2,6 +2,7 @@ from __future__ import print_function
 import pylab as pl
 import time as tm
 import numpy as np
+from six.moves import input
 
 def get_fig_nums_labs(match_str=''):
     """ get all figure labels if they exist, or str of the fig num if note
@@ -59,9 +60,10 @@ def list_matching(str=''):
         
 lmw = list_matching
 
-def raise_matching(str):
+def raise_matching(str, pause=False):
     """ raise all pylab windows with str in the title,
     whether they flash or raise depends on window manager and settings
+    The input option doesn't work properly as focus is lost.
     Note that figure(num='myname') is a legal way to name a fig"""
     labs = [lab for lab in get_fig_nums_labs(str) if str in lab]
     labs = np.sort(labs)
@@ -69,6 +71,8 @@ def raise_matching(str):
         pl.figure(lab)
         mgr = pl.get_current_fig_manager()
         mgr.window.tkraise()
+        # this fails, as focus is given to the raised window
+        input('<CR> to raise next - but buggy - focus is lost')
 
 def order_matching(str, startx=10, starty=10, incx=300, incy=0, wsize=None):
     """ reorder all pylab windows with str in the title,

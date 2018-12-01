@@ -24,6 +24,12 @@ versions created in August are >1M due to the comments?
 # 'rb' causes a problem with winpy - maybe using protocol 2 will fix?
 # wrong ?? ->  under proto 2, need ,encoding='ascii' in python3 if file written by python2
 # See test code at end
+
+Example to check relative timing of triggers.  Can't make sense of it for 2016 shots.
+A comment elsewhere suggests to use '6'
+[[pr, progs[pr]['trigger']['5'][0] - progs[pr]['trigger']['1'][0]] for pr in progs if progs[pr]['trigger'] is not None and len(progs[pr]['trigger']['1'])>0]
+
+
 """
 
 from __future__ import print_function
@@ -73,7 +79,7 @@ def get_programs(shot=None, json_file='/data/datamining/local_data/W7X/json/all_
         for p in progs['programs']:
             programs.update({p['id']: p})
 
-    # check if it is the cached version - if not go to the web site
+    # check if it is in the cached version - if not go to the web site
     if shot is not None: 
         decimal_shot = '{d}.{s:03d}'.format(d=shot[0], s=shot[1])
         if  decimal_shot not in programs:

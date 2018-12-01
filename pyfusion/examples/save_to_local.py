@@ -135,6 +135,7 @@ for shot_number in shot_list:
         if utc_shot_number is None:
             utc_shot_number = np.array([0, int(3e8)]) # default to first 300ms (in ns rel to t1)
         if dev_name == 'W7M':  # kludge set roi to control the time range
+            print('dev.acq.roi = {dar}'.format(dar=dev.acq.roi),end=': ')
             if shot_number[0] < 990000:  # test shot
                 mds_utc_offs = 0
             else:
@@ -148,7 +149,6 @@ for shot_number in shot_list:
         else:
             utc_shot_number = None
             
-    print('dev.acq.roi = {dar}'.format(dar=dev.acq.roi),end=': ')
     for diag in diag_list:
         if ('W7' in diag and 'LP' in diag) and shot_number[0]<20180000:
             # Try to selectively override delta time

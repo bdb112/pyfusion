@@ -12,6 +12,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from cycler import cycler
 from mpl_toolkits.axes_grid.inset_locator import inset_axes
+import matplotlib.cm as cm
 from pyfusion.utils.process_cmd_line_args import process_cmd_line_args
 from datetime import date
 from dateutil.rrule import rrule, DAILY
@@ -45,6 +46,8 @@ maxopen = 3  # will close fig if there are more than this
 lw = plt.rcParams['lines.linewidth']
 suptitle = 'Parallel power flux (MW/m2)'
 maxperpage = 60
+image = True
+inset_pos = 1 # 2: 'upper left' 1:Up R,  3:LL 4: LowR  # loc='best' hangs forever
 exec(process_cmd_line_args())
 
 all_figs = []
@@ -102,9 +105,14 @@ for date in dates:
                 axiter = iter([axx for axrow in axs for axx in axrow])  # flatten
                 ax = next(axiter)
 
-            scl = 1e6 if diag == 'pf' else -1e-3 if 'Sat' in diag else 1.
-            ax.step(1 + np.arange(len(pf)), np.nanmean(pf.T, axis=0) / scl, where='mid')
-            axins = inset_axes(ax, width="40%", height="40%", loc=2,  # 'upper left')  # loc='best' hangs forever
+            scl = 1e6 if diag in ['pf','pPerp'] else -1e-3 if 'Sat' in diag else 1.
+            if image:
+                ax.imshow(pf, aspect='auto', cmap=cm.jet)
+            else:
+                ax.step(1 + np.arange(len(pf)), np.nanmean(pf.T, axis=0) / scl, where='mid')
+            
+            # 2: 'upper left' 1(Up R) 3:LL 4: LowR  # loc='best' hangs forever
+            axins = inset_axes(ax, width="40%", height="40%", loc=inset_pos,
                                borderpad=0.3, axes_kwargs=dict(alpha=0.5))
             my_cycler = (cycler('color', 'b g r c m y k b g r'.split()) +
                          cycler('lw', 7*[lw] + 3*[1.5*lw]))  # the last 3 repeat but thicker
@@ -116,13 +124,16 @@ for date in dates:
             axins.text(1, 0.99, prog, verticalalignment='top',
                        horizontalalignment='right', transform=axins.transAxes, fontsize='xx-small')
             axins.xaxis.set_tick_params(labelsize='x-small')
-            axins.yaxis.set_tick_params(labelsize='x-small', labelleft=False, labelright=True, right=True, left=False)
+            lleft = image==True;
+            lright = not image
+            axins.yaxis.set_tick_params(labelsize='x-small', labelleft=lleft, labelright=lright, right=lright, left=lleft)
             # axins.set_ylim(ax.get_ylim())
             ax.set_title(pfname.split('.')[0])
         except Exception as reason:
             print('Exception {r} in {fn}'.format(r=reason, fn=pfname))
     ax = next(axiter, ax)  # if there is no room left, plop the legend on the last graph!
     ax.set_prop_cycle(my_cycler)
+    # show the colours and lines in the last window
     for p in range(len(pf)):
         ax.plot([p, p], label='LP{n:02}'.format(n=p + 1))
         ax.legend(prop={'size': 'x-small'}, ncol=int(np.sqrt(len(pf) / 2.)))

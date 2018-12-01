@@ -276,7 +276,9 @@ class BaseAcquisition(object):
             self.__dict__.update(get_config_as_dict('Acquisition', config_name))
         self.__dict__.update(kwargs)
 
-    def getdata(self, shot, config_name=None, interp={}, quiet=0, contin=False, exceptions=None, **kwargs):
+    # This is also used by the multi, as it is not overridden.
+    #  the multi class fetch calls getdata back as a single diag class
+    def getdata(self, shot, config_name=None, interp={}, quiet=0, contin=False, exceptions=None, time_range=None, **kwargs):
         """Get the data and return prescribed subclass of BaseData.
         
         :param shot: shot number
@@ -291,6 +293,18 @@ class BaseAcquisition(object):
 
         contin [False] - if True, continue with None for data
         quiet [0] Quiet counters the effect of pyfusion.VERBOSE for this routine - net effect is VERBOSE-quiet
+
+        Call chain is:
+        acq.getdata -> fetcher_class.fetch() chosen according to kwargs or diagn .cfg file
+        This always goes via base.fetch() because it isn't overridden in specific fetch.py
+        base.fetch then calls
+        -> fetcher_class.setup(),  fetcher_class do_fetch() and pull_down
+
+        An exception is the Multichannel fetcher_class, which is dealt with 
+        inside base.py.  The same getdata function is used 
+        (as Multi doesn't override getdata) which then calls the multi channel's
+        fetch function, which calls the getdata in the base.py 
+        as above on each channel.
 
         This method needs to know which  data fetcher class to use, if a
         config_name      argument     is      supplied      then     the
@@ -311,6 +325,9 @@ class BaseAcquisition(object):
         keyword arguments, and the result of the ``fetch`` method of the
         fetcher class is returned.
         """
+        if time_range is not None:
+            self.time_range = time_range
+
         if exceptions is None:
             exceptions = (LookupError) if pyfusion.DEBUG < CONTINUE_PAST_EXCEPTION else ()  # also in 428
 
@@ -340,7 +357,9 @@ class BaseAcquisition(object):
         ## Problem:  no check to see if it is a diag of the right device!??
         # enable stopping here on error to allow traceback if DEBUG>2
         # there is similar code elsewhere - check if is duplication
-
+        if pyfusion.VERBOSE > 0:
+            print('fetcher_class_name = ', fetcher_class_name)
+            
         fetcher_class.contin = contin
 
         try:
@@ -428,6 +447,7 @@ class BaseDataFetcher(object):
         The dummy return should be replaced in the specific routines, or
         the info passed through self.errmsg
         """
+        pyfusion.warn('acquisition-specific error_info not implemented for ', self.name)
         if hasattr(self, 'errmsg'):
             return(self.errmsg)
         else:
@@ -436,7 +456,7 @@ class BaseDataFetcher(object):
     def fetch(self):
         """Always use  this to fetch the data,  so that :py:meth:`setup`
         and  :py:meth:`pulldown` are  used to  setup and  pull  down the
-        environmet used by :py:meth:`do_fetch`.
+        environment used by :py:meth:`do_fetch`.
         
         :returns: the instance of a subclass of \
         :py:class:`~pyfusion.data.base.BaseData` or \
@@ -503,7 +523,7 @@ class BaseDataFetcher(object):
 
         if self.no_cache: 
             if pyfusion.VERBOSE>0:
-                print('** Skipping cache search as no_cache is set in pyfusion.cfg')
+                print('** Skipping cache search as no_cache is set in caller or pyfusion.cfg')
             tmp_data = None 
         else:
             tmp_data = try_fetch_local(self, chan)  # If there is a local copy, get it

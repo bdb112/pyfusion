@@ -37,6 +37,8 @@ smw = save_matching  # short cut
 
 def list_matching(str=''):
     """ list all pylab windows with str in the title,
+    Default (no arg or '') is to use all open windows
+    some text is shown - perhaps titles - depends.
     Note that figure(num='myname') is a legal way to name a fig"""
     labs = [lab for lab in get_fig_nums_labs(str)  if str in lab]
     labs = np.sort(labs)
@@ -74,9 +76,10 @@ def raise_matching(str, pause=False):
         # this fails, as focus is given to the raised window
         input('<CR> to raise next - but buggy - focus is lost')
 
-def order_matching(str, startx=10, starty=10, incx=300, incy=0, wsize=None):
-    """ reorder all pylab windows with str in the title,
+def order_matching(str='', startx=10, starty=10, incx=300, incy=0, wsize=None):
+    """ reorder all pylab windows in am array with str in the title,
     whether they flash or raise depends on window manager and settings
+    default (no arg or '') is to use all open windows
     Note that figure(num='myname') is a legal way to name a fig"""
     labs = [lab for lab in get_fig_nums_labs(str) if str in lab]
     if len(labs) == 0:
@@ -88,7 +91,10 @@ def order_matching(str, startx=10, starty=10, incx=300, incy=0, wsize=None):
     screen_x = mgr.window.winfo_screenwidth()
      
     for (i, lab) in enumerate(labs):
-        pl.figure(lab)
+        if lab.isdigit():  # must use int otherwise a new figure is opened
+            fig = pl.figure(int(lab))
+        else:
+            fig = pl.figure(lab)
         geom = ''
         mgr = pl.get_current_fig_manager()
         w, h = mgr.canvas.get_width_height()

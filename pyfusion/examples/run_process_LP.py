@@ -32,6 +32,7 @@ exception=Exception
 proc_kwargs = dict(overlap=2,dtseg=2000,initial_TeVfI0=dict(Te=30,Vf=5,I0=None),fit_params=dict(alg='amoeba',maxits=300,lpf=21,esterr=1,track_ratio=1.2),filename='/tmp/*2k2',threshold=0.001,t_comp=[.81,.84]) # debug ,t_range=[0.5,0.51])
 #select=1
 lpdiag='W7X_L5{s}_LPALLI'
+sweep_sig = 'W7X_L5UALL'  # OK, but if 53 is corrupted, it can affect 57
 seglist=[3,7]
 """
 
@@ -45,7 +46,7 @@ for k in replace_kw:  # override and
 for dateshot in shot_list:
     for seg in seglist:
         try:
-            LP = Langmuir_data(dateshot, lpdiag.format(s=seg),'W7X_L5UALL')
+            LP = Langmuir_data(dateshot, lpdiag.format(s=seg),sweep_sig)
             if select is not None:  # selected channels
                 LP.select = select
 

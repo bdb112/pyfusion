@@ -140,3 +140,20 @@ for date in dates:
         
     showfig(figs[-1], savefile=savefile, suptitle=suptitle, maxopen=maxopen)
     all_figs.extend(figs)
+
+"""
+
+dates = ['20180724']
+path = '/data/datamining/local_data/W7X/prelim_anal'
+
+timefile = '{p}/times/{d}_times.tgz'.format(d=date, p=path)
+pPerpfile = '{p}/{diag}/{dt}_{diag}.tgz'.format(diag='pPerp', dt=date, p=path)
+Tefile = '{p}/{diag}/{dt}_{diag}.tgz'.format(diag='Te', dt=date, p=path)
+nefile = '{p}/{diag}/{dt}_{diag}.tgz'.format(diag='ne', dt=date, p=path)
+tart = tarfile.open(timefile.format(d=date, p=path))
+tarp = tarfile.open(datfile)
+
+t = np.loadtxt(tart.extractfile(tf))
+pf = np.loadtxt(tarp.extractfile(pfname))
+
+"""

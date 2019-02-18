@@ -92,6 +92,9 @@ for ch in channels:
         for k in list(opts):
             if k not in ['gain', 'area', 'params', 'coords_w7_x_koord']:
                 opts.pop(k)
+                
+    # no need for this huge array in the DA file
+    [opts.pop(k) for k in list(opts) if k in ['diff_dimraw']]
     opts['name'] = ch
     json.dump(opts, ofile)
     ofile.write('\n')
@@ -138,8 +141,10 @@ for s in range(samples):
         ofile.write(sep+sep.join(['{val}'.format(val=mdat[k][s][c]) for k in vars]))
     ofile.write(nl)
 
+print('\nWrote ' + ofile.name)
 ofile.close()
 # now the json file
 mdat.update(dict(info=dat['info']))
 import json
 json.dump(mdat, file(jfilename, 'wt'))
+print('Wrote ' + jfilename)

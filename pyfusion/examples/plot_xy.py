@@ -57,7 +57,7 @@ if time_range != []:
 pyfusion.config.set('Acquisition:W7M','ROI', ROI)
 dev = pyfusion.getDevice(dev_name)
 
-dev.no_cache = True
+dev.no_cache = True  # This allows direct access to server so we can use time context for efficiency
 xdata = dev.acq.getdata(shot_number, xdiag, contin=not stop)
 ydata = dev.acq.getdata(shot_number, ydiag, contin=not stop)
 datlist = [xdata, ydata]

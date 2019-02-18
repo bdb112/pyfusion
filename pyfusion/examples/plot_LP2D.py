@@ -319,12 +319,13 @@ for s in srange:
                      .format(diag=diag, ch=da['info']['channels'][prch][2:]))
 
     axtime.plot(echdata.timebase - tech, echdata.signal/1000, label='ECH')
-    gasdata = dev.acq.getdata(shot, 'W7X_GasCtlV_23')
-    dtgas = (gasdata.utc[0] - t0_utc)/1e9
-    wplasmagas = np.where((gasdata.timebase+dtgas > np.min(probedata.timebase+dtprobe)) 
-                          & (gasdata.timebase+dtgas < np.max(probedata.timebase+dtprobe)))[0]
-    if np.max(gasdata.signal[wplasmagas]) > 0.1:
-        axtime.plot(gasdata.timebase + dtgas, gasdata.signal,label=gasdata.config_name[4:])
+    gasdata = dev.acq.getdata(shot, 'W7X_GasCtlV_23', contin=True)
+    if gasdata is not None:
+        dtgas = (gasdata.utc[0] - t0_utc)/1e9
+        wplasmagas = np.where((gasdata.timebase+dtgas > np.min(probedata.timebase+dtprobe)) 
+                              & (gasdata.timebase+dtgas < np.max(probedata.timebase+dtprobe)))[0]
+        if np.max(gasdata.signal[wplasmagas]) > 0.1:
+            axtime.plot(gasdata.timebase + dtgas, gasdata.signal,label=gasdata.config_name[4:])
     axtime.set_xlim(-0.01,max(probedata.timebase + dtprobe))
     #axtime.set_ylim(0,2*np.nanmean(probedata.signal))
     axtime.set_ylim(ne_range)

@@ -30,6 +30,7 @@ clim=None
 xlim=None
 ylim=None
 cmap=cm.jet   # see also cm.gray_r etc
+stop=False
 """
 
 exec(_var_defaults)
@@ -53,7 +54,7 @@ exec(pf.utils.process_cmd_line_args())
 
 if noverlap is None: noverlap = NFFT//2
 
-d = device.acq.getdata(shot_number, diag_name)
+d = device.acq.getdata(shot_number, diag_name, time_range=time_range, contin=not stop)
 if time_range != None:
     dr = d.reduce_time(time_range)
 else:

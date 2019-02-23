@@ -361,6 +361,7 @@ class BaseAcquisition(object):
             print('fetcher_class_name = ', fetcher_class_name)
             
         fetcher_class.contin = contin
+        fetcher_class.time_range = time_range
 
         try:
             d = fetcher_class(self, shot, interp=interp,
@@ -696,7 +697,7 @@ class MultiChannelFetcher(BaseDataFetcher):
             sgn = 1
             if chan[0]=='-': sgn = -sgn  # this allows flipping sign in the multi chan config
             bare_chan = (chan.split('-'))[-1]
-            ch_data = self.acq.getdata(self.shot, bare_chan, contin=self.contin)
+            ch_data = self.acq.getdata(self.shot, bare_chan, contin=self.contin, time_range=self.time_range)
             if len(t_range) == 2:
                 ch_data = ch_data.reduce_time(t_range)
 

@@ -375,7 +375,7 @@ class Langmuir_data():
 
     See :py:meth:`process_swept_Langmuir` for the processing arguments
     """
-    def __init__(self, shot, i_diag, v_diag, dev_name="W7X", debug=debug, plot=1, verbose=0, params=None):
+    def __init__(self, shot, i_diag, v_diag, dev_name="W7X", debug=debug, plot=1, verbose=0, params=None, time_range=None):
         """
 Create a Langmuir Data oject for later processing
 
@@ -403,8 +403,8 @@ Args:
         self.figs = []
         self.suffix = ''  # this gets put at the end of the fig name (title bar)
 
-        self.imeasfull = self.dev.acq.getdata(shot, i_diag, contin=True)
-        self.vmeasfull = self.dev.acq.getdata(shot, v_diag)
+        self.imeasfull = self.dev.acq.getdata(shot, i_diag, contin=True, time_range=time_range)
+        self.vmeasfull = self.dev.acq.getdata(shot, v_diag, contin=True, time_range=time_range)
         comlen = min(len(self.vmeasfull.timebase), len(self.imeasfull.timebase))
         FFT_size = nice_FFT_size(comlen-2, -1)
         # the minus 2 is a fudge to hide small inconsistencies in reduce_time
@@ -551,6 +551,7 @@ Args:
 
         lpf = fit_params.get('lpf', None)
         cycavg = fit_params.get('cycavg', None)
+        minleft = fit_params.get('minleft', [0.3, 20])  # min fraction remaining, min num remaining
 
         segtb = i_segds.timebase
         v, i, im = v_sig.copy(), i_sig.copy(), m_sig.copy()     # for fit
@@ -559,7 +560,7 @@ Args:
         good = find_clipped([v, im], clipfact=clipfact)
         wg = np.where(good)[0]
         if (~good).any():  # if any bad
-            if len(wg) < 0.3 * len(v) or len(wg) < 20:  # was (~good).all():
+            if len(wg) < minleft[0] * len(v) or len(wg) < minleft[1]:  # was (~good).all()
                 print('{t:.5f}s suppressing all !*** {a} *************************8'
                       .format(a=len(wg),t=np.average(segtb)))
                 if fit_params.get('esterr', None) is not None:
@@ -800,7 +801,7 @@ restrict time range, but keep pre-shot data accessible for evaluation of success
         self.actual_params = locals().copy()
         # try to catch mispelling, variables in the wrong place
         for k in fit_params:
-            if k not in 'Lnorm,cov,esterr,alg,xtol,ftol,lpf,maxits,track_ratio,cycavg'.split(','):
+            if k not in 'Lnorm,cov,esterr,alg,xtol,ftol,lpf,maxits,track_ratio,cycavg,minleft'.split(','):
                 raise ValueError('Unknown fit_params key ' + k)
 
         if (fit_params.get('cycavg', None) is not None and

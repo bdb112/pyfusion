@@ -11,7 +11,8 @@ Test method: Clumsy
 uncomment file:// in pyfusion.cfg
 from pyfusion.acquisition.W7X import fetch
 ff=fetch.W7XDataFetcher("W7X_L53_LP7_I",[20160302,26])
-ff.fmt='file:///data/databases/W7X/cache/archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.{CDS}/DataModuleDesc.{DMD}_DATASTREAM/{ch}/Channel_{ch}/scaled/_signal.json?from={shot_f}&upto={shot_t}'
+# seg_f_u  - segment from in utc - used to be shot_f which is ambiguous
+ff.fmt='file:///data/databases/W7X/cache/archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.{CDS}/DataModuleDesc.{DMD}_DATASTREAM/{ch}/Channel_{ch}/scaled/_signal.json?from={seg_f_u}&upto={seg_t_u}'
 ff.params='CDS=82,DMD=190,ch=2'
 ff.do_fetch()
 ff.repair=1   # or 0,2
@@ -46,7 +47,7 @@ import time as tm
 
 from .get_shot_info import get_shot_utc
 from .get_shot_list import get_shot_number
-from pyfusion.acquisition.W7X.get_shot_list import get_programs 
+from pyfusion.acquisition.W7X.get_shot_list import get_programs, make_utcs_relative_seconds
 
 VERBOSE = pyfusion.VERBOSE
 
@@ -125,10 +126,10 @@ class W7XDataFetcher(BaseDataFetcher):
         # the format is in the acquisition properties, to avoid
         # repetition in each individual diagnostic
 
-        if self.shot[1] > 1e9 or hasattr(self.time_range) and self.time_range is not None:
+        if self.shot[1] > 1e9 or hasattr(self, 'time_range') and self.time_range is not None:
             # we have start and end in UTC instead of shot no
             # need the shot and utc to get t1 to set zero t
-            if hasattr(self.time_range) and self.time_range is not None:
+            if hasattr(self, 'time_range') and self.time_range is not None:
                 actual_shot = self.shot
                 f_u = None # set to None to make sure we don't use it
             else:
@@ -137,28 +138,37 @@ class W7XDataFetcher(BaseDataFetcher):
 
             progs = get_programs(actual_shot)  # need shot to look up progs
             #  need prog to get trigger - not tested for OP1.1
-            this_prog = [prog for prog in progs if (f_u >= progs[prog]['from'] and
-                                                    t_u <= progs[prog]['upto'])]
-            if len(this_prog) is 1:
-                utc_0 = progs[this_prog[0]]['trigger']['1']
+            if len(progs) > 1:
+                raise LookupError('fetch: too few or too many programs')
+                #this_prog = [prog for prog in progs if (f_u >= progs[prog]['from'] and
+                #                                    t_u <= progs[prog]['upto'])]
+            if len(progs) == 1:
+                this_prog = progs.values()[0]
+                utc_0 = this_prog['trigger']['1'][0]
             else:
-                utc_0 = f_u  # better than nothing
+                utc_0 = f_u  #   better than nothing - probaby a test
             if f_u is None: # shorthand for have time range
-                f_u = utc_0 + int(1e9 * 61 + time_range[0])
-                f_t = utc_0 + int(1e9 * 61 + time_range[1])
-            
-        else:
-            f_u, t_u = get_shot_utc(self.shot)
+                f_u = utc_0 + int(1e9 * (self.time_range[0]))  # + 61))
+                t_u = utc_0 + int(1e9 * (self.time_range[1]))  # + 61)) was 61 rel to prog['from']
+
+        else:  # self.shot is an 8,3 digit shot
+            actual_shot = self.shot
+            f_u, t_u = get_shot_utc(actual_shot)
             # at present, ECH usually starts 61 secs after t0
             # so it is usually sufficient to request a later start than t0
             pre_trig_secs = self.pre_trig_secs if hasattr(self, 'pre_trig_secs') else 0.3
             # should get this from programs really
-            utc_0 = f_u + int(1e9 * (61))
-            f_u = f_u - int(1e9 * pre_trig_secs)
-        # A URL STYLE diagnostic - used for a one-off
+            utc_0 = f_u + int(1e9 * (61)) # utc0 is plasma initiation in utc
+            f_u = f_u - int(1e9 * pre_trig_secs)  # f_u is the first time wanted
+
+        # make sure we have the following defined regardless of how we got here
+        shot_f_u, shot_t_u  = get_shot_utc(actual_shot)
+        seg_f_u = f_u
+        seg_t_u = t_u
+        # A URL STYLE diagnostic - used for a one-off rather than an array
         # this could be moved to setup so that the error info is more complete
         if hasattr(self, 'url'):
-            fmt = self.url  # add from= further down: +'_signal.json?from={shot_f}&upto={shot_t}'
+            fmt = self.url  # add from= further down: +'_signal.json?from={seg_f_u}&upto={seg_t_u}'
             params = {}
             # check consistency -   # url should be literal - no params (only for fmt) - gain, units are OK as they are not params
             if hasattr(self, 'params'):
@@ -175,15 +185,16 @@ class W7XDataFetcher(BaseDataFetcher):
 
             params = eval('dict(' + self.params + ')')
 
-        # Originally added to fix up erroneous ECH alias mapping if ECH -
-        # only 6 work if I don't.  But THis seems to help with many others
-        # this implementation is kludgey but proves the principle, and
-        # means we don't have to refer to any raw.. signals
-        # would be nice if they made a formal way to do this.
+        # Originally added to fix up erroneous ECH alias mapping if ECH - only
+        #   6 sources work if I don't.  But it seems to help with many others
+        # This implementation is kludgey but proves the principle, and
+        #   means we don't have to refer to any raw.. signals
+        #   would be nice if they made a formal way to do this.
         if 'upto' not in fmt:
-            fmt += '_signal.json?from={shot_f}&upto={shot_t}'
+            fmt += '_signal.json?from={seg_f_u}&upto={seg_t_u}'
 
-        params.update(shot_f=f_u, shot_t=t_u)
+        assert(seg_f_u==f_u); assert(seg_t_u==t_u)  # 
+        params.update(seg_f_u=seg_f_u, seg_t_u=seg_t_u)
         url = fmt.format(**params)  # substitute the channel params
 
         debug_(pyfusion.DEBUG, 2, key="url", msg="middle of work on urls")
@@ -195,7 +206,7 @@ class W7XDataFetcher(BaseDataFetcher):
             tgt = url.split('KKS/')[1].split('/scaled')[0].split('_signal')[0]
             # construct a time filter for the shot
             self.tgt = tgt # for the sake of error_info
-            filt = '?filterstart={shot_f}&filterstop={shot_t}'.format(**params)
+            filt = '?filterstart={seg_f_u}&filterstop={seg_t_u}'.format(**params)
             # get the url with the filter
             url = url.replace(tgt, get_signal_url(tgt, filt)).split('KKS/')[-1]
             # take the filter back out - we will add the exact one later
@@ -203,10 +214,11 @@ class W7XDataFetcher(BaseDataFetcher):
 
         # nSamples now needs a reduction mechanism http://archive-webapi.ipp-hgw.mpg.de/
         # minmax is increasingly slow for nSamples>10k, 100k hopeless
-        # should ignore the test comparing the first two elements of the tb
+        # Should ignore the test comparing the first two elements of the tb
         # prevent reduction (NSAMPLES=...) to avoid the bug presently in codac
         if (('nSamples' not in url) and (pyfusion.NSAMPLES != 0) and
-            not (hasattr(self, 'allow_reduction') and int(self.allow_reduction) == 0)):
+            not (hasattr(self, 'allow_reduction') and 
+                 int(self.allow_reduction) == 0)):
             url += '&reduction=minmax&nSamples={ns}'.format(ns=pyfusion.NSAMPLES)
 
         debug_(pyfusion.DEBUG, 2, key="url", msg="work on urls")
@@ -219,8 +231,8 @@ class W7XDataFetcher(BaseDataFetcher):
             url = url.replace('/scaled/', '/unscaled/')
 
         if pyfusion.CACHE:
-            # needed for improperly configured cygwin systems: e.g.IPP Virual PC
-            # perhaps this should be executed at startup of pyfusion?
+            # Needed for improperly configured cygwin systems: e.g.IPP Virual PC
+            # Perhaps this should be executed at startup of pyfusion?
             cygbin = "c:\\cygwin\\bin"
             if os.path.exists(cygbin) and not cygbin in os.environ['path']:
                 os.environ['path'] += ";" + cygbin
@@ -238,9 +250,12 @@ class W7XDataFetcher(BaseDataFetcher):
                 url = url.replace('?', '@')
             # nicer replace - readback still fails in Win, untested on unix systems
             print('now trying the cached copy we just grabbed: {url}'.format(url=url))
+        if (seg_f_u > shot_t_u) or (seg_t_u < shot_f_u):
+            pyfusion.utils.warn('segment requested is outside the shot times for ' + str(actual_shot))
         if pyfusion.VERBOSE > 0:
-            print('======== fetching url over {dt:.1f} secs  =========\n[{u}]'
-                  .format(u=url, dt=(params['shot_t'] - params['shot_f']) / 1e9))
+            print('======== fetching url over {dt:.1f} secs from {fr:.1f} to {tt:.1f} =========\n[{u}]'
+                  .format(u=url, dt=(params['seg_t_u'] - params['seg_f_u']) / 1e9,
+                          fr=(params['seg_f_u'] - shot_f_u)/1e9, tt=(params['seg_t_u'] -shot_f_u) / 1e9))
 
         # seems to take twice as long as timeout requested.
         # haven't thought about python3 for the json stuff yet

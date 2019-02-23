@@ -1,4 +1,4 @@
-""" modelled after howtoREST.py 
+""" modelled after howtoREST.py - Note: see archiveDB.py for ideas (better ideas?)
 on the W7X virtual desktop, urllib wont work (no attribute 'request') unless get_shot_list update is run first (2015 version of urllib.py)
 """
 import urllib, json, datetime, calendar

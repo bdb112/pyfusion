@@ -33,6 +33,7 @@ A comment elsewhere suggests to use '6'
 """
 
 from __future__ import print_function
+import builtins
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -44,6 +45,7 @@ from pyfusion.debug_ import debug_
 from future.standard_library import install_aliases
 install_aliases()
 
+from pprint import pprint
 from urllib.parse import urlparse, urlencode
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
@@ -59,7 +61,32 @@ this_dir = os.path.dirname(__file__)
 import json
 
 #from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
+from copy import deepcopy
+def make_utcs_relative_seconds(dic, t0):
+    dic = deepcopy(dic)
+    lst = (tuple, list, np.ndarray)
+    for k, val in dic.iteritems():
+        if isinstance(val, builtins.int) and val > 1e9:
+            dic.update({k: (val - t0)/1e9})
+        elif isinstance(val, lst):
+            vnew = [(v - t0)/1e9 if isinstance(v, builtins.int) and v > 1e9
+                    else v for v in val]
+            dic.update({k: vnew})
+    return dic
 
+def show_program(shot=[20181018,41]):
+    progs = get_programs(shot)
+    assert len(progs) == 1, 'no or too many programs matching'
+    prog = deepcopy(progs.values()[0])
+    trel = prog['from']
+    triggers = prog['trigger']
+    prog.update(dict(trigger=make_utcs_relative_seconds(triggers, trel)))
+    scenarios = prog['scenarios']
+    assert isinstance(scenarios, list), 'scenarios is not a list'
+    newscens = [make_utcs_relative_seconds(scen, trel) for scen in scenarios]
+    prog.update(dict(scenarios=newscens))
+    pprint(prog)
+    
 def get_programs(shot=None, json_file='/data/datamining/local_data/W7X/json/all_programs.json'):
     """ 
     get the program for a shot, or reload the caches (shot = None or -1)
@@ -93,7 +120,7 @@ def get_programs(shot=None, json_file='/data/datamining/local_data/W7X/json/all_
     return(programs)
 
 def get_latest_program():
-    """ meant to be a quck way to get only the latest programs, for use 
+    """ meant to be a quick way to get only the latest programs, for use 
     during operation"""
     pass
 

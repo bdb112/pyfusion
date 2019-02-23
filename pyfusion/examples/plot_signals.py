@@ -30,7 +30,8 @@ fun2=myiden2
 plotkws={}
 hold=0  # 0 means erase, 1 means hold, 2 means twinx
 labeleg='False'
-t_range=[]
+t_range=None
+time_range=None
 t0=0
 stop=True  # if False, push on with missing data  - only makes sense for multi channel
 """
@@ -39,6 +40,7 @@ exec(_var_defaults)
 from  pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
+time_range = pyfusion.utils.choose_one(time_range, t_range)
 # save the start utc if there is already a 'data' object (***need to run -i to keep)
 if 'W7X' in dev_name:
     if 'utc0' in locals() and utc0 is not None:
@@ -49,12 +51,12 @@ if 'W7X' in dev_name:
             utc0 = data.utc[0] 
 
 dev = pyfusion.getDevice(dev_name)
-data = dev.acq.getdata(shot_number,diag_name, contin=not stop)
+data = dev.acq.getdata(shot_number,diag_name, contin=not stop, time_range=time_range if len(time_range) ==2 else None)
 if data is None:
     raise LookupError('data not found for {d} on shot {sh}'
                       .format(d=diag_name, sh=shot_number))
-if len(t_range) > 0:
-    data = data.reduce_time(t_range)
+if time_range is not None:
+    data = data.reduce_time(time_range)
 
 if hold==0: plt.figure()
 elif hold==2:

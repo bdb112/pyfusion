@@ -7,6 +7,13 @@ import pyfusion
 from six.moves import input
 import sys
 
+def choose_one(x, y):
+    if x is not None and y is not None:
+        raise ValueError('attempt to set both aliases ' + str(x) + ',' + str(y))
+    if x is None:
+        return y
+    elif y is None:
+        return x
 
 def wait_for_confirmation(msg):
     """

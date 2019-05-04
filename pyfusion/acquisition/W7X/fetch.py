@@ -86,7 +86,7 @@ def regenerate_dim(x):
         print('big or negative:', [[bigvals[argc], bigcounts[argc]] for argc in np.argsort(bigcounts)[::-1][0:10]])
         print('bincounts', counts)
         
-    debug_(pyfusion.DEBUG, 3, key="repair", msg="repair of W7-X scrambled Langmuir timebase") 
+    debug_(pyfusion.DEBUG, 3, key="repair", msg="repair of W7-X scrambled Langmuir probe timebase") 
     if len(counts) == 0:
         msg = 'no repair required'
         print(msg)
@@ -107,7 +107,10 @@ def regenerate_dim(x):
                   .format(l=len(x01111), dtns=dtns, e=errcnt))
 
     fixedx = np.cumsum(x01111) * dtns
-    wbad = np.where((x - fixedx) > 1e8)[0]
+    # This misses the case when the time values are locked onto discrete values ('sq wave look')
+    # unless the tolerance is made > 0.1 secs (e.g. 1.9 works forc
+    # run  pyfusion/examples/plot_signals diag_name='W7X_L57_LP01_I' shot_number=[20160303,13] decimate=10-1 sharey=0
+    wbad = np.where(abs(x - fixedx) > 1.9e8)[0]
     fixedx[wbad] = np.nan
     debug_(pyfusion.DEBUG, 3, key="repair", msg="repair of W7-X scrambled Langmuir timebase")
     return(fixedx, msg)
@@ -278,7 +281,8 @@ class W7XDataFetcher(BaseDataFetcher):
 
         # this form will default to repair = 2 for all LP probes.
         #default_repair = -1 if 'Desc.82/' in url else 0
-        default_repair = int(self.acq.repair) if  hasattr(self.acq, 'repair') else 2 if 'Desc.82/' in url else 0
+        # Override acq.repair with the probe value
+        default_repair = int(self.repair) if  hasattr(self, 'repair') else 2 if 'Desc.82/' in url else 0
         # this form follows the config file settings
         self.repair = int(self.repair) if hasattr(self, 'repair') else default_repair
         dimraw = np.array(dat['dimensions'])  

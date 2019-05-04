@@ -58,7 +58,7 @@ def register(*class_names):
                 filter_reg[cl_name] = [filter_method]
             else:
                 filter_reg[cl_name].append(filter_method)
-        debug_(pyfusion.DEBUG, 3, key=['register filter', 'register'])
+        debug_(pyfusion.DEBUG, 4, key=['register filter', 'register'])
         return filter_method
     return reg_item
 

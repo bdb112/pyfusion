@@ -24,7 +24,8 @@ def get_shot_info(date, shot, item='comment', quiet=False):
         if item == 'utc':
             return([shotDA['start_utc'][ws][0],shotDA['end_utc'][ws][0]])
         else:
-            return(shotDA[item][ws])
+            1/0
+            return(shotDA[item][ws][0])
 
     elif len(ws) == 0:
         if (shot == 0) or (shot >= 999):   # shot zero is assumed to be midnight

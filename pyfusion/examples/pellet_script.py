@@ -1,3 +1,4 @@
+#_PYFUSION_TEST_@@SCRIPT
 run pyfusion/examples/W7X_get_shot_times.py shot=[20170912,21] ECH=W7X_ECH_Rf_C5
 clf()
 run -i pyfusion/examples/plot_signals diag_name='W7X_LTDU_LP20_I' shot_number=[20170912,21] hold=1

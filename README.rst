@@ -9,7 +9,29 @@ pyfusion - python code for data mining plasma fluctuations
  * possible problem with tests - new convention to return None for data not found may suppress real errors, making tests look too good
  * wid_specgram memory error for foverlap>0
 
+ To see VERSION along with commit index  
+ git log -p pyfusion/version.py |egrep  "\+VERSION =|commit"
+
 Most recent update: 
+
+Version 0.993 Op1.2a
+ * Fix more examples in test
+ * Add examples/check_npz_data_integrity.py
+ * Rationalize the check for errors in the timebaseexpr to do with maxint comparison
+ * More improvements to deal with different timebases - seems OK!
+ * Simple method - use first signal's timebase and cut or nan-pad others
+    but only works if signals have utcs - should extend that.
+
+ * Add interpolate_W7X_timebase
+ * process_swept_Langnuir - try to detect bad choice of compesation interval
+ * plot_DA.py: more info to console
+ * plot_LP2D.py: don't error if gas is not available
+ * Add multi probe definitions to pyfusion.cfg to separate probes on different timebases, and, to aid in debugging, mix up one probe from different time bases.
+ * W7X/fetch.py - allow for self.time_range in do_fetch (not tested), cleanup style, f,t become f_u, t_u
+ * acquisition/base.py  add time_range to getdata, using an attribute (self.time_range)
+ * remove/rationalise the .t_min and t_max  and t_range from getdata?/plot_signals
+
+666e: merge in IPP changes, but not debugged
 
 Version 0.992 Op1.2b
  * examples/plot_tdu_pflux - makes a page of plots from the  prelim_anal LP data

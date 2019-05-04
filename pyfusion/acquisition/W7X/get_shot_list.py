@@ -63,6 +63,9 @@ import json
 #from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
 from copy import deepcopy
 def make_utcs_relative_seconds(dic, t0):
+    """ Take a dictionary and replace all utcs with seconds relative to t0
+    This helps with debugging in general and understanding programs.
+    """
     dic = deepcopy(dic)
     lst = (tuple, list, np.ndarray)
     for k, val in dic.iteritems():

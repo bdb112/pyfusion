@@ -18,6 +18,7 @@ import traceback
 import sys, os
 import pyfusion  # only needed for .VERBOSE and .DEBUG
 from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
+from pyfusion.acquisition.W7X import interpolate_W7X_timebase
 
 CONTINUE_PAST_EXCEPTION = 2  # level below which exceptions in fetch are continued over
 
@@ -68,10 +69,11 @@ if sys.version<'3,':
 else:
     newload = newloadv3
 
-def try_fetch_local(input_data, bare_chan):
+def try_fetch_local(input_data, bare_chan, time_range=None):
     """ return data if in the local cache, otherwise None
     doesn't work for single channel HJ data.
     sgn (not gain) be only be used at the single channel base/fetch level
+    shot can be a utc, but only if the stored data is of that form.
     """
     for each_path in pyfusion.config.get('global', 'localdatapath').split('+'):
         # check for multi value shot number, e.g. utc bounds for W7-X data
@@ -128,15 +130,33 @@ def try_fetch_local(input_data, bare_chan):
         return None
 
     signal_dict = newload(input_data.localname)
+    """ These W7X-specific lines are here to deal with npz saved data
+    Examples of difficult shots.
+    'W7X_L53_LP01_U' shot_number=[20160309,13]  0.8.2b writes all zeros (when 
+        read by newload 0.9.92O clean,on both) even though the rawdim is OK up to 350,000
+    L57  doesn't have this problem in 0.8.2b - written the same date! (but diff dimraw very fragmented)
+    """
     if 'params' in signal_dict and 'name' in signal_dict['params'] and 'W7X_L5' in signal_dict['params']['name']:
         if  signal_dict['params']['pyfusion_version'] < '0.6.8b':
             raise ValueError('probe assignments in error LP11-22 in {fn}'
                              .format(fn=input_data.localname))
         if np.nanmax(signal_dict['timebase']) == 0:
-            pyfusion.logging.warning('making a fake timebase for {fn}'
+            pyfusion.logging.warning("======== all 0's: making a fake timebase for {fn}"
                                      .format(fn=input_data.localname))
             signal_dict['timebase'] = 2e-6*np.cumsum(1.0 + 0*signal_dict['signal'])
 
+        if np.diff(signal_dict['timebase'])[0] == 0: # first two are the same
+            signal_dict['timebase'] = interpolate_W7X_timebase(signal_dict)
+        
+        true_start = (signal_dict['params']['data_utc'][0] -
+                      signal_dict['params']['shot_f'])/1e9 - 61
+        delta_t = signal_dict['timebase'][0] - true_start
+        if np.abs(delta_t) > 1e-6:
+            print("=== Timebase has not been adjusted to t=0 - discrepancy = {dt:.4g}"
+                  .format(dt=delta_t))
+            signal_dict['timebase'] = signal_dict['timebase'] - delta_t
+                
+    
     coords = get_coords_for_channel(**input_data.__dict__)
     #ch = Channel(bare_chan,  Coords('dummy', (0,0,0)))
     ch = Channel(bare_chan,  coords)
@@ -152,10 +172,18 @@ def try_fetch_local(input_data, bare_chan):
         output_data.params = signal_dict['params']
         if 'utc' in signal_dict['params']:
             output_data.utc =  signal_dict['params'].get('utc',None)
-    else:
-        # yes, it seems like duplication, but no
-        output_data.utc = None
-        output_data.params = dict(comment = 'old npz file has no params')
+        else:
+            # yes, it seems like duplication, but no
+            output_data.utc = None
+            output_data.params = dict(comment = 'old npz file has no params')
+
+    # If we are sub-selecting, the utc should be adjusted.
+    if time_range is not None:
+        origbnds = (output_data.timebase[[0,-1]]/1e-9).astype(np.float) #  can't use min max as we want the ends
+        output_data.reduce_time(time_range)
+        newbnds = (output_data.timebase[[0,-1]]/1e-9).astype(np.float)
+        output_data.utc = [output_data.utc[i] + (newbnds[i] - origbnds[i]).round(0) for i in range(2)]
+        print(output_data.utc)
 
     oldsrc =  ', originally from ' + output_data.params['source'] if 'source' in output_data.params else ''
     output_data.params.update(dict(source='from npz cache' + oldsrc))
@@ -276,8 +304,10 @@ class BaseAcquisition(object):
             self.__dict__.update(get_config_as_dict('Acquisition', config_name))
         self.__dict__.update(kwargs)
 
-    # This is also used by the multi, as it is not overridden.
-    #  the multi class fetch calls getdata back as a single diag class
+    # This is also used by the multi,  as it is not overridden, but explicitly
+    #  in user code in a call to getdata.  The multi class fetch then calls getdata
+    #  again from within fetch but as a single diag class.
+    # Contrast this with fetch - which are separate funtions for multi and single.
     def getdata(self, shot, config_name=None, interp={}, quiet=0, contin=False, exceptions=None, time_range=None, **kwargs):
         """Get the data and return prescribed subclass of BaseData.
         
@@ -325,6 +355,8 @@ class BaseAcquisition(object):
         keyword arguments, and the result of the ``fetch`` method of the
         fetcher class is returned.
         """
+        if shot is None:
+            raise ValueError('Attempt to get data for shot = None')
         if time_range is not None:
             self.time_range = time_range
 
@@ -354,6 +386,7 @@ class BaseAcquisition(object):
                 sys.exit()
             
         fetcher_class = import_from_str(fetcher_class_name)
+        print('fetcher class is', fetcher_class_name)
         ## Problem:  no check to see if it is a diag of the right device!??
         # enable stopping here on error to allow traceback if DEBUG>2
         # there is similar code elsewhere - check if is duplication
@@ -362,7 +395,7 @@ class BaseAcquisition(object):
             
         fetcher_class.contin = contin
         fetcher_class.time_range = time_range
-
+        print('fetcher time range = ', time_range, end=', ')
         try:
             d = fetcher_class(self, shot, interp=interp,
                               config_name=config_name, **kwargs).fetch()
@@ -527,8 +560,9 @@ class BaseDataFetcher(object):
                 print('** Skipping cache search as no_cache is set in caller or pyfusion.cfg')
             tmp_data = None 
         else:
-            tmp_data = try_fetch_local(self, chan)  # If there is a local copy, get it
+            tmp_data = try_fetch_local(self, chan, time_range=self.time_range)  # If there is a local copy, get it
 
+        debug_(pyfusion.DEBUG, 6, key='base_fetch')
         if tmp_data is None:
             self.gain = gain  # not needed by fetch - just to be consistent
             method = 'specific'
@@ -686,11 +720,15 @@ class MultiChannelFetcher(BaseDataFetcher):
         meta_dict={}
 
         group_utc = None  # assume no utc, will be replaced by channels
-        # t_min, t_max seem obsolete, and should be done in single chan fetch
-        if hasattr(self, 't_min') and hasattr(self, 't_max'):
-            t_range = [float(self.t_min), float(self.t_max)]
+        # t_min, t_max are obsolete, and should be done in single chan fetch
+
+        if self.time_range is not None:
+            time_range = self.time_range
+        elif hasattr(self, 't_min') and hasattr(self, 't_max'):
+            time_range = [float(self.t_min), float(self.t_max)]
         else:
-            t_range = []
+            time_range = None
+            
         params = {}  # will be added to output data, to include gain, really want Rs too
         for chan in ordered_channel_names:
             
@@ -698,8 +736,8 @@ class MultiChannelFetcher(BaseDataFetcher):
             if chan[0]=='-': sgn = -sgn  # this allows flipping sign in the multi chan config
             bare_chan = (chan.split('-'))[-1]
             ch_data = self.acq.getdata(self.shot, bare_chan, contin=self.contin, time_range=self.time_range)
-            if len(t_range) == 2:
-                ch_data = ch_data.reduce_time(t_range)
+            if time_range is not None and len(time_range) == 2:
+                ch_data = ch_data.reduce_time(time_range)
 
             if ch_data is None:
                 print('>>>>>>>>> Skipping ', chan)
@@ -725,45 +763,84 @@ class MultiChannelFetcher(BaseDataFetcher):
             # tack on the data utc
             ch_data.signal.utc = ch_data.utc
 
-            # Make a common timebase and do some basic checks.
+            """ *************** The common timebase issue ***************
+            See tests in W7_Limiter_Langmuir.odt under Common Timebase - 
+            Two choices - 1/ don't look ahead and just take the first.
+            if the next starts before or at the start, just chop off the front.
+            if the next ends after or at the end, just chop off the end.
+            If if starts after, pad with nans
+            if it ends before, pad with nans
+
+            or 2/ check them all first and choose the common piece
+
+            3? compromise is to do 1/ but reorder and restart each time a 
+                shortfall is found,  hopefully will only happy once. 
+            """
+
+            #  Make a common timebase and do some basic checks.
             if common_tb is None:
-                print('set common tb: ', end='')
+                print('set common tb from the first channel: ', end='')
+                # bdb bug!this is a mistake unless we restrict the time range to
+                #   one that suits all.  But Calling all data twice would
+                #   be slow, and storing all data would use memory - see """ above
                 common_tb = ch_data.timebase
+                tb_chan = ch_data.channels
                 if hasattr(ch_data,'utc'):
                     group_utc = ch_data.utc
-                    tb_chan = ch_data.channels
+
 
                 # for the first, append the whole signal
                 data_list.append(sgn * ch_data.signal)
-            else:
+            else:  # this for each extra channel
                 if hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'True':
                     # append regardless, but will have to go back over
                     # later to check length cf common_tb
                     if pyfusion.VERBOSE > 0: print('utcs: ******',ch_data.utc[0],group_utc[0])
+                    dtclock = 2000 if self.shot[0] < 20170101 else 1/0
+                    dtns = (ch_data.utc[0] - group_utc[0])
+                    dts = dtns/1e9
+                    nsampsdiff = int(round(dtns/dtclock,0))  # difference in number of samples
+                    skew = (nsampsdiff * dtclock) % dtclock
+                                        
                     if ch_data.utc[0] != group_utc[0]:
-                        dts = (ch_data.utc[0] - group_utc[0])/1e9
-                        print('*** different start times *****\n********trace {chcnf} starts after {tbch} by {dts:.2g} s'
-                              .format(tbch = tb_chan.config_name, chcnf = ch_data.config_name, dts=dts))
+                        print('*** different start times *****\n'
+                              '********trace {chcnf} starts after {tbch} by {dts:.10g} s, skew = {sk}ns'
+                              .format(tbch = tb_chan.config_name, chcnf = ch_data.config_name,
+                                      sk = skew, dts=dts),end=' ')
+
+                    if ch_data.utc[0] < group_utc[0]:
+                        debug_(pyfusion.DEBUG, level=3, key='shortening at start')
+                        ch_data.signal = ch_data.signal[-nsampsdiff:]
+                        ch_data.timebase = ch_data.timebase[-nsampsdiff:]
+                        ch_data.utc[0] -= nsampsdiff * int(dtclock/1e-9)  # not sure if we use this but..
+                        print(' **** reducing incoming data at start')
+                    elif ch_data.utc[0] > group_utc[0]:
+                        print('padding incoming data at start')
                         # should pad this channel out with nans - for now report an error.
                         # this won't work if combining signals on a common_tb
                         # ch_data.timebase += -dts  # not sure if + or -?
                         # print(ch_data.timebase[0])
-                        """ kind of works for L53_LP0701 309 13, but time error
-                        dtclock = 2e-6
-                        nsampsdiff = int(round(dts/dtclock,0))
+                        # works for L57_LP0701 309 13 and 0303,13
+                        # also for L53_LP0701 303,13, although timebase is stairstep (using old (0.6.8.b) stored data.
+                        # 
                         newlen = len(ch_data.timebase) + nsampsdiff
-                        newsig = np.array(newlen * [np.nan])
-                        newtb = np.array(newlen * [np.nan])
-                        newsig[nsampsdiff:] = ch_data.signal
+                        newsig = np.array(newlen * [np.nan])  # prepare an Nan signal that size
+                        newtb = np.array(newlen * [np.nan])   # and timebase 
+                        newsig[nsampsdiff:] = ch_data.signal  # write in the valid values
                         newtb[nsampsdiff:] = ch_data.timebase
-                        ch_data.signal = newsig
+                        debug_(pyfusion.DEBUG, level=4, key='padding start')
+                        ch_data.signal = newsig               # replace
                         ch_data.timebase = newtb
-                        ch_data.timebase += -dts  # not sure if + or -?
-                        """
+                        #ch_data.timebase += dts  # not sure if + or -?
+                        #"""
 
+                    # this cuts down the length to suit the first channel
+                    # but this logic assumes that the starts are the same.
+                    # e.g. originally the same or fixed as above.
                     if len(ch_data.signal)<len(common_tb):
-                        common_tb = ch_data.timebase
-                        tb_chan = ch_data.channels
+                        debug_(pyfusion.DEBUG, level=4, key='shortening')
+                        common_tb = ch_data.timebase  # make the timebase shorter - the existing channels
+                        tb_chan = ch_data.channels    #   will be shortened a few lines below.
                     data_list.append(ch_data.signal[0:len(common_tb)])
                 else:
                     try:
@@ -776,6 +853,9 @@ class MultiChannelFetcher(BaseDataFetcher):
 
         if len(data_list) == 0:
             return(None)
+        # This is a second time around to make sure that the lengths are
+        #  the same.  Should not ne needed if the more thorough combination
+        # has been done above.
         if hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'True':
             #  Messy - if we ignored timebase checks, then we have to check
             #  length and cut to size, otherwise it will be stored as a signal (and 
@@ -785,6 +865,8 @@ class MultiChannelFetcher(BaseDataFetcher):
             ltb = len(common_tb)
             for i in range(len(data_list)):
                 if len(data_list[i]) > ltb:
+                    debug_(pyfusion.DEBUG, level=2, key='trimming for length')
+                    print('**********trimming for length')
                     # this is a replacement.
                     data_list.insert(i,data_list.pop(i)[0:ltb])
 

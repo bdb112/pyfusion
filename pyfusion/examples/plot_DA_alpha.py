@@ -1,3 +1,5 @@
+"""  overlay different LP analysis windows with various alpha based on 
+rough estimate of uncertainty"""
 import numpy as np
 from matplotlib import pyplot as plt
 from pyfusion.utils.process_cmd_line_args import process_cmd_line_args

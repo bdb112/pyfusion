@@ -133,6 +133,13 @@ srange = range(105, 135)   # 20160224_25_L53  0.33
 
 minpts=18
 """
+
+dafile = 'LP/pyf2019/LP20160303_13_L57_2k2.npz'
+Te_range = [10, 80]  # 
+ne_range = [0, 6]   # 
+minpts=12 # 14 
+
+
 if len(sys.argv)>1:
     dafile=sys.argv[1]
 

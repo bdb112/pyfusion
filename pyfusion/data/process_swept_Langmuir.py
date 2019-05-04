@@ -377,7 +377,7 @@ class Langmuir_data():
     """
     def __init__(self, shot, i_diag, v_diag, dev_name="W7X", debug=debug, plot=1, verbose=0, params=None, time_range=None):
         """
-Create a Langmuir Data oject for later processing
+Create a Langmuir Data object for later processing
 
 Args:
         shot: shot number
@@ -462,6 +462,25 @@ Args:
             ipk = np.argmax(np.abs(sweepVFT)[0:ns//2])  # avoid the upper peak
             # ipk is the index of the FFT max
             comp = imeasFT[ipk]/sweepVFT[ipk]
+            # Try to detect bad choice of compensation region
+            harmonics = np.sqrt(np.linalg.norm(imeasFT[3*ipk//2:6*ipk])) / np.abs(imeasFT[ipk])
+            print('Harmonics = ', harmonics)
+            # Note that if temperature is high, the content is small and may not show
+            #  See for example LP10 in:
+            # run  pyfusion/examples/run_process_LP.py  sweep_sig='W7X_L57_LP01_U' replace_kw='dict(t_range=[.0,1.1],plot=0,t_comp=[1.08,1.1])' shot_list='[[20160309,13]]' seglist=[7] lpdiag='W7X_L57_LPALLI'
+
+            if harmonics > 0.1:
+                pyfusion.logging.warn('Harmonics large in t_comp region')
+                pyfusion.utils.warn('Harmonics large in t_comp region')
+            if self.debug>2:
+                plt.figure()
+                plt.plot(np.fft.fftfreq(ns, np.diff(tb)[0] ), np.abs(imeasFT))
+                plt.title('{ch}: {ha:.3f}'.format(ch=chan.name, ha=harmonics))
+                if harmonics > 0.1:
+                    plt.figure()
+                    plt.plot(tb[w_comp], imeas[w_comp])
+
+            debug_(pyfusion.DEBUG, 1, key='check_comp_harms')
             self.comp.append(comp)
             #print('leakage compensation factor = {r:.2e} + j{i:.2e}'
             #      .format(r=np.real(comp), i=np.imag(comp)))

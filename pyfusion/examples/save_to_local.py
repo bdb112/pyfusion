@@ -150,15 +150,17 @@ for shot_number in shot_list:
             utc_shot_number = None
             
     for diag in diag_list:
-        if ('W7' in diag and 'LP' in diag) and shot_number[0]<20180000:
+        this_save_kwargs = save_kwargs.copy()
+        # for now, try to compress timebase for all shots - was just > 20180101
+        if ('W7' in diag and 'LP' in diag) and shot_number[0]<20160000:
             # Try to selectively override delta time
-            # This won't work - needs to be in a different part of the loop
-            print('override delta encode time')
-            save_kwargs={"delta_encode_time": False}
+            this_save_kwargs.update({"delta_encode_time": False})
+            print('Set delta encode time to', this_save_kwargs['delta_encode_time'])
 
         diag = prefix + diag
 
         try:   # catch on a per diagnostic or multi bases
+            used_shot_number = shot_number
             params = pyfusion.conf.utils.get_config_as_dict('Diagnostic',diag)
             chan_list = []
             if (params['data_fetcher']
@@ -190,7 +192,7 @@ for shot_number in shot_list:
                                                    int(utc[0] + (61 + this_time_range[1])*1e9)]
                         
                     elif utc_shot_number is not None: #  
-                                pass  # nothing more to do - we have everything
+                        used_shot_number = utc_shot_number
                     if 'W7M' in dev.name:
                         # use current ROI - crude!
                         debug_(pyfusion.DEBUG, 1, key='W7M_save')
@@ -198,7 +200,7 @@ for shot_number in shot_list:
                         # time has already been converted to roi and updated
                         #  in pyfusion.config (line 135? I can't see it)
 
-                    data = dev.acq.getdata(utc_shot_number, diag_chan, no_cache=compress_local==False, exceptions=())
+                    data = dev.acq.getdata(used_shot_number, diag_chan, no_cache=compress_local==False, exceptions=())
                     print(diag_chan, shot_number, end=' - ')
 
                     # the above will help stop saving over existing data.  This is important
@@ -214,7 +216,7 @@ for shot_number in shot_list:
                     if downsample is not None:
                         data = data.downsample(downsample)
 
-                    if time_range is not None and 'W7X' not in dev.name:  # not tested!!
+                    if time_range is not None and utc_shot_number is not None:  # not tested!!
                         data = data.reduce_time(time_range, fftopt=True)
 
                     # I don't believe this test - always true!
@@ -252,7 +254,7 @@ for shot_number in shot_list:
                         debug_(pyfusion.DEBUG,1, key='save_to_local')
                         savez_new(signal=signal, timebase=tb, filename=localfilename, 
                                   params = np.array(params),
-                                  verbose=pyfusion.VERBOSE, **save_kwargs)
+                                  verbose=pyfusion.VERBOSE, **this_save_kwargs)
                         goods.append((shot_number,diag_chan))
                 except IOError as reason:
                     if 'No space' in str(reason):

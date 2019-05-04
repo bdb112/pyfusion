@@ -1,9 +1,12 @@
+""" find all W7X npz files and put all copies in a dictionary keyd by filename only.
+"""
 import glob, os
 import numpy as np
 
 ftable = {}
 wild = '/data/datamining/local_data/extra_data/**'
 wild = '/media/bdb112/PassportBDB4/**'
+# probably don't need recursive=True - just use glob2/glob with **/201*npz
 
 for fullfn in glob.glob(wild, recursive=True):  # only in 3.5 onwards
     if os.path.isdir(fullfn):

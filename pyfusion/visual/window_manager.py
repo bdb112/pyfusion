@@ -76,7 +76,7 @@ def raise_matching(str, pause=False):
         # this fails, as focus is given to the raised window
         input('<CR> to raise next - but buggy - focus is lost')
 
-def order_matching(str='', startx=10, starty=10, incx=300, incy=0, wsize=None):
+def order_matching(str='', startx=10, starty=10, incx=400, incy=0, wsize=None):
     """ reorder all pylab windows in am array with str in the title,
     whether they flash or raise depends on window manager and settings
     default (no arg or '') is to use all open windows

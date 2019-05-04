@@ -193,7 +193,7 @@ class W7XDataFetcher(BaseDataFetcher):
         if 'upto' not in fmt:
             fmt += '_signal.json?from={seg_f_u}&upto={seg_t_u}'
 
-        assert(seg_f_u==f_u); assert(seg_t_u==t_u)  # 
+        assert seg_f_u==f_u, 'seg_f_u error'; assert seg_t_u==t_u, 'seg_t_u error'  # 
         params.update(seg_f_u=seg_f_u, seg_t_u=seg_t_u)
         url = fmt.format(**params)  # substitute the channel params
 

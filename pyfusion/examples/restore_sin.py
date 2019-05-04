@@ -66,7 +66,7 @@ for i in range(2):  # iterate to restore amplitude to a constant
     amprec = np.abs(analytic_signal(reconst))
     reconst = Vpp/2.0 * reconst/amprec
 if method==2:
-    plot(rd.timebase, reconst,'m', label='reconst before DC adjust')
+    plt.plot(rd.timebase, reconst,'m', label='reconst before DC adjust')
 
 # should have a very nice constant ampl. sinusoid
 # now blank out the clipped, use given value because amplifier clipping 

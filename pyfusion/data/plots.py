@@ -56,7 +56,7 @@ def register(*class_names):
             else:
                 plot_reg[cl_name].append(plot_method)
         # See Note in base.py line 76 about when this works.
-        debug_(pyfusion.DEBUG, 2, key=['register plot', 'register'])
+        debug_(pyfusion.DEBUG, 4, key=['register plot', 'register'])
         return plot_method
     return reg_item
 

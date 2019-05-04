@@ -81,11 +81,12 @@ ofile.write(nl)
 
 for ch in channels:
     try:
-        # if these are local, their info may correspond more closely to that used
+        # if these are local, their info may correspond more closely to
+        # that used at the time it was calculated - may take longer?
         dev_name = 'W7X'
         shot_number = [dat['date'][0], dat['progId'][0]]
         dev = pyfusion.getDevice(dev_name)
-        cdata = dev.acq.getdata(shot_number, 'W7X_'+ch+'_I')
+        cdata = dev.acq.getdata(shot_number, ch)
         opts = cdata.params
     except:
         opts = pyfusion.conf.utils.get_config_as_dict('Diagnostic', ch)

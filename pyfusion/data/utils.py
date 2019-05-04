@@ -272,7 +272,7 @@ def make_title(formatstr, input_data, channum=None, at_dict = {}, min_length=3, 
         short_name = ''
         last_was_number = False
         discarded = ''
-        debug_(pyfusion.DEBUG, 1, key='make_title')
+        debug_(pyfusion.DEBUG, 4, key='make_title')
         for c in name:  # start from the first char
             if c >= '0' and c <= '9': 
                 short_name += c

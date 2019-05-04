@@ -1,6 +1,146 @@
 Use emacs sort-columns after defining column with the region to put in order
+vnc with vncserver, then xfce4-term and paste results into an emacs in the VNC
 
 sorting simplified - 3 dig leading 0's and alpha is the standard order
+
+Python 2.7.12 (default, Nov, Pyfusion 0.9.92O (666e5f6) Sat May  4 11:50:04 2019
+000  0.71 examples/DA_info.py           : OK! 
+001  1.23 examples/DP14_mode_plot.py    : OK! 
+002  2.21 examples/N2_puff_correlation.py: OK! 0m   plt.text(x[c] + (dot_radius[c] +.001)*np.array([1,-1])[x[c]<0], z[c] + voff, ch[2:], 
+003  0.00 examples/W7X_OP1.1_LCFS.py    : OK! skip
+004  1.21 examples/W7X_analysis.py      : OK! ndim > 0 to an index will result in an error in the future   return(shotDA[item][ws]) 
+005  0.00 examples/W7X_analysis_Fri_11Mar.py: OK! script
+006  0.00 examples/W7X_get_shot_times.py: OK! skip
+007  0.00 examples/W7X_marfe_neTe_profiles.py: OK! script
+008  1.82 examples/W7X_neTe_profile.py  : OK! meWarning: Invalid value encountered in median for 1 results   RuntimeWarning) 
+009  0.48 examples/W7X_probe_list.py    : OK! 
+010  0.35 examples/W7X_read_json.py     : OK! 
+011  0.38 examples/__init__.py          : OK! 
+012  0.98 examples/barber_pole.py       : OK! 
+013  2.95 examples/basic_ne_scan.py     : OK! 
+014  0.29 examples/boxcar.py            : Err NameError: name 'v' is not defined 
+015  0.42 examples/bug_report.py        : OK! 
+016  1.56 examples/calibrate_probes.py  : Err RL for W7X_UTDU_LP18_I in [1509529825000000000, 1509529826000000000] is prob LookupError: 
+017  1.90 examples/channel_angle_games.py: OK! 
+018  2.88 examples/channel_spectra.py   : OK! 
+019  0.78 examples/check_DA.py          : OK! 
+020  2.21 examples/check_HD_histogram.py: OK! 
+021  4.02 examples/check_W7X_timebase_repair.py: OK! 
+022  0.32 examples/check_dw_pdt.py      : OK! 
+023  0.43 examples/check_npz_data_integrity.py: OK! 
+024  1.10 examples/check_other_data.py  : OK! 
+025  2.44 examples/check_polarity_flips.py: OK! 
+026  4.74 examples/clean_up_pyfusion_text.py: OK! 
+027  6.26 examples/clean_up_pyfusion_text_mp.py: OK! 
+028  8.61 examples/cluster_DA.py        : OK! r facecolor properties.    warnings.warn("Setting the 'color' property will override" 
+029  1.97 examples/cluster_info.py      : OK! 
+030  0.94 examples/cluster_phases_three_colour.py: Err ImportError: cannot import name cm 
+031  2.30 examples/coherence_vs_time.py : OK! f fftopt > 0: new_time_range = get_optimum_time_range(input_data, new_time_range, fftopt) 
+032  1.19 examples/compare_LPdas.py     : OK! 
+033  2.47 examples/compare_analysis.py  : OK! 
+034  0.00 examples/compare_bands.py     : OK! skip
+035  0.80 examples/copy_DA.py           : Err IOError: [Errno 2] No such file or directory: '../../datamining/DA/PF2_130813_50_5X_1.5_5b
+036  0.00 examples/correct_LP_data.py   : OK! skip
+037  2.25 examples/cross_phase.py       : OK! 
+038  1.11 examples/density_cluster.py   : OK! 
+039  1.46 examples/divertor_power_profile.py: OK! 
+040  0.00 examples/example_fragments.py : OK! script
+041  2.28 examples/extract_limiter_coords.py: OK! 
+042  0.05 examples/file_finder_db.py    : Err TypeError: glob() got an unexpected keyword argument 'recursive' 
+043  0.00 examples/file_sorter.py       : OK! skip
+044  0.00 examples/find_2D_conf_scans.py: OK! skip
+045  0.00 examples/find_VSL_locking.py  : OK! script
+046  0.69 examples/find_close_shot.py   : OK! 
+047  0.98 examples/find_last_data.py    : OK! 
+048  0.42 examples/fix_struck.py        : OK! 
+049  0.81 examples/flip_phase.py        : OK! 
+050  0.50 examples/fonts.py             : OK! 
+051  8.40 examples/gen_fs_bands.py      : OK! Time:  ########shot 27233: 230/1428 fs finished in 6.60/7.46 
+052  3.76 examples/gen_fs_general.py    : OK! 
+053  6.17 examples/gen_fs_local.py      : OK! 
+054  0.00 examples/get_LP_data.py       : OK! skip
+055  0.91 examples/get_basic_params.py  : Err ValueError: no good shots 
+056  3.90 examples/get_diamag.py        : OK!  result in an error in the future   sm_timebase = timebase[offset:offset+len(sm_sig)] 
+057  0.00 examples/get_wp_etc.py        : OK! skip
+058  0.02 examples/good_ones_density_cluster.py: Err SyntaxError: invalid syntax 
+059  0.00 examples/h1_mode_identify.py  : OK! script
+060  7.76 examples/h1_mode_lists.py     : OK! r facecolor properties.    warnings.warn("Setting the 'color' property will override" 
+061  1.38 examples/igetfile.py          : OK! 
+062  0.48 examples/manage_data.py       : OK! 
+063  0.00 examples/many_specs.py        : OK! skip
+064  1.50 examples/marfe_plot.py        : OK! : 183/4, 1924 **************************   config_name=config_name, **kwargs).fetch() 
+065  1.35 examples/marfe_time_plot.py   : OK! 
+066  1.94 examples/medium_300.py        : OK! 
+067  1.07 examples/merge_basic_HJ_diagnostics.py: Err NameError: name 'dd' is not defined 
+068  1.02 examples/merge_basic_diagnostics.py: Err IOError: [Errno 2] No such file or directory: 'DA_file.npz' 
+069  0.81 examples/merge_h1_diagnostics.py: Err NameError: name 'dd' is not defined 
+070  1.36 examples/merge_text_pyfusion.py: OK! 
+071  0.00 examples/mini_summary.py      : OK! skip
+072  0.00 examples/mini_summary_MAGPIE.py: OK! skip
+073  0.00 examples/mini_summary_MDS.py  : OK! skip
+074  0.00 examples/mirnov_RMS_db.py     : OK! skip
+075  0.00 examples/mode_identify_example_2012.py: OK! skip
+076  0.02 examples/mode_identify_example_from_ICPP_2010.py: Err SyntaxError: invalid syntax 
+077  1.14 examples/mode_identify_script.py: Err IndexError: list index out of range 
+078  0.11 examples/modify_cfg.py        : OK! 
+079  0.97 examples/multi_plot.py        : OK! 
+080  2.90 examples/ne_profile_preprocess.py: OK! 
+081  0.81 examples/new_mode_identify_script.py: Err ValueError: Need to choose doN=True and/or doM=True 
+082  0.00 examples/pellet_script.py     : OK! script
+083  2.90 examples/phase_histogram.py   : OK! 
+084  1.58 examples/play_with_fft_signals.py: OK! 
+085  0.70 examples/plot_DA.py           : OK! 
+086  1.24 examples/plot_DA_alpha.py     : OK! 
+087  0.00 examples/plot_LP2D.py         : OK! skip
+088  3.65 examples/plot_basic.py        : OK! 42: RuntimeWarning: divide by zero encountered in true_divide   1/(dy1+dy2),)) 
+089  0.00 examples/plot_both_LP2D.py    : OK! skip
+090  2.11 examples/plot_correlation.py  : OK! 
+091  0.32 examples/plot_json_timeseries.py: OK! 
+092  0.72 examples/plot_many.py         : Err ValueError: SCAN NOT AVAILABLE!!!!! 
+093  6.98 examples/plot_multi_movie.py  : Err IOError: [Errno 2] No such file or directory: u'/tmp/movie/H1ToroidalAxial_97419.png' 
+094  3.12 examples/plot_ne_profile.py   : OK! 
+095  0.68 examples/plot_npz_data.py     : OK! 
+096  0.74 examples/plot_shot.py         : OK! 
+097  1.30 examples/plot_shots.py        : OK! 
+098  0.80 examples/plot_signals.py      : Err ImportError: cannot import name choose_one 
+099  2.49 examples/plot_signals_trivial.py: OK! 
+100  3.14 examples/plot_specgram.py     : OK! ************************   set_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
+101  3.09 examples/plot_svd.py          : OK! 
+102  2.89 examples/plot_svd_old.py      : OK! 
+103  2.95 examples/plot_svd_simple.py   : OK! 
+104  1.78 examples/plot_tdu_pflux.py    : OK! results might be incorrect.   warnings.warn("This figure includes Axes that are not " 
+105  0.75 examples/plot_text_fft.py     : Err IOError: [Errno 2] No such file or directory: 'g:fft26_50.dat' 
+106  0.75 examples/plot_text_pyfusion.py: Err IOError: [Errno 2] No such file or directory: '/docs/home/bdb112/pyfusion/working/pyfusion
+107 15.34 examples/plot_xy.py           : OK! 
+108  9.24 examples/prepfs_range.py      : OK! 
+109  4.77 examples/prepfs_range_mp.py   : OK! 
+110  2.40 examples/prepfs_range_sep.py  : OK! 
+111  3.89 examples/prepfs_time_mp.py    : OK! 
+112  1.59 examples/print_dict_tree.py   : OK! gs_PARLOG_V38_.json **************************   local_copy = get_PARMLOG_cache(shot) 
+113  1.70 examples/process_MLP.py       : OK! : invalid value encountered in log   vf_c = vp_flat[i + 2] - te_c * ln(a3 + 1) 
+114  0.75 examples/process_chirps.py    : Err NameError: name 'dd' is not defined 
+115  1.28 examples/process_swept_Langmuir.py: Err AttributeError: 'list' object has no attribute 'lower' 
+116  1.55 examples/query_h1ds.py        : Err sqlalchemy.exc.NoSuchTableError: summary 
+117  3.72 examples/read_DF.py           : OK! aining open files:/data/datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags_comp5.h5...done 
+118  1.00 examples/realtime_mode.py     : Err NameError: name 'da' is not defined 
+119  2.02 examples/restore_sin.py       : OK! 
+120  6.40 examples/run_process_LP.py    : OK! 
+121  0.89 examples/run_process_TDLP.py  : OK! 
+122  1.42 examples/save_to_local.py     : OK! 
+123  1.03 examples/show_corruption.py   : OK! 
+124  5.78 examples/simple_table.py      : OK! 
+125  1.29 examples/slider_f_t.py        : OK! 
+126  0.82 examples/small_300.py         : OK! 
+127  0.85 examples/small_65.py          : OK! 
+128  2.60 examples/sql_plot.py          : OK! 
+129  1.12 examples/svd_simple_rotator.py: OK! 
+130  1.72 examples/tables_extract.py    : OK! 
+131  0.91 examples/test_lasso_fs.py     : OK! 
+132  0.92 examples/testall.py           : OK!
+133  4.26 examples/wid_specgram.py      : OK! ************************   set_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
+134  2.90 examples/write_LP_as_CSV.py   : OK! 
+89 good, 24 errors out of 113 not skipped
+to see problem files, type print(err_files)
 
 Python 2.7.12 (default, Dec, Pyfusion 0.9.9O (50a5562) Thu Nov  1 15:07:54 2018
 000  0.69 examples/DA_info.py           : OK! 

@@ -219,7 +219,7 @@ for i in range(0, len(ip_flat), 3):
     tb_c = tb_flat[i + 2]
     for itr in range(iters):
         # print(tb_c, isat_c, te_c, vf_c)
-        debug_(pyfusion.DEBUG, 0, key='charlie iter')
+        debug_(pyfusion.DEBUG, 3, key='charlie iter')
         a1 = (vp_flat[i + 0] - vf_c) / te_c
         isat_c = ip_flat[i + 0] / (exp(a1) - 1)
         a2 = ip_flat[i + 1] / isat_c
@@ -263,4 +263,3 @@ plt.rc('font', size=18)
 
 
 """
-

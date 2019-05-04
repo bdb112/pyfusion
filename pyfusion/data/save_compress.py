@@ -90,7 +90,7 @@ def discretise_array(arrin, eps=0, bits=0, maxcount=0, verbose=None, delta_encod
            (unique and len(np.unique((ans['iarr']))) != len(arr))) :
         count+=1
         if (count>maxcount):
-            raise ValueError('Failed to discretise signal: > {m} iterations'
+            raise ValueError('Failed to discretise signal or timebase: > {m} iterations'
                              .format(m=maxcount))
         # have faith in our guess, assume problem is that step is
         # not the minimum.  e.g. arr=[1,3,5,8] 
@@ -197,7 +197,7 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, verbose=0, delta_encod
                   (peaknoise/pktopk, rmsnoise/pktopk))
 
         if verbose>2: 
-            st=str("averaging over %d diff diffs meeting criterion < %g " % 
+            st=str("save_compress trying to discretise\naveraging over %d diff diffs meeting criterion < %g " % 
                   (last_small_diff_diffs_ind, deltar/2 ))
             print(st)
             pl.plot(diff_sort,hold=0)
@@ -291,6 +291,8 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
                                           tim['deltar']))
     if delta_encode_time: 
 #        need to maintain the first element and the length
+        if pyfusion.VERBOSE > 1:
+            print('delta encoding time')
         rawtimebase=append(rawtimebase[0],diff(rawtimebase))
         timebaseexpr=str("timebase=%g+%s*%g" % (float(tim['minarr']),  # bdb103
                                                 "cumsum(dic['rawtimebase'])",
@@ -335,14 +337,46 @@ def newload(filename, verbose=verbose):
     # savez saves ARRAYS always, so have to turn array back into scalar    
     signalexpr=dic['signalexpr'].tolist()
     timebaseexpr=dic['timebaseexpr'].tolist()
-    # fixup for files written with np.nan removal and and cumsum
-    if ('cumsum' in timebaseexpr) and ('np.nan' in timebaseexpr):
-        print('!!!!!!!!!!!! faking a fixup of nans with cumsum !!!!!!!!!!!!!!!!!!')
-        timebaseexpr = timebaseexpr.replace("timebase=",
-                             "temp=").replace("*2e-06","\ntimebase=temp*2e-06")
-        timebaseexpr = timebaseexpr.replace("== dic['rawtimebase']","== temp")
 
     exec(signalexpr)
+
+    # fixup for (old) files written with both np.nan removal and and cumsum
+    # e.g. "timebase=0+dic['rawtimebase']*0.0064514\nmaxint = np.iinfo(dic['rawtimebase'].dtype).max\nwnan = np.where(maxint == dic['rawtimebase'])[0]\nif len(wnan)>0:\n    timebase[wnan]=np.nan"
+    # the problem here is that the maxint value is scaled BEFORE comparison.
+    # the fix is to scale after comparison
+    #
+    # A correct solution is (without delta_encode_time)
+    # perhaps the only files with this error also have a cumsum?
+    #   timebase=0+dic['rawtimebase']*0.0064514
+    #   maxint = np.iinfo(dic['rawtimebase'].dtype).max
+    #   wnan = np.where(maxint == dic['rawtimebase'])[0]
+    #   if len(wnan)>0:
+    #      timebase[wnan]=np.nan
+
+    # *Without* care to avoid nans in cumsum
+    if ('cumsum' in timebaseexpr) and ('np.nan' in timebaseexpr) and dict['version'] < 105:
+        print('newload: !!! kludging a fixup of nans in a timebase with cumsum !!')
+        if "*2e-06" not in timebaseexpr:
+            raise LookupError('*2e-06 expected in timebaseexpr:\n'+timebaseexpr +
+                              "\n Delete this line in save compress.py to try a good fixup")
+            dt_embedded = timebaseexpr.split("'rawtimebase'])*")[-1]
+            try:
+                testing = float(dt_embedded)
+            except Exception as reason:
+                raise ValueError('newload: failed to find a factor in cumsum ',
+                                 str(reason))
+            timebaseexpr = timebaseexpr.replace("timebase=",
+                                                "temp=").replace('*'+dt_embedded,"\ntimebase=temp*" + dt_embedded)
+            
+        else:
+            timebaseexpr = timebaseexpr.replace("timebase=",
+                                                "temp=").replace("*2e-06","\ntimebase=temp*2e-06")
+        timebaseexpr = timebaseexpr.replace("== dic['rawtimebase']","== temp")
+
+    # check that one doesn't sneak through
+    if ('cumsum' in timebaseexpr) and ('np.nan' in timebaseexpr) and 'temp' not in timebaseexpr:
+        raise ValueError('timebaseexpr has a potential issue with maxint and nans\n' + timebaseexpr)
+
     if dic['version'] <= 104 and timebaseexpr.startswith('timebase=0+'):  # bdb103 - needed for 104 too
         timebaseexpr = timebaseexpr.replace('timebase=0+','timebase=0.+')
 

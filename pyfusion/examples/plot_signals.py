@@ -37,10 +37,10 @@ stop=True  # if False, push on with missing data  - only makes sense for multi c
 """
 exec(_var_defaults)
 
-from  pyfusion.utils import process_cmd_line_args
+from  pyfusion.utils import process_cmd_line_args, choose_one
 exec(process_cmd_line_args())
 
-time_range = pyfusion.utils.choose_one(time_range, t_range)
+time_range = choose_one(time_range, t_range)
 # save the start utc if there is already a 'data' object (***need to run -i to keep)
 if 'W7X' in dev_name:
     if 'utc0' in locals() and utc0 is not None:
@@ -51,7 +51,7 @@ if 'W7X' in dev_name:
             utc0 = data.utc[0] 
 
 dev = pyfusion.getDevice(dev_name)
-data = dev.acq.getdata(shot_number,diag_name, contin=not stop, time_range=time_range if len(time_range) ==2 else None)
+data = dev.acq.getdata(shot_number,diag_name, contin=not stop, time_range=time_range)
 if data is None:
     raise LookupError('data not found for {d} on shot {sh}'
                       .format(d=diag_name, sh=shot_number))

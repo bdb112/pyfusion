@@ -125,10 +125,10 @@ else:
         d.signal=(d.signal.T*np.array(scales)).T  # a little kludgey
     shot_cache.update({this_key: deepcopy(d)})
 
-if time_range != None:
+if time_range is not None:
     d = d.reduce_time(time_range, fftopt=True)  # could use d.reduce_time(copy=False,time_range)
 
-if lowpass != None: 
+if lowpass is not None: 
     if highpass is None:
         d = d.sp_filter_butterworth_bandpass(
             lowpass*1e3,lowpass*2e3,2,20,btype='lowpass')
@@ -136,7 +136,7 @@ if lowpass != None:
         bp = [1e3*lowpass,1e3*highpass]
         bs = [0.5e3*lowpass,1.5e3*highpass]
         d = d.sp_filter_butterworth_bandpass(bp, bs,2,20,btype='bandpass')
-elif filter != None:
+elif filter is not None:
     if 'btype' in filter:
         d = d.sp_filter_butterworth_bandpass(**filter)
     else:
@@ -178,7 +178,7 @@ else:
                 outsvd.svdplot(hold=hold)
             try: # plotting mag
                 if verbose: print(outsvd.history)
-                if plot_mag and (seg_proc.scales != None):
+                if plot_mag and (seg_proc.scales is not None):
                     fig=pl.gcf()
                     oldtop=fig.subplotpars.top
                     fig.subplots_adjust(top=0.65)

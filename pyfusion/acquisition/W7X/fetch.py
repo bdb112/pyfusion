@@ -100,7 +100,8 @@ def regenerate_dim(x):
     if len(wmin) > 0:
         print('**********\n*********** Gap in data > {p:.2f}%'.format(p=100 * len(wmin) / float(len(cnts))))
     x01111 = np.ones(len(x))  # x01111 will be all 1s except for the first elt.
-    x01111[0] = 0
+    # x01111[0] = 0  # we apparently  used to assume the trace started at zero time??
+
     errcnt = np.sum(bigcounts) + np.sum(np.sort(counts)[::-1][1:])
     if errcnt > 0 or (pyfusion.VERBOSE > 0):
         msg = str('** repaired length of {l:,}, dtns={dtns:,}, {e} erroneous utcs'

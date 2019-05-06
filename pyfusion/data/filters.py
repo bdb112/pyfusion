@@ -207,6 +207,9 @@ def reduce_time(input_data, new_time_range, fftopt=0, copy=True):
         input_data.signal = input_data.signal[:, new_time_args[0]:new_time_args[1]]
     if pyfusion.VERBOSE>1: print('reduce_time to length {l}'
                                  .format(l=np.shape(input_data.signal))),
+    if len(input_data.signal) == 0:
+        raise LookupError('no samples in time_range of {trg} in {nm}'
+                          .format(trg=str(new_time_range), nm=input_data.config_name))
     return input_data
 
 

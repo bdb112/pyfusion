@@ -18,7 +18,7 @@ import traceback
 import sys, os
 import pyfusion  # only needed for .VERBOSE and .DEBUG
 from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
-from pyfusion.acquisition.W7X import interpolate_W7X_timebase
+from pyfusion.acquisition.W7X import interpolate_corrupted_W7X_timebase
 
 CONTINUE_PAST_EXCEPTION = 2  # level below which exceptions in fetch are continued over
 
@@ -146,7 +146,7 @@ def try_fetch_local(input_data, bare_chan, time_range=None):
             signal_dict['timebase'] = 2e-6*np.cumsum(1.0 + 0*signal_dict['signal'])
 
         if np.diff(signal_dict['timebase'])[0] == 0: # first two are the same
-            signal_dict['timebase'] = interpolate_W7X_timebase(signal_dict)
+            signal_dict['timebase'] = interpolate_corrupted_W7X_timebase(signal_dict)
         
         true_start = (signal_dict['params']['data_utc'][0] -
                       signal_dict['params']['shot_f'])/1e9 - 61
@@ -386,16 +386,18 @@ class BaseAcquisition(object):
                 sys.exit()
             
         fetcher_class = import_from_str(fetcher_class_name)
-        print('fetcher class is', fetcher_class_name)
+        if pyfusion.VERBOSE > 2:
+            print('fetcher class is', fetcher_class_name)
         ## Problem:  no check to see if it is a diag of the right device!??
         # enable stopping here on error to allow traceback if DEBUG>2
         # there is similar code elsewhere - check if is duplication
-        if pyfusion.VERBOSE > 0:
+        if pyfusion.VERBOSE > 2:
             print('fetcher_class_name = ', fetcher_class_name)
             
         fetcher_class.contin = contin
         fetcher_class.time_range = time_range
-        print('fetcher time range = ', time_range, end=', ')
+        if pyfusion.VERBOSE > 0:
+            print('fetcher time range = ', time_range, end=', ')
         try:
             d = fetcher_class(self, shot, interp=interp,
                               config_name=config_name, **kwargs).fetch()
@@ -629,9 +631,13 @@ class BaseDataFetcher(object):
                 else:
                     print("can't check cal_date")
             else: 
-                if pyfusion.VERBOSE>-1 and 'W7X' in self.acq.acq_class: 
+                if pyfusion.VERBOSE>-1 and 'W7X' in self.acq.acq_class and 'LP' in self.config_name: 
                     print("Can't check DMD on {s}, {d}".format(s=self.shot, d=self.config_name))
 
+        print(len(data.signal))
+        if len(data.signal) == 0:
+            raise LookupError('no samples in time_range of {trg} in {nm}'
+                              .format(trg=str(time_range), nm=self.config_name))
         data.gain_used = gain_units if gain is not None else expr
         if hasattr(self, 'vsweep'):
             data.vsweep = self.vsweep
@@ -640,7 +646,7 @@ class BaseDataFetcher(object):
             print('!data item {cn} already has comment {c}'
                   .format(cn=data.config_name, c=data.comment))
         data.comment = self.comment if hasattr(self, 'comment') else ''
-        if expr is not None:
+        if expr is not None:  # arbitrary? expression in terms of self_signal to calc signal
             data.signal = eval(expr.replace('self_signal','data.signal'))
         else:
             data.signal = gain * data.signal
@@ -764,6 +770,12 @@ class MultiChannelFetcher(BaseDataFetcher):
             ch_data.signal.utc = ch_data.utc
 
             """ *************** The common timebase issue ***************
+            Note that so far, the timebase realignment code only applies to W7X
+            That is that for other devices, diagnostics will only group if they 
+            are on the same timebase.  This could be fixed if we could either make 
+            a fake utc for those others, or introduce tb_limits to take the place 
+             of the utc pair.
+
             See tests in W7_Limiter_Langmuir.odt under Common Timebase - 
             Two choices - 1/ don't look ahead and just take the first.
             if the next starts before or at the start, just chop off the front.
@@ -796,7 +808,14 @@ class MultiChannelFetcher(BaseDataFetcher):
                     # append regardless, but will have to go back over
                     # later to check length cf common_tb
                     if pyfusion.VERBOSE > 0: print('utcs: ******',ch_data.utc[0],group_utc[0])
-                    dtclock = 2000 if self.shot[0] < 20170101 else 1/0
+                    #dtclock = 2000 if self.shot[0] < 20170101 else 1/0
+                    dts, counts = np.unique(np.diff(ch_data.timebase),return_counts=True)
+                    dtclock = int(round(dts[counts.argmax()] * 1e9))
+                    print('dtclock = {dt}ns'.format(dt=dtclock))
+                    if self.shot[0] < 20170101 and (dtclock != 2000):
+                        pyfusion.logger.warning('Unexpected clock period {dtclock} on shot {s}'
+                                                .format(dtclock=dtclock, s = str(shot)))
+                    
                     dtns = (ch_data.utc[0] - group_utc[0])
                     dts = dtns/1e9
                     nsampsdiff = int(round(dtns/dtclock,0))  # difference in number of samples

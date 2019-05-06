@@ -15,7 +15,7 @@ def interpolate_corrupted_W7X_timebase(signal_dict):
     """
     # trick to avoid circular import error - regenerate_dim should be standalone
     from pyfusion.acquisition.W7X.fetch import regenerate_dim
-    print('============== Try to repair')
+    print('==============  Try to repair')
 
     # check a few things - this will also be a place to debug the time correction
     dt_ns = signal_dict['params']['data_utc'][0] - signal_dict['params']['shot_f']

@@ -1,6 +1,7 @@
 from __future__ import print_function
 from six.moves import input
 import numpy as np
+import pyfusion
 from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
 from pyfusion.data.convenience import is_listlike
 
@@ -42,7 +43,11 @@ def shot_range(shot_from, shot_to=None, inc=1):
         shot = next_shot(shot, inc=inc)
         # this part is a fudge, but only needed for two component shots
         if is_listlike(shot) and shot[1]>150:   # assume max per day
-            shot = (shot[0]+1, 1)
+            pyfusion.utils.warn('Assuming W7X shot numbers') # nicer to be quiet unless invalid date found.
+            ymult = 10000
+            if (shot[0] % ymult) > 1300:  # 'month' is never > 1300
+                shot = (((shot[0]//ymult) + 1) * ymult, shot[1])
+            shot = (shot[0]+1, 1)  # for W7X, can take big advantage of 20 sec year wrap.
 
 def shot_range_gen(shot_from, shot_to, inc=1):
     shot = shot_from

@@ -50,7 +50,7 @@ import pyfusion
 from pyfusion.data.save_compress import discretise_signal as savez_new
 import pyfusion.utils
 from pyfusion.debug_ import debug_
-from pyfusion.utils import process_cmd_line_args
+from pyfusion.utils import process_cmd_line_args, pause_while
 from pyfusion.utils.time_utils import utc_ns
 
 if hasattr(pyfusion, 'NSAMPLES') and pyfusion.NSAMPLES != 0:
@@ -88,8 +88,6 @@ exec(_var_defaults)
 exec(process_cmd_line_args())
 
 pyfusion.RAW=save_in_RAW  # FUDGE!!! until fixed
-if time_range is not None and len(find_kws) > 0:
-    raise ValueError('Cannot specify both time_range and find_kws')
 
 if local_dir is not '':
     if not os.path.isdir(local_dir):
@@ -116,6 +114,19 @@ def getlocalfilename(shot_number, channel_name, local_dir=''):
     return fn
 
 # main
+
+""" Logic:
+time_range is always in seconds relative to t1 (or None)
+shot can be a utc pair or a W7X shot number, or a W7<=M shot number
+If asked to find_shot_times, return either found_utc or None, AND set this_time_range to [-1,0.3]
+If we have utc shot number or a found_utc, this provides the fetch_utc - otherwise
+use get_shot_utc to define shot_utc and set fetch_utc from shot_utc
+If time_range is not None, adjust fetch_utc
+
+For W7M, need to see if getdata accepts utcs, but in the meantime, fudge by changing the runtime ROI and pass a shot_number
+
+
+"""
 if len(np.shape(shot_list))==0:
     shot_list = [shot_list]
 if len(shot_list) == 0:
@@ -128,27 +139,55 @@ else:
     
 for shot_number in shot_list:
     dev = pyfusion.getDevice(dev_name)
-    if find_kws != {}:
-        utc_shot_number = find_shot_times(shot=shot_number, **find_kws)
-        print('Using threshold detection: {kws}'.format(kws=find_kws))
-        pyfusion.RAW = save_in_RAW  # bdb kludge - fix and remove
-        if utc_shot_number is None:
-            utc_shot_number = np.array([0, int(3e8)]) # default to first 300ms (in ns rel to t1)
-        if dev_name == 'W7M':  # kludge set roi to control the time range
-            print('dev.acq.roi = {dar}'.format(dar=dev.acq.roi),end=': ')
-            if shot_number[0] < 990000:  # test shot
-                mds_utc_offs = 0
-            else:
-                mds_utc_offs = get_shot_utc(shot_number)[0] + int(60*1e9)  # bdb kludgey - fix!!
-
-            dev.acq.roi = ' '.join([str(tn) for tn in (utc_shot_number-mds_utc_offs).tolist() + [100]])
-        debug_(pyfusion.DEBUG,2, key='W7M_save')
+    if pause_while(os.path.join(local_dir, 'pause'), check=60) == 'quit':
+        break
     else:
-        if 'W7X' in dev.name and shot_number[0]>1e9:
-            utc_shot_number = shot_number
+        pass
+
+    pyfusion.RAW = save_in_RAW  # bdb kludge - fix and remove
+    if find_kws != {}:
+        found_utc = find_shot_times(shot=shot_number, **find_kws)
+        print('Using threshold detection: {kws}'.format(kws=find_kws))
+        if found_utc is None: #  meant to find, but failed
+            # use the given time range, or if not set, a minimum amount enough to see problem
+            this_time_range = time_range if time_range is not None else [-0.15,0.3]
         else:
-            utc_shot_number = None
-            
+            this_time_range = None  # we have a plasma range, we don't want to fiddle
+    else:
+        found_utc = None
+        this_time_range = time_range
+    if found_utc is not None:
+        fetch_utc = found_utc
+        utc0 = fetch_utc[0]
+    elif shot_number[0] > 1e9:     # if it is a real shot
+        fetch_utc = shot_number
+        utc0 = fech_utc[0]
+    else: # have to be careful - time_rnage None means get all - before and after t1
+        shot_utc = get_shot_utc(shot_number)
+        fetch_utc = shot_utc
+        utc0 = shot_utc[0] + int(61 * 1e9)
+
+    if this_time_range is not None:
+        final_fetch_utc = [utc0 + int(tr * 1e9) for tr in this_time_range]
+    else:
+        final_fetch_utc = fetch_utc
+        
+    if dev_name == 'W7M':  # kludge set roi to control the time range
+        print('dev.acq.roi = {dar}'.format(dar=dev.acq.roi),end=': ')
+        if shot_number[0] < 990000:  # test shot - remember MDS shots are YYMMDD,NNN?
+            mds_utc_offs = 0
+        else:
+            mds_utc_offs = get_shot_utc(shot_number)[0] + int(60*1e9)  # bdb kludgey - fix!!
+
+        dev.acq.roi = ' '.join([str(tn) for tn in (final_fetch_utc - mds_utc_offs).tolist() + [100]])
+        # use current ROI - crude!
+        used_shot_number = shot_number
+        utc_shot_number = shot_number  # ignore utcs for now
+        # time has already been converted to roi and updated
+        #  in pyfusion.config (line 135? I can't see it)
+    else:
+        used_shot_number = final_fetch_utc
+        
     for diag in diag_list:
         this_save_kwargs = save_kwargs.copy()
         # for now, try to compress timebase for all shots - was just > 20180101
@@ -156,13 +195,13 @@ for shot_number in shot_list:
             # Try to selectively override delta time
             this_save_kwargs.update({"delta_encode_time": False})
             print('Set delta encode time to', this_save_kwargs['delta_encode_time'])
-
+            
         diag = prefix + diag
 
         try:   # catch on a per diagnostic or multi bases
-            used_shot_number = shot_number
             params = pyfusion.conf.utils.get_config_as_dict('Diagnostic',diag)
             chan_list = []
+            # now make a list of channels so the same code can be used by multi or single
             if (params['data_fetcher']
                 == 'pyfusion.acquisition.base.MultiChannelFetcher'):
                 for key in params:
@@ -176,30 +215,7 @@ for shot_number in shot_list:
                 # diagnostic basis.  Previously one bad killed all diags in the shot
                 # There is some redundant code left over in outer try/ex loop
                 try:
-                    this_time_range = time_range                      # often None
-                    # check for failed attempt to find shot times.
-                    if len(find_kws) > 0:
-                        if utc_shot_number is None: #  meant to find, but failed
-                            this_time_range = [-0.15,0.3] # enough to see problem
-                    # check for conflicting arguments - time_range and find_kws
-                    if (this_time_range is not None):  # time range specd in secs
-                        if 'W7X' in dev.name:
-                            if shot_number[0] > 1e9:     # if it is a real shot
-                                raise Exception('should not get here - time_range and find_times inconsistency\n perhaps this is a continuously recorded signal?')
-                            else:  # a time range in seconds
-                                utc = get_shot_utc(shot_number)
-                                utc_shot_number = [int(utc[0] + (61 + this_time_range[0])*1e9),
-                                                   int(utc[0] + (61 + this_time_range[1])*1e9)]
-                        
-                    elif utc_shot_number is not None: #  
-                        used_shot_number = utc_shot_number
-                    if 'W7M' in dev.name:
-                        # use current ROI - crude!
-                        debug_(pyfusion.DEBUG, 1, key='W7M_save')
-                        utc_shot_number = shot_number  # ignore utcs for now
-                        # time has already been converted to roi and updated
-                        #  in pyfusion.config (line 135? I can't see it)
-
+                    debug_(pyfusion.DEBUG, 1, key='before_getdata')
                     data = dev.acq.getdata(used_shot_number, diag_chan, no_cache=compress_local==False, exceptions=())
                     print(diag_chan, shot_number, end=' - ')
 
@@ -216,8 +232,9 @@ for shot_number in shot_list:
                     if downsample is not None:
                         data = data.downsample(downsample)
 
-                    if time_range is not None and utc_shot_number is not None:  # not tested!!
-                        data = data.reduce_time(time_range, fftopt=True)
+                    #no longer needed
+                    #if time_range is not None and utc_shot_number is not None:
+                    #    data = data.reduce_time(time_range, fftopt=True)
 
                     # I don't believe this test - always true!
 

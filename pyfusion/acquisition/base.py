@@ -7,6 +7,7 @@ from __future__ import print_function
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy import ndarray, shape
+from time import time as seconds
 from pyfusion import config
 from pyfusion.conf.utils import import_setting, kwarg_config_handler, \
      get_config_as_dict, import_from_str, NoSectionError
@@ -557,7 +558,7 @@ class BaseDataFetcher(object):
             else:
                 print('Transforming using', expr, self.config_name)
 
-        if self.no_cache: 
+        if self.no_cache or pyfusion.NSAMPLES != 0: 
             if pyfusion.VERBOSE>0:
                 print('** Skipping cache search as no_cache is set in caller or pyfusion.cfg')
             tmp_data = None 
@@ -742,13 +743,13 @@ class MultiChannelFetcher(BaseDataFetcher):
             if chan[0]=='-': sgn = -sgn  # this allows flipping sign in the multi chan config
             bare_chan = (chan.split('-'))[-1]
             ch_data = self.acq.getdata(self.shot, bare_chan, contin=self.contin, time_range=self.time_range)
-            if time_range is not None and len(time_range) == 2:
-                ch_data = ch_data.reduce_time(time_range)
-
             if ch_data is None:
                 print('>>>>>>>>> Skipping ', chan)
                 continue
             
+            if time_range is not None and len(time_range) == 2:
+                ch_data = ch_data.reduce_time(time_range)
+
             params.update({chan: dict(params=ch_data.params, gain_used=ch_data.gain_used, config_name=ch_data.config_name)})
             channels.append(ch_data.channels)
             # two tricky things here - tmp.data.channels only gets one channel here
@@ -860,11 +861,11 @@ class MultiChannelFetcher(BaseDataFetcher):
                         debug_(pyfusion.DEBUG, level=4, key='shortening')
                         common_tb = ch_data.timebase  # make the timebase shorter - the existing channels
                         tb_chan = ch_data.channels    #   will be shortened a few lines below.
-                    data_list.append(ch_data.signal[0:len(common_tb)])
+                    data_list.append(sgn*ch_data.signal[0:len(common_tb)])
                 else:
                     try:
                         assert_array_almost_equal(common_tb, ch_data.timebase)
-                        data_list.append(ch_data.signal)
+                        data_list.append(sgn*ch_data.signal)
                     except:
                         print('####  matching error in {c} - perhaps timebase not the same as the previous channel'.format(c=ch_data.config_name))
                         if not self.contin:

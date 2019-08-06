@@ -2,10 +2,24 @@ from __future__ import print_function
 import numpy as np
 
 # this changes the behaviour of warnings
+import sys
+import os
+from time import sleep
 import warnings
 import pyfusion
 from six.moves import input
-import sys
+
+def pause_while(path, check=60):
+    """ If [path] exists, wait about 'check' seconds before checking again
+    return once the file is removed.
+    """
+    if os.path.exists(path.replace('pause', 'quit')):
+        return('quit')
+    if os.path.exists(path):
+        print('paused until '+ path + ' is removed')
+        # wait check +- 20 secs, so they don't all start together
+        sleep(check + int(20 *(2 * np.random.uniform() - 1)))
+    return
 
 def choose_one(x, y):
     if x is not None and y is not None:

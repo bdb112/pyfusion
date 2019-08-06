@@ -274,7 +274,7 @@ def get_PARMLOG_cache(shot):
     utcs = get_shot_utc(shot)
     # now work down thourgh the versions and find the first where shot utc is after valid
     for vkey in np.array(Vfiles)[sortd]:
-        debug_(pyfusion.DEBUG, 1, key='get_PARMLOG_cache', msg='reading PARLOG_V files')
+        debug_(pyfusion.DEBUG, 3, key='get_PARMLOG_cache', msg='reading PARLOG_V files')
         if get_parm('parms/validSince/dimensions',pyfusion.W7X_minerva_cache[vkey])[0] < utcs[0]:
             pyfusion.utils.warn('Changing to parmlog ' + vkey)
             return(vkey)

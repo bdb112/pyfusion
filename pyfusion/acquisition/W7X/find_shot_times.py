@@ -33,6 +33,9 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
     try:
         pyfusion.NSAMPLES = 2000
         dev.acq.repair = -1
+        save_db = pyfusion.DEBUG
+        if plt.is_numlike(pyfusion.DEBUG):
+            pyfusion.DEBUG -= 2  # lower debug level to allow us past here
         data = dev.acq.getdata(shot, diag, exceptions=())
     except exceptions as reason:  # return None if typical expected exception
         print('Exception suppressed: ', str(reason))
@@ -43,6 +46,7 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
         
     finally:
         # this is executed always, even if the except code returns
+        pyfusion.DEBUG = save_db
         pyfusion.NSAMPLES = nsold
         pyfusion.RAW = 0
         print('params restored')

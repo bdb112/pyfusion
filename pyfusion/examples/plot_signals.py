@@ -33,7 +33,7 @@ labeleg='False'
 t_range=None
 time_range=None
 t0=0
-stop=True  # if False, push on with missing data  - only makes sense for multi channel
+stop=True  # if False, push on with missing data  - only makes sense for multi channel, and may only work when pyfusion.DEBUG is a number.
 """
 exec(_var_defaults)
 

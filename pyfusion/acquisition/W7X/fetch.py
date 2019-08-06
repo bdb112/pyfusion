@@ -21,6 +21,8 @@ Would be better to have an example with non-trivial units
 """
 
 import sys
+import time
+from time import time as seconds
 if sys.version < '3.0.0':
     from future.standard_library import install_aliases
     install_aliases()
@@ -77,22 +79,23 @@ def regenerate_dim(x):
     # bincount needs a positive input and needs an array with N elts where N is the largest number input
     small = (diffs > 0) & (diffs < 1000000)
     sorted_diffs = np.sort(diffs[np.where(small)[0]])
-    counts = np.bincount(sorted_diffs)
+    bincounts = np.bincount(sorted_diffs)
     bigcounts, bigvals = myhist(diffs[np.where(~small)[0]])
 
     if pyfusion.VERBOSE>0:
         print('[[diff, count],....]')
         print('small:', [[argc, counts[argc]] for argc in np.argsort(counts)[::-1][0:5]])
         print('big or negative:', [[bigvals[argc], bigcounts[argc]] for argc in np.argsort(bigcounts)[::-1][0:10]])
-        print('bincounts', counts)
+        print('bincounts', bincounts)
         
     debug_(pyfusion.DEBUG, 3, key="repair", msg="repair of W7-X scrambled Langmuir probe timebase") 
-    if len(counts) == 0:
+    udiffs, counts = np.unique(diffs, return_counts=1)
+    if len(counts) == 1:
         msg = 'no repair required'
         print(msg)
         return(x, msg)
-    dtns = 1 + np.argmax(counts[1:])  # skip the first position - it is 0
-    # wgt0 = np.where(sorted_diffs > 0)[0]  # we are in ns, so no worry about rounding
+    dtns_old = 1 + np.argmax(bincounts[1:])  # skip the first position - it is 0
+    dtns = udiffs[np.argmax(counts)]
     histo = plt.hist if pyfusion.DBG() > 1 else np.histogram
     cnts, vals = histo(x, bins=200)[0:2]
     # ignore the two end bins - hopefully there will be very few there
@@ -100,7 +103,7 @@ def regenerate_dim(x):
     if len(wmin) > 0:
         print('**********\n*********** Gap in data > {p:.2f}%'.format(p=100 * len(wmin) / float(len(cnts))))
     x01111 = np.ones(len(x))  # x01111 will be all 1s except for the first elt.
-    # x01111[0] = 0  # we apparently  used to assume the trace started at zero time??
+    x01111[0] = 0  # we apparently  used to assume the trace started at zero time??
 
     errcnt = np.sum(bigcounts) + np.sum(np.sort(counts)[::-1][1:])
     if errcnt > 0 or (pyfusion.VERBOSE > 0):
@@ -113,7 +116,9 @@ def regenerate_dim(x):
     # run  pyfusion/examples/plot_signals diag_name='W7X_L57_LP01_I' shot_number=[20160303,13] decimate=10-1 sharey=0
     wbad = np.where(abs(x - fixedx) > 1.9e8)[0]
     fixedx[wbad] = np.nan
-    debug_(pyfusion.DEBUG, 3, key="repair", msg="repair of W7-X scrambled Langmuir timebase")
+    if np.all(np.isnan(fixedx)):
+        raise ValueError('all nans ')
+    debug_(pyfusion.DEBUG, 1, key="repair", msg="repair of W7-X scrambled Langmuir timebase")
     return(fixedx, msg)
 
 
@@ -130,6 +135,7 @@ class W7XDataFetcher(BaseDataFetcher):
         # the format is in the acquisition properties, to avoid
         # repetition in each individual diagnostic
 
+        t_start = seconds()
         if self.shot[1] > 1e9 or hasattr(self, 'time_range') and self.time_range is not None:
             # we have start and end in UTC instead of shot no
             # need the shot and utc to get t1 to set zero t
@@ -148,7 +154,17 @@ class W7XDataFetcher(BaseDataFetcher):
                 #                                    t_u <= progs[prog]['upto'])]
             if len(progs) == 1:
                 this_prog = progs.values()[0]
-                utc_0 = this_prog['trigger']['1'][0]
+                # on shot 20180724,10, this trigger[1] is an empty list
+                trigger = this_prog['trigger']['1']
+                # This fallback to trigger[0] mean that more rubbish shots are saved than
+                # if we only look at the proper trigger (1)
+                if len(trigger) == 0:
+                    print('No Trigger 1 on shot {s}'.format(s=actual_shot))
+                    trigger = [trr +  + int(60 * 1e9)
+                               for trr in this_prog['trigger']['0']]
+                    if len(trigger) == 0:
+                          raise LookupError('No Trigger 0 or 1 on shot {s}'.format(s=actual_shot))
+                utc_0 = trigger[0]
             else:
                 utc_0 = f_u  #   better than nothing - probaby a test
             if f_u is None: # shorthand for have time range
@@ -263,20 +279,37 @@ class W7XDataFetcher(BaseDataFetcher):
 
         # seems to take twice as long as timeout requested.
         # haven't thought about python3 for the json stuff yet
+        # This is not clean - should loop for timeout in [pyfusion.TIMEOUT, 3*pyfusion.TIMEOUT]
         try:
             # dat = json.load(urlopen(url,timeout=pyfusion.TIMEOUT)) works
             # but follow example in
             #    http://webservices.ipp-hgw.mpg.de/docs/howtoREST.html#python
             #  Some extracts in examples/howtoREST.py
-            dat = json.loads(urlopen(url,timeout=pyfusion.TIMEOUT).read().decode('utf-8'))
-        except socket.timeout:
+            # dat = json.loads(urlopen(url,timeout=pyfusion.TIMEOUT).read().decode('utf-8'))
+            t_pre = seconds()
+            timeout = pyfusion.TIMEOUT
+            txtform = urlopen(url,timeout=timeout).read()
+            t_text = seconds()
+            print('{tm} {tp:.2f} prep, {tt:.2f} fetch, '.
+                  format(tm=time.strftime('%H:%M:%S'), tp=t_pre-t_start, tt=t_text-t_pre)),
+            sys.stdout.flush()
+            dat = json.loads(txtform.decode('utf-8'))
+            t_conv = seconds()
+            #  for 10MS of mirnov 0.06 prep, 9.61 fetch 19.03 conv
+            #print('{tp:.2f} prep, {tt:.2f} fetch {tc:.2f} conv'.
+            print('{tc:.2f} conv'.
+                  format(tp=t_pre-t_start, tt=t_text-t_pre, tc=t_conv-t_text))
+        except socket.timeout as reason:  #  the following url access is a slightly different form?
             # should check if this is better tested by the URL module
-            print('****** first timeout error *****')
-            dat = json.load(urlopen(url,timeout=3*pyfusion.TIMEOUT))
+            print('{tm} {tp:.2f} prep, {tt:.2f} timeout. '.
+                  format(tp=t_pre-t_start, tt=seconds() - t_pre, tm=time.strftime('%H:%M:%S'))),
+            print('****** first timeout error, try again with longer timeout  *****')
+            timeout *= 3
+            dat = json.load(urlopen(url,timeout=timeout))
         except Exception as reason:
-            if pyfusion.VERBOSE:
-                print('********Exception***** on {c}: {u} \n{r}'
-                      .format(c=self.config_name, u=url, r=reason))
+            if pyfusion.VERBOSE >= 0:
+                print('**** Exception OR timeout of {timeout} **** on {c}: {u} \n{r}'
+                      .format(c=self.config_name, u=url, r=reason, timeout=timeout))
 
             raise
 
@@ -289,7 +322,8 @@ class W7XDataFetcher(BaseDataFetcher):
         dimraw = np.array(dat['dimensions'])  
         # adjust dim only (not dim_raw so that zero time remains at t1
         dim = dimraw - utc_0
-        if self.repair == 0 or self.repair == -1:
+        # decimation with NSAMPLES will make the timebase look wrong - so disable repair
+        if pyfusion.NSAMPLES != 0 or self.repair == 0 or self.repair == -1:
             pass # leave as is
         # need at least this clipping for Langmuir probes in Op1.1
         elif self.repair == 1:

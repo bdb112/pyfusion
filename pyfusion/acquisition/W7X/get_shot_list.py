@@ -140,11 +140,23 @@ def json_save_shot_list(shotDA, new_name='/tmp/shotDA.json'):
 
 def _get_shotDA(fname):
     # TODO(boyd.blackwell@anu.edu.au): remove pickle option, use json only.
+    global shotDA
+    #shotDA = pyfusion.shotDA - Used a global instead.  This should be better..BUT need to copy dict!!!!
+    try:
+        #if shotDA is None:
+        #    raise ValueError('shotDA is None - not defined')
+        return(shotDA)
+    except NameError:
+        print('will load shotDA cache from ', fname)
+    except Exception as reason:  
+        print('Error accessing shotDA cache', reason)
+        pass
     ext = os.path.splitext(fname)[-1].lower()
     if pyfusion.VERBOSE>0: print('==> Trying ' +  fname)
     try:
         if ext == '.pickle':
-            return(pickle.load(open(fname,'rb')))
+            shotDA = pickle.load(open(fname,'rb'))
+            return(shotDA)
     except (FileNotFoundError, UnicodeDecodeError, TypeError) as reason:
         if pyfusion.VERBOSE>0: print('Error opening {f}\n {r}'.format(f=fname, r=reason))
         return None
@@ -160,6 +172,7 @@ def _get_shotDA(fname):
                 shotDA.update({k: jd[k]})
             else:
                 shotDA.update({k: np.array(jd[k])})
+
         return(shotDA)
     else:
         raise LookupError('file {f} cannot be read as a shotDA'.format(f=fname))

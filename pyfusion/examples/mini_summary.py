@@ -30,18 +30,21 @@ scatter(*(np.transpose(conn.execute('select shot, is2/im2 as kh from summ where 
 
 duds 36362
 """
+from __future__ import print_function
 import os
 import sys
 from pyfusion.data.signal_processing import smooth_n
+import time as tm
 from time import time as seconds
 import pyfusion
 from six.moves import input
+import json
 
 from sqlalchemy import create_engine 
 
 devname = 'W7X'
 if 'W7' in devname:
-    sqlfilename = 'W7X_mag_OP1_2scr.sqlite'
+    sqlfilename = 'W7X_OP1.2ab_MHD_41243214.sqlite'
 else:
     sqlfilename = 'H1.sqlite'
 
@@ -91,18 +94,72 @@ def mini_dump(list, filename='mini_summary_{0}_{1}.pickle'):
     except:
         print('skipped appending the schema')
     fnamefull = filename.format(*conn.execute('select min(shot), max(shot) from summ').fetchone())
-    print 'dumping to ' + fnamefull
+    print('dumping to ' + fnamefull)
     pickle.dump(list,file(fnamefull,'w'))
 
 ###########################
 # Functions to process data
-def Peak(x,t=None):
-    """ 99th percentile """
-    return np.sort(x)[int(0.99*len(x))]
+           
+def Peak_abs(x, t, pc=100, return_time=False):
+    frac = (100 - pc) / 100.
+    disc = int(round(frac * len(x)))
+    xa = np.abs(x)
+    max_idx = np.argsort(xa)[-1 - disc]
+    if return_time:
+        if t is None:
+            return None
+        else:
+            return(t[max_idx])
+    else:
+        return xa[max_idx]
+    
+def Peak_signed(x, t, pc=100, return_time=False):
+    """ returns the largest in magnitude but with the original sign """
+    frac = (100 - pc) / 100.
+    disc = int(round(frac * len(x)))
+    # unnecessary complication - just operate on abs
+    extr_idx = [np.argsort(x)[off] for off in [disc, -1 - disc]]
+    greater_idx = np.argsort(np.abs([x[ind] for ind in extr_idx]))[-1]
+    max_idx = extr_idx[greater_idx]
+    if return_time:
+        if t is None:
+            return None
+        else:
+            return(t[max_idx])
+    else:
+        return x[max_idx]
+    
+def rawPeak(x, t=None):
+    """ the highest """
+    return np.sort(x)[-1]
 
-def fPeak(x,t=None):
-    """ 97th percentile kinf od a filtered peak"""
-    return np.sort(x)[int(0.97*len(x))]
+def rawPeaktime(x, t=None):
+    """ the highest """
+    return None if t is None else t[np.argsort(x)[-1]]
+
+def rawPeak(x, t):
+    """ 100th percentile """
+    return(Peak_abs(x, t, pc=100))
+
+def rawPeaktime(x, t):
+    """ 100th percentile """
+    return(Peak_abs(x, t, pc=100, return_time=True))           
+
+def Peak(x, t):
+    """ 99th percentile """
+    return(Peak_abs(x, t, pc=99))
+
+def Peaktime(x, t):
+    """ 99th percentile """
+    return(Peak_abs(x, t, pc=99, return_time=True))           
+
+def fPeak(x, t):
+    """ 97th percentile """
+    return(Peak_abs(x, t, pc=97))
+
+def fPeaktime(x, t):
+    """ 97th percentile """
+    return(Peak_abs(x, t, pc=97, return_time=True))           
 
 def Special():
     # hard coded for now
@@ -112,7 +169,7 @@ def Special():
 def Std(x, t=None):
     return(np.std(x))
 
-def Average(x,t=None):
+def Average(x, t=None):
 # should really to an average over an interval
     if t is None:
         t = x.timebase
@@ -120,11 +177,11 @@ def Average(x,t=None):
     w = np.where((t>interval[0]) & (t>interval[1]))[0]
     return np.average(x[w])
 
-def Integral(x,t):
+def Integral(x, t):
 # should really include dt
     return np.average(np.diff(t))*np.sum(x)
 
-def Value(x,t):
+def Value(x, t):
     if np.issubdtype(type(x), int):
         return(int(x))
     else:
@@ -133,6 +190,7 @@ def Value(x,t):
 metadata = MetaData()
 
 if len(sys.argv)>1:
+    print('Using srange from the command line')
     try:
         srange = sys.argv[1]
         srange = eval(srange)
@@ -148,7 +206,11 @@ else:
     #srange = ((20160202,1), (20160202,99))
     srange = ((20171018,19),(20171018,20))
     srange = ((20180801,1),(20180822,999))
+    srange = ((20171207,1),(20181022,999))
+    srange = (([20171207,1], [20171231,999]),([20180701,1], [20181022,999]))
+pyfusion.NSAMPLES=2000
 
+    
 MDS_diags = dict(im1 = [Float, '.operations.magnetsupply.lcu.setup_main.i1', Value],
              im2 = [Float, '.operations.magnetsupply.lcu.setup_main.i2', Value],
              im3 = [Float, '.operations.magnetsupply.lcu.setup_main.i3', Value],
@@ -171,6 +233,7 @@ MDS_diags = dict(im1 = [Float, '.operations.magnetsupply.lcu.setup_main.i1', Val
              isweep = [Float, '.fluctuations.BPP:isweep',Std],
              mirnov_coh =  [Float, '', Special],
          )
+# Magnetic and basic plasma params
 diags = dict(imain = [Float, 'W7X_INonPlanar_1', Average, 1], # the first will be used in the example code
              IPlanar_A = [Float, 'W7X_IPlanar_A', Average, 1],
              IPlanar_B = [Float, 'W7X_IPlanar_B', Average, 1],
@@ -209,7 +272,7 @@ diags = dict(imain = [Float, 'W7X_INonPlanar_1', Average, 1], # the first will b
              #ECH_Rf_C5 = [Float, 'W7X_ECH_Rf_C5', Average, 1],
              #ECH_Rf_D5 = [Float, 'W7X_ECH_Rf_D5', Average, 1],
              )
-
+# Scraper study
 diags = ordict(iA = [Float, 'W7X_IPlanar_A', Average, 1],
                iB = [Float, 'W7X_IPlanar_B', Average, 1],
                i1 = [Float, 'W7X_INonPlanar_1', Average, 1],
@@ -230,6 +293,27 @@ diags = ordict(iA = [Float, 'W7X_IPlanar_A', Average, 1],
                IP_CONT = [Float, 'W7X_ROG_CONT', Peak, 1],
                neL = [Float, 'W7X_neL', Peak, 1],
 )
+# for MHD study
+diags = ordict()
+
+diags.update(dict(Pk4124 = [Float, 'W7X_MIR_4124', Peak, 3]))
+diags.update(dict(Pkt4124 = [Float, 'W7X_MIR_4124', Peaktime, 3]))
+diags.update(dict(Pkr4124 = [Float, 'W7X_MIR_4124', rawPeak, 3]))
+diags.update(dict(Pkrt4124 = [Float, 'W7X_MIR_4124', rawPeaktime, 3]))
+"""diags.update(dict(Pk4134 = [Float, 'W7X_MIR_4134', Peak, 3]))
+diags.update(dict(Pkt4134 = [Float, 'W7X_MIR_4134', Peaktime, 3]))
+diags.update(dict(Pkr4134 = [Float, 'W7X_MIR_4134', rawPeak, 3]))
+diags.update(dict(Pkrt4134 = [Float, 'W7X_MIR_4134', rawPeaktime, 3]))
+"""
+diags.update(dict(Pk4114 = [Float, 'W7X_MIR_4114', Peak, 3]))
+diags.update(dict(Pkt4114 = [Float, 'W7X_MIR_4114', Peaktime, 4]))
+diags.update(dict(Pkr4114 = [Float, 'W7X_MIR_4114', rawPeak, 3]))
+diags.update(dict(Pkrt4114 = [Float, 'W7X_MIR_4114', rawPeaktime, 4]))
+diags.update(dict(Pk4132 = [Float, 'W7X_MIR_4132', Peak, 3]))
+diags.update(dict(Pkt4132 = [Float, 'W7X_MIR_4132', Peaktime, 4]))
+diags.update(dict(Pkr4132 = [Float, 'W7X_MIR_4132', rawPeak, 3]))
+diags.update(dict(Pkrt4132 = [Float, 'W7X_MIR_4132', rawPeaktime, 4]))
+
 
 xdiags = dict(imain = [Float, 'need to define in pyfusion.cfg', Value],
              im2 = [Float, '.operations.magnetsupply.lcu.setup_main.i2', Value],
@@ -253,11 +337,20 @@ xdiags = dict(imain = [Float, 'need to define in pyfusion.cfg', Value],
              isweep = [Float, '.fluctuations.BPP:isweep',Std],
              mirnov_coh =  [Float, '', Special],
          )
+if pyfusion.NSAMPLES !=0:
+    ans = input('Data secimation to {n} entries in force:  Continue?  (y/N)'.format(n=pyfusion.NSAMPLES,))
+    if len(ans)==0 or ans.lower()[0] == 'n':
+        sys.exit()
+    input
 
 # make the database infrastructure
 col_list = [Column('shot', Integer, primary_key=True), 
             Column('date', Integer, primary_key=True),
-            Column('sshot', Integer, primary_key=True)]
+            Column('sshot', Integer, primary_key=True),
+            Column('took', Float),
+            Column('length', Float),
+            Column('dtsam', Float), #only approx
+]
 
 for diag in diags.keys():
     if len(diags[diag]) == 3: 
@@ -274,10 +367,10 @@ summ = Table('summ', metadata, *col_list)
 metadata.create_all(engine)
 # simple method
 
-ins=summ.insert()  # not sure why this is needed?
+ins = summ.insert()  # not sure why this is needed?
 
 #import MDSplus as MDS
-result=conn.execute('select count(*) from summ')
+result = conn.execute('select count(*) from summ')
 n = result.fetchone()[0]
 if n> 0:
     ans = input('database {dbfile} is populated with {n} entries:  Continue?  (y/N)'.format(n=n, dbfile=dbfile))
@@ -295,22 +388,28 @@ for diag in diags.keys():
     errs.update({diag:[]})  # error list for each diagnostic
 
 print("""If off-line, set pyfusion.TIMEOUT=0 to prevent long delays
-The search for valid shot numbers will take a while.  about 2 mins as of 10/2017  
+The search for valid shot numbers is now much quicker
 """)
-
+# will take a while (~ 0.7 sec/day?),  about 2 mins as of 10/2017  
 
 start = seconds()
-dev=pyfusion.getDevice(devname)  # 'H1Local')
+dev = pyfusion.getDevice(devname)  # 'H1Local')
 if 'W7' in devname:
-    srange = expand_shot_range(*srange)
+    if len(np.shape(srange)) < 3:
+        print('assume a simple range')
+        srange = expand_shot_range(*srange)
+    else:
+        srange = [sh for sr in srange for sh in expand_shot_range(*sr)]
 else:
     srange=range(92000,95948)
-
-for sh in srange: # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,88891): #81399,81402):  #(81600,84084):
+print(srange)    
+cache = 3*[None]
+# on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,88891): #81399,81402):  #(81600,84084):
+for sh in srange[::-1]: 
     if 'W7' in devname:
         datdic = dict(shot=sh[0]*1000+sh[1], date=sh[0], sshot=sh[1])
         if (sh[1] % 10) == 0:
-            print(sh),
+            print(sh, end=' ')
         else: 
             sys.stderr.write('.')
         if (sh[1]%100)==0: print('')
@@ -327,15 +426,25 @@ for sh in srange: # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,8889
         # non_special.remove('mirnov_coh')
         for diag in non_special:
             try:
+                print(diag, end=', ')
                 if len(diags[diag]) == 3: 
                     typ, node, valfun = diags[diag]
                     dp = None
                 else:
                     typ, node, valfun, dp = diags[diag]
 
-                data = dev.acq.getdata(sh, node)
+                if cache[0:2] == [sh, node]:
+                    data = cache[2]
+                else:
+                    print('no cache for ', cache[0:2], end=', ')
+                    req_time = seconds()
+                    data = dev.acq.getdata(sh, node)
+                    took = seconds() - req_time
+                cache = [sh, node, data.copy()]
                 if hasattr(data, 'timebase'):
                     tb = data.timebase
+                    length = tb.max() - tb.min()
+                    dtsam = np.diff(tb).mean()
                 else:
                     tb = None
                 val = valfun(data.signal, tb)
@@ -344,7 +453,7 @@ for sh in srange: # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,8889
                 
                 datdic.update({diag:val})
             except node_exception, reason:
-                print sh,node,reason
+                print(sh, node, reason)
                 errs[diag].append(sh)
 
         """         
@@ -359,6 +468,7 @@ for sh in srange: # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,8889
         except node_exception, reason:    
             errs['mirnov_coh'].append(sh)
         """
+        datdic.update(dict(took = took))
     except shot_exception:
         errs['shot'].append(sh)
     else:  # executed if no exception
@@ -368,19 +478,36 @@ for sh in srange: # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,8889
 
 from sqlalchemy import select
 # note the .c attribute of the table object (column)
+#if len(diags) > 10:
 sel = select([summ.c.shot, eval('summ.c.'+diags.keys()[0])]) 
 result = conn.execute(sel)  
 row = result.fetchone()
+#else
+print(conn.execute('select * from summ limit 2').fetchall())
+
 print('\nsample row = {r},\n  as items {it}\n  as dict {d}\n{b} bad/missing shots'
       .format(r=row, it=row.items(), d=dict(row), b=len(errs['shot'])))
 all_bad = []
 for diag in errs.keys():
     all_bad.extend(errs[diag])
-    print '{0:11s} {1:6d} errors'.format(diag, len(errs[diag]))
+    print('{0:11s} {1:6d} errors'.format(diag, len(errs[diag])))
 print('{t} problems in {s} of {all} shots'.format(t=len(all_bad), s=len(np.unique(all_bad)),all=shots))
 
 result.close()  # get rid of any leftover results
 print('took {s:.1f} sec'.format(s=seconds()-start))
+
+bads = errs
+url = str(engine.url)
+shot_numbers = '-'.join([str(sh).strip() for sh in [np.sort(srange)[idx] for idx in [0, -1]]])
+goods = [s for s in srange if s not in all_bad] 
+save_path = '/tmp/' if 'memory' in url else ''
+pfile = str('{spath}_{s}_{dt}_{fname}.log'
+            .format(dt=tm.strftime('%Y%m%d%H%M%S'), fname=os.path.split(url)[-1], spath=save_path,
+                    s=shot_numbers.replace('(','').replace(')','').replace(']','_').replace('[','_')
+                    .replace(',','_').replace(' ','')))
+
+print('See bads for {l} errors, also goods ({g}), and in {pfile}'.format(l=len(bads), g=len(goods), pfile=pfile))
+json.dump(dict(bads=bads, goods=goods), open(pfile+'.json','w'))
 
 """
 Examples:

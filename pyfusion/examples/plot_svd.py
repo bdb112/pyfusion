@@ -6,10 +6,13 @@ keys typed at the terminal allow stepping backward and forward.
 
 Works from RAW data.
 
+
 Typical usage : run  dm/plot_svd.py start_time=0.01 "normalise='v'" use_getch=0
       separate [=1] if True, normalisation is separate for each channel
 Dave's checkbuttons on plot_svd don't work unless you use hold.
 running outside pyfusion is more reliable
+
+run pyfusion/examples/plot_svd.py "dev_name='W7X'" start_time=5.6481  "normalise='r'" shot_number=[20171207,6] numpts=4*128 diag_name=W7X_MIRNOV_41_13  plot_mag=1 plot_phase=1 separate=1 closed=0
 
 Note that the code is hard wired to reset hold after a "hold" so that you can continue
 
@@ -65,6 +68,7 @@ channel_number=0
 lowpass = None  # set to corner freq for lowpass filter
 highpass = None  # set to corner freq for lowpass filter
 start_time = None
+seg_time = 0.1  # length of data retrieved per run
 numpts = 512
 normalise='0'
 myfilter1p5=dict(passband=[1e3,2e3], stopband=[0.5e3,3e3], max_passband_loss=2, min_stopband_attenuation=15,btype='bandpass')
@@ -120,7 +124,7 @@ if this_key in shot_cache: # we can expect the variables to be still around, run
     d = deepcopy(shot_cache[this_key])
 else:
     print('get data for {k}'.format(k=this_key))
-    d = device.acq.getdata(shot_number, diag_name) # ~ 50MB for 6ch 1MS. (27233MP)
+    d = device.acq.getdata(shot_number, diag_name, time_range=[start_time, start_time+seg_time]) # ~ 50MB for 6ch 1MS. (27233MP)
     if scales is not None:
         d.signal=(d.signal.T*np.array(scales)).T  # a little kludgey
     shot_cache.update({this_key: deepcopy(d)})

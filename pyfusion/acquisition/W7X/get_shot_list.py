@@ -141,7 +141,7 @@ def json_save_shot_list(shotDA, new_name='/tmp/shotDA.json'):
 def _get_shotDA(fname):
     # TODO(boyd.blackwell@anu.edu.au): remove pickle option, use json only.
     global shotDA
-    #shotDA = pyfusion.shotDA - Used a global instead.  This should be better..BUT need to copy dict!!!!
+    #shotDA = pyfusion.shotDA - Used a global instead. However that is probably be better..BUT need to copy dict!!!!
     try:
         #if shotDA is None:
         #    raise ValueError('shotDA is None - not defined')

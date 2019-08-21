@@ -62,7 +62,7 @@ def history_reg_method(method):
         # TODO output.meta.update() looks wrong - if a filter modifies a meta value, does this
         # overwrite the modified version with the original?
 
-        if output is not None:
+        if (output is not None) and hasattr(output, 'meta'):
             output.meta.update(input_data.meta)
 
         return output

@@ -148,7 +148,7 @@ for shot_number in shot_list:
     if find_kws != {}:
         found_utc = find_shot_times(shot=shot_number, **find_kws)
         print('Using threshold detection: {kws}'.format(kws=find_kws))
-        if found_utc is None: #  meant to find, but failed
+        if found_utc is None: #  meant (hoped) to find, but failed
             # use the given time range, or if not set, a minimum amount enough to see problem
             this_time_range = time_range if time_range is not None else [-0.15,0.3]
         else:

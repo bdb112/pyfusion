@@ -736,6 +736,15 @@ class MultiChannelFetcher(BaseDataFetcher):
         else:
             time_range = None
             
+        # Shortcut for small range:
+        # so that time_range=[3,.1] --> [2.9, 3.1] and [1,1] -> [0,2]
+        if (time_range is not None and
+            (time_range[0] != 0) and
+            (np.abs(time_range[1]/time_range[0]) <= 1) and
+            (time_range[1] < time_range[0])):
+            dt= time_range[1]
+            time_range = np.array([time_range[0] - time_range[1],
+                          time_range[0] + time_range[1]])
         params = {}  # will be added to output data, to include gain, really want Rs too
         for chan in ordered_channel_names:
             

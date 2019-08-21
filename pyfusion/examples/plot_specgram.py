@@ -26,11 +26,12 @@ noverlap=None
 time_range = None
 channel_number=0
 hold=0
-clim=None
+clim=None  #  if 'show' show the clim in the legend - (note - "clim='show'")
 xlim=None
 ylim=None
 cmap=cm.jet   # see also cm.gray_r etc
 stop=False
+hspace = None
 """
 
 exec(_var_defaults)
@@ -59,4 +60,5 @@ if time_range != None:
     dr = d.reduce_time(time_range)
 else:
     dr = d
-dr.subtract_mean().plot_spectrogram(noverlap=noverlap, NFFT=NFFT, channel_number=channel_number, hold=hold, cmap=cmap, clim=clim, xlim=xlim, ylim=ylim)
+dr = dr.subtract_mean()
+ax_list = dr.plot_spectrogram(noverlap=noverlap, NFFT=NFFT, channel_number=channel_number, hold=hold, cmap=cmap, clim=clim, xlim=xlim, ylim=ylim, hspace=hspace)

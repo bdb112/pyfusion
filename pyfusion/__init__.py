@@ -87,7 +87,7 @@ def DBG():
 
 # VERBOSE is likely to be used as an env var for debugging and as a config
 # var, depending on taste.
-shotDA = None  # Used a global instead.  However this is probably better..
+shotDA = None  # Used a global instead.  However this (pyfusion.shotDA) is probably better..
 VERBOSE = int(os.getenv('PYFUSION_VERBOSE', '0'))  # early setup allows config info to be debugged
 
 """ 

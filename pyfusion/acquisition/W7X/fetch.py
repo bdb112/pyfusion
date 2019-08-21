@@ -103,7 +103,7 @@ def regenerate_dim(x):
     if len(wmin) > 0:
         print('**********\n*********** Gap in data > {p:.2f}%'.format(p=100 * len(wmin) / float(len(cnts))))
     x01111 = np.ones(len(x))  # x01111 will be all 1s except for the first elt.
-    x01111[0] = 0  # we apparently  used to assume the trace started at zero time??
+    x01111[0] = 0  # we apparently generate a trace starting at 0 and then correct
 
     errcnt = np.sum(bigcounts) + np.sum(np.sort(counts)[::-1][1:])
     if errcnt > 0 or (pyfusion.VERBOSE > 0):
@@ -308,7 +308,7 @@ class W7XDataFetcher(BaseDataFetcher):
             dat = json.load(urlopen(url,timeout=timeout))
         except Exception as reason:
             if pyfusion.VERBOSE >= 0:
-                print('**** Exception OR timeout of {timeout} **** on {c}: {u} \n{r}'
+                print('**** Exception (Memory? out of disk space?) OR timeout of {timeout} **** on {c}: {u} \n{r}'
                       .format(c=self.config_name, u=url, r=reason, timeout=timeout))
 
             raise

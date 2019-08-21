@@ -41,6 +41,13 @@ attr_filename = 'pyfusion/acquisition/HeliotronJ/BES_data.txt'
 attr_dtype=[('name','S20'), ('X','f'), ('Y','f'), ('Z','f')]
 attr_fmt = 'coords_reduced = {x:.5f}, {y:.5f}, {z:.5f}\n'
 
+attr = 'quasi_toroidal_coords_QXM41'
+target = '^\[Diagnostic:W7X_MIR_[2][0-9][0-9]0\]'
+attr_filename = 'pyfusion/acquisition/W7X/QXM41_data.txt    '
+attr_dtype=[('name','S20'), ('X','f'), ('Y','f'), ('Z','f')]
+attr_fmt = 'coords_reduced = {x:.5f}, {y:.5f}, {z:.5f}\n'
+
+
 if 'oord' in attr:
     def attr_dict(dat):
         return(dict(x=dat['X']/1e3, y=dat['Y']/1e3, z=dat['Z']/1e3))

@@ -239,7 +239,7 @@ def plot_signals(input_data, filename=None, downsamplefactor=1, n_columns=1, hsp
                    'key for suptitle [{s}]'
                    .format(m=input_data.meta, s=suptitle))
 
-    if hspace != None:  # adjust vertical spacing between plots
+    if hspace is not None: # adjust vertical spacing between plots
         pl.gcf().subplotpars.hspace = hspace
         pl.gcf().subplotpars.bottom = hspace + 0.08 # was 0.04
         extratop = 0.01
@@ -265,7 +265,8 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
     Accepts multi or single channel data (I think?)
     Title will be auto generated: if supplied, include '+' to include the auto-generated part
     To suppress, use title=' ' (one space)
-
+    clim:  [None] auto clim, 'show' - label each graph with clims
+    Returns ax_list which can be used for clims or other manipulations
     """
     import pylab as pl
     
@@ -311,6 +312,7 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
     displace = '' # doens't make send for spectra, as they are usually squarish
     
     axcount = -1  # so the first will be 0
+    ax_list = []  #  We don't use subplots(), because we want control of sharey
     for row in range(n_rows):
         for col in range(n_columns):
             axcount += 1
@@ -349,6 +351,7 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
                              NFFT=NFFT, noverlap=noverlap,
                              Fs=input_data.timebase.sample_freq/ffact,
                              window=windowfn, xextent=xextent, **kwargs)
+            ax_list.append(axn)
             # Used be (incorrectly coloraxis)
             if pyfusion.VERBOSE>2:
                 print('data/plot_spectrogram: noverlap={no}, {nt} time segs, {nf} freqs'
@@ -357,7 +360,7 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
                 axn.set_xlim(xlim)
             if ylim is not None:
                 axn.set_ylim(ylim)
-            if clim is not None: im.set_clim(clim)
+            if clim is not None and clim != 'show': im.set_clim(clim)
             else:
                 try:
                     pl.clim(eval(pyfusion.config.get('Plots','coloraxis')))
@@ -398,13 +401,40 @@ def plot_spectrogram(input_data, windowfn=None, units='kHz', channel_number=0, f
                 pass # tit is the default
             else:
                 tit = title.replace('+',tit)
-            pl.title(tit)
+            # No titles for rows >= 3 - maybe better to have no titles at all
+            #   and use the legend (without frame) to show the channel number
+            # instead of the ytitle.
+            if n_rows <= 3:  # keep consistent with n_rows > 3 above
+                pl.title(tit)
+            if clim == 'show':
+                axn.legend([], [], frameon=0, title=str(np.round(axn.get_images()[0].get_clim(), 1)))
 
     # ======== end of plot loop
+    if suptitle is not None:
+        try:
+            suptitlestr = (suptitle.format(**input_data.meta))
+        except:
+            suptitlestr = ''
+            debug_(pyfusion.DEBUG, 1, key='plot_signal_suptitle',
+                   msg=' input metadata [{m}] does not have  a '
+                   'key for suptitle [{s}]'
+                   .format(m=input_data.meta, s=suptitle))
+
+
+    if suptitle != '': pl.suptitle(suptitlestr)
+    if hspace is not None: # adjust vertical spacing between plots
+        pl.gcf().subplotpars.hspace = hspace
+        pl.gcf().subplotpars.bottom = hspace + 0.08 # was 0.04
+        extratop = 0.01
+        if suptitle != '': extratop += 0.04
+        pl.gcf().subplots_adjust(top = 1-(hspace+extratop)) # allow a little room for title
+
     if filename != None:
         pl.savefig(filename)
     else:
         pl.show(block=0)
+
+    return(ax_list)
 
 #def plot_multichannel_coord(input_data, coord=None, savefig=None):
 #    pass

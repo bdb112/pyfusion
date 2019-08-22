@@ -230,6 +230,8 @@ def get_signal_url(path='CBG_ECRH/A1/medium_resolution/Rf_A1', filter=''):
     """ return the cryptic url corresponding to the human readable form relative to 
     ArchiveDB/views/KKS
     """
+    if pyfusion.LAST_DNS_TEST < 0:
+        return None
     import os
     root = 'http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/views/KKS/'
     oneup, wantname = os.path.split(path)

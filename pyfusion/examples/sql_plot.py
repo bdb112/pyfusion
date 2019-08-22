@@ -13,14 +13,16 @@ run ~/python/sql_plot.py _select='select kappa_ABB,ne18_bmax' _where='where shot
 _PYFUSION_TEST_@@block=0 table='summary_h1'
 
 Example showing the swap feature - plot selected columns in kind of alphabetical order labelled with the first column (kappa_V)
->> run pyfusion/examples/sql_plot.py 'kappa_V, \*' "_from=combsum" '_where="shot between 92647 and 92658"' swap=1
+>> run pyfusion/examples/sql_plot.py 'kappa_V, \*' "_from=combsum" '_where="shot between 92647 and 92658"' swap=1 table='summary_h1'
 
 plotting with channels on X axis (swapwild)
 
-run pyfusion/examples/sql_plot.py 'kappa_V,\*' "_from=combsum" '_where="shot between 97490 and 97580 and round(kh_req,2) is .3 and rfp_req is 40"' swapwild='ne[0-9]*$' sub=[2,4]
+run pyfusion/examples/sql_plot.py 'kappa_V,\*' "_from=combsum" '_where="shot between 97490 and 97580 and round(kh_req,2) is .3 and rfp_req is 40"' swapwild='ne[0-9]*$' sub=[2,4]  table='summary_h1'
+
 
 # a join on the fly
-run pyfusion/examples/sql_plot.py kh_req,kappa_V,mirnov_RMS,m02y,m04y,m06y,m08y,m10y,m12y,m13y,m14y,m16y,m05x,m06x,m02x " _where=  (summary_h1.shot between 93405 and 93437)" _from="from summary_h1 join mirnov_RMS using (shot)" mrk='o-/s-/^-'
+run pyfusion/examples/sql_plot.py kh_req,kappa_V,mirnov_RMS,m02y,m04y,m06y,m08y,m10y,m12y,m13y,m14y,m16y,m05x,m06x,m02x " _where=  (summary_h1.shot between 93405 and 93437)" _from="from summary_h1 join mirnov_RMS using (shot)" mrk='o-/s-/^-' table='summary_h1'
+
 
 pseudo variable 'rowid' allows you to plot by occurence rather than shot, so no space on the x axis wasted for long runs
 
@@ -36,6 +38,7 @@ from sqlite3 import OperationalError  # , NoSuchTableError
 from matplotlib import pyplot as plt
 from collections import OrderedDict
 import numpy as np
+import os
 import sys
 import re
 
@@ -57,7 +60,8 @@ plabel=''  # label each point (of the first series) with this value
 maxplabels=300
 db_url='sqlite:////data/summary.db' # or 
 #db_url='sqlite:////rmt/h1svr/home/datasys/virtualenvs/h1ds_production/h1ds/h1ds/db/summary.db' 
-split=5 # if >0, split lines according to the column which has the fewest unique values - if split=5, only do it is there are 5 unique values or less.
+split=5 # if >0, split lines according to the column which has the fewest unique values - if split=5, only do it is there are 5 unique values or less. This typically changes the symbol shape between that column (secondary variable) but keeps colours of the primary columns the
+
 def __hxelp__():
     print('local help routine for sqlplot, defined in _var_defaults')
 fig=None
@@ -110,6 +114,10 @@ if _order is '':
     else:
         _order = 'order by ' + vars[0]
 
+url_cpts = db_url.split('sqlite:///')
+if not os.path.exists(url_cpts[-1]):
+    input('{fn} could not be found!!\n'.format(fn=url_cpts[-1]))
+
 h1db = SQLSoup(db_url)
 # Note - this info. is here now, but disappears if there is an error - save
 tables = list(h1db._cache)
@@ -142,7 +150,9 @@ except (OperationalError, Exception) as reason:
     sys.exit()
 
 xx = res.fetchall()
+print('Selected ',len(xx))
 xxt = np.array(xx).T
+
 # put them in a dictionary
 # note that the presence of Nones requires fiddling to avoid 'objects'
 dat = OrderedDict()
@@ -223,6 +233,8 @@ if np.nanmin(num_uniqs) < split and len(ykeys)>1:  # and so we have to use nanmi
     # take that variable off the x, y axis list, it will be a grouping var
     idx = [i for i in idx if keys[i] != gkey]
 else:   # just one range
+    # probably should be no brackets here.
+    # this worked in a special case, hard to gneralise it - see *trygen
     inds_list = [range(len(dat[keys[idx[0]]]))]
     label_extras = ['']
 
@@ -242,33 +254,41 @@ for p,(inds,labex) in enumerate(zip(inds_list, label_extras)):
     if 'shot' in keys:
         grouped_shots.append([dat['shot'][ii] for ii in inds])
     # mrk can be a comma, so split using / instead
-    mk = mrk.split('/')[p] if '/' in mrk else mrk
+    if len(inds_list) > 1:  ## *trygen
+        mk = mrk.split('/')[p] if '/' in mrk else mrk
     for pp,iidx in enumerate(idx[1:]):
         # if we are plotting more than one var (i.e. len(idx[1:])>1, go through colors
         if len(idx[1:]) > 1:
             col = colors[pp] if pp < len(colors) else None
         else:  # use the colors to denote group as well as shapes.
             col = colors[p]
+        if len(inds_list) == 1: #  *trygen
+            mk = mrk.split('/')[pp] if '/' in mrk else mrk
         label = labels[p] if p < len(labels) else keys[iidx]+labex
         lin, = plt.plot(dat[keys[idx[0]]][inds], dat[keys[iidx]][inds], mk, color=col,
                         label=label,  hold=(hold or p>0 or pp>0), **plkw)
         lines.append(lin)
-        print(p),
+        print(p, mk),
 
         if plabel is not '':
             # for ind in inds[:maxplabels]:    # can't print too many
-            for ind in inds[::max(1,len(inds)//maxplabels)]:    # can't print too many
+            # Want to subselect so that there are a max of maxplabels *trygen
+            for ii, ind in enumerate(inds):    # can't print too many
+                everynth = max(1,len(inds)//maxplabels)
+                if (ii % everynth) > 0 :  #skip all but every everynth
+                    continue
                 yval = dat[keys[iidx]][ind]
                 labtext = ''
-                for lab in plabels:
+                for lab in plabels: # go through the labels, 
                     if yval is not None and not np.isnan(yval):
-                        if len(labtext) > 0:
+                        if len(labtext) > 0:  # fold lab if there is one already
                             labtext += '\n'
                         labtext += '  ' + str(dat[lab][ind])  # space on left
 
                 plt.text(dat[keys[idx[0]]][ind], dat[keys[iidx]][ind], labtext,
                          fontsize='x-small', verticalalignment='center')
 
+plt.plot(plt.xlim(), [0,0], 'k', lw=0.2)
 plt.xlabel(keys[idx[0]])
 # split qry into nice lnegth lines
 titl = ''

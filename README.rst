@@ -14,6 +14,22 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+Version 0.993 Op1.2b 
+ * Bring in/debug many improvements in W7X fetch and save_to_local (rationalised logic, improved repair)
+ * add get_W7X_shot_list (bin and python wrapper)
+ * restore cdiff.py
+ * mini_summary: imporvements for npz only operation, add specgram (pkr4124SPD)
+ * Feed back small changes from t440p to big IPP update.
+ * modify_cfg.py to make fake 'quasi_toroidal_coords_QXM41'
+ * plot_signals and specgram - time_range=[t0, delta] converted to [t0-delta, t+delta]
+ * some improved comments
+ * plot_specgram - manage titles better for dense multiple plots, add set_clim
+ * plots.py:plot_spectrogram - return the axes so that we can access images, clims etc.
+
+ * acquisitions/base: cleanup, better dtclock estimate in the common timebase code 
+ * plot_svd - remove  == None and other anachronisms
+ * pyfusion.cfg - add plots section - not sure if this is a great idea.
+
 Version 0.993 Op1.2a
  * Fix more examples in test
  * Add examples/check_npz_data_integrity.py

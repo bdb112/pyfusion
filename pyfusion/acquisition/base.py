@@ -560,13 +560,14 @@ class BaseDataFetcher(object):
 
         if self.no_cache or pyfusion.NSAMPLES != 0: 
             if pyfusion.VERBOSE>0:
-                print('** Skipping cache search as no_cache is set in caller or pyfusion.cfg')
+                print('** Skipping cache search as NSAMPLES>0 or no_cache is set in caller or pyfusion.cfg')
             tmp_data = None 
         else:
             tmp_data = try_fetch_local(self, chan, time_range=self.time_range)  # If there is a local copy, get it
 
         debug_(pyfusion.DEBUG, 6, key='base_fetch')
-        if tmp_data is None:
+        # LAST_DNS_TEST is 0 at start, positive if test has occurred and negative if suppressed
+        if tmp_data is None and pyfusion.LAST_DNS_TEST >= 0:
             self.gain = gain  # not needed by fetch - just to be consistent
             method = 'specific'
             try:
@@ -736,15 +737,6 @@ class MultiChannelFetcher(BaseDataFetcher):
         else:
             time_range = None
             
-        # Shortcut for small range:
-        # so that time_range=[3,.1] --> [2.9, 3.1] and [1,1] -> [0,2]
-        if (time_range is not None and
-            (time_range[0] != 0) and
-            (np.abs(time_range[1]/time_range[0]) <= 1) and
-            (time_range[1] < time_range[0])):
-            dt= time_range[1]
-            time_range = np.array([time_range[0] - time_range[1],
-                          time_range[0] + time_range[1]])
         params = {}  # will be added to output data, to include gain, really want Rs too
         for chan in ordered_channel_names:
             

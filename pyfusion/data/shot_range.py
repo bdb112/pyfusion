@@ -23,6 +23,8 @@ def shot_gte(shot1, shot2):
     else: return(shot1 >= shot2)
 
 def shot_range(shot_from, shot_to=None, inc=1):
+    if pyfusion.VERBOSE>0:
+        print('Expanding a range of shots')
     rng = []
     if shot_to is None:
         inp = input(' Assume you want just one shot in a list? (y/nq) ')

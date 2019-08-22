@@ -44,7 +44,7 @@ from sqlalchemy import create_engine
 
 devname = 'W7X'
 if 'W7' in devname:
-    sqlfilename = 'W7X_OP1.2ab_MHD_41243214.sqlite'
+    sqlfilename = '/tmp/W7X_OP1.2ab_MHD_41243214.sqlite'
 else:
     sqlfilename = 'H1.sqlite'
 
@@ -113,6 +113,16 @@ def Peak_abs(x, t, pc=100, return_time=False):
     else:
         return xa[max_idx]
     
+def rawPeakSPD(x, t=None, NFFT=1024):  # A power, not amplitude
+    return(np.max(specgram(x, NFFT=NFFT)[0].flatten()))
+
+def rawPeakSPDtime(x, t=None, NFFT=1024):
+    if t is None:
+        return None
+    spd = specgram(x, NFFT=NFFT, noverlap=0, Fs=1/np.diff(t).mean() )
+    idxs = np.unravel_index(np.argmax(spd[0], axis=None), spd[0].shape)
+    return(sg[2][idxs[0]] + t[0])  # this time will not exactly be in the timebase
+
 def Peak_signed(x, t, pc=100, return_time=False):
     """ returns the largest in magnitude but with the original sign """
     frac = (100 - pc) / 100.
@@ -189,15 +199,19 @@ def Value(x, t):
 
 metadata = MetaData()
 
+# main
+debug=0
+#pyfusion.NSAMPLES=2000
+
+
 if len(sys.argv)>1:
-    print('Using srange from the command line')
+    print('Assuming srange is given in the command line')
     try:
         srange = sys.argv[1]
         srange = eval(srange)
-        expand_shot_range(*srange)
     except Exception as reason:
         raise ValueError("{r}: \nInput was\n{inp}\nProbably need quotes:\n  Example:\n  run pyfusion/examples/mini_summary 'range(88600,88732)' or  [[20171018,19],[20171018,21]] - no quotes needed if square brackets"
-                         .format(r=reason, inp=sys.argv))
+                             .format(r=reason, inp=sys.argv))
 else:
     srange = range(88600,88732)
     srange = ((20160309,1), (20160310,99))
@@ -208,7 +222,6 @@ else:
     srange = ((20180801,1),(20180822,999))
     srange = ((20171207,1),(20181022,999))
     srange = (([20171207,1], [20171231,999]),([20180701,1], [20181022,999]))
-pyfusion.NSAMPLES=2000
 
     
 MDS_diags = dict(im1 = [Float, '.operations.magnetsupply.lcu.setup_main.i1', Value],
@@ -296,15 +309,22 @@ diags = ordict(iA = [Float, 'W7X_IPlanar_A', Average, 1],
 # for MHD study
 diags = ordict()
 
+diags.update(dict(PkrSPD4124time = [Float, 'W7X_MIR_4124', rawPeakSPDtime, 8]))
+diags.update(dict(PkrSPD4124 = [Float, 'W7X_MIR_4124', rawPeakSPD, 3]))
 diags.update(dict(Pk4124 = [Float, 'W7X_MIR_4124', Peak, 3]))
 diags.update(dict(Pkt4124 = [Float, 'W7X_MIR_4124', Peaktime, 3]))
 diags.update(dict(Pkr4124 = [Float, 'W7X_MIR_4124', rawPeak, 3]))
 diags.update(dict(Pkrt4124 = [Float, 'W7X_MIR_4124', rawPeaktime, 3]))
-"""diags.update(dict(Pk4134 = [Float, 'W7X_MIR_4134', Peak, 3]))
+"""
+diags.update(dict(PkrSPD4134time = [Float, 'W7X_MIR_4134', rawPeakSPDtime, 8]))
+diags.update(dict(PkrSPD4134 = [Float, 'W7X_MIR_4134', rawPeakSPD, 3]))
+diags.update(dict(Pk4134 = [Float, 'W7X_MIR_4134', Peak, 3]))
 diags.update(dict(Pkt4134 = [Float, 'W7X_MIR_4134', Peaktime, 3]))
 diags.update(dict(Pkr4134 = [Float, 'W7X_MIR_4134', rawPeak, 3]))
 diags.update(dict(Pkrt4134 = [Float, 'W7X_MIR_4134', rawPeaktime, 3]))
 """
+diags.update(dict(PkrSPD4132time = [Float, 'W7X_MIR_4132', rawPeakSPDtime, 8]))
+diags.update(dict(PkrSPD4132 = [Float, 'W7X_MIR_4132', rawPeakSPD, 3]))
 diags.update(dict(Pk4114 = [Float, 'W7X_MIR_4114', Peak, 3]))
 diags.update(dict(Pkt4114 = [Float, 'W7X_MIR_4114', Peaktime, 4]))
 diags.update(dict(Pkr4114 = [Float, 'W7X_MIR_4114', rawPeak, 3]))
@@ -381,7 +401,7 @@ shots = 0
 
 # set these both to () to stop on errors
 shot_exception = () # Exception # () to see message - catches and displays all errors
-node_exception = Exception # ()  ditto for nodes.
+node_exception = () if debug > 0 else Exception # ()  ditto for nodes.
 
 errs = dict(shot=[])  # error list for the shot overall (i.e. if tree is not found)
 for diag in diags.keys():
@@ -395,30 +415,28 @@ The search for valid shot numbers is now much quicker
 start = seconds()
 dev = pyfusion.getDevice(devname)  # 'H1Local')
 if 'W7' in devname:
-    if len(np.shape(srange)) < 3:
+    if len(np.shape(srange)) == 3: # a bunch of begin/ends
+        srange = [sh for sr in srange for sh in expand_shot_range(*sr)]
+    elif np.shape(srange) == (2,2):
         print('assume a simple range')
         srange = expand_shot_range(*srange)
-    else:
-        srange = [sh for sr in srange for sh in expand_shot_range(*sr)]
+    else: # already a list
+        pass 
 else:
     srange=range(92000,95948)
 print(srange)    
 cache = 3*[None]
 # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,88891): #81399,81402):  #(81600,84084):
-for sh in srange[::-1]: 
+for (ish, sh) in enumerate(srange[::-1]):
     if 'W7' in devname:
         datdic = dict(shot=sh[0]*1000+sh[1], date=sh[0], sshot=sh[1])
-        if (sh[1] % 10) == 0:
-            print(sh, end=' ')
-        else: 
-            sys.stderr.write('.')
-        if (sh[1]%100)==0: print('')
     else:
         datdic = dict(shot=sh)
-        if (sh%10)==0: 
-            sys.stderr.write(str(sh))
-        else: 
-            sys.stderr.write('.')
+    if (ish % 10) == 0:
+        print(sh, end=' ')
+    else: 
+        sys.stderr.write('.')
+    if (ish % 100) == 0: print('\n<<<{pc:.1f}% complete>>> '.format(pc=100*float(ish)/len(srange)), end='')
 
     shots += 1
     try:
@@ -433,10 +451,10 @@ for sh in srange[::-1]:
                 else:
                     typ, node, valfun, dp = diags[diag]
 
-                if cache[0:2] == [sh, node]:
+                if (cache[0] == sh) and (cache[1] == node):
                     data = cache[2]
                 else:
-                    print('no cache for ', cache[0:2], end=', ')
+                    print('>> no cache for ', cache[0:2], end=', ')
                     req_time = seconds()
                     data = dev.acq.getdata(sh, node)
                     took = seconds() - req_time
@@ -453,7 +471,7 @@ for sh in srange[::-1]:
                 
                 datdic.update({diag:val})
             except node_exception, reason:
-                print(sh, node, reason)
+                print('Node Exception: ', sh, node, reason)
                 errs[diag].append(sh)
 
         """         
@@ -506,7 +524,8 @@ pfile = str('{spath}_{s}_{dt}_{fname}.log'
                     s=shot_numbers.replace('(','').replace(')','').replace(']','_').replace('[','_')
                     .replace(',','_').replace(' ','')))
 
-print('See bads for {l} errors, also goods ({g}), and in {pfile}'.format(l=len(bads), g=len(goods), pfile=pfile))
+print('See bads for {l} errors, also goods ({g}), and in {pfile}'
+      .format(l=len([b for b in bads.values() if len(b) > 0]), g=len(goods), pfile=pfile))
 json.dump(dict(bads=bads, goods=goods), open(pfile+'.json','w'))
 
 """

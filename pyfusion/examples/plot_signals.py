@@ -50,13 +50,26 @@ if 'W7X' in dev_name:
         if 'data' in locals() and hold !=0:
             utc0 = data.utc[0] 
 
+## move this to a function: time_range = process_time_range(time_range)
+# Shortcut for small range: (should work for 3 element also (3rd is interval))
+# so that time_range=[3,.1] --> [2.9, 3.1] and [1,1] -> [0,2]
+if (time_range is not None and
+    (time_range[0] != 0) and
+    (abs(time_range[1]/time_range[0]) <= 1) and
+    (time_range[1] < time_range[0])):
+    print('Using delta time range in multi channel fetcher ')
+    dt = time_range[1]
+    time_range[1]  = time_range[0] + dt
+    time_range[0] -= dt
+
 dev = pyfusion.getDevice(dev_name)
 data = dev.acq.getdata(shot_number,diag_name, contin=not stop, time_range=time_range)
 if data is None:
     raise LookupError('data not found for {d} on shot {sh}'
                       .format(d=diag_name, sh=shot_number))
-if time_range is not None:
-    data = data.reduce_time(time_range)
+#  this is only here if getdata fails to select time range not needed now
+#if time_range is not None:
+#    data = data.reduce_time(time_range)
 
 if hold==0: plt.figure()
 elif hold==2:

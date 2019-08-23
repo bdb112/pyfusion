@@ -18,7 +18,7 @@ Version 0.993 Op1.2b
  * Bring in/debug many improvements in W7X fetch and save_to_local (rationalised logic, improved repair)
  * add get_W7X_shot_list (bin and python wrapper)
  * restore cdiff.py
- * mini_summary: imporvements for npz only operation, add specgram (pkr4124SPD)
+ * mini_summary: improvements for npz only operation, add specgram (pkr4124SPD)
  * Feed back small changes from t440p to big IPP update.
  * modify_cfg.py to make fake 'quasi_toroidal_coords_QXM41'
  * plot_signals and specgram - time_range=[t0, delta] converted to [t0-delta, t+delta]
@@ -359,7 +359,7 @@ Version 0.7.6 alpha
 * get_shot_list - info messages suppressed unless VREBOSE>0
 * acq/data/base - keep track of data source (source via acq.source) in params 
 * several Langmuir file - change Vp to Vf
-* N2_puff_correlation - move ECH to a twin axis, imporve limit
+* N2_puff_correlation - move ECH to a twin axis, improve limit
   setting
 * extract_limiter_coords - extract limiter profile in midplane, include node index list
 
@@ -571,7 +571,7 @@ Version 0.6.9: beta
 * temporary update to avoid too many changes at once
 * process_swept_Langmuir includes scipy.optimise.leastsq and some more
   parameters, also tracks the root finder, fixed figure count limiter
-  and imporved flexibility of saved filename.
+  and improved flexibility of saved filename.
 * get_LP_data.py pulls the v,i data from a characteristic plot and
   plays with it for algorithm development.
 * N2_puff_correlation: add correlation  (coefficient and physical

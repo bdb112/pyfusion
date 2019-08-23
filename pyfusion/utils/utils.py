@@ -14,6 +14,7 @@ def pause_while(path, check=60):
     return once the file is removed.
     """
     if os.path.exists(path.replace('pause', 'quit')):
+        print('Quitting because the file "quit" was found')
         return('quit')
     if os.path.exists(path):
         print('paused until '+ path + ' is removed')

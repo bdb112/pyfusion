@@ -181,7 +181,7 @@ def try_fetch_local(input_data, bare_chan, time_range=None):
     # If we are sub-selecting, the utc should be adjusted.
     if time_range is not None:
         origbnds = (output_data.timebase[[0,-1]]/1e-9).astype(np.float) #  can't use min max as we want the ends
-        output_data.reduce_time(time_range)
+        output_data = output_data.reduce_time(time_range)  # because reduce time can only copy now.
         newbnds = (output_data.timebase[[0,-1]]/1e-9).astype(np.float)
         output_data.utc = [output_data.utc[i] + (newbnds[i] - origbnds[i]).round(0) for i in range(2)]
         print(output_data.utc)
@@ -636,6 +636,9 @@ class BaseDataFetcher(object):
                 if pyfusion.VERBOSE>-1 and 'W7X' in self.acq.acq_class and 'LP' in self.config_name: 
                     print("Can't check DMD on {s}, {d}".format(s=self.shot, d=self.config_name))
 
+        if data is None:
+            raise LookupError('Data not found dir {cn} on {sh} - set pyfusion.VERBOSE=3 and rerun'
+                              .format(sh=str(self.shot), cn =self.config_name)) 
         print(len(data.signal))
         if len(data.signal) == 0:
             raise LookupError('no samples in time_range of {trg} in {nm}'

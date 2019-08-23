@@ -1,4 +1,9 @@
 """ 
+
+Notes: 
+default is NOT to find shot times, so need to set find_kws={} or something to have range found
+find_shot_times overides time range, if successful
+
 ****  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.
 
 hopefully we have fixed getting wrong utc for multi channel diags!!!  *********
@@ -56,9 +61,8 @@ from pyfusion.utils.time_utils import utc_ns
 if hasattr(pyfusion, 'NSAMPLES') and pyfusion.NSAMPLES != 0:
     if input('pyfusion.NSAMPLES is going to decimate - are you sure?').lower()[0]!='y':
         sys.exit(1)
-    
-pyfusion.reload_config()  # needed for W7M hacks - e.g if ROI is set specially
 
+    
 try:       # this allows usage on systems without all the new url features
     from pyfusion.data.shot_range import shot_range
     from pyfusion.acquisition.W7X.get_shot_info  import get_shot_utc
@@ -80,12 +84,16 @@ save_kwargs = {}
 prefix=''  #'HeliotronJ_'
 local_dir='/tmp'  # safe for linux and windows
 exceptions = Exception  # a single exception or tuple of exceptions to be continued past [] or () will cause pyfusion to stop at the error
-find_kws={}  # e.g. find_kws = "dict(diag=W7X_LTDU_LP20_I)"
+find_kws=None  # to use - simply find_kws={} or  find_kws = "dict(diag=W7X_LTDU_LP20_I)"
 save_in_RAW=1   # save in raw mode by default, so gain is not applied twice.
 diag_name=["W7X_TotECH"] # Use a list - otherwise process_cmd will not accept a list
 """
 exec(_var_defaults)
 exec(process_cmd_line_args())
+
+if dev_name == "W7M":
+    pyfusion.reload_config()  # needed for W7M hacks - e.g if ROI is set specially
+    pyfusion.utils.warn('Resetting the configuration - W7M hack!')
 
 pyfusion.RAW=save_in_RAW  # FUDGE!!! until fixed
 
@@ -139,20 +147,23 @@ else:
     
 for shot_number in shot_list:
     dev = pyfusion.getDevice(dev_name)
+    # if we find the file 'pause' we pause, or if we find 'quit' we quit
     if pause_while(os.path.join(local_dir, 'pause'), check=60) == 'quit':
         break
     else:
         pass
 
     pyfusion.RAW = save_in_RAW  # bdb kludge - fix and remove
-    if find_kws != {}:
+    if find_kws is not None:
         found_utc = find_shot_times(shot=shot_number, **find_kws)
         print('Using threshold detection: {kws}'.format(kws=find_kws))
         if found_utc is None: #  meant (hoped) to find, but failed
             # use the given time range, or if not set, a minimum amount enough to see problem
             this_time_range = time_range if time_range is not None else [-0.15,0.3]
+            print('Could not find plasma on {sh} (find_shot_times) default to + str(this_time_range)'
+                  .format(sh=shot_number))
         else:
-            this_time_range = None  # we have a plasma range, we don't want to fiddle
+            this_time_range = None  # we have found a plasma duration, we don't want to override with time_range
     else:
         found_utc = None
         this_time_range = time_range

@@ -57,7 +57,7 @@ if (time_range is not None and
     (time_range[0] != 0) and
     (abs(time_range[1]/time_range[0]) <= 1) and
     (time_range[1] < time_range[0])):
-    print('Using delta time range in multi channel fetcher ')
+    print('Using delta time range ')
     dt = time_range[1]
     time_range[1]  = time_range[0] + dt
     time_range[0] -= dt

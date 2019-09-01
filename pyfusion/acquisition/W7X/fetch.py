@@ -23,6 +23,7 @@ Would be better to have an example with non-trivial units
 import sys
 import time
 from time import time as seconds
+import httplib  # just to get httplib.IncompleteRead  - is there a better way?
 if sys.version < '3.0.0':
     from future.standard_library import install_aliases
     install_aliases()
@@ -287,13 +288,31 @@ class W7XDataFetcher(BaseDataFetcher):
             #  Some extracts in examples/howtoREST.py
             # dat = json.loads(urlopen(url,timeout=pyfusion.TIMEOUT).read().decode('utf-8'))
             t_pre = seconds()
-            timeout = pyfusion.TIMEOUT
-            txtform = urlopen(url,timeout=timeout).read()
-            t_text = seconds()
-            print('{tm} {tp:.2f} prep, {tt:.2f} fetch, '.
-                  format(tm=time.strftime('%H:%M:%S'), tp=t_pre-t_start, tt=t_text-t_pre)),
-            sys.stdout.flush()
-            dat = json.loads(txtform.decode('utf-8'))
+            # for long shots, adjust strategy and timeout to reduce memory consumption
+            ONE = 4 #  memory conservation tricks only apply for DEBUG<1
+            # Thin allows the cutoff value to be increased in come cases
+            # uncomment the following two for testing the exception handler
+            ## timeout = pyfusion.TIMEOUT 
+            ## raise  httplib.IncompleteRead('test')
+            if ( seg_t_u -  seg_f_u )/1e9 > pyfusion.VERY_LONG:
+                size_MS = 2 * ( seg_t_u -  seg_f_u )/1e9 # approximate - later on calc from dt i.e. MSamples
+                if pyfusion.NSAMPLES !=0:  # allow for subsampled data
+                    size_MS = pyfusion.NSAMPLES/1e6
+                timeout = 8 * size_MS + pyfusion.TIMEOUT #  don't make timeout too small!
+                print('On-the-fly conversion: Setting timeout to {tmo}'
+                      .format(tmo=timeout))
+                dat = json.load(urlopen(url,timeout=timeout))
+                t_text = seconds()
+            else:
+                timeout = pyfusion.TIMEOUT
+                txtform = urlopen(url,timeout=timeout).read()
+                t_text = seconds()
+                print('{tm} {tp:.2f} prep, {tt:.2f} fetch without decode, '.
+                      format(tm=time.strftime('%H:%M:%S'), tp=t_pre-t_start, tt=t_text-t_pre)),
+                sys.stdout.flush()
+                dat = json.loads(txtform.decode('utf-8'))
+                if pyfusion.DEBUG < ONE:
+                    txtform = None  # release memory
             t_conv = seconds()
             #  for 10MS of mirnov 0.06 prep, 9.61 fetch 19.03 conv
             #print('{tp:.2f} prep, {tt:.2f} fetch {tc:.2f} conv'.
@@ -306,12 +325,20 @@ class W7XDataFetcher(BaseDataFetcher):
             print('****** first timeout error, try again with longer timeout  *****')
             timeout *= 3
             dat = json.load(urlopen(url,timeout=timeout))
+        except MemoryError as reason:
+            raise # too dangerous to do anything else except to reraise
+        except httplib.IncompleteRead as reason:
+            msg=str('** IncompleteRead after {tinc:.0f}/{timeout:.0f}s ** on {c}: {u} \n{r}'
+                    .format(tinc=seconds()-t_start, c=self.config_name,
+                            u=url, r=reason, timeout=timeout))
+            pyfusion.logging.error(msg)  # don't want to disturb the original exception, so raise <nothing> i.e. reraise
+            raise # possibly a memory error really? - not the case for 4114 20180912.48
         except Exception as reason:
             if pyfusion.VERBOSE >= 0:
                 print('**** Exception (Memory? out of disk space?) OR timeout of {timeout} **** on {c}: {u} \n{r}'
                       .format(c=self.config_name, u=url, r=reason, timeout=timeout))
 
-            raise
+            raise  # re raises the last exception
 
         # this form will default to repair = 2 for all LP probes.
         #default_repair = -1 if 'Desc.82/' in url else 0
@@ -320,6 +347,9 @@ class W7XDataFetcher(BaseDataFetcher):
         # this form follows the config file settings
         self.repair = int(self.repair) if hasattr(self, 'repair') else default_repair
         dimraw = np.array(dat['dimensions'])  
+        output_data_utc = [dat['dimensions'][0], dat['dimensions'][-1]]
+        if pyfusion.DEBUG < ONE:
+            dat['dimensions'] = None  # release memory
         # adjust dim only (not dim_raw so that zero time remains at t1
         dim = dimraw - utc_0
         # decimation with NSAMPLES will make the timebase look wrong - so disable repair
@@ -350,7 +380,7 @@ class W7XDataFetcher(BaseDataFetcher):
             output_data = TimeseriesData(timebase=Timebase(1e-9*dim),
                                          signal = scl*Signal(dat['values']), channels=ch)
         output_data.meta.update({'shot': self.shot})
-        output_data.utc = [dat['dimensions'][0], dat['dimensions'][-1]]
+        output_data.utc = output_data_utc  #  this copy was saved earlier so we could delete the large array to save space
         output_data.units = dat['units'] if 'units' in dat else ''
         # this is a minor duplication - at least it gets saved via params
         params['data_utc'] = output_data.utc
@@ -359,6 +389,8 @@ class W7XDataFetcher(BaseDataFetcher):
         # and storage as differences takes very little space.
         params['diff_dimraw'] = dimraw
         params['diff_dimraw'][1:] = np.diff(dimraw)
+        if pyfusion.DEBUG < ONE:
+            dimraw = None
         # NOTE!!! need float128 to process dimraw, and cumsum won't return ints
         # or automatically promote to 128bit (neither do simple ops like *, +)
         params['pyfusion_version'] = pyfusion.version.get_version()

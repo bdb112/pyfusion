@@ -2,6 +2,9 @@
 
 General pyfusion version of mini_summary - see mini_summary_MDS for MDSPlus specific version
 
+cd c:/cygwin/home/bobl/pyfusion/working/pyfusion
+echo 'y' | python pyfusion/examples/mini_summary.py shot_list.txt
+
 This version is even more robust - an error looking up
 one diagnostic won't prevent data from being gathered for the others.
 5/sec h1svr 2016
@@ -39,12 +42,15 @@ from time import time as seconds
 import pyfusion
 from six.moves import input
 import json
-
+from pyfusion.utils import process_cmd_line_args, pause_while
+from pyfusion.data.DA_datamining import report_mem
+from matplotlib.mlab import specgram   # this is a non-plotting version
+ 
 from sqlalchemy import create_engine 
 
 devname = 'W7X'
 if 'W7' in devname:
-    sqlfilename = '/tmp/W7X_OP1.2ab_MHD_41243214.sqlite'
+    sqlfilename = 'W7X_OP1.2ab_MHD_4124321436_rev.sqlite'
 else:
     sqlfilename = 'H1.sqlite'
 
@@ -114,14 +120,15 @@ def Peak_abs(x, t, pc=100, return_time=False):
         return xa[max_idx]
     
 def rawPeakSPD(x, t=None, NFFT=1024):  # A power, not amplitude
-    return(np.max(specgram(x, NFFT=NFFT)[0].flatten()))
+    return(np.max(specgram(x, NFFT=NFFT, noverlap=0)[0].flatten()))
 
 def rawPeakSPDtime(x, t=None, NFFT=1024):
     if t is None:
         return None
     spd = specgram(x, NFFT=NFFT, noverlap=0, Fs=1/np.diff(t).mean() )
-    idxs = np.unravel_index(np.argmax(spd[0], axis=None), spd[0].shape)
-    return(sg[2][idxs[0]] + t[0])  # this time will not exactly be in the timebase
+    # Use flatten tomake sure that both dimensions are scanned
+    idxs = np.unravel_index(np.argmax(spd[0].flatten()), spd[0].shape)
+    return(spd[2][idxs[1]] + t[0])  # this time will not exactly be in the timebase
 
 def Peak_signed(x, t, pc=100, return_time=False):
     """ returns the largest in magnitude but with the original sign """
@@ -200,17 +207,24 @@ def Value(x, t):
 metadata = MetaData()
 
 # main
-debug=0
+debug = 0  #  For looping, debug=1 (stops on diag node exception)
+#             might be better to avoid shots being labelled as bad
+took = 0
 #pyfusion.NSAMPLES=2000
 
 
 if len(sys.argv)>1:
-    print('Assuming srange is given in the command line')
+    print('Assuming srange is given in the command line, and ranges start with [ or (')
     try:
-        srange = sys.argv[1]
-        srange = eval(srange)
+        srangestr = sys.argv[1] 
+        if srangestr.startswith('[') or srangestr.startswith('('):
+            srange = eval(srangestr)
+        else:
+            shot_file = os.path.join(dbpath, srangestr)
+            # json.dump(shot_list, open(os.path.join(dbpath, 'shot_list.txt'), 'w'))
+            srange = json.load(open(shot_file, 'r'))
     except Exception as reason:
-        raise ValueError("{r}: \nInput was\n{inp}\nProbably need quotes:\n  Example:\n  run pyfusion/examples/mini_summary 'range(88600,88732)' or  [[20171018,19],[20171018,21]] - no quotes needed if square brackets"
+        raise ValueError("Exception: {r}: \nInput was\n{inp}\nProbably need quotes:\n  Example:\n  run pyfusion/examples/mini_summary 'range(88600,88732)' or  [[20171018,19],[20171018,21]] - no quotes needed if square brackets"
                              .format(r=reason, inp=sys.argv))
 else:
     srange = range(88600,88732)
@@ -310,30 +324,33 @@ diags = ordict(iA = [Float, 'W7X_IPlanar_A', Average, 1],
 diags = ordict()
 
 diags.update(dict(PkrSPD4124time = [Float, 'W7X_MIR_4124', rawPeakSPDtime, 8]))
+
 diags.update(dict(PkrSPD4124 = [Float, 'W7X_MIR_4124', rawPeakSPD, 3]))
 diags.update(dict(Pk4124 = [Float, 'W7X_MIR_4124', Peak, 3]))
 diags.update(dict(Pkt4124 = [Float, 'W7X_MIR_4124', Peaktime, 3]))
 diags.update(dict(Pkr4124 = [Float, 'W7X_MIR_4124', rawPeak, 3]))
 diags.update(dict(Pkrt4124 = [Float, 'W7X_MIR_4124', rawPeaktime, 3]))
-"""
-diags.update(dict(PkrSPD4134time = [Float, 'W7X_MIR_4134', rawPeakSPDtime, 8]))
-diags.update(dict(PkrSPD4134 = [Float, 'W7X_MIR_4134', rawPeakSPD, 3]))
-diags.update(dict(Pk4134 = [Float, 'W7X_MIR_4134', Peak, 3]))
-diags.update(dict(Pkt4134 = [Float, 'W7X_MIR_4134', Peaktime, 3]))
-diags.update(dict(Pkr4134 = [Float, 'W7X_MIR_4134', rawPeak, 3]))
-diags.update(dict(Pkrt4134 = [Float, 'W7X_MIR_4134', rawPeaktime, 3]))
-"""
-diags.update(dict(PkrSPD4132time = [Float, 'W7X_MIR_4132', rawPeakSPDtime, 8]))
-diags.update(dict(PkrSPD4132 = [Float, 'W7X_MIR_4132', rawPeakSPD, 3]))
+
+diags.update(dict(PkrSPD4136time = [Float, 'W7X_MIR_4136', rawPeakSPDtime, 8]))
+diags.update(dict(PkrSPD4136 = [Float, 'W7X_MIR_4136', rawPeakSPD, 3]))
+diags.update(dict(Pk4136 = [Float, 'W7X_MIR_4136', Peak, 3]))
+diags.update(dict(Pkt4136 = [Float, 'W7X_MIR_4136', Peaktime, 3]))
+diags.update(dict(Pkr4136 = [Float, 'W7X_MIR_4136', rawPeak, 3]))
+diags.update(dict(Pkrt4136 = [Float, 'W7X_MIR_4136', rawPeaktime, 3]))
+
+diags.update(dict(PkrSPD4114time = [Float, 'W7X_MIR_4114', rawPeakSPDtime, 8]))
+diags.update(dict(PkrSPD4114 = [Float, 'W7X_MIR_4114', rawPeakSPD, 3]))
 diags.update(dict(Pk4114 = [Float, 'W7X_MIR_4114', Peak, 3]))
 diags.update(dict(Pkt4114 = [Float, 'W7X_MIR_4114', Peaktime, 4]))
 diags.update(dict(Pkr4114 = [Float, 'W7X_MIR_4114', rawPeak, 3]))
 diags.update(dict(Pkrt4114 = [Float, 'W7X_MIR_4114', rawPeaktime, 4]))
+
+diags.update(dict(PkrSPD4132time = [Float, 'W7X_MIR_4132', rawPeakSPDtime, 8]))
+diags.update(dict(PkrSPD4132 = [Float, 'W7X_MIR_4132', rawPeakSPD, 3]))
 diags.update(dict(Pk4132 = [Float, 'W7X_MIR_4132', Peak, 3]))
 diags.update(dict(Pkt4132 = [Float, 'W7X_MIR_4132', Peaktime, 4]))
 diags.update(dict(Pkr4132 = [Float, 'W7X_MIR_4132', rawPeak, 3]))
 diags.update(dict(Pkrt4132 = [Float, 'W7X_MIR_4132', rawPeaktime, 4]))
-
 
 xdiags = dict(imain = [Float, 'need to define in pyfusion.cfg', Value],
              im2 = [Float, '.operations.magnetsupply.lcu.setup_main.i2', Value],
@@ -392,11 +409,17 @@ ins = summ.insert()  # not sure why this is needed?
 #import MDSplus as MDS
 result = conn.execute('select count(*) from summ')
 n = result.fetchone()[0]
-if n> 0:
-    ans = input('database {dbfile} is populated with {n} entries:  Continue?  (y/N)'.format(n=n, dbfile=dbfile))
+if n > 0:
+    print(conn.execute('select shot from summ').fetchall())
+    ans = input('database {dbfile} is populated with {n} entries:  Continue?  (y/N/q=close)'.format(n=n, dbfile=dbfile))
     if len(ans)==0 or ans.lower()[0] == 'n':
         print("Example\n>>> conn.execute('select * from summ order by shot desc limit 1').fetchone()")
+        if ans.lower()[0] == 'q':
+            print('Closing db')
+            conn.close()
         sys.exit()
+
+have_shots=[longsht[0] for longsht in conn.execute('select shot from summ').fetchall()]
 shots = 0
 
 # set these both to () to stop on errors
@@ -415,6 +438,13 @@ The search for valid shot numbers is now much quicker
 start = seconds()
 dev = pyfusion.getDevice(devname)  # 'H1Local')
 if 'W7' in devname:
+    if (len(np.shape(srange)) == 3) or (np.shape(srange) == (2,2)):
+        ansexp = input('About to expand shot range: Continue?  (Y/n/q)')
+        if len(ans)==0 or ans.lower()[0] != 'y':
+            sys.exit()
+    
+    pyfusion.logging.info(str('Starting with {st}, shape is {shp}'
+                              .format(st=srangestr, shp=np.shape(srange))))
     if len(np.shape(srange)) == 3: # a bunch of begin/ends
         srange = [sh for sr in srange for sh in expand_shot_range(*sr)]
     elif np.shape(srange) == (2,2):
@@ -426,19 +456,51 @@ else:
     srange=range(92000,95948)
 print(srange)    
 cache = 3*[None]
+start_mem = report_mem(msg='Entry', prev_values = None)
 # on t440p (83808,86450): # FY14-15 (86451,89155):#(36363,88891): #81399,81402):  #(81600,84084):
-for (ish, sh) in enumerate(srange[::-1]):
+for (ish, sh) in enumerate(srange[::-1]):# may want [::-1] here to see the last first
+    if 1000*sh[0] + sh[1] in have_shots:
+        print('Skipping duplicate {shnum} '.format(shnum=str(sh))),
+        continue
+
+    cur_mem = report_mem(msg='next_shot', prev_values=start_mem, verbose=debug)
+    # if we find the file 'pause' we pause, or if we find 'quit' we quit
+    if pause_while(os.path.join(dbpath, 'pause'), check=2) == 'quit':
+        break
+    else:
+        pass
+
     if 'W7' in devname:
         datdic = dict(shot=sh[0]*1000+sh[1], date=sh[0], sshot=sh[1])
     else:
         datdic = dict(shot=sh)
+
     if (ish % 10) == 0:
         print(sh, end=' ')
+        if 1:  # the 'if' just is an artifice to indent  
+            all_bad = []  # this simple logic gives false goods unless at end 
+            for diag in errs.keys():
+                all_bad.extend(errs[diag])
+            bads = errs
+            url = str(engine.url)
+            shot_numbers = '-'.join([str(shnum).strip() for shnum in [np.sort(srange)[idx] for idx in [0, -1]]])
+            goods = [s for s in srange if s not in all_bad] 
+            save_path = 'tmp' if 'memory' in url else ''
+            pfile = str('{spath}_{s}_{dt}_{fname}.log'
+                        .format(dt=tm.strftime('%Y%m%d%H%M%S'), fname=os.path.split(url)[-1].replace(':','_'), spath=save_path,
+                                s=shot_numbers.replace('(','').replace(')','').replace(']','_').replace('[','_')
+                                .replace(',','_').replace(' ','')))
+
+            print('See bads for {l} errors, also goods ({g}), and in {pfile}'
+                  .format(l=len([b for b in bads.values() if len(b) > 0]), g=len(goods), pfile=pfile))
+            json.dump(dict(bads=bads, goods=goods), open(pfile+'.json','w'))
+
     else: 
-        sys.stderr.write('.')
+        sys.stderr.write('.' + str(sh))
     if (ish % 100) == 0: print('\n<<<{pc:.1f}% complete>>> '.format(pc=100*float(ish)/len(srange)), end='')
 
     shots += 1
+
     try:
         non_special = list(diags.keys())
         # non_special.remove('mirnov_coh')
@@ -451,14 +513,23 @@ for (ish, sh) in enumerate(srange[::-1]):
                 else:
                     typ, node, valfun, dp = diags[diag]
 
-                if (cache[0] == sh) and (cache[1] == node):
+                if (cache[0] is not None) and (cache[0] == sh) and (cache[1] == node):
                     data = cache[2]
                 else:
-                    print('>> no cache for ', cache[0:2], end=', ')
+                    msg = str('>> no memory cache for {diag} on {sh}'
+                              .format(sh=str(cache[0:2]), diag=diag))
+                    print(msg, end=', ')
                     req_time = seconds()
                     data = dev.acq.getdata(sh, node)
+                    if 'npz' not in data.params['source']:
+                        pyfusion.logging.warn(msg.replace('memory', 'npz'))
                     took = seconds() - req_time
-                cache = [sh, node, data.copy()]
+                    print('took ',took)
+                    cache = [sh, node, data.copy()]
+                    # hope to catch memory errors before they happen, but we still catch them is they do
+                    mem_phys, mem_avail, mem_tot = report_mem(msg='after getdata', prev_values=None)
+                    if mem_avail < 4e9:  # 12e9 is good for a test in the W7X VPCs 4e9 might be safe.
+                        raise MemoryError('mem_avail = {mag:.2f}GB'.format(mag=mem_avail/1e9))
                 if hasattr(data, 'timebase'):
                     tb = data.timebase
                     length = tb.max() - tb.min()
@@ -470,9 +541,12 @@ for (ish, sh) in enumerate(srange[::-1]):
                     val = round(val, dp)
                 
                 datdic.update({diag:val})
-            except node_exception, reason:
-                print('Node Exception: ', sh, node, reason)
-                errs[diag].append(sh)
+            except MemoryError as mem_reason:
+                raise MemoryError('Shot {sh}, node {diag}, {mem_reason}'
+                                  .format(sh=sh, diag=diag, mem_reason=mem_reason))
+            except node_exception as reason:
+                print('Node Exception: ', sh, node, reason.__repr__())
+                errs[diag].append(list(sh))
 
         """         
         mtree=MDS.Tree('mirnov',sh)
@@ -486,7 +560,12 @@ for (ish, sh) in enumerate(srange[::-1]):
         except node_exception, reason:    
             errs['mirnov_coh'].append(sh)
         """
-        datdic.update(dict(took = took))
+        datdic.update(dict(took=took)) # warning - these are for the last diag only
+        datdic.update(dict(length=length))
+    except MemoryError as mem_reason:
+        pyfusion.logging.error(str('Memory Error shot {sh}, node {diag} {mr}'
+                                   .format(sh=sh, diag=diag, mr=str(mem_reason))))
+        break
     except shot_exception:
         errs['shot'].append(sh)
     else:  # executed if no exception
@@ -503,8 +582,11 @@ row = result.fetchone()
 #else
 print(conn.execute('select * from summ limit 2').fetchall())
 
-print('\nsample row = {r},\n  as items {it}\n  as dict {d}\n{b} bad/missing shots'
-      .format(r=row, it=row.items(), d=dict(row), b=len(errs['shot'])))
+if row is None:
+    raise LookupError('No data matching the query found - stopped by ./quit ?')
+else:
+    print('\nsample row = {r},\n  as items {it}\n  as dict {d}\n{b} bad/missing shots'
+          .format(r=row, it=row.items(), d=dict(row), b=len(errs['shot'])))
 all_bad = []
 for diag in errs.keys():
     all_bad.extend(errs[diag])
@@ -516,11 +598,11 @@ print('took {s:.1f} sec'.format(s=seconds()-start))
 
 bads = errs
 url = str(engine.url)
-shot_numbers = '-'.join([str(sh).strip() for sh in [np.sort(srange)[idx] for idx in [0, -1]]])
+shot_numbers = '-'.join([str(shnum).strip() for shnum in [np.sort(srange)[idx] for idx in [0, -1]]])
 goods = [s for s in srange if s not in all_bad] 
-save_path = '/tmp/' if 'memory' in url else ''
+save_path = 'tmp' if 'memory' in url else ''
 pfile = str('{spath}_{s}_{dt}_{fname}.log'
-            .format(dt=tm.strftime('%Y%m%d%H%M%S'), fname=os.path.split(url)[-1], spath=save_path,
+            .format(dt=tm.strftime('%Y%m%d%H%M%S'), fname=os.path.split(url)[-1].replace(':','_'), spath=save_path,
                     s=shot_numbers.replace('(','').replace(')','').replace(']','_').replace('[','_')
                     .replace(',','_').replace(' ','')))
 

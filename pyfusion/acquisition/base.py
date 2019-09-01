@@ -96,7 +96,7 @@ def try_fetch_local(input_data, bare_chan, time_range=None):
                 if (ord(ch) - ord('a')) < len(revshot):
                     subdir += revshot[ord(ch) - ord('a')]
                 else:
-                    print('working with MDSplus W7M test shot?')
+                    print('Are we working with MDSplus W7M test shot???', shot)
 
         else:
             subdir = patt
@@ -356,6 +356,7 @@ class BaseAcquisition(object):
         keyword arguments, and the result of the ``fetch`` method of the
         fetcher class is returned.
         """
+        print('fetcher', shot, end=', ')
         if shot is None:
             raise ValueError('Attempt to get data for shot = None')
         if time_range is not None:
@@ -393,7 +394,7 @@ class BaseAcquisition(object):
         # enable stopping here on error to allow traceback if DEBUG>2
         # there is similar code elsewhere - check if is duplication
         if pyfusion.VERBOSE > 2:
-            print('fetcher_class_name = ', fetcher_class_name)
+            print('shot {0}, fetcher_class_name {1} '.format(shot, fetcher_class_name))
             
         fetcher_class.contin = contin
         fetcher_class.time_range = time_range
@@ -639,7 +640,7 @@ class BaseDataFetcher(object):
         if data is None:
             raise LookupError('Data not found dir {cn} on {sh} - set pyfusion.VERBOSE=3 and rerun'
                               .format(sh=str(self.shot), cn =self.config_name)) 
-        print(len(data.signal))
+        print(len(data.signal),' samples', end=', ')
         if len(data.signal) == 0:
             raise LookupError('no samples in time_range of {trg} in {nm}'
                               .format(trg=str(time_range), nm=self.config_name))

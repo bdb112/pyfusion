@@ -115,6 +115,10 @@ def plot_signals(input_data, filename=None, downsamplefactor=1, n_columns=1, hsp
     elif isinstance(sharey, type(max)):  # really want isinstance(sharey, function) but not defined
         raise ValueError('''sharey was set to the function all()! - use sharey=1 or "sharey='all'"''')
 
+    if pyfusion.NSAMPLES > 0 and downsamplefactor != 1:
+        print('Ignoring downsample on already decimated signal')
+        downsamplefactor = 1
+        
     if pyfusion.VERBOSE > 1: print(fun, fun2)
     if ((scale != 1) or (offset != 0)) and fun2 is not None:
         raise ValueError('need fun2 to be None so that scale/offset works')

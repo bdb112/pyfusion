@@ -58,6 +58,14 @@ from pyfusion.debug_ import debug_
 from pyfusion.utils import process_cmd_line_args, pause_while
 from pyfusion.utils.time_utils import utc_ns
 
+try:
+    import psutil
+    def monitor(msg=''):
+        print('***   ', msg, psutil.virtual_memory()[2],'% phys mem  ***', end='..')
+except:
+    def monitor(msg=''):
+        print(' ')
+        
 if hasattr(pyfusion, 'NSAMPLES') and pyfusion.NSAMPLES != 0:
     if input('pyfusion.NSAMPLES is going to decimate - are you sure?').lower()[0]!='y':
         sys.exit(1)
@@ -96,6 +104,7 @@ if dev_name == "W7M":
     pyfusion.utils.warn('Resetting the configuration - W7M hack!')
 
 pyfusion.RAW=save_in_RAW  # FUDGE!!! until fixed
+monitor('start')
 
 if local_dir is not '':
     if not os.path.isdir(local_dir):
@@ -148,7 +157,7 @@ else:
 for shot_number in shot_list:
     dev = pyfusion.getDevice(dev_name)
     # if we find the file 'pause' we pause, or if we find 'quit' we quit
-    if pause_while(os.path.join(local_dir, 'pause'), check=60) == 'quit':
+    if pause_while(os.path.join(local_dir, 'pause'), check=2) == 'quit':
         break
     else:
         pass
@@ -290,11 +299,25 @@ for shot_number in shot_list:
                         sys.exit(1)
                 except exceptions as chan_reason:
                     bads.append((shot_number, diag_chan, chan_reason.__repr__()))
+                finally:
+                    monitor('diag loop before clear')
+                    signal=None  # save memory?
+                    tb=None
+                    data=None
+                    monitor('diag_loop after')
+
             # redundant goods.append((shot_number,'whole thing'))
         except exceptions as reason:
             bads.append((shot_number,'whole thing',reason.__repr__()))
             print('skipping shot {s} because <<{r}>>'.format(r=reason, s=shot_number))
-pfile = str('{s}_{dt}_save_local'
+
+        finally:
+            monitor('shot loop before clear')
+            signal=None  # save memory?
+            tb=None
+            data=None
+            monitor('shot_loop after')
+            pfile = str('{s}_{dt}_save_local'
             .format(dt=tm.strftime('%Y%m%d%H%M%S'), 
                     s=str(shot_number).replace('(','').replace(')','')
                     .replace(',','_').replace(' ','')))

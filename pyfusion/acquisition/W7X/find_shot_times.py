@@ -6,7 +6,7 @@ from pyfusion.debug_ import debug_
 from pyfusion.utils import wait_for_confirmation
 from matplotlib import pyplot as plt
 
-def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin=[.3,.4], debug=0, duty_factor=0.12, exceptions=(LookupError)):
+def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin=[.3,.7], debug=0, duty_factor=0.12, exceptions=(LookupError), nsamples=2000):
     """ Return the actual interesting times in utc for a given shot, 
     based on the given diag.  Use raw data to allow for both 1 and 10 ohm 
       resistors (set above common mode sig)
@@ -31,7 +31,7 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
         wait_for_confirmation('You will not save t1? with margin={m}\n {h}(n/q/y)'
                               .format(m=str(margin),h=__doc__))
     try:
-        pyfusion.NSAMPLES = 2000
+        pyfusion.NSAMPLES = nsamples
         dev.acq.repair = -1
         save_db = pyfusion.DEBUG
         if plt.is_numlike(pyfusion.DEBUG):

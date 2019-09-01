@@ -137,6 +137,12 @@ TIMEOUT = int(os.getenv('PYFUSION_TIMEOUT',
 LAST_DNS_TEST = int(os.getenv('PYFUSION_LAST_DNS_TEST',
                     config.get('global','LAST_DNS_TEST',vars={'LAST_DNS_TEST':'0'})))
 
+# Duration in seconds above which the json file is converted on the fly to 
+# reduce memory usage, important on a 4GB system.  Eventually will be in 
+# units of MSamples.  In such cases timeout is increased by at least 3x
+VERY_LONG = int(os.getenv('PYFUSION_VERY_LONG',
+                    config.get('global','VERY_LONG',vars={'VERY_LONG':'20'})))
+
 # restrict the number of samples to speed up access over slow nets (for debugging of course)
 NSAMPLES = int(os.getenv('PYFUSION_NSAMPLES',
                     config.get('global','NSAMPLES',vars={'NSAMPLES':'0'})))

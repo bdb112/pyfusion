@@ -652,9 +652,9 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, AngName=Non
     pl.show(block=block)
 
 @register("SVDData")
-def svdplot(input_data, fmax=None, hold=0):
+def svdplot(input_data, fmax=None, hold=0, init_but_list=[0,1]):
 
-    if hold==0: pl.clf() # erase the figure, as this is a mult- axis plot
+    if hold==0: pl.clf() # erase the figure, as this is a multi-axis plot
     else: pl.clf() # do it anyway, trying to overcome checkbuttons problem
 
     n_SV = len(input_data.svs)
@@ -683,7 +683,7 @@ def svdplot(input_data, fmax=None, hold=0):
         button_setting_list.append(False)
         
     # have first 2 SVs on as default
-    for i in [0,1]:
+    for i in init_but_list:
         button_setting_list[i] = True
 
         # like "self"
@@ -805,10 +805,11 @@ def svdplot(input_data, fmax=None, hold=0):
         for j in range(len(neg)):
             sub_plot_4_list[j+len(pos)], = ax4.fill(neg[j][0],neg[j][1],col,visible= button_setting_list[sv_i],alpha=0.5)
                 
-        sub_plot_4_list[len(neg)+len(pos)+0], = ax4.plot(angle_array,tmp_topo,'%so' %(col),visible= button_setting_list[sv_i],markersize=3)
+        sub_plot_4_list[len(neg)+len(pos)+0], = ax4.plot(angle_array,tmp_topo,'%so' %(col),visible= button_setting_list[sv_i],markersize=3,label=['', 'Topo {svi}'.format(svi=sv_i)][button_setting_list[sv_i]])
         # show repeated val
         sub_plot_4_list[len(neg)+len(pos)+1], = ax4.plot([angle_array[-1]],[tmp_topo[-1]],'kx', visible= button_setting_list[sv_i],markersize=6)
         debug_(pyfusion.DEBUG, 2, key='svdplot')
+        ax4.legend(frameon=0, fontsize='small')
         plot_list_4.append(sub_plot_4_list)
 
     def test_action(label):
@@ -837,7 +838,9 @@ def svdplot(input_data, fmax=None, hold=0):
 
     # show plot
     pl.show(block=hold)
-
+    ax_list=[ax1, ax2, ax3, ax4]
+    return(ax_list)
+    
 
 
 @register("SVDData")

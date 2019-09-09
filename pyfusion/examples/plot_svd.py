@@ -85,6 +85,7 @@ AngName=None  # need 'AngName="Phi"'
 offset=0   # the approx delta phase expected (helps check aliasing)
 
 scales=None #[1,1,-1,1,-1,1]
+init_but_list = [0,1]
 verbose=0
 max_fs = 2
 shot_number = None
@@ -153,7 +154,7 @@ else:
 
 if start_time is None:
     sv = d.svd()
-    sv.svdplot(hold=hold)
+    sv.svdplot(hold=hold, init_but_list=init_but_list)
 
 else:
     # first copy the segments into a list, so they can be addressed
@@ -174,12 +175,12 @@ else:
             if (normalise != 0) and (normalise != '0'): 
 # the old code used to change seg, even at the beginning of a long chain.
                 seg_proc=seg.subtract_mean().normalise(normalise,separate)
-                outsvd=seg_proc.svd()
-                outsvd.svdplot(hold=hold)
             else: 
                 seg_proc=seg.subtract_mean()
-                outsvd=seg_proc.svd()
-                outsvd.svdplot(hold=hold)
+
+            outsvd=seg_proc.svd()
+            ax_list = outsvd.svdplot(hold=hold, init_but_list=init_but_list)
+
             try: # plotting mag
                 if verbose: print(outsvd.history)
                 if plot_mag and (seg_proc.scales is not None):

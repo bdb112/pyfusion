@@ -640,7 +640,7 @@ class BaseDataFetcher(object):
         if data is None:
             raise LookupError('Data not found dir {cn} on {sh} - set pyfusion.VERBOSE=3 and rerun'
                               .format(sh=str(self.shot), cn =self.config_name)) 
-        print(len(data.signal),' samples', end=', ')
+        print'{nsam:,d} samples'.format(nsam=len(data.signal)), end=', ')  # comma format
         if len(data.signal) == 0:
             raise LookupError('no samples in time_range of {trg} in {nm}'
                               .format(trg=str(time_range), nm=self.config_name))
@@ -817,7 +817,7 @@ class MultiChannelFetcher(BaseDataFetcher):
                     #dtclock = 2000 if self.shot[0] < 20170101 else 1/0
                     dts, counts = np.unique(np.diff(ch_data.timebase),return_counts=True)
                     dtclock = int(round(dts[counts.argmax()] * 1e9))
-                    print('dtclock = {dt}ns'.format(dt=dtclock))
+                    print('dtclock = {dt}ns'.format(dt=dtclock), end=',' )
                     if self.shot[0] < 20170101 and (dtclock != 2000):
                         pyfusion.logger.warning('Unexpected clock period {dtclock} on shot {s}'
                                                 .format(dtclock=dtclock, s = str(shot)))

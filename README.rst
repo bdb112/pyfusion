@@ -14,6 +14,12 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+ * Add dmusic, plot_dmusic, and add fake coords to W7X_MIRNOV
+ * dmusic routine now confirmed against matlab version, and modified to be a more useful subroutine, with debug, plot
+ * plot_svd - optional initialisation of buttons returns list of axes for post-manipulation
+ * modify.cfg code for fake mirnov cleaned up
+ * pyfusion.cfg put fake coordinates in, a couple more collections of mirnov 41
+
 Version 0.993 Op1.2b 
  * Bring in/debug many improvements in W7X fetch and save_to_local (rationalised logic, improved repair)
  * add get_W7X_shot_list (bin and python wrapper)

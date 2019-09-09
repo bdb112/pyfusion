@@ -30,6 +30,11 @@ pseudo variable 'rowid' allows you to plot by occurence rather than shot, so no 
 #   using 'as' in sql to plot kappas as extra mirnovs (m00x and m17x)
   run pyfusion/examples/sql_plot.py 'kh_req,\*,(kh_req-0.72)*20 as m00x,kappa_V as m17x' "_from=combsum" '_where="shot between 100400 and 100435"' swapwild='m[0-1][0-9]x$'  _order='kappa_v,kh_req'
 
+example of sqlite3
+.headers on
+.mode column
+.width 1 10 5 5 5 4 11 11 8 8 8 8 8 8 8 8 8 8 8 8 8 8
+select * from summ where PkrSPD4124time > 0 order by PkrSPD4124 desc limit 30;
 
 """
 from six.moves import input
@@ -62,7 +67,7 @@ db_url='sqlite:////data/summary.db' # or
 #db_url='sqlite:////rmt/h1svr/home/datasys/virtualenvs/h1ds_production/h1ds/h1ds/db/summary.db' 
 split=5 # if >0, split lines according to the column which has the fewest unique values - if split=5, only do it is there are 5 unique values or less. This typically changes the symbol shape between that column (secondary variable) but keeps colours of the primary columns the
 
-def __hxelp__():
+def __help__():
     print('local help routine for sqlplot, defined in _var_defaults')
 fig=None
 plkw={} #  "plkw=dict(color='g')"

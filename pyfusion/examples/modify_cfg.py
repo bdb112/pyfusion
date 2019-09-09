@@ -41,14 +41,19 @@ attr_filename = 'pyfusion/acquisition/HeliotronJ/BES_data.txt'
 attr_dtype=[('name','S20'), ('X','f'), ('Y','f'), ('Z','f')]
 attr_fmt = 'coords_reduced = {x:.5f}, {y:.5f}, {z:.5f}\n'
 
-attr = 'quasi_toroidal_coords_QXM41'
-target = '^\[Diagnostic:W7X_MIR_[2][0-9][0-9]0\]'
-attr_filename = 'pyfusion/acquisition/W7X/QXM41_data.txt    '
+# attr = 'quasi toroidal coords QXM41'  # just a line to indicate start of this data
+attr = 'fake coords_reduced QXM41'  # just a line to indicate start of this data
+target = '^\[Diagnostic:W7X_MIR_[4][0-9][0-9][0-9]\]'
+attr_filename = 'pyfusion/acquisition/W7X/QXM41_data.txt'
 attr_dtype=[('name','S20'), ('X','f'), ('Y','f'), ('Z','f')]
 attr_fmt = 'coords_reduced = {x:.5f}, {y:.5f}, {z:.5f}\n'
 
 
-if 'oord' in attr:
+if 'coords_reduced' in attr:
+    def attr_dict(dat):
+        r2d = 180/np.pi
+        return(dict(x=dat['X']/r2d, y=dat['Y']/r2d, z=dat['Z']/r2d))
+elif 'oord' in attr:
     def attr_dict(dat):
         return(dict(x=dat['X']/1e3, y=dat['Y']/1e3, z=dat['Z']/1e3))
 elif 'area' in attr:
@@ -97,7 +102,7 @@ while i < len(clines)-1:
        if (i >= len(clines)):
            break
     else:
-        if 'BES' not in attr_filename:
+        if 'BES' not in attr_filename and 'QXM' not in attr_filename:
             toks = clines[i].strip().split('_')
             if 'TDU' in attr_filename:
                 seg = toks[1][0]
@@ -111,13 +116,15 @@ while i < len(clines)-1:
                 l = np.where((dat['seg'] == seg) & (dat['name'] == 'Sonde_{p}.1 (Spitze)'.format(p=probe)))[0]
             elif 'TDU' in attr_filename:
                 print(seg, i)
-                #  51 is the Upper TDU
+                #  51 is the Upper TDU - not sure if I used the QRP5 ever?
                 Qname = 'QRP5{s}CE1{probe:02d}'.format(s=[0,1][seg=='U'], probe=probe)
                 l = np.where(dat['name'] == Qname)[0]
             else:
                 l = np.where(dat['name'] == clines[i].split(':')[1].split(']')[0])[0]
         else:
-            probe = clines[i].strip().split('_', 1)[1].split(']')[0]
+            probe = clines[i].strip().split('tic:', 1)[1].split(']')[0]
+            if 'BES' in attr_filename:
+                probe = probe.split('_')[1]
             seg = None
             l = np.where(dat['name'] == probe)[0]
             
@@ -147,5 +154,6 @@ print('final length {l}, {e} extra'.format(l=len(clines),e=len(clines)-initial))
 with open('pyfusion.cfg.new','wb') as outfile:
     outfile.writelines(clines)
 
+print(outfile.name)
 # W7-X Koordinatensystem
 

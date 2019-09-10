@@ -562,7 +562,7 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, AngName=Non
     min_length = max(1,40/len(input_data.channels))    
     # min_length - min_length???
     short_names_1,p,s = split_names(ch1n, min_length=2)  # need to break up loops to do this
-    short_names_2,p,s = split_names(ch2n, min_length=5)  # 
+    short_names_2,p,s = split_names(ch2n, min_length=4)  # used to be 5
 
 # need to know how big the shortened names are before deciding on the separator
     if (2*len(input_data.dphase)*(2+len(short_names_1[0])))> max_chars:
@@ -615,14 +615,17 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, AngName=Non
     if AngName is not 'Phi' and len(np.unique(Theta)) > 1:
         AngName = 'Theta'
         Ang = Theta
-        dAngfor1 = np.pi/13  #dAngfor1 is the average coil dph for M=1
+        dAngformeq1 = np.pi/13  #dAngformeq1 is the average coil dph for M=1
         span = (np.pi)/13  # span is the average coil spacing in radians
     else:
         AngName = 'Phi'
         Ang = Phi
-        dAngfor1 = (2*np.pi)/6
+        dAngformeq1 = (2*np.pi)/6  # seems hardwired for LHD or shaun??
         span = 2*np.pi/6
         
+    if closed:
+        dAngformeq1 = (2*np.pi)/len(Ang)  # bdb 2019 - overide if closed
+        span = dAngformeq1  # why two veraible for the same thing - are they same?
     # expect Phi from ~.2 to twopi+.2 (if closed)
     Angfix = fix2pi_skips(Ang,around=3.5)
 
@@ -630,12 +633,13 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, AngName=Non
     # increase monotonically - the raw numbers in .cfg may not start at zero 
     # need to make sure the right dp is divided by the right dPhi!
     ax.plot(fix2pi_skips(Angfix[0:-1],around=np.pi),dp/np.diff(Angfix)*span,
-            '+-',label='dp/d'+AngName[0])
+            '+-',label='dp/d'+AngName[0],lw=0.2,)
     ax.plot(fix2pi_skips(Angfix[0:-1],around=np.pi),dp,'o-', label='d'+AngName)
     ax.set_xlim([ax.get_xlim()[0],
                  ax.get_xlim()[1]+np.average(np.diff(Angfix))])
     ax.plot(ax.get_xlim(),[0,0],':k',linewidth=0.5)
-    for N in (-3,-2,-1,1,2,3): ax.plot(ax.get_xlim(),[N*dAngfor1,N*dAngfor1],':r',linewidth=0.5)
+    for N in (-3,-2,-1,1,2,3): ax.plot(ax.get_xlim(),[N*dAngformeq1,N*dAngformeq1],':m',
+                                       linewidth=0.2, label=['','~dth(m=1)'][N==1])
     tot=np.sum(dp)
     over = Angfix[-1] - Angfix[0]
     print(tot)
@@ -648,7 +652,10 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, AngName=Non
     debug_(pyfusion.DEBUG, 1, key='fs_phase')
     #ax.set_xticks(range(len(dp)))
     ax.set_xticks(Angfix)
-    ax.set_xticklabels(short_ch21n)
+    # think this out better - e.g. this 128 should be adjusted according to max_chars
+    ax.set_xticklabels(short_ch21n, fontsize=min(128//len(short_ch21n),10),
+                       rotation=['horizontal','vertical'][len(Angfix)>8])
+    print('block = ', block)
     pl.show(block=block)
 
 @register("SVDData")
@@ -809,7 +816,7 @@ def svdplot(input_data, fmax=None, hold=0, init_but_list=[0,1]):
         # show repeated val
         sub_plot_4_list[len(neg)+len(pos)+1], = ax4.plot([angle_array[-1]],[tmp_topo[-1]],'kx', visible= button_setting_list[sv_i],markersize=6)
         debug_(pyfusion.DEBUG, 2, key='svdplot')
-        ax4.legend(frameon=0, fontsize='small')
+        ax4.legend(frameon=0, fontsize='xx-small', loc='best')
         plot_list_4.append(sub_plot_4_list)
 
     def test_action(label):

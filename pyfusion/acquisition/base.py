@@ -640,7 +640,7 @@ class BaseDataFetcher(object):
         if data is None:
             raise LookupError('Data not found dir {cn} on {sh} - set pyfusion.VERBOSE=3 and rerun'
                               .format(sh=str(self.shot), cn =self.config_name)) 
-        print'{nsam:,d} samples'.format(nsam=len(data.signal)), end=', ')  # comma format
+        print('{nsam:,d} samples'.format(nsam=len(data.signal)), end=', ')  # comma format
         if len(data.signal) == 0:
             raise LookupError('no samples in time_range of {trg} in {nm}'
                               .format(trg=str(time_range), nm=self.config_name))

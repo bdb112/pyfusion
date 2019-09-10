@@ -45,16 +45,27 @@ for (isig, sig) in enumerate(seg.signal):
     except:
         continue
     ls = ['-', '--', ':', '-.'][(isig // 7) % 4]
-    axp.plot(freqs[fsel]/1e3, np.angle(FT[fsel]), ls=ls, label=seg.channels[isig].name.split('_',1)[-1])
+    label=seg.channels[isig].name.split('_',1)[-1]
+    axp.plot(freqs[fsel]/1e3, np.angle(FT[fsel]), ls=ls, label=label) 
     # axp.plot(freqs[fsel]/1e3, 2*np.pi + np.angle(FT[fsel]), color=axp.get_lines()[-1].get_color())
-    axa.plot(freqs[fsel]/1e3, np.abs(FT[fsel]), ls=ls, color=axp.get_lines()[-1].get_color())
-axp.legend(fontsize='small')
-
+    axa.plot(freqs[fsel]/1e3, np.abs(FT[fsel]), ls=ls, label=label, color=axp.get_lines()[-1].get_color())
+axa.legend(fontsize='xx-small', loc='best',ncol=1 + len(isigs)//8)  # put legend on amplitude plot as it has more room
+fig.suptitle('Shot {sh}: {di}, <t>={tavg:.4g}, dt={dt}'
+             .format(sh=str(shot_number), di=diag_name, dt=dt, tavg=np.average(seg.timebase)))
+axparray.set_xlabel('<t>={tavg:.4g} dt={dt}'
+                    .format(sh=str(shot_number), di=diag_name, dt=dt, tavg=np.average(seg.timebase)))
 
 plt.show()
 
 
-def plot_array_phase(freq, ax=plt.gca(), fixp=0, phase_ref=0):
+def plot_array_phase(freq, ax=plt.gca(), fixp=False, ref_probe=0, ref_offset=0):
+    """  Warning - this really should have FS passed as an arg
+    Also, to fix 2Pi skips - if there are a number of noisy graphs that 
+    should be similar.  Chose the 2pi skip that keeps a graph closest to 
+    an already processed one (or the ensemble average?) (how??)
+
+    """
+
     if not isinstance(freq, int):
         findex = np.argsort(np.abs(freqs - freq))[0]
         print('freq {freq} index {findex}'.format(**locals())),
@@ -62,13 +73,12 @@ def plot_array_phase(freq, ax=plt.gca(), fixp=0, phase_ref=0):
         findex = freq
 
     phaselist_orig = [np.angle(FTs[isig][findex]) for isig in isigs]
-    phaselist = np.copy(phaselist_orig)  # save the origina for debugging
+    phaselist = np.copy(phaselist_orig)  # save the original for debugging
 
     phaselist = fix2pi_skips(phaselist) if fixp else phaselist
-    phaselist = phaselist - phaselist[phase_ref] if phase_ref > -999 else phaselist
-    
-    ax.plot(phaselist, label=str('{f:.1f}kHz'.format(f=freqs[findex])))
-    ax.legend(fontsize='small')
+    phaselist = phaselist - phaselist[ref_probe] if ref_probe > -999 else phaselist
+    if (ref_probe) > -999 and (not fixp):  #  use mod2pi to
+        phaselist = modtwopi(phaselist, offset=ref_offset)
+    ax.plot(phaselist, label=str('{f:.1f}kHz'.format(f=freqs[findex]/1e3)))
+    ax.legend(fontsize='xx-small', loc='best',ncol=1 + min(3, len(isigs)//6))
     plt.show()
-
-        

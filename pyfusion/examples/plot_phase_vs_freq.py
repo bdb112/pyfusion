@@ -42,13 +42,13 @@ for (isig, sig) in enumerate(seg.signal):
         FT = np.fft.fft(sig)
         FTs.append(FT)
         isigs.append(isig)
-    except:
+    except:  # for nonexistent signal 
         continue
-    ls = ['-', '--', ':', '-.'][(isig // 7) % 4]
+    linestyle = ['-', '--', ':', '-.'][(isig // 7) % 4]
     label=seg.channels[isig].name.split('_',1)[-1]
-    axp.plot(freqs[fsel]/1e3, np.angle(FT[fsel]), ls=ls, label=label) 
+    axp.plot(freqs[fsel]/1e3, np.angle(FT[fsel]), ls=linestyle, label=label) 
     # axp.plot(freqs[fsel]/1e3, 2*np.pi + np.angle(FT[fsel]), color=axp.get_lines()[-1].get_color())
-    axa.plot(freqs[fsel]/1e3, np.abs(FT[fsel]), ls=ls, label=label, color=axp.get_lines()[-1].get_color())
+    axa.plot(freqs[fsel]/1e3, np.abs(FT[fsel]), ls=linestyle, label=label, color=axp.get_lines()[-1].get_color())
 axa.legend(fontsize='xx-small', loc='best',ncol=1 + len(isigs)//8)  # put legend on amplitude plot as it has more room
 fig.suptitle('Shot {sh}: {di}, <t>={tavg:.4g}, dt={dt}'
              .format(sh=str(shot_number), di=diag_name, dt=dt, tavg=np.average(seg.timebase)))
@@ -61,12 +61,12 @@ plt.show()
 def plot_array_phase(freq, ax=plt.gca(), fixp=False, ref_probe=0, ref_offset=0):
     """  Warning - this really should have FS passed as an arg
     Also, to fix 2Pi skips - if there are a number of noisy graphs that 
-    should be similar.  Chose the 2pi skip that keeps a graph closest to 
+    should be similar.  Choose the 2pi skip that keeps a graph closest to 
     an already processed one (or the ensemble average?) (how??)
 
     """
 
-    if not isinstance(freq, int):
+    if not isinstance(freq, int):  # convert reals to the corresponding index
         findex = np.argsort(np.abs(freqs - freq))[0]
         print('freq {freq} index {findex}'.format(**locals())),
     else:

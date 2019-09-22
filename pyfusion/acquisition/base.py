@@ -186,7 +186,7 @@ def try_fetch_local(input_data, bare_chan, time_range=None):
         output_data.utc = [output_data.utc[i] + (newbnds[i] - origbnds[i]).round(0) for i in range(2)]
         print(output_data.utc)
 
-    oldsrc =  ', originally from ' + output_data.params['source'] if 'source' in output_data.params else ''
+    oldsrc =  ', originally from ' + output_data.params['source'] if hasattr(output_data, 'params') and 'source' in output_data.params else ''
     output_data.params.update(dict(source='from npz cache' + oldsrc))
     return(output_data)
 

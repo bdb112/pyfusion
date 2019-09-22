@@ -48,6 +48,15 @@ attr_filename = 'pyfusion/acquisition/W7X/QXM41_data.txt'
 attr_dtype=[('name','S20'), ('X','f'), ('Y','f'), ('Z','f')]
 attr_fmt = 'coords_reduced = {x:.5f}, {y:.5f}, {z:.5f}\n'
 
+# Note: pyfusion.cfg file has the x,y,z coords, but is used at present with
+# equal intervals in theta as a first approx via /QXM41_data.txt'  
+# attr = 'quasi toroidal coords QXM41'  # just a line to indicate start of this data
+attr = 'coords_w7-x-koord for QXM41 from Kian 9/2019'  # just a line to indicate start of this data
+target = '^\[Diagnostic:W7X_MIR_[4][0-9][0-9][0-9]\]'
+attr_filename = 'pyfusion/acquisition/W7X/QXM_xyz_data.txt'
+attr_dtype=[('name','S20'), ('X','f'), ('Y','f'), ('Z','f')]
+attr_fmt = 'coords_w7-x-koord = {x:.5f}, {y:.5f}, {z:.5f}\n'
+
 
 if 'coords_reduced' in attr:
     def attr_dict(dat):
@@ -121,6 +130,11 @@ while i < len(clines)-1:
                 l = np.where(dat['name'] == Qname)[0]
             else:
                 l = np.where(dat['name'] == clines[i].split(':')[1].split(']')[0])[0]
+        elif 'QXM' in attr_filename:
+            seg = None
+            probe = clines[i].strip().split('tic:', 1)[1].split(']')[0]
+            Qname = 'QXM{hs}CE{pnum}0'.format(hs=probe[-4:-2], pnum=probe[-2:])
+            l = np.where(dat['name'] == Qname)[0]
         else:
             probe = clines[i].strip().split('tic:', 1)[1].split(']')[0]
             if 'BES' in attr_filename:

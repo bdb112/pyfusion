@@ -223,7 +223,7 @@ for (cnt, shot) in enumerate(shot_range):
                             # caused apparent duplicate times
                             # Aug 12 2013 - changed amp to sqrt(f)*RMS scale - like plot_svd.
                             SV_fmt = "{{0:{w}b}}".format(w=2+n_channels)
-                            write ("%d %8.5g %s %6.3g %6.5f %.2f %.3f %.3f %5.1f %5.1f %5.1f %5.1f %s\n" % (
+                            write ("%8d %9.5g %s %7.3g %6.5f %.2f %.3f %.3f %5.1f %5.1f %5.1f %5.1f %s\n" % (
                                     #shot, fs.t0, "{0:11b}".format(fs._binary_svs), 
                                     s_shot, fs.t0-toff, SV_fmt.format(fs._binary_svs), 
                                     fs.freq/1000., sqrt(fs.p)*RMS_scale, # was sqrt(fs.E*fs.p)*RMS_scale see above

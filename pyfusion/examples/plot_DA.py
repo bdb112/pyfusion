@@ -21,12 +21,17 @@ else:
     if os.path.split(filename)[1] == filename:
         print(os.getcwd(), end='')
     print(filename)
-    if len(sys.argv) > 2:
-        key = sys.argv[2]
-    else:
-        key = 'ne18'
 
     da = DA(filename, load=1)
+    if len(sys.argv) > 2:
+        key = sys.argv[2]
+    elif 'ne18' in da:
+        key = 'ne18'
+    elif 'phases' in da:
+        key = 'phases'
+    else:
+        raise LookupError('Keys available are: ' + str(list(da)))
+
     da.plot(key)
     if 'info' in da:
         pprint.pprint(da['info'])

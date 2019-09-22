@@ -1,12 +1,20 @@
 #!/bin/bash
-#return the shot numbers of all the W7X data in the pwd (or the first arg) and below it
-helpstr="Usage: get_W7X_shotnums <dir> <diag>\n  e.g. get_W7X_shotnums . W7X_MIR "
+# print the shot numbers of all the W7X data in the pwd (or the first arg) and
+#  below it
+helpstr="Usage: get_W7X_shotnums <dir> <diag>\n  e.g. get_W7X_shotnums . W7X_MIR     \"[%d,%d],\" to get list format (quote the quotes  \\\"[%d etc "
+# here is the FMT example as typed in !python
+# !pyfusion/bin/get_W7X_shotnums /data/datamining/local_data/W7X/short/ MIR_4136 \"[%d,%d].\"
+#
 if [ $# -lt 1 ]; then
     echo $helpstr;
     exit 96;
 fi
 DIAG=${2:-"W7X"}
+FMT=${3:-"\"%d,%d\\n\""}
 # echo 'look in ' $1 for $DIAG
 pushd ${1} >> /dev/null
-ls -RL |awk -F_ ' /'$DIAG'/ {printf "%d,%d\n", $1,$2}'|sort -n|uniq
+# this line is the simple way (but it works)
+# ls -RL |awk -F_ ' /'$DIAG'/ {printf "%d,%d\n", $1,$2}'|sort -n|uniq
+# this is the more flexible way
+ls -RL |awk -F_ ' /'$DIAG'/ {printf '${FMT}', $1,$2}'|sort -n|uniq
 popd >> /dev/null

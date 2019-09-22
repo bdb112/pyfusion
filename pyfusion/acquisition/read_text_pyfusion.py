@@ -75,6 +75,12 @@ def find_data(file, target, skip = 0, recursion_level=0, debug=0):
                       'target {t} not found in file {f}'.
                       format(t=target, f=file))
 
+def plot_fs_DA(ds, hold=1, ms=100):
+    if hold == 0: pl.clf() # for the colorbar()
+    pl.scatter(ds['t_mid'],ds['freq'],ms*ds['a12'],ds['amp'])
+    pl.title('{s}, colour is amp, size is a12'.format(s=ds['shot'][0]))
+    pl.colorbar()
+
 
 def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinteractive(), ms=100, hold=0, debug=0, quiet=1,  maxcpu=1, exception = Exception):
     """ Accepts a file or a list of files, returns a list of structured arrays
@@ -127,6 +133,7 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
             # is the first character of the 2nd last a digit?
             if header_toks[phase_offs][0] in b'0123456789': 
                 if pyfusion.VERBOSE > 0: 
+                    print('header toks', header_toks)
                     print('found new header including number of phases')
                 n_phases = int(header_toks[phase_offs])
                 ph_dtype = [('p{n}{np1}'.format(n=n,np1=n+1), f) for n in range(n_phases)]
@@ -174,13 +181,10 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
             traceback.print_exc()
     print("{c} out of {t} files".format(c=count, t=len(file_list)))
     if plot>0 and len(ds_list)>0: 
-        ds = ds_list[0]
-        if hold == 0: pl.clf() # for the colorbar()
-        pl.scatter(ds['t_mid'],ds['freq'],ms*ds['a12'],ds['amp'])
-        pl.title('{s}, colour is amp, size is a12'.format(s=ds['shot'][0]))
-        pl.colorbar()
+        plot_fs_DA(ds_list[0], ms=ms)
     return(ds_list, comment_list)
 
+            
 def merge_ds(ds_list, comment_list=[], old_dd=None, debug=True, force=False):
     """ Take a list of structured arrays, and merge into one
     Adding to an existing dd is not fully tested - may be memory intensive

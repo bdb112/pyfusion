@@ -14,6 +14,13 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+ * fixes to get old datamining going - read_text_pyfusion, gen_fs_bands formatted better for long times
+ * bin/get_W7X_shotnums more flexible  examples/get_W7X_shotlist.py to find whuch shots for which diags
+ * modify.cfg now accesses kain's data, but we are using an equal angle fudge for now 
+ * add examples/full_processing_example_script.py
+ * find_cluster_members - a really crude cluster finder.
+ * visual/nicer_log_axis.py remove some of the clutter in manissa
+
  * Add dmusic, plot_dmusic, and add fake coords to W7X_MIRNOV
  * dmusic routine now confirmed against matlab version, and modified to be a more useful subroutine, with debug, plot
  * plot_svd - optional initialisation of buttons returns list of axes for post-manipulation

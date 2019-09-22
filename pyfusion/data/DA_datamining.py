@@ -979,7 +979,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         if 'channels' in self.infodict:
             labs = self.infodict['channels']
         else:
-            labs = [str(ch for ch in range(nchans))]
+            labs = [str(ch) for ch in range(nchans)]
         if axlist is not None:
             axs = axlist
             fig = plt.gcf()

@@ -1,5 +1,5 @@
 import pyfusion
-from pyfusion.acquisition.read_text_pyfusion import read_text_pyfusion, merge_ds
+from pyfusion.acquisition.read_text_pyfusion import read_text_pyfusion, plot_fs_DA, merge_ds
 from glob import glob
 import numpy as np
 from pyfusion.debug_ import debug_

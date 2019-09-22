@@ -30,11 +30,16 @@ pseudo variable 'rowid' allows you to plot by occurence rather than shot, so no 
 #   using 'as' in sql to plot kappas as extra mirnovs (m00x and m17x)
   run pyfusion/examples/sql_plot.py 'kh_req,\*,(kh_req-0.72)*20 as m00x,kappa_V as m17x' "_from=combsum" '_where="shot between 100400 and 100435"' swapwild='m[0-1][0-9]x$'  _order='kappa_v,kh_req'
 
+# Nice profile of spectral power density of the 10 biggest sum signals
+run  pyfusion/examples/sql_plot.py  db_url='sqlite:///W7X_MIR/W7X_OP1.2ab_MHD_4124321436_rev.sqlite' table='summ' _select='select shot, date-20180800+sshot*.01,  *, PkrSPD4124, -PkrSPD4124time/1e8 as time24, PkrSPD4132' _where='where 1' _order='order by PkrSPD4114+PkrSPD4124+PkrSPD4132+PkrSPD4136 desc limit 10' split=0 plabel=shot colors='rrggcc' mrk='s-/s/^-/^/*-/*/*' maxplabels=100 swapwild='PkrS.*[0-9]$'
+
+
+
 example of sqlite3
 .headers on
 .mode column
-.width 1 10 5 5 5 4 11 11 8 8 8 8 8 8 8 8 8 8 8 8 8 8
-select * from summ where PkrSPD4124time > 0 order by PkrSPD4124 desc limit 30;
+.width 1 8 3 3 3 1 11 10 6 7 7 8 11 10 6 7 7 8 11 10 6 7 7 8 11 10 6 7 7 8
+select * from summ where 1 order by PkrSPD4114+PkrSPD4124+PkrSPD4132+PkrSPD4136 desc limit 30;
 
 """
 from six.moves import input
@@ -208,7 +213,7 @@ if swapwild != '':  # plot columns across x axis
                               origin='lower', extent=extent)
     ax_xy.set_xticks(np.array(range(len(names))))
     ax_im.set_xticks(0.5 + np.array(range(len(names))))
-    ax_im.set_ylabel('y axis not linear')
+    ax_im.set_ylabel('y axis not linear\n (actually row num)')
     for ax in [ax_xy, ax_im]:
         ax.set_xticklabels(sorted_names, rotation=90, fontsize='small')
     plt.colorbar(matim_axim, ax=(ax_im, ax_xy))

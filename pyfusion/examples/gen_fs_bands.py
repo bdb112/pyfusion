@@ -35,7 +35,9 @@ import sys
 from time import sleep, time as seconds
 import os
 from pyfusion.data.utils import find_signal_spectral_peaks, subdivide_interval
-from pyfusion.data.pyfusion_sigproc import find_shot_times
+#from pyfusion.data.pyfusion_sigproc import find_shot_times
+from pyfusion.acquisition.W7X.find_shot_times import find_shot_times
+from numpy.linalg import LinAlgError
 
 # implement some extras from gen_fs_local
 def timeinfo(message, outstream=sys.stdout):
@@ -48,7 +50,10 @@ def timeinfo(message, outstream=sys.stdout):
         st = seconds()
         st_0 = seconds()
         return
-    outstream.writelines("Time: {m} in {dt:.2f}/{t:.2f}\n".format(m=message, dt=dt, t=seconds()-st_0))
+    msgstr = str("Time: {m} in {dt:.2f}/{t:.2f}\n"
+                 .format(m=message, dt=dt, t=seconds()-st_0))
+    outstream.writelines(msgstr)
+    pyfusion.logging.info(msgstr)
     st = seconds()
     return
 
@@ -102,6 +107,7 @@ else:
     fd = open(outfile, 'w+')
     write = fd.write
     close = fd.close
+    flush = fd.flush
 
 count = 0  #  we print the header right before the first data
 raw_count = 0
@@ -120,16 +126,26 @@ for (cnt, shot) in enumerate(shot_range):
         sleep(int(20*(1+random.uniform())))  # wait 20-40 secs, so they don't all start together
 
     timeinfo('start shot {s}'.format(s=shot))
+    if type(time_range) == str and  'find' in time_range:  # OK for all npz data
+        this_time_range = find_shot_times(shot, margin=[0,0],
+                                          secs_rel_t1='secs_rel_t1' in time_range)
+        if this_time_range is None:
+            continue
+    else:
+        this_time_range = time_range
+    print('this_time_range = ', this_time_range)
     try:
-        d = dev.acq.getdata(shot, diag_name)
+        d = dev.acq.getdata(shot, diag_name, time_range=this_time_range)
         timeinfo('data read')
+        if 'diff_dimraw' in d.params:
+            d.params['diff_dimraw'] = None # save space
         try:
             n_channels = len(d.channels)
         except:
             raise LookupError('{dn} is not a multi_channel diagnostic'
                               .format(dn=diag_name))
 
-        dt = np.average(np.diff(d.timebase))
+        dt = np.nanmean(np.diff(d.timebase))
         if n_samples is None:
             n_samples = next_nice_number(seg_dt/dt)
             write('Choosing {N} samples to cover {seg_dt}\n'
@@ -140,9 +156,16 @@ for (cnt, shot) in enumerate(shot_range):
             sys.stderr.writelines('########### Warning: n_samples ({ns}) > n_samples_max ({nsm}) ###'
                                   .format(ns=n_samples, nsm=n_samples_max))
         if time_range != None:
-            if type(time_range)==str: # strings are recipes for finding shot times
-                time_range = find_shot_times(dev, shot, time_range)
-            d.reduce_time(time_range, copy=False)
+            if type(time_range)==str: # strings are recipes to find shot times
+                # 'nonan; is thelast resort for mixed starts in npz -
+                # prefer 'find_secs_rel_t1'  (is this same as 'old_find'?
+                if time_range == 'nonan':
+                    wnonan = np.where(~np.isnan(np.sum(d.signal, axis=0)))[0]
+                    time_range = [d.timebase[wn]
+                                  for wn in [wnonan[1], wnonan[-1]]]
+                elif time_range == 'old_find':
+                    time_range = find_shot_times(dev, shot, time_range)
+            d = d.reduce_time(this_time_range, copy=True)
 
         sections = d.segment(n_samples, overlap)
         if info+first > 0: write('<<{h}, {l} sections, version = {vsn}\n'
@@ -163,9 +186,10 @@ for (cnt, shot) in enumerate(shot_range):
             fmax = 0.5/np.average(np.diff(ord_segs[0].timebase)) - df
 
         timeinfo('beginning flucstruc loop')
-
         for idx in ord:
             t_seg = ord_segs[idx]
+            if np.isnan(np.sum(t_seg.signal)):  # if signal is missing, skip
+                continue
             if max_bands>1:              # keep it simple if one band
                 (ipk, fpk, apk) = find_signal_spectral_peaks(t_seg.timebase, t_seg.signal[0],minratio=0.1)
                 w_in_range = np.where(fpk < fmax)[0]
@@ -234,12 +258,17 @@ for (cnt, shot) in enumerate(shot_range):
         # the -f stops the rm cmd going to the terminal
 #        subprocess.call(['/bin/rm -f /data/tmpboyd/pyfusion/FMD*%d*' %shot], shell=True)
 #        subprocess.call(['/bin/rm -f /data/tmpboyd/pyfusion/SX8*%d*' %shot], shell=True)
-    except exception as info:
-#set Exception=() to allow traceback to show - it can never happen
+
+    except exception as reason:
+#set exception=() to allow traceback to show - it can never happen
 # otherwise, the warnigns.warn will prevent multiple identical messages
-        warning_msg = str('shot {s} not processed: ei={ei}, {info}' 
-                          .format(s=shot,ei=sys.exc_info()[1].__repr__(),info=info))
-        warnings.warn(warning_msg,stacklevel=2)
+        warning_msg = str('shot {s} not processed: ei={ei}, {reason}' 
+                          .format(s=shot,ei=sys.exc_info()[1].__repr__(), reason=reason))
+        print(warning_msg, '\n\n')
+        pyfusion.logging.error(warning_msg)
+    fd.flush()
+    timeinfo('\n######## shot {s}: {c}/{rc} fs so far'
+             .format(c=count,rc=raw_count,s=shot), sys.stderr) # stderr so that read    
 
 if pyfusion.orm_manager.IS_ACTIVE: 
 

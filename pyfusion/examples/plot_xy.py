@@ -58,8 +58,8 @@ pyfusion.config.set('Acquisition:W7M','ROI', ROI)
 dev = pyfusion.getDevice(dev_name)
 
 dev.no_cache = True  # This allows direct access to server so we can use time context for efficiency
-xdata = dev.acq.getdata(shot_number, xdiag, contin=not stop)
-ydata = dev.acq.getdata(shot_number, ydiag, contin=not stop)
+xdata = dev.acq.getdata(shot_number, xdiag, contin=not stop, time_range=time_range)
+ydata = dev.acq.getdata(shot_number, ydiag, contin=not stop, time_range=time_range)
 datlist = [xdata, ydata]
 if wdiag is None:
     wdata = None
@@ -72,7 +72,7 @@ for dat in datlist:
         raise LookupError('data not found for {d} on shot {sh}'
                           .format(d=dat, sh=shot_number))
 if len(time_range) == 2:  
-    for dat in datalist:
+    for dat in datlist:
         dat.reduce_time(time_range, copy=False)
 #   xdata = xdata.reduce_time(time_range)
 #   ydata = ydata.reduce_time(time_range)

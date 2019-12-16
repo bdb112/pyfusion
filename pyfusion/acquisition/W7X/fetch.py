@@ -384,6 +384,7 @@ class W7XDataFetcher(BaseDataFetcher):
         output_data.units = dat['units'] if 'units' in dat else ''
         # this is a minor duplication - at least it gets saved via params
         params['data_utc'] = output_data.utc
+        params['utc_0'] = utc_0  # hopefully t0 -- useful in npz files
         # Warning - this could slow things down! - but allows 
         # corrupted time to be re-calculated as algorithms improve.
         # and storage as differences takes very little space.

@@ -6,10 +6,11 @@ from pyfusion.debug_ import debug_
 from pyfusion.utils import wait_for_confirmation
 from matplotlib import pyplot as plt
 
-def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin=[.3,.7], debug=0, duty_factor=0.12, exceptions=(LookupError), nsamples=2000):
-    """ Return the actual interesting times in utc for a given shot, 
-    based on the given diag.  Use raw data to allow for both 1 and 10 ohm 
-      resistors (set above common mode sig)
+def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin=[.3,.7], debug=0, duty_factor=0.12, secs_rel_t1=False, exceptions=(LookupError), nsamples=2000):
+    """ Return the actual interesting times in utc (absolute) for a given
+    shot, based on the given diag.  
+    secs_rel_t1: [False] - if True, return in seconds relative to trigger 1
+    We use raw data to allow for both 1 and 10 ohm resistors (see above common mode sig)
     Tricky shots are [20171025,51] # no sweep), 1025,54 - no sweep or plasma
     See the test routine in __main__ when this is 'run' 
          
@@ -98,7 +99,18 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
         plt.plot(timesplus, [-threshold, -threshold],'o--r')
         plt.xlim(2*timesplus - times)  # double margin for plot
         plt.show()
-    return(timesplus)
+
+    fact = 1
+    if secs_rel_t1:
+        utc_0 = data.params.get('utc_0', 0)
+        if utc_0 == 0:
+            raise LookupError("no t1 value, so can't select secs_rel_t1")
+        else:
+            fact = 1e-9
+    else:
+        utc_0 = 0
+    print(fact, utc_0)
+    return((timesplus - utc_0) * fact)
 
 if __name__ == "__main__":
     print(find_shot_times([20170913, 27], debug=1))

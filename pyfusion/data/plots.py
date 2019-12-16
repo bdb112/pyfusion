@@ -646,7 +646,7 @@ def fsplot_phase(input_data, closed=True, ax=None, hold=0, offset=0, AngName=Non
     if closed: # only makes sense to draw a mean dp line if closed
         ax.plot(ax.get_xlim(),[tot/(2*np.pi),tot/(2*np.pi)],':b',linewidth=0.5)
 
-    ax.legend(prop=FontProperties(size='small'))
+    ax.legend(prop=FontProperties(size='xx-small'))
     ax.set_title('sum = {s:.2f} over {o:.2f} ~ {r:.1f}'
                  .format(s=tot,o=over, r=tot/over))
     debug_(pyfusion.DEBUG, 1, key='fs_phase')

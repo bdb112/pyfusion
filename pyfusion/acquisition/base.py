@@ -755,6 +755,8 @@ class MultiChannelFetcher(BaseDataFetcher):
             if time_range is not None and len(time_range) == 2:
                 ch_data = ch_data.reduce_time(time_range)
 
+            if pyfusion.VERBOSE < 2:
+                ch_data.params['diff_dimraw'] = None
             params.update({chan: dict(params=ch_data.params, gain_used=ch_data.gain_used, config_name=ch_data.config_name)})
             channels.append(ch_data.channels)
             # two tricky things here - tmp.data.channels only gets one channel here
@@ -841,6 +843,8 @@ class MultiChannelFetcher(BaseDataFetcher):
                         print(' **** reducing incoming data at start')
                     elif ch_data.utc[0] > group_utc[0]:
                         print('padding incoming data at start')
+                        # NOTE! leading nans in a timebase are a problem
+                        # Also the signal (timeseries) probably will lose the attribute such as normalise_freq
                         # should pad this channel out with nans - for now report an error.
                         # this won't work if combining signals on a common_tb
                         # ch_data.timebase += -dts  # not sure if + or -?

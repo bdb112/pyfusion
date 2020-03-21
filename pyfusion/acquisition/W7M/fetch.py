@@ -82,7 +82,10 @@ class W7MDataFetcher(BaseDataFetcher):
                 else:
                     fact=1e9
                     
-                tr_ns = [long(float(t) * fact) for t in ROI.split()] 
+                tr_ns = [long(float(t) * fact) for t in ROI.split()]
+                if hasattr(self, 'time_range') and self.time_range is not None:
+                    for iii in range(2):
+                        tr_ns[iii] = long(self.time_range[iii]*1e9)
                 context = 'settimecontext({0}Q,{1}Q,{2}Q)'.format(*tr_ns)
                 self.conn.get(context)
 

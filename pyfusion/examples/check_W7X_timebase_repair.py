@@ -22,9 +22,11 @@ dev_name = "W7X"
 diag_name = "W7X_L57_LP01_08"
 shot_number = [20160224,3] 
 sharey=True
+sharex=True
 plotkws={}
 fsamp=498.94
-def aphase(t,y): return (t,analytic_phase(y)-fsamp*2*pi*t)  # no fooling with time - but the fsamp is 'hardwired'
+iterate=1
+def aphase(t,y): return (t,analytic_phase(y)-fsamp*2*pi*t)  # no fooling with time - but the fsamp is 'hardwired' - see aphase_dyn below
 # replace time vector with a faked time
 def aphase_fix_time(t,y): tt=2e-6*arange(len(t)); return(tt,analytic_phase(y)-498.94*2*pi*tt)
 fun=myiden
@@ -32,6 +34,7 @@ fun2=aphase
 add_corruption=0  # add three dislocations a long, short (~3ms) and vshort 0.5ms
 fft=1
 block=0
+time_range=None
 """
 exec(_var_defaults)
 
@@ -41,7 +44,8 @@ exec(process_cmd_line_args())
 dev = pyfusion.getDevice(dev_name)
 if shot_number[0] == 20160310:
     pyfusion.utils.warn(' need to restore sin ')
-data = dev.acq.getdata(shot_number,diag_name)
+data = dev.acq.getdata(shot_number,diag_name, time_range=time_range)
+
 print('data length is ',len(data.timebase))
 if add_corruption:
     for sig in data.signal:  # small dislocation for 0309_52
@@ -58,13 +62,25 @@ if fft:
     print('filtered data length is ',len(fd.timebase))
 
 phc = analytic_phase(data[data.keys()[0]]) - fsamp*2*pi*data.timebase
-ends = len(phc)/100
-fsamp += np.diff(phc)[ends:-ends].mean()/np.diff(data.timebase).mean()/(2*pi)
-
+ends = len(phc)/10
+#fsamp += np.diff(phc)[ends:-ends].mean()/np.diff(data.timebase).mean()/(2*pi)
+if iterate:  # this correction looks just at data between 30% and 70% to avoid hiccups from shot with no plasma
+    dfsamp = (phc[-3*ends:-2*ends].mean() - phc[2*ends:3*ends].mean())/(
+        (data.timebase[-3*ends:-2*ends].mean() - data.timebase[2*ends:3*ends].mean()))/(2*np.pi)
+    if np.isnan(dfsamp):
+        print('*** Unable to correct fsamp due to Nans - find the best fsamp on a shorter segment')
+    else:
+        fsamp += dfsamp
+        
+        # this line refines the aphase fun used in plot_signal call
+exec("def aphase_dyn(t,y): print('recompiled', fsamp); return (t,analytic_phase(y)-fsamp*2*pi*t)")
 
 # maybe should be in data/plots.py, but config_name not fully implemented
-fd.plot_signals(suptitle='shot {shot}: '+diag_name + ' fsamp=' + str(round(fsamp,2)), sharey=sharey,
-                  fun=fun, fun2=fun2, **plotkws)
+# note that this layout is overridden by a multi diag
+fig, [axph, axdt] = plt.subplots(2, 1)
+plt.sca(axph)
+fd.plot_signals(suptitle='shot {shot}: '+diag_name + ' fsamp=' + str(round(fsamp,2)),
+                sharey=sharey, sharex=sharex, hold=1, fun=fun, fun2=aphase_dyn, **plotkws)
 
 # compare timebase from signal with one reconstructed from the rawdim, if present
 # due to bugs, it only works with single diagnostics
@@ -74,11 +90,15 @@ if 'W7X' in data.keys()[0]:
     else:
         dt = data.params.get('diff_dimraw', None)
         if dt is None:
-            raise Exception(' no diff_dumraw found in params')
-        tbcheck = np.clip(np.cumsum(dt.astype(np.float128))-dt[0], 0, None)/1e9
-        plt.figure()
-        ax = plt.gca()
-        ax.set_title('diff of dimraw')
-        ax.plot(tbcheck - data.timebase)
-        ax.set_yscale('symlog', linthreshy=1e-6)
+            raise Exception(' no diff_dimraw found in params')
+        biggest_float = np.float128 if hasattr(np, 'float128') else np.float64
+        t_zero = (data.params['req_f_u']-data.params['utc_0'])/1e9
+        offs = dt[0]
+        dt[0] = 0
+        tbcheck = np.clip(np.cumsum(dt.astype(biggest_float)), 0, None)/1e9
+        axdt.set_title('diff of dimraw in secs')
+        axdt.plot(data.timebase, tbcheck[0:len(data.timebase)] + t_zero - data.timebase)
+        axdt.set_yscale('symlog', linthreshy=1e-6)
 plt.show(block)
+if abs(np.diff(axph.get_ylim()))>10:
+    print('***\n***Failure to reduce slope may be due to shift in input signal level > some amplitude (such as before plasma).  Signal is sampled between 30% and 70% time')

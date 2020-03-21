@@ -89,7 +89,7 @@ for ch in channels:
         cdata = dev.acq.getdata(shot_number, ch)
         opts = cdata.params
     except:
-        opts = pyfusion.conf.utils.get_config_as_dict('Diagnostic', ch)
+        opts = pyfusion.conf.utils.get_config_as_dict('Diagnostic', dev_name + "_" + ch + '_I')
         for k in list(opts):
             if k not in ['gain', 'area', 'params', 'coords_w7_x_koord']:
                 opts.pop(k)

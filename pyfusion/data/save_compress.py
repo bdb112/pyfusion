@@ -16,6 +16,7 @@ July 2009 - long-standing error in delta_encode_signal fixed (had not been
 usable before)
 
 may 2016 - version 104 works around an error caused by W7X corrupted timebases (all 0s and nans)
+March 2020  improvements in "fixing" corrupted timebase.  Use version 106 - not sure if version 105 was ever implemented, but skip it.
 """
 from numpy import max, std, array, min, sort, diff, size, mean, mod,\
     log10, int16, int8, uint16, uint8
@@ -255,12 +256,20 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
     There is no dependence on pyfusion.  Version 101 adds time_unit_in_seconds
     version 102 adds utc, raw, 103 after correction of probes 11-20
     Note: changed to parent_element=array(0) by default - not sure what this is!
+    Delta encode signal should not be used with Nans - at the moment the necessary code
+    to do this (especially the reconstruction) has not been written (although it could be
+    easily modelled on the timebase cade.
     """
     from numpy import remainder, mod, min, max, \
         diff, mean, append
     from pyfusion.debug_ import debug_
 
     debug_(pyfusion.DEBUG, 2, key='discretise_signal')
+    if np.any(np.isnan(signal)):
+        pyfusion.utils.warn('Nans in signal - this will probably not reconstruct as Nans')
+        if delta_encode_signal:
+            raise ValueError('Nans found in signal to be put in {fn} - delta encode cannot be used'
+                             .format(fn = filename))
 
     dat=discretise_array(signal,eps=eps,verbose=verbose, delta_encode=delta_encode_signal)
 #    signalexpr=str("signal=%g+rawsignal*%g" % (dat['minarr'], dat['deltar']))
@@ -269,39 +278,56 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
 #                                        dat['deltar']))
 
 # this version is designed to be evaluated on dictionary called dic
+    """ Saving code should probably should be separated as it is getting complex.
+     variables: 
+         dat - dictionary with discretized signal info
+         tim - dictionary with discretized timebase info
+         dic - the dictionary to be used at reconstruction time
+         rawsignal - working copy of signal in integer form
+    """
     rawsignal=dat['iarr']
-    signalexpr=str("signal=%g+%s*%g" % (dat['minarr'], "dic['rawsignal']",
-                                        dat['deltar']))
     if delta_encode_signal: 
-#        need to maintain the first element and the length
-        tempraw=append(rawsignal[0],diff(rawsignal))
+#        need to maintain the first element - this also keeps the length the same
+        tempraw = append(rawsignal[0],diff(rawsignal))
         rawsignal = tempraw
-        signalexpr=str("signal=%g+%s*%g" % (dat['minarr'], 
-                                                "cumsum(dic['rawsignal'])",
-                                                dat['deltar']))
-# saving bit probably should be separated
+        # precision of .15 is really only needed in timebase encode, but no cost to do it here
+        restore_str = "cumsum(dic['rawsignal'])",
+    else:
+        restore_str = "dic['rawsignal']"
+
+    signalexpr=str("signal=%.15g+%s*%.15g" % (dat['minarr'], restore_str, dat['deltar']))
+
     if verbose>0:
         print('====== Now discretize timebase========')
     tim=discretise_array(timebase,eps=eps,verbose=verbose, unique=True)
     rawtimebase=tim['iarr']
-    timebaseexpr=str("timebase=%g+%s*%g" % (tim['minarr'], "tim['iarr']",
-                                            tim['deltar']))
+
 # this version 
-    timebaseexpr=str("timebase=%g+%s*%g" % (tim['minarr'], "dic['rawtimebase']",
-                                          tim['deltar']))
+    # timebaseexpr=str("timebase=%g+%s*%g" % (tim['minarr'], "dic['rawtimebase']",
+    #                                          tim['deltar']))
     if delta_encode_time: 
 #        need to maintain the first element and the length
         if pyfusion.VERBOSE > 1:
             print('delta encoding time')
         rawtimebase=append(rawtimebase[0],diff(rawtimebase))
-        timebaseexpr=str("timebase=%g+%s*%g" % (float(tim['minarr']),  # bdb103
-                                                "cumsum(dic['rawtimebase'])",
-                                                tim['deltar']))
-    # This only works for NON delta encoded.
-    wnan = np.where(np.isnan(timebase))[0]
-    if len(wnan)>0:
-        timebaseexpr = timebaseexpr + ";maxint = np.iinfo(dic['rawtimebase'].dtype).max;wnan = np.where(maxint == dic['rawtimebase'])[0];if len(wnan)>0:;    timebase[wnan]=np.nan".replace(';','\n')
+        restore_str = "np.cumsum(dic['rawtimebase'])"
+    else:
+        restore_str = "dic['rawtimebase']"
 
+    # This now works for both delta and NON delta encoded taking into account nan representation
+    # test code for below - can debug and fix on the spot.
+    # ipdb> exec("dic=dict(rawtimebase=rawtimebase);ximebase=3.4e-07+dic['rawtimebase']*2e-06\nmaxint = np.iinfo(dic['rawtimebase'].dtype).max\nwnan = np.where(maxint == dic['rawtimebase'])[0]\nif len(wnan)>0:\n ximebase[wnan]=np.nan")
+    # ipdb> plt.plot (ximebase[0:100] , timebase[0:100])
+
+    timebaseexpr=str("timebase=%.15g+%s*%.15g" % (tim['minarr'], restore_str,
+                                                tim['deltar']))
+    wnan = np.where(np.isnan(timebase))[0]
+    if len(wnan) != 0:
+        # inefficient (two cumsums)
+        timebaseexpr += ";maxint = np.iinfo(dic['rawtimebase'].dtype).max;wnan = np.where(maxint == np.cumsum(dic['rawtimebase']))[0];print(len(wnan));if len(wnan)>0:; timebase[wnan]=np.nan".replace(';','\n')
+        # inefficient but code is a little shorter
+        timebaseexpr += ";temp=dic['rawtimebase'];maxint = np.iinfo(temp.dtype).max;wnan=np.where(maxint==np.cumsum(temp))[0];if len(wnan)>0:; timebase[wnan]=np.nan".replace(';','\n')
+        # efficient would be to put cumsum in temp (only one cumsum)
     if verbose>4: 
         import pylab as pl
         pl.plot(rawsignal)
@@ -310,11 +336,25 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
         if verbose>0: print('========> Saving as %s <=======' % filename)
         # time_unit_in_seconds is automatically set by a fudge - won't work for W7-X Op2
         tus=[.001,1][max(abs(array(timebase)))<100]
-
+        # call it 106 - see comment at top of this file
         savez_compressed(filename, timebaseexpr=timebaseexpr, 
                          signalexpr=signalexpr, params=params,
                          parent_element=parent_element, time_unit_in_seconds=tus,
-                         rawsignal=rawsignal, rawtimebase=rawtimebase, version=104)
+                         rawsignal=rawsignal, rawtimebase=rawtimebase, version=106)
+        # in situ reconstruction check even for VERBOSE=0
+        if pyfusion.VERBOSE > -1:
+            orig_timebase = timebase  # this test wipes out original so save it  to compare with readback
+            exec("dic=dict(rawtimebase=rawtimebase);" + timebaseexpr)
+            if np.any(np.where(np.isnan(orig_timebase))[0] != np.where(np.isnan(timebase))[0]):
+                raise ValueError('Nans not preserved in ' + filename)
+            errs = [np.nanmin(orig_timebase - timebase),
+                    np.nanmax(orig_timebase - timebase)]
+            if pyfusion.VERBOSE>0:
+                print("Timebase encoding error range between {lowest} and {highest}"
+                      .format(lowest=errs[0], highest=errs[1]))
+            if np.max(np.abs(errs)) > 1e-9:
+                pyfusion.utils.warn("Unexpectedly large error in timebase encoding " +
+                                    filename + " " + str(errs))
 
 
 def newload(filename, verbose=verbose):
@@ -354,7 +394,7 @@ def newload(filename, verbose=verbose):
     #      timebase[wnan]=np.nan
 
     # *Without* care to avoid nans in cumsum
-    if ('cumsum' in timebaseexpr) and ('np.nan' in timebaseexpr) and dict['version'] < 105:
+    if ('cumsum' in timebaseexpr) and ('np.nan' in timebaseexpr) and dic['version'] < 105:
         print('newload: !!! kludging a fixup of nans in a timebase with cumsum !!')
         if "*2e-06" not in timebaseexpr:
             raise LookupError('*2e-06 expected in timebaseexpr:\n'+timebaseexpr +
@@ -373,8 +413,8 @@ def newload(filename, verbose=verbose):
                                                 "temp=").replace("*2e-06","\ntimebase=temp*2e-06")
         timebaseexpr = timebaseexpr.replace("== dic['rawtimebase']","== temp")
 
-    # check that one doesn't sneak through
-    if ('cumsum' in timebaseexpr) and ('np.nan' in timebaseexpr) and 'temp' not in timebaseexpr:
+    # check that one doesn't sneak through - the old fix was temp, the new (106) one is detectable by iinfo
+    if ('cumsum' in timebaseexpr) and ('np.nan' in timebaseexpr) and not (('temp' in timebaseexpr) or ('iinfo' in timebaseexpr)):
         raise ValueError('timebaseexpr has a potential issue with maxint and nans\n' + timebaseexpr)
 
     if dic['version'] <= 104 and timebaseexpr.startswith('timebase=0+'):  # bdb103 - needed for 104 too
@@ -419,7 +459,7 @@ def test_compress(file=None, verbose=0, eps=0, debug=False, maxcount=0):
     """
     from numpy import load as loadz
     print("Testing %s" % file)
-    if file is None: file='18993_densitymediaIR.npz'
+    if file is None: file='18993_densitymediaIR.npz'  # on drive-n-go 
     test=loadz(file)
     stat=os.stat(file)
 
@@ -447,3 +487,28 @@ def test_compress(file=None, verbose=0, eps=0, debug=False, maxcount=0):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+
+""" test cases: this is more relevant to fetch.py
+  * no repair required.
+  shot_list=[[20160310,11]] diag_name="['W7X_L57_LP01_I']" dev_name='W7X' local_dir='W7X/test/' time_range=[0.041514,.44]  # the lower limit is right at the edge (41512-> repair) , the upper is not
+  ** same shot, some repairs (LP01_U shown as it is same as LP01_I but more meaningful 
+     to check phase)  time discrepancies up to -4 ..6ms
+  shot_number=[20160310,11] diag_name=W7X_L57_LP01_U dev_name='W7X' time_range=[-9,5]
+    ** Start is delayed by >2 us 8,141,192,340 relative to the request
+    ** End is earlier by >2 us 265,113,660 relative to the request
+    For the repaired 99.63%, the mean apparent timebase offset is -0.000960 and mean spread is ~0.0032 sec
+    shot [20160310, 11], W7X_L57_LP01_U: ** repaired length of 2,800,000, dtns=2,000, 4705 erroneous utcs (if first sample is correct)
+
+* this one has only retreivable data from t=-0.857 to t=0.15
+  shot_number=[20160310,11] diag_name="W7X_L53_LP05_I" dev_name='W7X' time_range=[-9,.2]
+    ** Start is delayed by >2 us 8,141,000,320 relative to the request
+    ** End is earlier by >2 us 59,263,680 relative to the request
+    For the repaired 99.88%, the mean apparent timebase offset is -0.000127 and mean spread is ~0.00018 sec
+    shot [20160310, 11], W7X_L53_LP05_I: ** repaired length of 500,000, dtns=2,000, 14 erroneous utcs (if first sample is correct)
+
+    This just draws horiz line and vert line - probably because it attemps to repair.
+    run pyfusion/examples/plot_signals shot_number=[20160310,12] diag_name="W7X_L57_LP01_I" dev_name='W7X'
+
+
+
+"""

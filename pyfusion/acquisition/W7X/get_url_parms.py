@@ -28,6 +28,7 @@ from pyfusion.data.shot_range import shot_gte
 install_aliases()
 from urllib.request import urlopen, Request
 #  https://codereview.stackexchange.com/questions/21033/flatten-dictionary-in-python-functional-style
+from urllib.error import HTTPError, URLError
 
 def flatten_dict(d, level=None, sep='.'):
     """ return a dictionary flatten to a  depth of <level> 
@@ -200,9 +201,11 @@ def get_minerva_parms(fetcher_obj):
     return(fetcher_obj, dict(cal_date=last_mod, cal_comment=cal_remarks))
 
 
-def get_subtree(url, debug=1, level=0):
+def get_subtree(url, debug=1, level=0, stop=1):
     """  only works for urls
                level is just for pretty printing 
+    Not sure what this is for but here is an example
+    get_subtree('http://archive-webapi.ipp-hgw.mpg.de/ArchiveDB/raw/Minerva/Minerva.QRP.settings/Settings_PARLOG/',stop=0)
     """
     dic = OrderedDict()   # Don't forget the parens, Boyd
     links = get_links(url, debug=0)
@@ -215,7 +218,13 @@ def get_subtree(url, debug=1, level=0):
             if name in dic:
                 raise LookupError(' dictionary already contains ' + name)
             else:
-                dic.update({name: get_subtree(lnk, debug=debug, level=level + 1)})
+                try:  #  This doesn't seem to report the actual error - it is as if only the outermost except applies
+                    dic.update({name: get_subtree(lnk, debug=debug, level=level + 1)})
+                except HTTPError as HTTP_reason:
+                    print("get_subtree:", HTTPError, HTTP_reason.__repr__(), name, lnk)
+                    dic.update({name: HTTP_reason.__repr__()})
+                    if stop:
+                        raise
         else:
             if debug > 1: print('retrieving data from ', name)
             daturl = lnk + '/_signal.json?from=0&upto=1606174400000000000'

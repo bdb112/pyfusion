@@ -123,7 +123,7 @@ def plot_signals(input_data, filename=None, downsamplefactor=1, n_columns=1, hsp
     if ((scale != 1) or (offset != 0)) and fun2 is not None:
         raise ValueError('need fun2 to be None so that scale/offset works')
     import pylab as pl
-    n_rows = input_data.signal.n_channels() # doesn't work with fftd data
+    n_rows = input_data.signal.n_channels() # didn't work with fftd data - because fft doesn't invoke timeseries class?  - but seems to work now! (2020)
     n_rows = int(round(0.49+(n_rows/float(n_columns))))
     if (n_rows > 3) and (hspace is None): 
         hspace = 0.001 # should be 0, but some plots omitted if 

@@ -30,7 +30,7 @@ def choose_one(x, y):
     elif y is None:
         return x
 
-def wait_for_confirmation(msg):
+def wait_for_confirmation(msg, exit_for_n = True):
     """
     The following test assumes you will type y<CR>y<CR>
 
@@ -39,7 +39,7 @@ def wait_for_confirmation(msg):
     >>> wait_for_confirmation('foo')
     foo: ?'y'
 
-    
+    returns a lower case y or n, exits if q or if exit_for_n and 'n'
     """
     ip = input(msg + ': ?')
     ip = ip.strip()
@@ -55,7 +55,7 @@ def wait_for_confirmation(msg):
 
     if len(ip) == 0:
         action = default
-    elif ip in 'nq':
+    elif ip in 'nq' and exit_for_n:
         action = 'q'
     else:
         action = ip
@@ -228,7 +228,7 @@ if pyfusion.COLORS != None:
     def my_show(message, category, filename, lineno, file=None, line=None):
         if hasattr(message, 'message'):
             msg = message.message
-            print('Ok')
+            print('my_show: Ok')
         else:
             print('warning - my_show/warn called with a simple string')
             msg = message

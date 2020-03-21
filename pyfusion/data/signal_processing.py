@@ -125,7 +125,7 @@ if __name__ == "__main__":
     xn=smooth(arange(ntest),7)
     xt=smooth(arange(ntest), timebase=arange(ntest)/100,n_smooth=.07)
     print('fractional test '),
-    if (xn==xt[1]).all(): print('OK')
+    if (xn==xt[1]).all(): print('sig_proc: OK')
     else:
         print('failed: results don''t match', xn,xt[1])
 

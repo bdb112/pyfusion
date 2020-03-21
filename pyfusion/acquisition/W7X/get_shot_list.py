@@ -68,20 +68,45 @@ def make_utcs_relative_seconds(dic, t0):
     """
     dic = deepcopy(dic)
     lst = (tuple, list, np.ndarray)
+    anyints = (builtins.int, np.int32, np.int64)
     for k, val in dic.iteritems():
-        if isinstance(val, builtins.int) and val > 1e9:
+        if isinstance(val, anyints) and val > 1e9:
             dic.update({k: (val - t0)/1e9})
         elif isinstance(val, lst):
-            vnew = [(v - t0)/1e9 if isinstance(v, builtins.int) and v > 1e9
-                    else v for v in val]
+            vnew = [(v - t0)/1e9 if isinstance(v, anyints) and v > 1e9
+                    else v for v in val[0:10]]
             dic.update({k: vnew})
     return dic
 
-def show_program(shot=[20181018,41]):
+def pprint_params(dic, utc_or_shot):
+    """ pretty print a dictionary, showing ns times relative to t0, which can be given as 
+           a utc, shot in utc or date, number (W7X)
+           e.g. pprint_params(signal_dict['params'],[20160310,11])
+                pprint_params(data.params,[20160310,11])   
+    >>> offset = 1000000000*123456; parms = dict(utc0=offset, utc1=offset+10**9, deci=1.23, xstr='unchanged')
+    >>> pprint_params(parms, 0); pprint_params(parms, offset)
+    {'deci': 1.23, 'utc0': 123456.0, 'utc1': 123457.0, 'xstr': 'unchanged'}
+    {'deci': 1.23, 'utc0': 0.0, 'utc1': 1.0, 'xstr': 'unchanged'}
+    """
+    if isinstance(utc_or_shot, list):
+        if utc_or_shot[1] < 1e9:
+            progs = get_programs(utc_or_shot)
+            t0 = progs.values()[0]['from']
+        else:
+            t0 = utc_or_shot[0]
+    else: t0 = utc_or_shot
+    
+    copydic = deepcopy(dic)
+    reldic = make_utcs_relative_seconds(copydic, t0)
+    pprint(reldic)
+    
+def show_program(shot=[20181018,41]):  # pretty print program times
     progs = get_programs(shot)
     assert len(progs) == 1, 'no or too many programs matching'
     prog = deepcopy(progs.values()[0])
     trel = prog['from']
+    conv_prog = make_utcs_relative_seconds(prog, trel)
+    prog = conv_prog
     triggers = prog['trigger']
     prog.update(dict(trigger=make_utcs_relative_seconds(triggers, trel)))
     scenarios = prog['scenarios']
@@ -384,3 +409,8 @@ update=0
                       cmt=shotDA['comment'][i].replace('\n',' '),
                       nl = '\n' if len(shotDA['comment'][i]) > 50 else ' '))
 
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
+
+    # not sure wh  run  ing this prints 41 shots

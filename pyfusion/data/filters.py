@@ -175,8 +175,10 @@ def reduce_time(input_data, new_time_range, fftopt=0, copy=True):
         print('Entering reduce_time, fftopt={0}, isinst={1}'
               .format(fftopt, isinstance(input_data, DataSet)))
         pyfusion.logger.warning("Testing: can I see this?")
-    if (np.min(input_data.timebase) >= new_time_range[0] and 
-        np.max(input_data.timebase) <= new_time_range[1]):
+        
+    # not clear that this helps
+    if (np.nanmin(input_data.timebase) >= new_time_range[0] and 
+        np.nanmax(input_data.timebase) <= new_time_range[1]):
         print('time range is already reduced')
         return(input_data)
 
@@ -615,6 +617,10 @@ def make_mask(NA, norm_passband, norm_stopband, input_data, taper):
     else:            mask[:1+NA/2:-1] = mask[1:(NA/2)] # odd 
     return(mask)
 
+def fudgey_n_channels():
+    """ Until we work out the right way"""
+    return 1L
+
 @register("TimeseriesData")
 def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=None):
     """ 
@@ -690,8 +696,8 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
     singl = not isinstance(output_data.channels, (list, tuple, np.ndarray))
     if singl:
         ## this is a fudge - need to set the value part to a list.
-        output_data.signal = [output_data.signal]
-        #output_data.signal.n_channels = 1  #bdb fudge for single channel diag - doesn't work, because we fudged output_data.signal to be a list
+        output_data.signal = [output_data.signal]  # not right - need to use same fudge as acq/bas
+        # output_data.signal.n_channels = fudgey_n_channels  #bdb fudge for single channel diag - doesn't work, because we fudged output_data.signal to be a list (or because n_channels is a func)
     for i,s in enumerate(output_data.signal):
         #if len(output_data.signal) == 1: print('bug for a single signal')
 
@@ -751,9 +757,10 @@ def filter_fourier_bandpass(input_data, passband, stopband, taper=None, debug=No
         plt.show()
     debug_(debug, 3, key='filter_fourier')
     if np.max(mask) == 0: raise ValueError('Filter blocks all signals')
+    from pyfusion.data.timeseries import Signal
     if singl:
-        output_data.signal = output_data.signal[0]
-
+        output_data.signal = Signal(output_data.signal[0])
+        # output_data.signal.n_channels = fudgey_n_channels  would work if signal was propoer not just an array of data
     return output_data
 
 

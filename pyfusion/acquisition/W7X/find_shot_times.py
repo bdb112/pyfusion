@@ -6,7 +6,7 @@ from pyfusion.debug_ import debug_
 from pyfusion.utils import wait_for_confirmation
 from matplotlib import pyplot as plt
 
-def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin=[.3,.7], debug=0, duty_factor=0.12, secs_rel_t1=False, exceptions=(LookupError), nsamples=2000):
+def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin=[.3,.7], debug=0, duty_factor=0.12, max_iters=40, secs_rel_t1=False, exceptions=(LookupError), nsamples=2000):
     """ Return the actual interesting times in utc (absolute) for a given
     shot, based on the given diag.  
     secs_rel_t1: [False] - if True, return in seconds relative to trigger 1
@@ -39,10 +39,10 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
             pyfusion.DEBUG -= 2  # lower debug level to allow us past here
         data = dev.acq.getdata(shot, diag, exceptions=())
     except exceptions as reason:  # return None if typical expected exception
-        print('Exception suppressed: ', str(reason))
+        print('Exception suppressed: ', str(reason), ' on channel', diag)
         return None
     except Exception as reason:
-        print('Exception NOT suppressed: ', str(reason))
+        print('Exception NOT suppressed: ', str(reason), ' on channel', diag)
         raise
         
     finally:
@@ -53,6 +53,7 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
         print('params restored')
         debug_(pyfusion.DEBUG, 3, key='find_shot_times')
                     
+    # if the timebase is not an int , probably a nan, so use the raw dim in params if there
     if not isinstance(data.timebase[1], int) and hasattr(data, 'params') and 'diff_dimraw' in data.params:
         data.timebase = data.params['diff_dimraw'].cumsum()
     if len(np.unique(np.diff(data.timebase)))>1: # test for minmax reduction
@@ -60,13 +61,29 @@ def find_shot_times(shot = None, diag = 'W7X_UTDU_LP10_I', threshold=0.2, margin
         duty_factor = min(duty_factor * 4,0.9)
         
     tb = data.timebase
-    tsamplen = tb[-1] - tb[0]
-    for trial in range(40):
-        wbig = np.where(np.abs(data.signal) > np.abs(threshold))[0]
+    sig = data.signal
+    if shot[0] > 1e9:  # a ns timebase and shot start and end
+        wvalid_times = np.where((tb >= shot[0]) & (tb <= shot[1]))[0]
+    else:  # guess suitable bounds for shot
+        wvalid_times = np.where((np.diff(tb)<1e8) & (np.diff(tb)>0))[0]
+        
+    #  We take care to get a good estimate of the sampled length
+    # The previous simple version got into a loop because of inaccurate calcs.
+    tsamplen = tb[wvalid_times[-1]] - tb[wvalid_times[0]]
+    print(shot[0], len(wvalid_times), 'valid time values',
+          len(tb) -len(wvalid_times), 'invalid')
+
+    sig = sig[wvalid_times]
+    tb  = tb[wvalid_times]
+    for trial in range(max_iters):
+        wbig = np.where(np.abs(sig) > np.abs(threshold))[0]
         if len(wbig) < 5:
             threshold *= 0.8
             continue
         times = np.array([tb[wbig.min()], tb[wbig.max()]], dtype=np.int64)
+        if debug > 1: print ([tmm/1e9 for tmm in times],
+                             np.diff(times)/1e9, wbig.min(), wbig.max(),
+                             'tsamplen (s) = ', tsamplen/1e9)
         # fract_samples > 0.2 fract time avoids influence of spikes
         fract_time = (times[1] - times[0])/float(tsamplen)
         fract_samples = len(wbig)/float(len(tb))

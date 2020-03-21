@@ -11,14 +11,14 @@ from matplotlib import pyplot as plt
 
 def interpolate_corrupted_W7X_timebase(signal_dict):
     """ Early saved data incorrectly regenerated dim to seconds, resolution
-    was only ~ 50ms
+    was only ~ 50ms, due to use of uint8 I think, which works if the timebase is perfect, but once the steps are greater than 255*2000 us->, 
     """
     # trick to avoid circular import error - regenerate_dim should be standalone
     from pyfusion.acquisition.W7X.fetch import regenerate_dim
     print('==============  Try to repair')
 
     # check a few things - this will also be a place to debug the time correction
-    dt_ns = signal_dict['params']['data_utc'][0] - signal_dict['params']['shot_f']
+    dt_ns = signal_dict['params']['data_utc'][0] - signal_dict['params']['shot_f_u']
     assumed_delay_from_shot_utc_to_ECH = int(61e9)
 
     tb = signal_dict['timebase']

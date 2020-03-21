@@ -535,6 +535,7 @@ Args:
         if self.select is None:
             self.select = range(len(self.i_chans))
         res = []
+        debug_(self.debug, 2, key='fit_swept_multi')
         for (c, chan) in enumerate(i_seg.channels):
             if self.select is not None and c not in self.select:
                 continue
@@ -553,6 +554,8 @@ Args:
             if fit_params.get('esterr', None) is not None:
                 res_list.extend( [eTe, ene, eI0])
             res.append(res_list)
+            if len(res) < 1:
+                pyfusion.utils.warn('No segments analysed - is select OK')
         return(res)
     
     def fit_swept_Langmuir_seg_chan(self, m_sig, i_sig, v_sig, i_segds, channame, fit_params=None, clipfact=5,  initial_TeVfI0=None, plot=None):
@@ -1057,4 +1060,12 @@ LP952.process_swept_Langmuir(overlap=1,dtseg=5e5/500.402/2,initial_TeVfI0=dict(T
 # these overlap well about 20 samples difference beginning to end - could be the drift
 plot(LP952.segs[-11][2].signal[1])
 plot(LP952.segs[1][2].signal[1])
+
+successful 9,7 session 797 IPP
+run  pyfusion/examples\run_process_LP.py  replace_kw="dict(t_range=[0.0,0.7],t_comp=[-0.025,0],filename='c:/cygwin/tmp/*2k2am1p2_21')"  shot_list=[[20160309,7]] lpdiag='W7X_L5{s}_LPALLI' sweep_s
+ig=W7X_L5UALL
+796 IPP
+run  pyfusion/examples\run_process_LP.py  replace_kw="dict(t_range=[0.0,0.7],t_comp=[-0.025,0],filename='c:/cygwin/tmp/*2k2am1p2_21')" seglist=['7'] shot_list=[[20160310,11]] lpdiag='W7X_L5{s}_L
+PALLI' sweep_sig=W7X_L57_U
+
 """

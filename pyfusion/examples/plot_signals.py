@@ -16,6 +16,7 @@ run pyfusion/examples/plot_signals.py dev_name='HeliotronJ' shot_number=58000 di
 import pyfusion
 from pyfusion.data.plots import myiden, myiden2, mydiff
 from pyfusion.utils.time_utils import utc_ns
+from pyfusion.utils import wait_for_confirmation
 import matplotlib.pyplot as plt
 
 _var_defaults = """
@@ -43,12 +44,13 @@ exec(process_cmd_line_args())
 time_range = choose_one(time_range, t_range)
 # save the start utc if there is already a 'data' object (***need to run -i to keep)
 if 'W7X' in dev_name:
-    if 'utc0' in locals() and utc0 is not None:
-        pyfusion.utils.warn("using previous utc - can give trouble for data after 2016 - don't use run -i")
-        print("***** using previous utc - can give trouble for data after 2016 ")
-    else:
+    if True:  # this catches the use of run -i, and data being there from a previous plot
         if 'data' in locals() and hold !=0:
-            utc0 = data.utc[0] 
+            if 'allow_utc' not in locals():
+                resp = wait_for_confirmation('Allow the utc0 fudge? (n/q/y)', exit_for_n=False)
+                allow_utc = resp == 'y'
+            if 'allow_utc' in locals() and allow_utc and utc0 not in locals():
+                utc0 = data.utc[0] 
 
 ## move this to a function: time_range = process_time_range(time_range)
 # Shortcut for small range: (should work for 3 element also (3rd is interval))
@@ -81,16 +83,20 @@ elif hold==2:
         plt.sca(ax)
         labeleg='True'
 
+# should no longer be needed - comment out for now until we test more of the old routines.
 if 'W7X' in dev_name:
-    if t0 is None:
+    if t0 is None:  # if t0 NOT given (i.e. None) then  we are asking to fudge it
         pgms = pyfusion.acquisition.W7X.get_shot_list.get_programs(shot=shot_number)
         pgm = pgms['{d}.{s:03d}'.format(d=shot_number[0], s=shot_number[1])]
         utc0 = pgm['trigger']['5'][0]
         # maybe should be in data/plots.py, but config_name not fully implemented
-    if 'utc0' in locals() and utc0 is not None:
+    if 'allow_utc' in locals() and allow_utc and 'utc0' in locals() and utc0 is not None:  # if t0 is given, and there an utc- and allow_utc is True
+        pyfusion.utils.warn("using previous utc - can give trouble for data after 2016 - don't use run -i")
+        print("\n***** using previous utc - can give trouble for data after 2016 - set allow_utc=False or don't use run -i ")
         t0 = (utc0 - data.utc[0])/1e9
         
-data.plot_signals(suptitle='shot {shot}: '+diag_name, t0=t0, sharey=sharey, downsamplefactor=max(1, decimate),
+data.plot_signals(suptitle='shot {shot}: '+diag_name, t0=t0, sharey=sharey,
+                  downsamplefactor=max(1, decimate),
                   fun=fun, fun2=fun2, labeleg=labeleg, **plotkws)
 
 # for shot in range(76620,76870,10): dev.acq.getdata(shot,diag_name).plot_signals()

@@ -10,16 +10,48 @@ pyfusion - python code for data mining plasma fluctuations
  * wid_specgram memory error for foverlap>0
 
  To see VERSION along with commit index  
- git log -p pyfusion/version.py |egrep  "\+VERSION =|commit"
+
+.. code-block::
+
+   git log -p pyfusion/version.py |egrep  "\+VERSION =|commit"
 
 Most recent update: 
+Version 0.995a Op1.2b: 
+
+ * W7X/fetch.py Lots of fixes and checks for fetch - used to assume trace started at zero time - fixing this required a number of changes to the heuristic fixup code.  The main such change is in code to 'fix' the sq-wave effect, which is now understood to be a precsion problem due to not very smart dealing with absolute times in ns and Nan times.
+ * Finally more argument consistency checking, rename some times to make the definition clearer.
+ * Use trigger['1'] but fall back to trigger ['0'] if 1 is missing but not in all places. Need to replaced all '61' with a function call.
+ * Improve the timeout strategy - the data access is about 1/3rd the time of the JSON conversion,
+    - improve strategy for long data segments by getting the json data first, then do the conversion
+    - no need for a timeout in the conversion stage, and the timeout will be shorter and so detected faster
+ * W7M/fetch.py: integrate time_range and ROI
+ * find_shot_times: more comments, checks, importantly we correct the calculation the proportion of time a signal  is above a threshold, given that decimated signal timebases are weird, esp if there is timebase corruption
+ * filters: work-around(n_channel fn) for ffts to work in single chan diags, seems to be successful (e.g. check_W7_timebase
+ * plot_signals - require a confirmation to use 'old utc' (but only asks if you use run -i) (need to remove 61 sec bit)
+ * get_shot_list - much faster for large shot ranges now that shotDA is cached
+ * acquisition/base.py: use dist-utils to look at pyfusion version of the saving propram for npz files.
+   re-institute sign correction in multi-channel diags. 
+   partial workaround for files containing shot_f - more to come
+   hardwired 61 sec correction removed but not all of them
+ * shot_range - skip from month '13' to next year
+ * mini_summary: python 3 print, add MIR4131 series, add peak abs function. fpeak (97th percentil), expands shot_range more correctly, incorporate a cache of multiple actions are perfomed on the same data.
+ * plot_svd - W7X example
+ * save_to_local - enable pause_while to allow clean pauses, write down the logic, improve logic, debug
+ * save_compress
+    - carefully create the code to decompress delta encoded times, which used to be prone to severe representational accuracy problems
+    - built in accuracy test
+ * pyfusion.cfg add MIRno-41_13, MIRNOV_41_13 and fix some other mirnovs
+ * check_W7_timebase.py  now works fully AND even for single channel
+ * run_process_LP bring more up to date with langmuir_data  - still a funny bug with segments
+ * pyfusion.cfg add W7X_L57_U with two copies of LP01_U (and for 53)
+
 
  * fixes to get old datamining going - read_text_pyfusion, gen_fs_bands formatted better for long times
  * bin/get_W7X_shotnums more flexible  examples/get_W7X_shotlist.py to find whuch shots for which diags
  * modify.cfg now accesses kain's data, but we are using an equal angle fudge for now 
  * add examples/full_processing_example_script.py
  * find_cluster_members - a really crude cluster finder.
- * visual/nicer_log_axis.py remove some of the clutter in manissa
+ * visual/nicer_log_axis.py remove some of the clutter in mantissa
 
  * Add dmusic, plot_dmusic, and add fake coords to W7X_MIRNOV
  * dmusic routine now confirmed against matlab version, and modified to be a more useful subroutine, with debug, plot

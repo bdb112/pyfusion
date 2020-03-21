@@ -20,13 +20,16 @@ import sys, os
 import pyfusion  # only needed for .VERBOSE and .DEBUG
 from pyfusion.acquisition.W7X.get_shot_info import get_shot_utc
 from pyfusion.acquisition.W7X import interpolate_corrupted_W7X_timebase
+from distutils.version import LooseVersion
 
-CONTINUE_PAST_EXCEPTION = 2  # level below which exceptions in fetch are continued over
+CONTINUE_PAST_EXCEPTION = 2  # level of pyfusion.DEBUG below which exceptions in fetch are continued over
 
 def newloadv3(filename, verbose=1):
-    """ This the the version that works in python 3, but can't handle Nans
+    """ This the the version that works in python 3, but can't handle Nans yet
+    because exec() is not supported in Py3 and the code below so far only 
+    chooses the expressions to be exec'ed apart simplistically.
     Intended to replace load() in numpy
-    counterpart is data/savez_compress.py
+    Its counterpart is data/savez_compress.py
     """
     from numpy import load as loadz
     from numpy import cumsum, array
@@ -132,13 +135,14 @@ def try_fetch_local(input_data, bare_chan, time_range=None):
 
     signal_dict = newload(input_data.localname)
     """ These W7X-specific lines are here to deal with npz saved data
+    See the W7X fetch.py for more info
     Examples of difficult shots.
     'W7X_L53_LP01_U' shot_number=[20160309,13]  0.8.2b writes all zeros (when 
         read by newload 0.9.92O clean,on both) even though the rawdim is OK up to 350,000
     L57  doesn't have this problem in 0.8.2b - written the same date! (but diff dimraw very fragmented)
     """
     if 'params' in signal_dict and 'name' in signal_dict['params'] and 'W7X_L5' in signal_dict['params']['name']:
-        if  signal_dict['params']['pyfusion_version'] < '0.6.8b':
+        if  LooseVersion(signal_dict['params']['pyfusion_version']) < LooseVersion('0.6.8b'):
             raise ValueError('probe assignments in error LP11-22 in {fn}'
                              .format(fn=input_data.localname))
         if np.nanmax(signal_dict['timebase']) == 0:
@@ -148,16 +152,30 @@ def try_fetch_local(input_data, bare_chan, time_range=None):
 
         if np.diff(signal_dict['timebase'])[0] == 0: # first two are the same
             signal_dict['timebase'] = interpolate_corrupted_W7X_timebase(signal_dict)
+
+#        if 'req_f_u' not in signal_dict['params']:  # req_f_u was initially called seg_f_u (incorrectly)
+#            signal_dict['params']['req_f_u'] = signal_dict['params']['shot_f']
+        if 'utc_0' in signal_dict['params']:
+            true_start = (signal_dict['params']['data_utc'][0] - signal_dict['params']['utc_0'])/1e9
+        else:
+            true_start = (signal_dict['params']['data_utc'][0] - signal_dict['params']['shot_f'])/1e9  - 61.0
+
+        print('\n base:.py ****True_start of timebase', true_start)
+        delta_t = true_start - signal_dict['timebase'][0] 
+        # used to want timebase starting at zero - changed in 2020 - probably wrong for a long time.
         
-        true_start = (signal_dict['params']['data_utc'][0] -
-                      signal_dict['params']['shot_f'])/1e9 - 61
-        delta_t = signal_dict['timebase'][0] - true_start
         if np.abs(delta_t) > 1e-6:
-            print("=== Timebase has not been adjusted to t=0 - discrepancy = {dt:.4g}"
-                  .format(dt=delta_t))
-            signal_dict['timebase'] = signal_dict['timebase'] - delta_t
+            if  LooseVersion(signal_dict['params']['pyfusion_version']) >= LooseVersion('0.9.94O'):  #note the O!
+                #  not accessible here - if signal_dict['version'] >= 106:
+                print('not adjusting')
+            else:
+                # Ideally the timebase in seconds should be 0 secs at t1 (diag trigger)
+                print("=== correcting timebase which has not been adjusted to t=0 - discrepancy = {dt:.4g}"
+                      .format(dt=delta_t))
+                # Note that the relevant version is at the time of saving.
+                signal_dict['timebase'] = signal_dict['timebase'] - delta_t
                 
-    
+
     coords = get_coords_for_channel(**input_data.__dict__)
     #ch = Channel(bare_chan,  Coords('dummy', (0,0,0)))
     ch = Channel(bare_chan,  coords)
@@ -415,6 +433,9 @@ class BaseAcquisition(object):
         if d is not None:
             d.history += "\n:: shot: {s} :: config: {c}".format(s=shot, c=config_name)
 
+        if pyfusion.NSAMPLES != 0:
+            d.timebase = np.clip(d.timebase, -10, 100) # should really do it to shot_t - shot_t
+            
         return d
         
 class BaseDataFetcher(object):
@@ -822,7 +843,7 @@ class MultiChannelFetcher(BaseDataFetcher):
                     print('dtclock = {dt}ns'.format(dt=dtclock), end=',' )
                     if self.shot[0] < 20170101 and (dtclock != 2000):
                         pyfusion.logger.warning('Unexpected clock period {dtclock} on shot {s}'
-                                                .format(dtclock=dtclock, s = str(shot)))
+                                                .format(dtclock=dtclock, s = str(self.shot)))
                     
                     dtns = (ch_data.utc[0] - group_utc[0])
                     dts = dtns/1e9
@@ -885,7 +906,7 @@ class MultiChannelFetcher(BaseDataFetcher):
         # This is a second time around to make sure that the lengths are
         #  the same.  Should not ne needed if the more thorough combination
         # has been done above.
-        if hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'True':
+        if (pyfusion.NSAMPLES != 0) or (hasattr(self, 'skip_timebase_check') and self.skip_timebase_check == 'True'):
             #  Messy - if we ignored timebase checks, then we have to check
             #  length and cut to size, otherwise it will be stored as a signal (and 
             #  we will end up with a signal of signals)

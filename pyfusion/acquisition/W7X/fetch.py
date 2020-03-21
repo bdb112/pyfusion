@@ -11,8 +11,8 @@ Test method: Clumsy
 uncomment file:// in pyfusion.cfg
 from pyfusion.acquisition.W7X import fetch
 ff=fetch.W7XDataFetcher("W7X_L53_LP7_I",[20160302,26])
-# seg_f_u  - segment from in utc - used to be shot_f which is ambiguous
-ff.fmt='file:///data/databases/W7X/cache/archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.{CDS}/DataModuleDesc.{DMD}_DATASTREAM/{ch}/Channel_{ch}/scaled/_signal.json?from={seg_f_u}&upto={seg_t_u}'
+# req_f_u  - segment from in utc - used to be shot_f which is ambiguous
+ff.fmt='file:///data/databases/W7X/cache/archive-webapi.ipp-hgw.mpg.de/ArchiveDB/codac/W7X/CoDaStationDesc.{CDS}/DataModuleDesc.{DMD}_DATASTREAM/{ch}/Channel_{ch}/scaled/_signal.json?from={req_f_u}&upto={req_t_u}'
 ff.params='CDS=82,DMD=190,ch=2'
 ff.do_fetch()
 ff.repair=1   # or 0,2
@@ -74,7 +74,8 @@ def myhist(X):
 
 
 def regenerate_dim(x):
-    """ assume x in ns since epoch from the current time """
+    """ assume x in ns since epoch from the current time
+        This code assumes the first stamp is correct """
     msg = None  # msg allows us to see which shot/diag was at fault
     diffs = np.diff(x)
     # bincount needs a positive input and needs an array with N elts where N is the largest number input
@@ -82,10 +83,14 @@ def regenerate_dim(x):
     sorted_diffs = np.sort(diffs[np.where(small)[0]])
     bincounts = np.bincount(sorted_diffs)
     bigcounts, bigvals = myhist(diffs[np.where(~small)[0]])
-
+    dt_freq_pairs =  [[argc, bincounts[argc]] for argc in np.argsort(bincounts)[::-1][0:5]]
+    if dt_freq_pairs[0][1] > len(x) * 0.95:
+        actual_dtns = dt_freq_pairs[0][0]  # should reconcile with the dtns calculated below (udiffs)
+        if diffs[0] != actual_dtns:
+            print('***Warning - first element or second timestamp is likely to be corrupted - dtns = ', diffs[0])
     if pyfusion.VERBOSE>0:
         print('[[diff, count],....]')
-        print('small:', [[argc, counts[argc]] for argc in np.argsort(counts)[::-1][0:5]])
+        print('small:', dt_freq_pairs)  # e.g. ('small:', [[2000, 511815], [198000, 3], [770000, 2]...
         print('big or negative:', [[bigvals[argc], bigcounts[argc]] for argc in np.argsort(bigcounts)[::-1][0:10]])
         print('bincounts', bincounts)
         
@@ -98,28 +103,57 @@ def regenerate_dim(x):
     dtns_old = 1 + np.argmax(bincounts[1:])  # skip the first position - it is 0
     dtns = udiffs[np.argmax(counts)]
     histo = plt.hist if pyfusion.DBG() > 1 else np.histogram
-    cnts, vals = histo(x, bins=200)[0:2]
+    cnts, vals = histo(x, bins=200)[0:2]   #look over all the timestamps, not the differences so we see where the gaps are
     # ignore the two end bins - hopefully there will be very few there
-    wmin = np.where(cnts[1:-1] < np.max(cnts[1:-1]))[0]
+    # find bins which are noticabley empty  - very rough
+    wmin = np.where(cnts[1:-1] < np.max(cnts[1:-1])/10)[0]
     if len(wmin) > 0:
-        print('**********\n*********** Gap in data > {p:.2f}%'.format(p=100 * len(wmin) / float(len(cnts))))
+        print('**********\n*********** Gap in data may be > {p:.2f}%'.format(p=100 * len(wmin) / float(len(cnts))))
     x01111 = np.ones(len(x))  # x01111 will be all 1s except for the first elt.
-    x01111[0] = 0  # we apparently generate a trace starting at 0 and then correct
+    x01111[0] = 0  # we apparently used to generate a trace starting at 0 and then correct in another routine - now correct it here.
 
+    # print(x[0:4]/1e9)
     errcnt = np.sum(bigcounts) + np.sum(np.sort(counts)[::-1][1:])
     if errcnt > 0 or (pyfusion.VERBOSE > 0):
-        msg = str('** repaired length of {l:,}, dtns={dtns:,}, {e} erroneous utcs'
+        msg = str('** repaired length of {l:,}, dtns={dtns:,}, {e} erroneous utcs (if first sample is correct)'
                   .format(l=len(x01111), dtns=dtns, e=errcnt))
 
-    fixedx = np.cumsum(x01111) * dtns
-    # This misses the case when the time values are locked onto discrete values ('sq wave look')
-    # unless the tolerance is made > 0.1 secs (e.g. 1.9 works forc
-    # run  pyfusion/examples/plot_signals diag_name='W7X_L57_LP01_I' shot_number=[20160303,13] decimate=10-1 sharey=0
-    wbad = np.where(abs(x - fixedx) > 1.9e8)[0]
-    fixedx[wbad] = np.nan
-    if np.all(np.isnan(fixedx)):
-        raise ValueError('all nans ')
+    fixedx = np.cumsum(x01111) * dtns + x[0]
+    # the following comment is most likely no longer applicable:   (marked ##)
+    # The sq wave look is probably a inadequate precision bug in save_compressed
+    ##This misses the case when the time values are locked onto discrete values ('sq wave look')
+    ## unless the tolerance is made > 0.1 secs (e.g. 1.9 works for:
+    ## run  pyfusion/examples/plot_signals diag_name='W7X_L57_LP01_I' shot_number=[20160303,13] decimate=10-1 sharey=0
+    # 2020: This was meant to take care of cases where the lower time bits get
+    # stuck, making the time look like a staircase, for example
+    # [20160310,11] diag_name=W7X_L53_LP08_I has a step length of 83ms (from old npz files)
+    # This code is retained, but now the time offset tolerance should be much smaller - e.g. 1ms
+    # plt.plot(x[0:100000],',')
+    for dtt in [1e-5, 1e-4, 1e-3, .01, .1]:
+        wbad = np.where(abs(x - fixedx) > dtt*1e9)[0]
+        if len(wbad) < len(fixedx)/10:
+            break
+    else:
+        print('Unable to repair most of the timebase by time offsets up to {dtt} sec'.format(dtt=dtt))
+        
     debug_(pyfusion.DEBUG, 1, key="repair", msg="repair of W7-X scrambled Langmuir timebase")
+    fixedx[wbad] = np.nan
+    meanoff = np.nanmean(x - fixedx)
+    print('For the repaired {pc:.2f}%, the mean apparent timebase offset is {err:.6f} and mean spread is ~{spr:.2g} sec'
+          .format(err=meanoff/1e9, spr=np.nanmean(np.abs(x-fixedx-meanoff))/1e9,
+                  pc=100*(1-len(wbad)/float(len(x)))))
+    # suppress plot if VERBOSE<0 even if big errors
+    if pyfusion.VERBOSE>0 or ((pyfusion.VERBOSE > -1) and (np.abs(meanoff)/1e9 > 1e-6)):
+        plt.figure()
+        wnotnan = np.where(~np.isnan(x))[0]   # avoid lots of runtime errors
+        offp = plt.plot((x-fixedx)[wnotnan]/1e9)
+        ax=plt.gca()
+        ax.set_yscale('symlog',linthreshy=1e-3)
+        ax.set_title('timing offets corrected by regenerate_dim - VERBOSE=-1 to suppress')
+        ax.set_ylabel('seconds')
+        plt.show()
+    if np.all(np.isnan(fixedx)):
+        raise ValueError('fetch: all nans ')
     return(fixedx, msg)
 
 
@@ -127,8 +161,17 @@ class W7XDataFetcher(BaseDataFetcher):
     """Fetch the W7X data using urls"""
 
     def do_fetch(self):
+        # Definitions:
+        # data_utc: is meant to be the first and last timestamps of the saved
+        #        or the retrieved data if not saved. (at least from 3 march 2016)
+        # shot_f, shot_t: are beginning and end of shot (from programs) at least from 3 march 2016
+        # utc: seems to be same as data_utc
+        # seg_f_u: up til 20 march 2020, seg_f_u appears to be the *requested* segment, (now fixed - renamed to req_f_u)
+        # utc0 - only 9.9 or so.  Should be in file or set in base.py
+        
         # In this revision, the only changes are - allow for self.time_range,
-        #   variable names f, t changed to f_u, t_u and comment fixes, 
+        #   variable names f, t changed to f_u, t_u (the desired data utc)
+        # and comment fixes, 
         # in preparation for including time_range and other cleanups.
 
         # My W7X shots are either of the form from_utc, to_utc,
@@ -141,16 +184,18 @@ class W7XDataFetcher(BaseDataFetcher):
             # we have start and end in UTC instead of shot no
             # need the shot and utc to get t1 to set zero t
             if hasattr(self, 'time_range') and self.time_range is not None:
+                if self.shot[1] > 1e9:
+                    raise ValueError("Can't supply shot as a utc pair and specify a time_range")
                 actual_shot = self.shot
                 f_u = None # set to None to make sure we don't use it
             else:
-                f_u, t_u = self.shot
+                f_u, t_u = self.shot  #  Initialize to the requested utc range
                 actual_shot = get_shot_number([f_u, t_u])
 
             progs = get_programs(actual_shot)  # need shot to look up progs
             #  need prog to get trigger - not tested for OP1.1
             if len(progs) > 1:
-                raise LookupError('fetch: too few or too many programs')
+                raise LookupError('fetch: too many programs found - covers > 1 shot?')
                 #this_prog = [prog for prog in progs if (f_u >= progs[prog]['from'] and
                 #                                    t_u <= progs[prog]['upto'])]
             if len(progs) == 1:
@@ -158,38 +203,43 @@ class W7XDataFetcher(BaseDataFetcher):
                 # on shot 20180724,10, this trigger[1] is an empty list
                 trigger = this_prog['trigger']['1']
                 # This fallback to trigger[0] mean that more rubbish shots are saved than
-                # if we only look at the proper trigger (1)
-                if len(trigger) == 0:
-                    print('No Trigger 1 on shot {s}'.format(s=actual_shot))
-                    trigger = [trr +  + int(60 * 1e9)
-                               for trr in this_prog['trigger']['0']]
+                # if we only look at the proper trigger (1) - here is an example
+                # run pyfusion/examples/plot_signals shot_number=[20180724,10] diag_name="W7X_UTDU_LP15_I" dev_name='W7X'
+                if len(trigger) == 0:  # example above
+                    print('** No Trigger 1 on shot {s}'.format(s=actual_shot))
+                    debug_(pyfusion.DEBUG, 0, key="noTrig1", msg="No Trigger 1 found")
+                    # take any that exist, at 60
+                    trigger = [trr[0] + int(60 * 1e9)
+                               for trr in this_prog['trigger'].values() if len(trr) > 0]
                     if len(trigger) == 0:
-                          raise LookupError('No Trigger 0 or 1 on shot {s}'.format(s=actual_shot))
-                utc_0 = trigger[0]
+                          raise LookupError('No Triggers at all on shot {s}'.format(s=actual_shot))
+                utc_0 = trigger[0] # utc_0 is the first trigger (usu 61 sec ahead of data)
             else:
-                utc_0 = f_u  #   better than nothing - probaby a test
+                print('Unable to look up programs - assuming this is a test shot')
+                utc_0 = f_u  #   better than nothing - probably a 'private' test/calibration shot
             if f_u is None: # shorthand for have time range
                 f_u = utc_0 + int(1e9 * (self.time_range[0]))  # + 61))
                 t_u = utc_0 + int(1e9 * (self.time_range[1]))  # + 61)) was 61 rel to prog['from']
 
-        else:  # self.shot is an 8,3 digit shot
+        else:  # self.shot is an 8,3 digit shot and time range not specified
             actual_shot = self.shot
-            f_u, t_u = get_shot_utc(actual_shot)
+            f_u, t_u = get_shot_utc(actual_shot)  # f_u is the start of the overall shot - i.e about plasma time -61 sec.
             # at present, ECH usually starts 61 secs after t0
             # so it is usually sufficient to request a later start than t0
             pre_trig_secs = self.pre_trig_secs if hasattr(self, 'pre_trig_secs') else 0.3
-            # should get this from programs really
-            utc_0 = f_u + int(1e9 * (61)) # utc0 is plasma initiation in utc
-            f_u = f_u - int(1e9 * pre_trig_secs)  # f_u is the first time wanted
+            # should get this from programs really - code is already above. We need to just move it.
+            pyfusion.utils.warn('fetch: still using hard-coded 61 secs')
+            utc_0 = f_u + int(1e9 * (61)) # utc_0 is plasma initiation in utc
+            f_u = utc_0 - int(1e9 * pre_trig_secs)  # f_u is the first time wanted
 
         # make sure we have the following defined regardless of how we got here
         shot_f_u, shot_t_u  = get_shot_utc(actual_shot)
-        seg_f_u = f_u
-        seg_t_u = t_u
+        req_f_u = f_u  # req_f_u is the start of the desired data segment - sim. for req_t_u
+        req_t_u = t_u
         # A URL STYLE diagnostic - used for a one-off rather than an array
         # this could be moved to setup so that the error info is more complete
         if hasattr(self, 'url'):
-            fmt = self.url  # add from= further down: +'_signal.json?from={seg_f_u}&upto={seg_t_u}'
+            fmt = self.url  # add from= further down: +'_signal.json?from={req_f_u}&upto={req_t_u}'
             params = {}
             # check consistency -   # url should be literal - no params (only for fmt) - gain, units are OK as they are not params
             if hasattr(self, 'params'):
@@ -212,10 +262,10 @@ class W7XDataFetcher(BaseDataFetcher):
         #   means we don't have to refer to any raw.. signals
         #   would be nice if they made a formal way to do this.
         if 'upto' not in fmt:
-            fmt += '_signal.json?from={seg_f_u}&upto={seg_t_u}'
+            fmt += '_signal.json?from={req_f_u}&upto={req_t_u}'
 
-        assert seg_f_u==f_u, 'seg_f_u error'; assert seg_t_u==t_u, 'seg_t_u error'  # 
-        params.update(seg_f_u=seg_f_u, seg_t_u=seg_t_u)
+        assert req_f_u==f_u, 'req_f_u error'; assert req_t_u==t_u, 'req_t_u error'  # 
+        params.update(req_f_u=req_f_u, req_t_u=req_t_u, shot_f_u=shot_f_u)
         url = fmt.format(**params)  # substitute the channel params
 
         debug_(pyfusion.DEBUG, 2, key="url", msg="middle of work on urls")
@@ -227,7 +277,7 @@ class W7XDataFetcher(BaseDataFetcher):
             tgt = url.split('KKS/')[1].split('/scaled')[0].split('_signal')[0]
             # construct a time filter for the shot
             self.tgt = tgt # for the sake of error_info
-            filt = '?filterstart={seg_f_u}&filterstop={seg_t_u}'.format(**params)
+            filt = '?filterstart={req_f_u}&filterstop={req_t_u}'.format(**params)
             # get the url with the filter
             url = url.replace(tgt, get_signal_url(tgt, filt)).split('KKS/')[-1]
             # take the filter back out - we will add the exact one later
@@ -271,12 +321,12 @@ class W7XDataFetcher(BaseDataFetcher):
                 url = url.replace('?', '@')
             # nicer replace - readback still fails in Win, untested on unix systems
             print('now trying the cached copy we just grabbed: {url}'.format(url=url))
-        if (seg_f_u > shot_t_u) or (seg_t_u < shot_f_u):
+        if (req_f_u > shot_t_u) or (req_t_u < shot_f_u):
             pyfusion.utils.warn('segment requested is outside the shot times for ' + str(actual_shot))
         if pyfusion.VERBOSE > 0:
             print('======== fetching url over {dt:.1f} secs from {fr:.1f} to {tt:.1f} =========\n[{u}]'
-                  .format(u=url, dt=(params['seg_t_u'] - params['seg_f_u']) / 1e9,
-                          fr=(params['seg_f_u'] - shot_f_u)/1e9, tt=(params['seg_t_u'] -shot_f_u) / 1e9))
+                  .format(u=url, dt=(params['req_t_u'] - params['req_f_u']) / 1e9,
+                          fr=(params['req_f_u'] - shot_f_u)/1e9, tt=(params['req_t_u'] -shot_f_u) / 1e9))
 
         # seems to take twice as long as timeout requested.
         # haven't thought about python3 for the json stuff yet
@@ -294,8 +344,8 @@ class W7XDataFetcher(BaseDataFetcher):
             # uncomment the following two for testing the exception handler
             ## timeout = pyfusion.TIMEOUT 
             ## raise  httplib.IncompleteRead('test')
-            if ( seg_t_u -  seg_f_u )/1e9 > pyfusion.VERY_LONG:
-                size_MS = 2 * ( seg_t_u -  seg_f_u )/1e9 # approximate - later on calc from dt i.e. MSamples
+            if ( req_t_u -  req_f_u )/1e9 > pyfusion.VERY_LONG:
+                size_MS = 2 * ( req_t_u -  req_f_u )/1e9 # approximate - later on calc from dt i.e. MSamples
                 if pyfusion.NSAMPLES !=0:  # allow for subsampled data
                     size_MS = pyfusion.NSAMPLES/1e6
                 timeout = 8 * size_MS + pyfusion.TIMEOUT #  don't make timeout too small!
@@ -347,6 +397,12 @@ class W7XDataFetcher(BaseDataFetcher):
         # this form follows the config file settings
         self.repair = int(self.repair) if hasattr(self, 'repair') else default_repair
         dimraw = np.array(dat['dimensions'])  
+        if ('nSamples' not in url):   # skip this check if we are decimating
+            if np.abs(req_f_u - dimraw[0]) > 2000:
+                print('** Start is delayed by >2 us {dtdel:,} relative to the request'.format(dtdel=dimraw[0] - req_f_u))
+            if (req_t_u - dimraw[-1]) > 2000:
+                print('** End is earlier by >2 us {dtdel:,} relative to the request'.format(dtdel=req_t_u - dimraw[-1]))
+        
         output_data_utc = [dat['dimensions'][0], dat['dimensions'][-1]]
         if pyfusion.DEBUG < ONE:
             dat['dimensions'] = None  # release memory

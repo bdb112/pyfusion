@@ -169,8 +169,8 @@ for shot_number in shot_list:
         if found_utc is None: #  meant (hoped) to find, but failed
             # use the given time range, or if not set, a minimum amount enough to see problem
             this_time_range = time_range if time_range is not None else [-0.15,0.3]
-            print('Could not find plasma on {sh} (find_shot_times) default to + str(this_time_range)'
-                  .format(sh=shot_number))
+            print('Could not find plasma on {sh} (find_shot_times) default to '
+                  + str(this_time_range).format(sh=shot_number))
         else:
             this_time_range = None  # we have found a plasma duration, we don't want to override with time_range
     else:
@@ -181,8 +181,8 @@ for shot_number in shot_list:
         utc0 = fetch_utc[0]
     elif shot_number[0] > 1e9:     # if it is a real shot
         fetch_utc = shot_number
-        utc0 = fech_utc[0]
-    else: # have to be careful - time_rnage None means get all - before and after t1
+        utc0 = fetch_utc[0]
+    else: # have to be careful - time_range None means get all - before and after t1
         shot_utc = get_shot_utc(shot_number)
         fetch_utc = shot_utc
         utc0 = shot_utc[0] + int(61 * 1e9)

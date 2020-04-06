@@ -19,12 +19,20 @@ def mymirexp(x, params):
     return(b * np.exp(-a*np.abs(x)) + c)
 
 def mybiexp(x, params):
-    """ bi- (independent) exponentials """
+    """ bi- (independent) exponentials on either side of zero"""
     a = params[0:2]
     b = params[2:4]
     c = params[4:6]
     i = (x>0).astype(int)
     return(b[i] * np.exp(-a[i]*np.abs(x)) + c[i])
+
+def mydoubleexp(x, params):
+    """ sum of two exponentials, mirrored across zero"""
+    a = params[0:2]
+    b = params[2:4]
+    c = params[4:6]
+    plt.plot(x, np.sum([b[i] * np.exp(-a[i]*np.abs(x)) + c[i] for i in [0,1]], axis=0),lw=0.03)
+    return(np.sum([b[i] * np.exp(-a[i]*np.abs(x)) + c[i] for i in [0,1]], axis=0))
 
 def residuals(params, fn, x, y, yerrs=None):
     # add a general function, passed in args
@@ -43,7 +51,7 @@ def fitgauss(x_data, y_data, yerrs=None, ax=None, guess=None, pltkwargs={}):
     if ax is not None:
         xplot = np.linspace(np.min(x), np.max(x), 200)
         ax.plot(xplot, mygauss(xplot, newfit), **pltkwargs)
-    if cond not in [1,2,3,4]: print('Failure in fits.py')
+    if cond not in [1,2,3,4]: print('Warning: Failure in fits.py')
     return(newfit, cond, mygauss(x_data, newfit))
 
 
@@ -61,6 +69,21 @@ def fitbiexp(x_data, y_data, yerrs=None, ax=None, guess=None, pltkwargs={}):
         ax.plot(xplot, mybiexp(xplot, newfit), **pltkwargs)
     if cond not in [1,2,3,4]: print('Failure in fits.py')
     return(newfit, cond, mybiexp(x_data, newfit))
+
+def fitdoubleexp(x_data, y_data, yerrs=None, ax=None, guess=None, pltkwargs={}):
+    wnot = np.where(~np.isnan(y_data))[0]
+    x = x_data[wnot]
+    y = y_data[wnot]
+    if yerrs is not None:
+        yerrs = yerrs[wnot]
+    guess =  [.2, .1, 1, 1, 0, 0] if guess is None else guess
+    newfit, cond = leastsq(residuals, guess, args=(mydoubleexp, x, y, yerrs))
+
+    if ax is not None:
+        xplot = np.linspace(np.min(x), np.max(x), 200)
+        ax.plot(xplot, mydoubleexp(xplot, newfit), **pltkwargs)
+    if cond not in [1,2,3,4]: print('Warning: Failure in fitdoubleexp of fits.py')
+    return(newfit, cond, mydoubleexp(x_data, newfit))
 
 def fitmirexp(x_data, y_data, yerrs=None, ax=None, guess=None, pltkwargs={}):
     wnot = np.where(~np.isnan(y_data))[0]

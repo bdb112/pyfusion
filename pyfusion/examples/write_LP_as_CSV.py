@@ -76,28 +76,46 @@ ofile.write("'version','channels','samples','header line','date','progId','utc_n
             .format(channels=nchans, version=1, samples=samples,
                     s=sep, hl=2 + 2 + nchans,date=dat['date'][0],progId=dat['progId'][0],
                     utc_ns = params['i_diag_utc'][0],dtseg=params['dtseg']))
+# now write the dictionary in json form into the spreadsheet as a short cut.  Not sure if anything can read it
 json.dump(info, ofile)
 ofile.write(nl)
 
+# this tries to get quantities NOT already in the DA file. (e.g. area), by looking for details on channels used in data, defaulting to whats in pyfusion.cfg
+extra_dict = {}
+dev_name = 'W7X'
 for ch in channels:
+    if 'full_channel_name' not in dat:
+        ch = dev_name + '_' + ch + '_I'
     try:
+        config_opts = pyfusion.conf.utils.get_config_as_dict('Diagnostic', ch)
+        for k in list(config_opts):
+            if k not in ['gain', 'area', 'params', 'coords_w7_x_koord']:
+                print('discarding', k, ' for ', ch)
+                config_opts.pop(k)
+                
+        # look at data - local if found else try to get it
         # if these are local, their info may correspond more closely to
         # that used at the time it was calculated - may take longer?
-        dev_name = 'W7X'
         shot_number = [dat['date'][0], dat['progId'][0]]
         dev = pyfusion.getDevice(dev_name)
         cdata = dev.acq.getdata(shot_number, ch)
-        opts = cdata.params
-    except:
-        opts = pyfusion.conf.utils.get_config_as_dict('Diagnostic', dev_name + "_" + ch + '_I')
-        for k in list(opts):
-            if k not in ['gain', 'area', 'params', 'coords_w7_x_koord']:
-                opts.pop(k)
-                
+        data_opts = cdata.params
+
+        # first put the config opts in - they are the least up to date - so they will get written over byt the data_opts
+        opts = dict(config_opts.items())
+        for dkey in data_opts:
+            opts.update({dkey: data_opts[dkey]})
+    except () as opt_reason:
+        print('opts skipped because of exception', opt_reason.__repr__())
+        opts = {}
+
     # no need for this huge array in the DA file
     [opts.pop(k) for k in list(opts) if k in ['diff_dimraw']]
     opts['name'] = ch
+    print(list(opts))
+    # and dumpt the ductionary in to the CSV fwiw
     json.dump(opts, ofile)
+    extra_dict.update({ch: opts})
     ofile.write('\n')
 
 vars = list(dat)
@@ -146,6 +164,7 @@ print('\nWrote ' + ofile.name)
 ofile.close()
 # now the json file
 mdat.update(dict(info=dat['info']))
+mdat.update(dict(extra_dict = extra_dict))
 import json
 json.dump(mdat, file(jfilename, 'wt'))
 print('Wrote ' + jfilename)

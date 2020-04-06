@@ -1065,7 +1065,6 @@ successful 9,7 session 797 IPP
 run  pyfusion/examples\run_process_LP.py  replace_kw="dict(t_range=[0.0,0.7],t_comp=[-0.025,0],filename='c:/cygwin/tmp/*2k2am1p2_21')"  shot_list=[[20160309,7]] lpdiag='W7X_L5{s}_LPALLI' sweep_s
 ig=W7X_L5UALL
 796 IPP
-run  pyfusion/examples\run_process_LP.py  replace_kw="dict(t_range=[0.0,0.7],t_comp=[-0.025,0],filename='c:/cygwin/tmp/*2k2am1p2_21')" seglist=['7'] shot_list=[[20160310,11]] lpdiag='W7X_L5{s}_L
-PALLI' sweep_sig=W7X_L57_U
+run  pyfusion/examples\run_process_LP.py  replace_kw="dict(t_range=[0.0,0.7],t_comp=[-0.025,0],filename='c:/cygwin/tmp/*2k2am1p2_21')" seglist=['7'] shot_list=[[20160310,11]] lpdiag='W7X_L5{s}_LPALLI' sweep_sig=W7X_L57_U
 
 """

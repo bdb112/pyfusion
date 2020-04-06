@@ -16,6 +16,17 @@ pyfusion - python code for data mining plasma fluctuations
    git log -p pyfusion/version.py |egrep  "\+VERSION =|commit"
 
 Most recent update: 
+
+
+Version 0.995b Op1.2b: 
+
+ * debug on t440p
+ * fits.py - include a sum of exponential (double exp)
+ * include Lukas PickledAssistant - this required path changes in several profile plots
+ * write_LP_as_CSV.py: include area and other indirect paramters in the json form
+ * extra_limiter_coords - put centre line in saved json file
+
+  
 Version 0.995a Op1.2b: 
 
  * W7X/fetch.py Lots of fixes and checks for fetch - used to assume trace started at zero time - fixing this required a number of changes to the heuristic fixup code.  The main such change is in code to 'fix' the sq-wave effect, which is now understood to be a precsion problem due to not very smart dealing with absolute times in ns and Nan times.

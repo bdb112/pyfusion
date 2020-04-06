@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from pyfusion.data.DA_datamining import Masked_DA, DA
 from pyfusion.data.process_swept_Langmuir import Langmuir_data
 import pyfusion
-from lukas.PickledAssistant import lookupPosition
+from pyfusion.acquisition.W7X.lukas_approx_SOL.PickledAssistant import lookupPosition
 
 def correlation(x,y,AC=True,coefft=True):
     """  AC => remove means first

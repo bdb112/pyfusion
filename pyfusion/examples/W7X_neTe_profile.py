@@ -33,7 +33,7 @@ from pyfusion.data.DA_datamining import Masked_DA, DA
 import sys
 import os
 
-from lukas.PickledAssistant import lookupPosition
+from pyfusion.acquisition.W7X.lukas_approx_SOL.PickledAssistant import lookupPosition
 from pyfusion.acquisition.W7X.mag_config import get_mag_config, plot_trim
 from pyfusion.data.fits import fitgauss, mygauss, fitmirexp, mymirexp, fitbiexp, mybiexp
 from pyfusion.debug_ import debug_

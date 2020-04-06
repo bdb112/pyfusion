@@ -1,4 +1,4 @@
-from lukas.PickledAssistant import lookupPosition
+from pyfusion.acquisition.W7X.lukas_approx_SOL.PickledAssistant import lookupPosition
 import numpy as np
 #_PYFUSION_TEST_@@SKIP
 for lim in ['lower','upper']:

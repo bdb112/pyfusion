@@ -1,0 +1,17 @@
+from pyfusion.data.process_swept_Langmuir import Langmuir_data, fixup
+sys.path.append('/home/bdb112/python/')
+# to reproduce marfe data based on 224 - this (6th dec 2016) is supseded by the June 4th 2017 work?
+t_range_list_5marfe=[[0.3,0.32], [0.45,0.47], [0.5,0.52], [.53,0.54], [0.5,0.52]]
+run -i pyfusion/examples/W7X_neTe_profile.py dafile_list="['LP/all_LD/LP20160224_30_L5SEG_2k2.npz']" labelpoints=0 t_range_list=[0.1,0.2] diag2=ne18 av=np.nanmedian
+sigs224_30=sigs
+sigs3020=np.array([sigs224_30[1]*exp(abs(solds[1])/20),sigs224_30[3]*exp(abs(solds[3])/20)])/6
+sigs3015=np.array([sigs224_30[1]*exp(abs(solds[1])/15),sigs224_30[3]*exp(abs(solds[3])/15)])/6
+
+run -i pyfusion/examples/W7X_neTe_profile.py dafile_list="['LP/all_LD/LP20160309_10_L5SEG_2k2.npz']" labelpoints=0 t_range_list=[0.1,0.2] diag2=ne18 av=np.nanmedian nrms=sigs3015
+axLCne.plot(sort(sold), 1.7*exp(-abs(sort(sold)/15)),'--',label='Feng',lw=2)
+axLCne.plot(sort(sold), 3.2*exp(-abs(sort(sold)/15)),'--',label='Feng * 1.9',lw=0.3)
+axLCTe.plot(sort(sold), 60*exp(-abs(sort(sold)/30)),'--',label='Feng Te',lw=2)
+plt.legend()
+plt.show()
+
+

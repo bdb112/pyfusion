@@ -7,11 +7,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os, sys
 
-component_path = sys.argv[1] if len(sys.argv) > 1 else '/data/databases/W7X/LP/limiter_component_474.'
+component_path = sys.argv[1] if len(sys.argv) > 1 else '/data/databases/W7X/LP/limiter_component_474'
 
-nfname = component_path + 'nodes.bz2'
+nfname = component_path + '.nodes.bz2'
 i, x, y, z = np.loadtxt(nfname).T
-efname = component_path + 'elements.bz2'
+efname = component_path + '.elements.bz2'
 tris = np.loadtxt(efname, dtype=int)
 print('{np:,} vertices, {nq:,} quadrilaterals in object, {nu:,} are unique'
       .format(np=len(x), nq=len(tris), nu=len(np.unique(zip(x, y, z)))))
@@ -66,19 +66,23 @@ plt.plot(x, y, z, '.', label=nfname)
 
 plt.legend(prop={'size': 'small'})
 #  use this to force aspect equal
-from threed_aspect import set_axes_equal
+from pyfusion.visual.threed_aspect import set_axes_equal
 set_axes_equal(ax)
 
 # from six.moves import input
 # ans = input('Write a json coording file to temp dir? y/N')
 # if 'y' in ans.lower():
 import json
-thispath = os.path.dirname(__file__)
-W7X_path = os.path.realpath(thispath+'/../acquisition/W7X/')
+try:
+    thispath = os.path.dirname(__file__)
+    W7X_path = os.path.realpath(thispath+'/../acquisition/W7X/')
+except NameError as reason:
+    print("Using current dir as __file__ not understood", reason.__repr__())
+    W7X_path = '.'
+    
 fh = file(os.path.join(W7X_path,'limiter_geometry.json'), 'wt')
 small_data = dict(rlim=xu.tolist(), zlim=zu.tolist(), shape_poly=pfit.tolist())
 # a sample of the points along the centreline - presumably the wetted line
 small_data.update(dict(xcl=x[inds][::10].tolist(),ycl=y[inds][::10].tolist(), zcl=z[inds][::10].tolist()))
 json.dump(small_data, fh)
-xcl=x[inds][::10]
 print('saved in ' + fh.name)

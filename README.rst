@@ -17,6 +17,7 @@ pyfusion - python code for data mining plasma fluctuations
 
 Most recent update: 
 
+ * add service examples in acq/W7X, add threed_aspect, SOL_distance.py
 
 Version 0.995b Op1.2b: 
 

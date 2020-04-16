@@ -46,7 +46,8 @@ class W7MDataFetcher(BaseDataFetcher):
         debug_(pyfusion.DEBUG, level=1, key='W7M_setup',msg='entering W7X MDS SETUP')
         self.conn = MDS.Connection(self.acq.server)
         print(' path was' , self.conn.get("getenv('qrp_path')"), end=': ')
-        self.conn.get('setenv("qrp_path=qrp-server::/w7x/new/qrp;/w7x/vault/qrp")')
+        # may need this path to get test data
+        # self.conn.get('setenv("qrp_path=qrp-server::/w7x/new/qrp;/w7x/vault/qrp")')
         print(' now' , self.conn.get("getenv('qrp_path')"))
         # valid_shots is not read in yet here
         try:

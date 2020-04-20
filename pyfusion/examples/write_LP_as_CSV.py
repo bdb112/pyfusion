@@ -88,11 +88,14 @@ for ch in channels:
         ch = dev_name + '_' + ch + '_I'
     try:
         config_opts = pyfusion.conf.utils.get_config_as_dict('Diagnostic', ch)
+        discards = []
         for k in list(config_opts):
             if k not in ['gain', 'area', 'params', 'coords_w7_x_koord']:
-                print('discarding', k, ' for ', ch)
+                discards.append(k)
                 config_opts.pop(k)
-                
+
+        print(ch, ': discarding', ','.join(discards))
+
         # look at data - local if found else try to get it
         # if these are local, their info may correspond more closely to
         # that used at the time it was calculated - may take longer?

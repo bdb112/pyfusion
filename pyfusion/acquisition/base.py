@@ -374,7 +374,8 @@ class BaseAcquisition(object):
         keyword arguments, and the result of the ``fetch`` method of the
         fetcher class is returned.
         """
-        print('fetcher', shot, end=', ')
+        if pyfusion.VERBOSE >= 0:
+            print('fetcher', shot, end=', ')
         if shot is None:
             raise ValueError('Attempt to get data for shot = None')
         if time_range is not None:
@@ -547,10 +548,12 @@ class BaseDataFetcher(object):
             #  Implement a single argument function - no spaces allowed,
             #  data is self_signal, will ignore gain
             # e.g. expr = -10/self_signal
+            ##  Note that it only is applied when pyfusion.RAW is not in effect
+            #  (so it is not applied during save_local, which sets RAW at present 
             debug_(pyfusion.DEBUG, level=2, key='expr')
             if hasattr(self, 'expr'):
-                if len(self.expr.split()) < 2:
-                    raise ValueError('expr must have units')
+                if len(self.expr.split()) != 2:
+                    raise ValueError('expr must have units and otherwise, no spaces')
                 expr, units = self.expr.split()
                 gain = None
             else:
@@ -568,7 +571,7 @@ class BaseDataFetcher(object):
                 if hasattr(self, 'fixup_gain'):
                     print('************ fixup_gain ***************')
                     gain *= float(self.fixup_gain)
-        else:
+        else:  #  pyfusion.RAW is set
             gain_units = '1 raw'
             gain, units = gain_units.split()
             gain = float(gain)
@@ -661,7 +664,8 @@ class BaseDataFetcher(object):
         if data is None:
             raise LookupError('Data not found dir {cn} on {sh} - set pyfusion.VERBOSE=3 and rerun'
                               .format(sh=str(self.shot), cn =self.config_name)) 
-        print('{nsam:,d} samples'.format(nsam=len(data.signal)), end=', ')  # comma format
+        if pyfusion.VERBOSE >= 0:
+            print('{nsam:,d} samples'.format(nsam=len(data.signal)), end=', ')  # comma format
         if len(data.signal) == 0:
             raise LookupError('no samples in time_range of {trg} in {nm}'
                               .format(trg=str(time_range), nm=self.config_name))
@@ -673,6 +677,7 @@ class BaseDataFetcher(object):
             print('!data item {cn} already has comment {c}'
                   .format(cn=data.config_name, c=data.comment))
         data.comment = self.comment if hasattr(self, 'comment') else ''
+
         if expr is not None:  # arbitrary? expression in terms of self_signal to calc signal
             data.signal = eval(expr.replace('self_signal','data.signal'))
         else:
@@ -694,7 +699,8 @@ class BaseDataFetcher(object):
         if pyfusion.VERBOSE>0: 
             print("base.py: data.config_name", data.config_name)
         data.channels.config_name=data.config_name
-        print(method, end=' - ')
+        if pyfusion.VERBOSE >= 0:
+            print(method, end=' - ')
         if method == 'specific':  # don't pull down if we didn't setup
             self.pulldown()
 

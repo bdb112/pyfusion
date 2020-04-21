@@ -143,10 +143,12 @@ xlabel('Z(m)'); suptitle(nfname); legend(loc='best')
 
 # Lukas' distances after running W7X_OP1.1_LCFS.py
 run pyfusion/examples/W7X_OP1.1_LCFS.py
-SOL = array([[LP[1], distance_to_surface(sval=0.6534784, vmec_eq='w7x_ref_113',point=LP[2], ax3D=None, max_its=4)[0]] for LP in allLP])
+sval=0.6534784; vmec_eq='w7x_ref_113'
+#sval=0.6743; vmec_eq='w7x_ref_114'
+SOL = array([[LP[1], distance_to_surface(sval=sval, vmec_eq=vmec_eq,point=LP[2], ax3D=None, max_its=4)[0]] for LP in allLP])
 figure()
 plot [LP[1] for LP in allLP],  [LP[-1] for LP in allLP],'*r',label='Lukas',markersize=20
-plot SOL[:,0],SOL[:,1]*1000,'o',label='VMEC:w7x_ref_113',ms=8
+plot SOL[:,0],SOL[:,1]*1000,'o',label='VMEC:'+vmec_eq + str(',s={0:.4f}'.format(sval)), ms=8
 legend loc='best'
 title('SOL distance in mm for both LP sets')
 show()

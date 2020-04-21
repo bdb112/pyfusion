@@ -2,6 +2,8 @@ import pyfusion
 import numpy as np
 
 """
+From Philipp Drew, April 2020
+
 x0=-5930.11862;
 y0=-2254.21244;
 z0=-168;
@@ -21,9 +23,13 @@ rpos(:,j)=-r*0.05;
 xpos(:,j)=x0-rpos(:,j)*(x1-x0)/veclen;
 ypos(:,j)=y0-rpos(:,j)*(y1-y0)/veclen;
 zpos(:,j)=z0-rpos(:,j)*(z1-z0)/veclen;
+# See below - had to divide first term by 1e3
 """
 
 def get_MPM_data(shot_number=[20160309,32]):
+    """ retrieve MPM x,y,z from hardware channel 15. Note that the sample rate is 5MS/s
+    so we should use downsampling of some sort
+    """
     dev_name = 'W7M'
     dev = pyfusion.getDevice(dev_name)
     data = dev.acq.getdata(shot_number, 'W7M_MPM_R')

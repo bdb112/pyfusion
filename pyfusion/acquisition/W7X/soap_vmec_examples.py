@@ -20,8 +20,10 @@ vmec_coords.x1 = np.linspace(0.4, 0.4, num=npts)
 vmec_coords.x2 = np.linspace(-0.1, 0.1, num=npts)
 vmec_coords.x3 = np.linspace(-0.1, 0.1, num=npts)
 
-cyl = vmec.service.toCylinderCoordinates('w7x_ref_81', vmec_coords)
+cyl = vmec.service.toCylinderCoordinates('w7x_ref_113', vmec_coords)
 
 # limiter vertical centreline from extract_limiter coordinates.
-v=Points3D(limcl.T)
-vmec.service.toVMECCoordinates('w7x_ref_113', Points3D([norm([v.x1,v.x2],axis=0), arctan2(v.x2, v.x1), v.x3]), tolerance=1e-6)
+limcl = array([small_data['xvcl'], small_data['yvcl'], small_data['zvcl']]).T
+v = Points3D(limcl.T)
+limVMEC = vmec.service.toVMECCoordinates('w7x_ref_113', Points3D([norm([v.x1,v.x2],axis=0), arctan2(v.x2, v.x1), v.x3]), tolerance=1e-6)
+plot(limcl.T[2],limVMEC.x1)

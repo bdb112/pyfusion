@@ -27,10 +27,14 @@ def read_zip_data(filename, trans={}, verbose=0):
     return(dat)
 
 def read_MPM_data(filename='/data/databases/W7X/MPM/MPM_20160309_13.zip', verbose=1,
-                  trans=dict([('te','Te'),('te_error', 'eTe'),('ne','ne18'),('ne_error','ene'),('T','t_mid')])):
+                  trans=dict([('te','Te'),('te_error', 'eTe'),('ne','ne18'),('ne_error','ene'),('T','t_mid'),('shot','old_shot')])):
     """ read a bunch of ascii files from the MPM diagnostic (Philipp Drews)
     """
     dat = read_zip_data(filename=filename, trans=trans, verbose=verbose)
+    shp = np.shape(np.array([dat[k] for k in ['x','y','z']]))
+    if len(shp) != 2:
+        print('************************ x, y and z not all the same length ****************')
+        
     if verbose > 0:
         R = np.linalg.norm([dat['x'], dat['y']], axis=0)
         print('shot {shot}, {filename:s}, x0={x0:.4f}'

@@ -42,6 +42,8 @@ from pyfusion.debug_ import debug_
 
 #global debug, fake_sin, fake_ne, LRsym
 
+global reff_0, xtoLCFS
+
 debug = 0  # additional graphs showing all quantities used
 fake_sin = 0
 fake_ne = 0
@@ -178,6 +180,7 @@ def LCFS_plot(da, diag, t0_utc, t_range, av=None, ax=None, xtoLCFS=1, nrm=None, 
     values with large uncertainties.
     Alternatively np.median can be used - but it treats nans as large => bias up
     """
+    global reff_0
     av = np.nanmean if av is None else av
     ax = plt.gca() if ax is None else ax
     chans = np.array(da['info']['channels'])
@@ -191,10 +194,19 @@ def LCFS_plot(da, diag, t0_utc, t_range, av=None, ax=None, xtoLCFS=1, nrm=None, 
         
     distLCFS = []
     td = []         # td is transverse signed distance from limiter vertical midplane 
-
+    if xtoLCFS == 2:
+        MPM = read_MPM_data('/data/databases/W7X/MPM/MPM_{0:d}_{1:d}.zip'.format(*shot_number),verbose=1)
+        # LPxyz = MPM['XYZ_LP'].reshape([2,20,3])
+        reff_LP = 1e3 * MPM['reff_LP'].reshape(2,20)  # to mm
+        reff_0 = np.min(reff_LP)
+        reff_LP = reff_LP - reff_0  # assume the innermost probe is at the LCFS - good assumption
+    reffs = []
     if diag in  ['ne18', 'Pdens', 'I0', 'Vf']:
         exclude.extend(['LP11','LP12','L57_LP09'])
+
+
     for (c, ch) in enumerate(chans):
+
         LPnum = int(ch[-2:])
         if 'TDU' in ch:
             lim = ch[0:4]
@@ -206,7 +218,11 @@ def LCFS_plot(da, diag, t0_utc, t_range, av=None, ax=None, xtoLCFS=1, nrm=None, 
         else:
             lim = 'lower' if 'L57' in ch else 'upper'
             X, Y, Z, dLCFS = lookupPosition(LPnum, lim)
-            
+            if xtoLCFS == 2:
+                reffs.append(reff_LP[0 + ('upper' in lim), LPnum-1])
+            else:
+                reffs.append(np.nan)
+                
         td.append(rot(X, Y,  2*np.pi*4/5.)[1])
         distLCFS.append(dLCFS)
 
@@ -230,20 +246,21 @@ def LCFS_plot(da, diag, t0_utc, t_range, av=None, ax=None, xtoLCFS=1, nrm=None, 
             print(nrm)
 
     signed_dLCFS = distLCFS * np.sign(td)
+    signed_reffs = reffs * np.sign(td)
     td = np.array(td)
     for (c, ch) in enumerate(chans):
         if sum([st in ch for st in exclude]):
             sig[c] = np.nan
         if labelpoints>0 and (not np.isnan(sig[c])):
             if labelpoints>1 or sig[c]>1.3*np.median(sig):
-                ax.text(([td, signed_dLCFS][xtoLCFS])[c], sig[c], ch,  fontsize='small')
-    ax.errorbar([td, signed_dLCFS][xtoLCFS], sig, ebars, fmt='o', label=lim, color=col, lw=0.5)
+                ax.text(([td, signed_dLCFS, signed_reffs][xtoLCFS])[c], sig[c], ch,  fontsize='small')
+    ax.errorbar([td, signed_dLCFS, signed_reffs][xtoLCFS], sig, ebars, fmt='o', label=lim, color=col, lw=0.5)
     ax.set_ylabel(diag)
     #if diag == 'Te':
     ax.set_ylim(0, ax.get_ylim()[1])
 
     debug_(pyfusion.DEBUG, 3, key='LCFS_plot')
-    return(signed_dLCFS, td, sig, ebars)
+    return(signed_reffs, signed_dLCFS, td, sig, ebars)
 
 def infostamp(txt, fig=None, default_kwargs=dict(horizontalalignment='right', verticalalignment='bottom', fontsize=7, x=0.99, y=0.008), **kwargs):
     import os, sys, pyfusion
@@ -271,7 +288,7 @@ save_images = 'None'
 Te_lim = None
 ne_lim = None
 fp_list = [sys.stdout, open('profile_log.log','ab')]
-xtoLCFS = 1
+xtoLCFS = 2
 axset_list = "None"
 options = 'cfg,1leg' # 1leg for 1 legend, cfg for diagram of config.
 #fake_ne = 0
@@ -308,7 +325,7 @@ else:
 def get_half_width(params):
     hw = []
     for i in [0,1]:
-        if params[4+i]<0: # if the offset is negative, the fit is probably a striaght line
+        if params[4+i]<0: # if the offset is negative, the fit is probably a straight line
             halfW = (params[2+i]+params[4+i])/(params[i]*params[2+i])/2.
         else:
             halfW = np.log(2)/params[i]
@@ -334,7 +351,7 @@ elif not isinstance(axset_list, (list, tuple)):
         nr = ns; nc = 2
     elif 'col' in axset_list:
         nr = 2; nc = ns
-    figLCFS, axs = plt.subplots(nrows=nr, ncols=nc, sharex='all', squeeze=None)
+    figLCFS, axs = plt.subplots(nrows=nr, ncols=nc, sharex='all', squeeze=None, figsize=[9,7])
     axset_list = [[figLCFS, ax] for ax in axs]
 
 else:
@@ -372,7 +389,10 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
     if 'TDU' in dafile:
         xlabel = 'Distance to pumping gap (mm) Lower TDU marked as -ve' 
     else:
-        xlabel = ['Horizontal distance from limiter centre (mm)','Distance outside LCFS (mm, -ve is left side)'][xtoLCFS]
+        xlabel = ['Horizontal distance from limiter centre (mm)',
+                  'Distance outside LCFS (mm, -ve is left side)',
+                  'delta reff (mm, -ve is left side)',
+        ][xtoLCFS]
 
     if not 'pub' in options:
         xlabel = xlabel.replace('mm -','mm,  from lukas R. -') # add comment about source normally
@@ -389,7 +409,7 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
         for fp in fp_list:
             fp.write('\n{fn}: {d}'.format(fn=da.name, d=diag2))
         kwargs.update(dict(col=col))
-        sold, td, sig1, ebar1 = LCFS_plot(da, diag1, ax=axLCTe, **kwargs)
+        reffs, sold, td, sig1, ebar1 = LCFS_plot(da, diag1, ax=axLCTe, **kwargs)
         sigs.append(sig1)
         tds.append(td)
         solds.append(sold)
@@ -398,8 +418,9 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
                    print('*** Seg {seg}, t_range={tr}: too few non-Nans to fit: {nn}'.
                          format(seg=seg, tr=t_range, nn=len(np.where(~np.isnan(sig1))[0])))
                    continue
-            params, cond, fitsig1 = dofit(sold, sig1, yerrs=ebar1, ax=None)
-            xgridded, ygridded = interpolate([td, sold][xtoLCFS], sold)
+            xvar = [td, sold, reffs][xtoLCFS]
+            params, cond, fitsig1 = dofit(xvar, sig1, yerrs=ebar1, ax=None)
+            xgridded, ygridded = interpolate([td, sold, reffs][xtoLCFS], xvar)
 
             ycurve = fitfun(ygridded, params)
             if xtoLCFS == 0:
@@ -421,7 +442,7 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
                           tr=t_range, sh=shot_number))
             fitsigs.append(fitsig1)
 
-        sold, td, sig2, ebar2 = LCFS_plot(da, diag2, nrm=nrm, ax=axLCne, Tesmooth=fitsig1, **kwargs)
+        reffs, sold, td, sig2, ebar2 = LCFS_plot(da, diag2, nrm=nrm, ax=axLCne, Tesmooth=fitsig1, **kwargs)
         sigs.append(sig2)
         tds.append(td)
         solds.append(sold)
@@ -444,7 +465,7 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
         ind = 'Ind {ind}'.format(ind=ind)
     else:
         ind = ''
-    title = str('shot {s}, {avname} filter {fr}-{t}s {tb}: {ind}' 
+    title = str('shot {s},\n{avname} filter {fr}-{t}s {tb}: {ind}' 
                 .format(s=[da['date'][0], da['progId'][0]],
                         fr=t_range[0],t=t_range[1], tb=tb,
                         avname=av.__name__, ind=ind))

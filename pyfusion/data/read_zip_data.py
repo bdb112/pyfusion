@@ -9,15 +9,24 @@ def read_zip_data(filename, trans={}, verbose=0):
         Assumes the shot number is the last part of the name before the discarded extension.
     """
     zdata = zipfile.ZipFile(filename)
+    #  This until =======  is MPM-specific
     dat = dict(filename=filename,
                shot = divmod(int(2e10)+int(zdata.namelist()[0].split('.')[0].split('_')[-1]), 1000))
     for nm, finfo in zip(zdata.namelist(), zdata.filelist):
         # get first token or first two if error
         nmroot = nm.split('.')[0]  # get rid of .txt or .dat
-        temp_name = '_'.join(nmroot.split('_')[0:1 + int('error' in nmroot)])
+        # allow for names like Te_error (OK, not too specific) and _LP (very MPM specific)
+        temp_name = '_'.join(nmroot.split('_')
+                             [0:1 + np.any([frag in nmroot for
+                                            frag in '_LP,_vs,_error'.split(',')])])
         my_name = trans[temp_name] if temp_name in trans else temp_name
-        dat.update({my_name: np.array([float(ln) for ln in zdata.read(finfo).split()])})
+        # could use loadtxt here, but might need to convert to a stream
+        # advantage would be to seamlessly read multi columns
+        datarr = np.array([float(ln) for ln in zdata.read(finfo).split()])
+        print(len(datarr), my_name, temp_name, finfo)
+        dat.update({my_name: datarr})
     print(dat['shot'], dat.keys())
+    # End of MPM specific stuff
     if verbose > 0:
         print('no checks yet') # temp_name is not a list
         # unchanged = [t_name for t_name in temp_name if t_name in dat.keys()]
@@ -27,8 +36,10 @@ def read_zip_data(filename, trans={}, verbose=0):
     return(dat)
 
 def read_MPM_data(filename='/data/databases/W7X/MPM/MPM_20160309_13.zip', verbose=1,
-                  trans=dict([('te','Te'),('te_error', 'eTe'),('ne','ne18'),('ne_error','ene'),('T','t_mid'),('shot','old_shot')])):
+                  trans=dict([('te','Te'),('te_error', 'eTe'),('ne','ne18'),('ne_error','ene'),
+                              ('T','t_mid'),('shot','old_shot')])):
     """ read a bunch of ascii files from the MPM diagnostic (Philipp Drews)
+    The trans dictionary changes to my naming convention.
     """
     dat = read_zip_data(filename=filename, trans=trans, verbose=verbose)
     shp = np.shape(np.array([dat[k] for k in ['x','y','z']]))

@@ -12,7 +12,9 @@ import numpy as np
 from sqlalchemy import create_engine 
 # put the file in the example (this) folder although it may be better in the acquisition/W7X folder
 dbpath = os.path.dirname(__file__)
-engine=create_engine('sqlite:///'+ dbpath + '/W7X_mag_OP1_2.sqlite', echo=False)
+sql_url = 'sqlite:///'+ dbpath + '/W7X_mag_OP1_1.sqlite'
+print(sql_url)
+engine=create_engine(sql_url, echo=False)
 conn = engine.connect()
 
 def plot_trim(ax, mag_dict=None, offset=[1.08, 0.88], size=.06, aspect=1, **pltkwargs):

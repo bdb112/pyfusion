@@ -6,7 +6,12 @@ import sys
 from warnings import warn
 import six  # just for is_string_like fix
 
-""" Note: in programming, be careful not to refer to .da[k] unnecessarily
+"""
+Note: In np.load() allow_pickle defaults to False in 1.17 c.f. True in 1.16.1
+    This is only relevant to saving objects - not needed for simple arrays of 
+     primitive types.  The only such type in pyfusion data is the params dic
+
+Note: in programming, be careful not to refer to .da[k] unnecessarily
 if it is not loaded - typically, if you plan to test it then use it,
 save to a var first, then test, then use it.  see "dak" below
 """
@@ -21,6 +26,16 @@ except:
             print('attempt to debug {msg}'.format(msg=msg) +
                   " need boyd's debug_.py to debug properly")
 
+
+def myload(filename, allow_pickle=True):
+    """ allow_pickle defaults to false in 1.16.3  -  CVE-2019-6446
+    need to allow for old versions that don't have the allow_pickle keyword 
+    In future, save the params as a json string instead to totally avoid this.
+    """
+
+    from numpy import __version__
+    kwargs = dict(allow_pickle=allow_pickle) if __version__ > '1.16.1' else {}
+    return(np.load(filename, **kwargs))
 
 class Masked_DA():
     """  A virtual sub dictionary of a DA, contained in the 'masked' attribute
@@ -194,7 +209,7 @@ Example:
 
     # The file is loaded into dd, and the new dictionary is new_dict
     # Add .npz if the name given does not exist, and it is not already
-    dd = np.load(process_file_name(filename))
+    dd = myload(process_file_name(filename))
     error = None
     if 'indx' in dd.keys() and 'indx' in new_dict.keys():
         check = dd['indx']
@@ -294,7 +309,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
             self.name = 'dict'
         else:
             self.name = process_file_name(fileordict)
-            self.da = np.load(self.name)
+            self.da = myload(self.name)
             self.loaded = False  # i.e. not really loaded yet - just have the zipfile table
 
         self.keys = self.da.keys  # self.keys used to be a list, now a function

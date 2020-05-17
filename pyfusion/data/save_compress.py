@@ -364,7 +364,7 @@ def newload(filename, verbose=verbose):
     """
     from numpy import load as loadz
     from numpy import cumsum
-    dic=loadz(filename)
+    dic=loadz(filename, allow_pickle=True)
 #    if dic['version'] != None:
 #    if len((dic.files=='version').nonzero())>0:
     if len(dic.files)>3:
@@ -424,6 +424,10 @@ def newload(filename, verbose=verbose):
     retdic = {"signal":signal, "timebase":timebase, "parent_element":
               dic['parent_element']}
 
+    if not dic.allow_pickle:  # should be able to remove this, just a backstop
+        pyfusion.utils.warn('resetting allow_pickle')
+        dic.allow_pickle = True
+        
     if 'params' in dic: retdic.update({"params": dic['params'].tolist()})
     if (len(signal) > 5e5) and (verbose > 0):
         print('Need to call with verbose>0 to see type of large data files')

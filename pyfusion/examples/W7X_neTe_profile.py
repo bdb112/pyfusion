@@ -32,6 +32,7 @@ import pyfusion
 from pyfusion.data.DA_datamining import Masked_DA, DA
 import sys
 import os
+import json
 
 from pyfusion.acquisition.W7X.lukas_approx_SOL.PickledAssistant import lookupPosition
 from pyfusion.acquisition.W7X.mag_config import get_mag_config, plot_trim
@@ -48,7 +49,6 @@ debug = 0  # additional graphs showing all quantities used
 fake_sin = 0
 fake_ne = 0
 TeLRsym = 0
-
 
 if TeLRsym:
     dofit, fitfun = fitmirexp, mymirexp
@@ -105,7 +105,7 @@ def rot(x, y, t):
 def get_calculated(da, diag, inds, av=np.average, x=None, Tesmooth=None, nrm=None):
     """ returns calculated power density, directly or smoothed (by using ne instead of isat)
     """
-    import json
+
     ebars = None
     Vfkey = 'Vf' if 'Vf' in da.keys() else 'Vp'
     Vf = da[Vfkey]
@@ -277,6 +277,7 @@ _var_defaults = """
 dev_name = 'W7X'
 dafile_list = ['LP/all_LD/LP20160309_52_L5SEG_2k2.npz']
 labelpoints=0
+savep=''  # save profile data - superseded by json dump - see code at end 
 diag1='Te'
 diag2='ne18'
 exclude = []
@@ -321,6 +322,9 @@ else:
     from pyfusion.utils import process_cmd_line_args
     exec(process_cmd_line_args())
 
+if savep != '':
+    with open(savep, 'w') as foo:  # now I implemented the json save, delete
+        pass    
 
 def get_half_width(params):
     hw = []
@@ -359,6 +363,8 @@ else:
 
 
 print(dafile_list)
+allsigs = []
+
 for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_list, axset_list)):
     if 'TDU' in dafile:
         da53,da57 = [DA(dafile.replace('SEG',n)) for n in ['U','L']]
@@ -504,6 +510,11 @@ for framenum, (dafile, t_range, axset) in enumerate(zip(dafile_list, t_range_lis
             continue
         plot_trim(axLCTe, mag_dict=cfg_dict, aspect=2.6, size=0.06, color='g')
 
+    allsigs.append(sigs)
+    if savep != '':   # now I implemented the json post save, delete
+        for prof in [sold, reffs] + sigs:
+            json.dump(prof.tolist(), open(savep, 'a'))
+            
     figLCFS.show()
     if save_images is not 'None':
         figLCFS.savefig(save_images+'{fr:03}.png'.format(fr=framenum))
@@ -523,4 +534,19 @@ figure(); i3=argsort(solds[0]); plot(solds[0][i3], sigs[1][i3]*sqrt(fitsigs[0][i
 
 run ~/python/digitize_overlay_graph_image imagefile='/data/databases/W7X/LP/philipp_drews_20171122_talk_Te.png' origin='upper' lower_left.dxy=[5.97,0] upper_right.dxy=[6.04,30]
 r,T = loadtxt('/data/databases/W7X/LP/digitize_philipp_drew.txt',delimiter=',').T
+#####  save all te and ne (for each time) in a json dictionary
+### should be able to generate the keys automatically
+### using lim and diag1, 2
+
+alltimes = {}
+for _times, _sigs in zip(t_range_list, allsigs):
+    dic = {}
+    for _sig, k in zip([reffs, sold] + _sigs, 
+                       ['reffs','sold','uTe', 'une', 'lTe', 'lne']):
+        dic.update({k: _sig.tolist()})
+    alltimes.update({'{0:.4f}'.format(_times[0]):dic})
+    json.dump(alltimes, open('0309_7_fake', 'w'))
+
+
+
 """

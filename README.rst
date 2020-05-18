@@ -13,6 +13,13 @@ pyfusion - python code for data mining plasma fluctuations
  git log -p pyfusion/version.py |egrep  "\+VERSION =|commit"
 
 Most recent update: 
+ * 0.995 Op1.2b
+ * more options in plot_fs_DA.py
+ * dat/base.py - add the config_name attrib (blank), explanation in config.rst
+ * find_cluster_members.py - add a function get_probe_angles - a bit kludgey?
+ * merge_test_pyfusion.py - add glob expansion
+ * plot_xy.py allow arbitrary timebase
+ * sp.py allow collections control to switch points on and off (def on(colls), etc)
 
  * fixes to get old datamining going - read_text_pyfusion, gen_fs_bands formatted better for long times
  * bin/get_W7X_shotnums more flexible  examples/get_W7X_shotlist.py to find whuch shots for which diags

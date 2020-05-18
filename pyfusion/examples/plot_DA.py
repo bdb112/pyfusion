@@ -22,19 +22,31 @@ else:
         print(os.getcwd(), end='')
     print(filename)
 
-    da = DA(filename, load=1)
+    # from_emacs was called block_me
+    from_emacs = not hasattr(sys, 'ps1')
+    if from_emacs:
+        print('from emacs')
+        os.environ['PYFUSION_VERBOSE'] = '-1'  # keep clutter down
+
+    import pyfusion
+    pyfusion.VERBOSE = -1   # why doesn't the environ above work?
+    da = DA(filename, load=1, verbose=pyfusion.VERBOSE)
+    if 'info' in da:
+        pprint.pprint(da['info'])
+    if hasattr(da, 'info'):
+        da.info()
+    sys.stdout.flush()  # works, but not effective in emacs, at least when ! is used.
+    
     if len(sys.argv) > 2:
         key = sys.argv[2]
     elif 'ne18' in da:
+        typ = 'LP'
         key = 'ne18'
     elif 'phases' in da:
+        typ = 'FS'
         key = 'phases'
     else:
         raise LookupError('Keys available are: ' + str(list(da)))
 
     da.plot(key)
-    if 'info' in da:
-        pprint.pprint(da['info'])
-    if hasattr(da, 'info'):
-        da.info()
     plt.show(1)

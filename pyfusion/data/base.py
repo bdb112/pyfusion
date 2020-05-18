@@ -193,6 +193,7 @@ class Channel(object):
         self.coords = coords
         self.parent_device = parent_device  # refers to LHD or H1 etc.
         self.source = source
+        self.config_name = ''  # placeholder, depends on device - added by Boyd bdb
         debug_(pyfusion.DEBUG,5, key=['class Channel','device_name'])        
 
     def save(self):
@@ -224,6 +225,8 @@ def orm_load_channel_map(man):
                                       )
 
 class ChannelList(list):
+    """ Don't know why, but this wants an 'expanded' list - i.e. ChannelList(*list)
+    """
     def __init__(self, *args):
         self.extend(args)
 

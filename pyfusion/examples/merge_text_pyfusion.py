@@ -27,6 +27,12 @@ exec(_var_defaults)
 from pyfusion.utils import process_cmd_line_args
 exec(process_cmd_line_args())
 
+if isinstance(file_list, str):
+    file_list_in = file_list
+    file_list = glob(file_list)
+else:
+    file_list_in = np.copy(file_list)
+
 if len(np.shape(file_list)) == 0: file_list=[file_list]
 
 if len(file_list)<10:
@@ -35,6 +41,8 @@ if len(file_list)<10:
 
 if len(ds_list) == 0: raise LookupError('no valid files found in the {n} files in {f}'
                                         .format(f=file_list,n=len(file_list)))
+if isinstance(file_list_in, str):
+    comment_list = [file_list_in] + comment_list
 
 if append_old_method:
     ds_list.append(dd)

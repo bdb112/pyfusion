@@ -354,7 +354,7 @@ def newload(filename, verbose=verbose):
     #      timebase[wnan]=np.nan
 
     # *Without* care to avoid nans in cumsum
-    if ('cumsum' in timebaseexpr) and ('np.nan' in timebaseexpr) and dict['version'] < 105:
+    if ('cumsum' in timebaseexpr) and ('np.nan' in timebaseexpr) and dic['version'] < 105:
         print('newload: !!! kludging a fixup of nans in a timebase with cumsum !!')
         if "*2e-06" not in timebaseexpr:
             raise LookupError('*2e-06 expected in timebaseexpr:\n'+timebaseexpr +

@@ -2,6 +2,7 @@
 SH : 2May2013
 bdb lots of mods 
 testing: pyfusion/examples/clusterDA.py
+See also clustering/EM_vonMises.py for another attempt
 Lots of duplication - needs rationalisation
 '''
 

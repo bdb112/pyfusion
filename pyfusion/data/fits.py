@@ -19,12 +19,19 @@ def mymirexp(x, params):
     return(b * np.exp(-a*np.abs(x)) + c)
 
 def mybiexp(x, params):
-    """ bi- (independent) exponentials """
+    """ bi- (independent) exponentials on either side of zero"""
     a = params[0:2]
     b = params[2:4]
     c = params[4:6]
     i = (x>0).astype(int)
     return(b[i] * np.exp(-a[i]*np.abs(x)) + c[i])
+
+def mydoubleexp(x, params):
+    """ sum of two exponentials"""
+    a = params[0:2]
+    b = params[2:4]
+    c = params[4:6]
+    return(np.sum([b[i] * np.exp(-a[i]*np.abs(x)) + c[i] for i in [0,1]]), axis=0)
 
 def residuals(params, fn, x, y, yerrs=None):
     # add a general function, passed in args

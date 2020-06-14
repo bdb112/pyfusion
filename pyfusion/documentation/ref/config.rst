@@ -73,6 +73,17 @@ See :ref:`configparser-basics` which includes some syntax rules.
 
   .. ********** EDIT LINE. Is this where Dave got up to ??  ***********
 
+config_name
+-----------
+This has meaning in the context of a device, - the .cfg file for H-1
+and a different one in a diagnostic - e.g. the hardware name
+
+So far it is a dynamically generated name (not in the .cfg
+file) which helps in tracking to the physical device (e.g. digitzer
+no/chan).  A common use is to track the coords, but in retrospect
+this should really be linked through the normal (.cfg file defined) name.
+Another function would be to label graphs wih digitiser channel names.
+
 
 
 The sections in the configuration (except for [variabletypes]) file have the syntax

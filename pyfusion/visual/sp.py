@@ -8,25 +8,37 @@ from pyfusion.debug_ import debug_
 
 debug=0
 
-def on(colls):
+def get_colls(ax=None):
+    ax = pl.gca() if ax is None else ax
+    colls = [ch for ch in ax.get_children() if hasattr(ch,'get_clim')]
+    return(colls)
+
+def on(colls=None):
     """ control the overlay of points - on or off
     This is somewhat specialised to scatterplots as refers to a collection
     """ 
+    if colls is None:         # get the last collection
+        colls = get_colls()[-1:] 
+
     for coll in colls:
         coll.set_visible(1)
     pl.show()
 
-def off(colls):
+def off(colls=None, remove=False):
+    if colls is None:         # get the last collection
+        colls = get_colls()[-1:] 
+
     for coll in colls:
-        coll.set_visible(0)
+        if remove:
+            coll.remove()
+        else:
+            coll.set_visible(0)
+            
     pl.show()
 
 def tog(colls=None):
-    if colls is None:
-        colls = []
-        for c in pl.gca().get_children():
-            if type(c) == matplotlib.collections.PathCollection:
-                colls.append(c)
+    if colls is None:         # get the last collection
+        colls = get_colls()[-1:] 
 
     for coll in colls:
         coll.set_visible(not coll.get_visible())

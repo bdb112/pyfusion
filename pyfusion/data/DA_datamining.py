@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 from time import time as seconds
@@ -368,7 +369,8 @@ Note: This is my prototype of google style python sphinx docstrings - based on
 
         if 'mask' in self.da:  # need to load first, regardless
             load = 1
-            print('Autoloading as data has a mask enabled')
+            if self.verbose > -1:
+                print('Autoloading as data has a mask enabled')
 
         if load == 0:  
             self.loaded = False
@@ -432,7 +434,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         new_keys = []
         for nkey in new_dict.keys():
             if nkey in self.da.keys():
-                print('replacing {k}'.format(k=nkey))
+                if self.verbose > -1: print('replacing {k}'.format(k=nkey))
             else:
                 new_keys.append(nkey)
 
@@ -715,7 +717,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
                 if hasattr(dd[k],'dtype'):
                     if dd[k].dtype == np.dtype('object'):
                         dd[k] = dd[k].tolist()
-                        if self.verbose: 
+                        if self.verbose > 0: 
                             print('object conversion for {k}'
                                   .format(k=k))
                     if (hasattr(dd[k],'dtype') and 
@@ -726,7 +728,7 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         # key 'info' should be replaced by the more up-to-date self. copy
         self.da = dd
         self.update({'info': self.infodict}, check=False)
-        if self.verbose: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
+        if self.verbose > -1: print(' in {dt:.1f} secs'.format(dt=seconds()-st))
         report_mem(start_mem, verbose=self.verbose)
         return(True)
 
@@ -965,11 +967,11 @@ Note: This is my prototype of google style python sphinx docstrings - based on
         if sharey == 1:
             sharey = 'all'
         if xkey not in self and 't_mid' in self:
-            print("no 't' available - defaulting to 't_mid'")
+            print("no 't' available - defaulting to 't_mid'", end=', ')
             xkey = 't_mid'
 
         if masked and hasattr(self, 'masked') and key in self.masked.keys():
-            print('using masked {k}'.format(k=key))
+            print('using masked {k}'.format(k=key), end=', ')
             arr = self.masked[key]
         else:
             arr = self[key]

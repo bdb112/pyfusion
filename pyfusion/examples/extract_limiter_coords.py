@@ -69,6 +69,7 @@ plt.figure()
 axdR = plt.gca()
 # .0001 is needed to get the Y=0 point otherwise derivative flips sign at the origin
 wq = np.where((Y[wZ0] > -0.0001) & (X[wZ0]-5.6686 > -0.0108))[0]
+# try to limit excessive number of points
 axdR.plot(Y[wZ0[wq]][::5], X[wZ0[wq]][::5]-5.6686, '.', label='limiter_profile')
 axdR.set_aspect('equal')
 axdR.set_ylabel('R relative to limiter tip')

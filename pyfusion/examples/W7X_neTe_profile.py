@@ -547,6 +547,12 @@ for _times, _sigs in zip(t_range_list, allsigs):
     alltimes.update({'{0:.4f}'.format(_times[0]):dic})
     json.dump(alltimes, open('0309_7_fake', 'w'))
 
-
+# as a text file - a pain compared to the json form, and generates really long lines.
+with open('textfile', 'w') as tfh:
+    for ktm in alltimes:
+        tfh.write(ktm + '\n')
+        for kvar in alltimes[ktm]:
+            tfh.write(kvar + ':')
+            tfh.write(' '.join([str('{val:.4f}'.format(val=val)) for val in alltimes[ktm][kvar]]) + '\n')
 
 """

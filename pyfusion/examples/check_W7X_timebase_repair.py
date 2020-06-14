@@ -76,7 +76,7 @@ if iterate:  # this correction looks just at data between 30% and 70% to avoid h
 exec("def aphase_dyn(t,y): print('recompiled', fsamp); return (t,analytic_phase(y)-fsamp*2*pi*t)")
 
 # maybe should be in data/plots.py, but config_name not fully implemented
-# note that this layout is overridden by a multi diag
+# note that this figure layout is overridden by a multi diag
 fig, [axph, axdt] = plt.subplots(2, 1)
 plt.sca(axph)
 fd.plot_signals(suptitle='shot {shot}: '+diag_name + ' fsamp=' + str(round(fsamp,2)),

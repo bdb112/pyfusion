@@ -74,7 +74,7 @@ def make_utcs_relative_seconds(dic, t0):
             dic.update({k: (val - t0)/1e9})
         elif isinstance(val, lst):
             vnew = [(v - t0)/1e9 if isinstance(v, anyints) and v > 1e9
-                    else v for v in val[0:10]]
+                    else v for v in val[0:10]]  # prevent long lists from floding screen
             dic.update({k: vnew})
     return dic
 
@@ -413,4 +413,4 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
-    # not sure wh  run  ing this prints 41 shots
+    # not sure why  running this prints 41 shots

@@ -302,7 +302,7 @@ def discretise_signal(timebase=None, signal=None, parent_element=array(0),
     tim=discretise_array(timebase,eps=eps,verbose=verbose, unique=True)
     rawtimebase=tim['iarr']
 
-# this version 
+# older version 
     # timebaseexpr=str("timebase=%g+%s*%g" % (tim['minarr'], "dic['rawtimebase']",
     #                                          tim['deltar']))
     if delta_encode_time: 

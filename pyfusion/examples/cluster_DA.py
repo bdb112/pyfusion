@@ -1,5 +1,5 @@
 """
-A quick test
+A quick test - this version is newer than cluster_DA_0.py
 _PYFUSION_TEST_@@DAfilename='$DA/300_384_RMSv2_neNBecVA.npz' cl=-1
 """
 from pyfusion.data.DA_datamining import DA

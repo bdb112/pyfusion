@@ -75,11 +75,56 @@ def find_data(file, target, skip = 0, recursion_level=0, debug=0):
                       'target {t} not found in file {f}'.
                       format(t=target, f=file))
 
-def plot_fs_DA(ds, hold=1, ms=100):
-    if hold == 0: pl.clf() # for the colorbar()
-    pl.scatter(ds['t_mid'],ds['freq'],ms*ds['a12'],ds['amp'])
-    pl.title('{s}, colour is amp, size is a12'.format(s=ds['shot'][0]))
-    pl.colorbar()
+def plot_fs_DA(ds, ax=None, hold=1, ms=100, inds=None, shot=None, alpha_b=None, clim=[None, None], **sckw):
+    """ ms is marker scale
+        clim is the range of colours - if None and 
+           there is already a collection - use its clims
+           if no collections then auto scale clim
+        alpha_b is the border alpha - if not None, repeat plot with Borders only at this alpha
+           (usually 1)
+
+    colls=[ch for ch in plt.gca().get_children() if hasattr(ch,'get_clim')]
+
+    """
+    ax = ax if ax is not None else pl.gca()
+    fig = ax.get_figure()
+    if hold == 0:
+        fig.clf() # clear the colorbar()
+        ax = pl.gca()
+    do_cbar =True
+    if clim[0] is None:
+        colls=[ch for ch in ax.get_children() if hasattr(ch,'get_clim')]
+        if len(colls) > 0:
+            clim = colls[0].get_clim()
+            do_cbar = False
+    inds = np.arange(len(ds['shot'])) if inds is None else inds
+    if shot is not None:
+        inds = np.where(ds['shot'] == shot)[0] 
+    ord = np.argsort(ds['a12'][inds])  # sort so that the highest a12 lies on top
+    inds = inds[ord]
+    scp = ax.scatter(ds['t_mid'][inds],ds['freq'][inds],ms*ds['a12'][inds], ds['amp'][inds],
+                         vmin=clim[0], vmax=clim[1], **sckw)
+    if alpha_b is not None:
+        #sckw.update(dict(alpha=alpha_b, facecolor="r"))
+        scp.set_facecolor("none")
+        scp.set_alpha(alpha_b)
+        #ax.scatter(ds['t_mid'][inds],ds['freq'][inds],ms*ds['a12'][inds], ds['amp'][inds],
+        #           vmin=clim[0], vmax=clim[1], **sckw)
+                   
+        
+    shotstr = str('{sfr}..{sto}'.format(sfr=ds['shot'][0], sto=ds['shot'][-1]))
+    if len(np.unique(ds['shot'])) == 1:
+        shotstr = str(ds['shot'][0])
+    if shot is not None:
+        shotstr = str(shot)
+    if hasattr(ds, 'name'):
+        shotstr = shotstr + '[{name}]'.format(name=ds.name)
+    elif hasattr(ds, 'keys') and isinstance(ds['info']['comment'][0], str):
+        shotstr = shotstr + ' [{name}]'.format(name=ds['info']['comment'][0])
+
+    fig.suptitle('{shotstr}\n colour is amp, size is a12'.format(shotstr=shotstr))
+    if do_cbar:
+        fig.colorbar(scp)
 
 
 def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinteractive(), ms=100, hold=0, debug=0, quiet=1,  maxcpu=1, exception = Exception):
@@ -171,9 +216,9 @@ def read_text_pyfusion(files, target=b'^Shot .*', ph_dtype=None, plot=pl.isinter
             else:
                 print('no data in {f}'.format(f=filename))
 
-        except ValueError as info:
-            print('Conversion error while processing {f} with loadtxt - {info} {args}'
-                  .format(f=filename, info=info, args=info.args))
+        except ValueError as reason:
+            print('Conversion error while processing {f} with loadtxt - {reason} {args}'
+                  .format(f=filename, reason=reason, args=reason.args))
             traceback.print_exc()
 
         except exception as info:
@@ -268,7 +313,7 @@ def merge_ds(ds_list, comment_list=[], old_dd=None, debug=True, force=False):
 
     # put the comments in a dictionary, so that operations on arrays won't be atttempted
     dd['info'] = {'comment': np.array(comment_list)}
-
+    print("############# comment_list", comment_list)
 
     return(dd)
     
@@ -280,13 +325,3 @@ if __name__ == "__main__":
     (ds_list, comment_list) = read_text_pyfusion(glob('pyfusion/test_files/bad_PF2_dat/PF*2'))
     print('expected result is 3 exceptions, and 2 out of 5 files')
     if len(ds_list)!=2: print('test failed')
-
-
-
-
-
-
-
-
-
-

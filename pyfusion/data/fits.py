@@ -31,8 +31,9 @@ def mydoubleexp(x, params):
     a = params[0:2]
     b = params[2:4]
     c = params[4:6]
-    plt.plot(x, np.sum([b[i] * np.exp(-a[i]*np.abs(x)) + c[i] for i in [0,1]], axis=0),lw=0.03)
-    return(np.sum([b[i] * np.exp(-a[i]*np.abs(x)) + c[i] for i in [0,1]], axis=0))
+    fn = np.sum([b[i] * np.exp(-a[i]*np.abs(x)) + c[i] for i in [0,1]], axis=0)
+    plt.plot(x, fn, lw=0.03)
+    return(fn)
 
 def residuals(params, fn, x, y, yerrs=None):
     # add a general function, passed in args

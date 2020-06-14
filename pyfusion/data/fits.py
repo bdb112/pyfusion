@@ -27,6 +27,7 @@ def mybiexp(x, params):
     return(b[i] * np.exp(-a[i]*np.abs(x)) + c[i])
 
 def mydoubleexp(x, params):
+    # changes from f893a897a merged in
     """ sum of two exponentials, mirrored across zero"""
     a = params[0:2]
     b = params[2:4]

@@ -77,6 +77,7 @@ if len(time_range) == 2:
 #   xdata = xdata.reduce_time(time_range)
 #   ydata = ydata.reduce_time(time_range)
 
+tsamp = 1/xdata.timebase.sample_freq
 
 if hold == 0: plt.figure()
 
@@ -113,8 +114,8 @@ ybcreal = boxcar(sig=yarr, period=period, maxnum=1)
 
 axs[1].plot(xbcreal, ybcreal, '.', label='real time, no delay', markersize=4, **plotkws)
 axs[1].plot(xbc, ybc, '.', label='{nc} cyc., no delay'.format(nc=numused), markersize=4, **plotkws)
-axs[1].plot(rotate(xbc, offs), ybc, marker, label='{nc} cyc., vdel {ns}ns'
-            .format(nc = numused, ns=offs*-100), **plotkws)
+axs[1].plot(rotate(xbc, offs), ybc, marker, label='{nc} cyc., vdel {ns:,d}ns'
+            .format(nc = numused, ns=int(-offs*tsamp*1e9)), **plotkws)
 axs[0].set_xlabel('V')
 axs[0].set_ylabel('A')  #  avoids interference
 if len(time_range) > 0:

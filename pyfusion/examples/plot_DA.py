@@ -52,8 +52,4 @@ else:
         raise LookupError('Keys available are: ' + str(list(da)))
 
     da.plot(key)
-    if 'info' in da:
-        pprint.pprint(da['info'])
-    if hasattr(da, 'info'):
-        da.info()
     plt.show(1)

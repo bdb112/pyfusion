@@ -62,6 +62,8 @@ copyright = u'2016, David Pretty, Boyd Blackwell(current), Shaun Haskey'
 # The short X.Y version.
 version = '0.995'
 # The full version, including alpha/beta/rc tags.
+# merged in f893a897
+# The letter needed to be hard up against the number for version to see it
 release = '0.995b Op1.2b ' # alpha etc - alpha is first, then beta
 # edit version.py, README.rst accordingly
 

@@ -23,7 +23,7 @@ def git_sha():
     )
     return p.communicate()[0]
 
-
+# merged in f893a89 - the letter b needs to be just after the last number
 VERSION = (0, 9, 9, '5b Op1.2b', 0)   #  set version here (started at 0.58)
 # note - need to edit version in documentation/conf.py also
 

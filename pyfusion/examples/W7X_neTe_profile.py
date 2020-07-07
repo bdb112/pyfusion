@@ -1,4 +1,5 @@
 """
+_PYFUSION_TEST_@@dafile_list='["LP/all_LD/LP20160309_17_L5SEG_2k2.npz"]'
 labelpoints=1 label highest amplitude
 labelpoints=2 label all
 
@@ -38,6 +39,7 @@ from pyfusion.acquisition.W7X.lukas_approx_SOL.PickledAssistant import lookupPos
 from pyfusion.acquisition.W7X.mag_config import get_mag_config, plot_trim
 from pyfusion.data.fits import fitgauss, mygauss, fitmirexp, mymirexp, fitbiexp, mybiexp
 from pyfusion.debug_ import debug_
+from pyfusion.data.read_zip_data import read_MPM_data
 
 #  from cycler import cycler  # not working yet
 

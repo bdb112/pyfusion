@@ -4,10 +4,10 @@ import pyfusion
 import pyfusion.utils
 from scipy import fftpack as fft
 from pyfusion.utils.utils import fix2pi_skips, modtwopi
-
+#TEST - the defaults below are quick, but don't show a nice result
 
 _var_defaults = """ """
-diag_name = ''
+diag_name='W7X_MIRNOV_41_SOME'
 debug = 0 # 
 dev_name = 'W7X'   # 'LHD'
 exception = Exception  # to catch all exceptions and move on
@@ -15,7 +15,7 @@ time_range = [5.8, 5.81]
 dt = 1e-3
 help = 0
 verbose = 0
-shot_number = None
+shot_number = [20181009, 24]
 stop = False  # True will stop to allow debugging
 fsel = []
 # sharex = 'col'
@@ -55,7 +55,7 @@ fig.suptitle('Shot {sh}: {di}, <t>={tavg:.4g}, dt={dt}'
 axparray.set_xlabel('<t>={tavg:.4g} dt={dt}'
                     .format(sh=str(shot_number), di=diag_name, dt=dt, tavg=np.average(seg.timebase)))
 
-plt.show()
+plt.show(block=0)
 
 
 def plot_array_phase(freq, ax=plt.gca(), fixp=False, ref_probe=0, ref_offset=0):
@@ -81,4 +81,4 @@ def plot_array_phase(freq, ax=plt.gca(), fixp=False, ref_probe=0, ref_offset=0):
         phaselist = modtwopi(phaselist, offset=ref_offset)
     ax.plot(phaselist, label=str('{f:.1f}kHz'.format(f=freqs[findex]/1e3)))
     ax.legend(fontsize='xx-small', loc='best',ncol=1 + min(3, len(isigs)//6))
-    plt.show()
+    plt.show(block=0)

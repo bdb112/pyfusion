@@ -1,6 +1,7 @@
 from pyfusion.data.process_swept_Langmuir import Langmuir_data, fixup
 sys.path.append('/home/bdb112/python/')
 # to reproduce marfe data based on 224 - this (6th dec 2016) is supseded by the June 4th 2017 work?
+#_PYFUSION_TEST_@@SCRIPT
 t_range_list_5marfe=[[0.3,0.32], [0.45,0.47], [0.5,0.52], [.53,0.54], [0.5,0.52]]
 run -i pyfusion/examples/W7X_neTe_profile.py dafile_list="['LP/all_LD/LP20160224_30_L5SEG_2k2.npz']" labelpoints=0 t_range_list=[0.1,0.2] diag2=ne18 av=np.nanmedian
 sigs224_30=sigs

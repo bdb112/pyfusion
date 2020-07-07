@@ -17,6 +17,7 @@ Advantage of file output is that it is easier to run simple cases and test cases
 # as LHD with the same name.
 run pyfusion/examples/gen_fs_bands.py dev_name='HeliotronJ' diag_name='HeliotronJ_MP_array' time_range=[100,250] shot_range=[50000] seg_dt=1 info=1
 _PYFUSION_TEST_@@seg_dt=0.01 time_range=[1,1.5]
+_PYFUSION_TEST_@@diag_name=W7X_MIRNOV_41_SOME shot_range=[[20180808,5]] max_bands=1 info=0 min_svs=2 max_H=0.999 min_p=0 fmax=15e3  seg_dt=3e-3 min_svs=2 time_range=[15,15.5] 
 ## Strange timing - is there a bug? ##
 all have  max_bands=4 diag_name= 'MP2010' unless stated
 6  run pyfusion/examples/gen_fs_bands seg_dt=0.01 time_range=[1,1.5]  Good
@@ -103,6 +104,7 @@ from pyfusion.data.filters import next_nice_number
 if outfile is None or outfile == 'None':  # stdout
     write = sys.stdout.write
     close = sys.stdout.flush
+    flush = sys.stdout.flush
 else:
     fd = open(outfile, 'w+')
     write = fd.write
@@ -266,7 +268,7 @@ for (cnt, shot) in enumerate(shot_range):
                           .format(s=shot,ei=sys.exc_info()[1].__repr__(), reason=reason))
         print(warning_msg, '\n\n')
         pyfusion.logging.error(warning_msg)
-    fd.flush()
+    flush()
     timeinfo('\n######## shot {s}: {c}/{rc} fs so far'
              .format(c=count,rc=raw_count,s=shot), sys.stderr) # stderr so that read    
 

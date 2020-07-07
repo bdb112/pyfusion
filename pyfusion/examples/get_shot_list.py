@@ -26,8 +26,9 @@ exec(process_cmd_line_args())
 
 cmd = str('pyfusion/bin/get_W7X_shotnums {path} {diag} > /tmp/file_list'
           .format(**locals()))
-extra_shell = 'x' if os.name == 'posix' else 'c:\\cygwin\\bin\\bash.exe -c '
+extra_shell = '' if os.name == 'posix' else 'c:\\cygwin\\bin\\bash.exe -c '
 retcode = os.system(extra_shell + cmd)
+# in test_examples.py this somehow comes up as an error
 if retcode != 0:
     print('failed with code {retcode} executing \n{cmd}'.format(**locals()))
     x=input('execute manually and run again to read data, then hit return')

@@ -199,6 +199,7 @@ def analytic_phase(x, t=None, subint=None):
             phs[i,:] = arctan2(xsub, hilbert(xsub))
         phi = phs.flatten()
     else:
+        print('hilbert.. ')
         y=hilbert(x)  # use hilbert twice just to remove DC (lazy)
         phi = arctan2(y, hilbert(y))
 

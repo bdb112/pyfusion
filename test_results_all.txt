@@ -1,7 +1,165 @@
 Use emacs sort-columns after defining column with the region to put in order
-vnc with vncserver, then xfce4-term and paste results into an emacs in the VNC
+vnc with vncserver, then xfce4-term and paste results into an emacs in the VNC.
+if an xterm is used instead, make sure it is wide before starting
 
 sorting simplified - 3 dig leading 0's and alpha is the standard order
+
+Python 2.7.12 (default, Apr, Pyfusion 0.9.95O (06d52f8) Tue Jul  7 13:10:28 2020
+106  1.86 examples/plot_phase_vs_freq.py: OK! 
+100  1.61 examples/plot_dmusic.py       : Err ValueError: Invalid number of FFT data points (0) specified. 
+055  0.00 examples/full_processing_example_script.py: OK! script
+009  0.00 examples/W7X_neTe_MPM_LP_comparison_script.py: OK! script
+040  0.00 examples/daihong_script.py    : OK! script
+056  7.55 examples/gen_fs_bands.py      : OK! s so far in 3.26/6.56 Time:  ########shot [20180808, 5]: 114/503 fs finished in 0.00/6.56
+069  0.00 examples/low_level_W7X_MDSplus_example.py: OK! 
+023  3.88 examples/check_W7X_timebase_repair.py: OK! ********* [20160309, 51] is an old npz file? t0 may be off ***********************
+002  0.00 examples/EM_cluster_plot_script.py: OK! script
+073  0.00 examples/marfe_plots_June_2017.py: OK! script
+063  0.58 examples/get_shot_list.py     : OK!  such file or directory ls: cannot access './backup_disk/0303': No such file or directory
+146  3.01 examples/write_LP_as_CSV.py   : OK! 
+094  0.76 examples/plot_DA.py           : OK! 
+010  1.34 examples/W7X_neTe_profile.py  : OK!  function has reached maxfev = 1400.   warnings.warn(errors[info][0], RuntimeWarning) 
+044  2.71 examples/extract_limiter_coords.py: OK! 
+118 11.51 examples/plot_xy.py           : OK! 
+126 18.10 examples/process_multi_LP.py  : OK! untimeWarning: overflow encountered in exp   return(I0 * (1 - exp((v-Vf)/Te))) 
+105  1.39 examples/plot_npz_data.py     : OK! 
+079  1.84 examples/merge_text_pyfusion.py: OK! 
+050  4.41 examples/find_cluster_members.py: OK! 
+030 19.03 examples/cluster_DA.py        : OK! r facecolor properties.    warnings.warn("Setting the 'color' property will override" 
+008  0.00 examples/W7X_marfe_neTe_profiles.py: OK! script
+004  0.00 examples/W7X_OP1.1_LCFS.py    : OK! skip
+132  3.46 examples/run_process_LP.py    : OK! 
+134  1.03 examples/save_to_local.py     : OK! 
+003  2.15 examples/N2_puff_correlation.py: OK! 0m   plt.text(x[c] + (dot_radius[c] +.001)*np.array([1,-1])[x[c]<0], z[c] + voff, ch[2:]
+109  1.15 examples/plot_signals.py      : OK!  label='...' kwarg on individual plots.   warnings.warn("No labelled objects found. " 
+087  0.07 examples/modify_cfg.py        : OK! 
+060  0.49 examples/get_W7X_shotlist.py  : OK! 
+140  0.86 examples/sql_plot.py          : OK! 
+111  3.45 examples/plot_specgram.py     : OK! ********************** set_clim([-80, -10] to change clims ************************** 
+110  3.15 examples/plot_signals_trivial.py: OK! 
+112  1.07 examples/plot_svd.py          : Err TypeError: unsupported operand type(s) for +: 'NoneType' and 'float' 
+080  0.00 examples/mini_summary.py      : OK! skip
+147  0.02 examples/write_csv_simple.py  : Err NameError: name 'csv' is not defined 
+045  0.06 examples/file_finder_db.py    : Err TypeError: glob() got an unexpected keyword argument 'recursive' 
+131  2.31 examples/restore_sin.py       : OK! 
+091  0.00 examples/pellet_script.py     : OK! script
+124  3.71 examples/process_MLP.py       : OK! : invalid value encountered in log   vf_c = vp_flat[i + 2] - te_c * ln(a3 + 1) 
+144  4.36 examples/testall.py           : OK! 
+095  6.08 examples/plot_DA_alpha.py     : OK! 
+096  0.00 examples/plot_LP2D.py         : OK! skip
+025  2.08 examples/check_npz_data_integrity.py: OK! 
+035  9.14 examples/compare_analysis.py  : Err ValueError: Not enough points 0 in t_comp for leakage est. - try [ 0.847  0.947] 
+115  7.59 examples/plot_tdu_pflux.py    : OK! results might be incorrect.   warnings.warn("This figure includes Axes that are not " 
+130  4.10 examples/realtime_mode.py     : Err NameError: name 'da' is not defined 
+052  0.52 examples/fix_struck.py        : OK! 
+136  5.92 examples/simple_table.py      : OK! ************************** Assuming W7X shot numbers **************************   """ 
+016  0.31 examples/boxcar.py            : Err NameError: name 'v' is not defined 
+133  1.00 examples/run_process_TDLP.py  : OK! 
+123  1.47 examples/print_dict_tree.py   : OK! gs_PARLOG_V38_.json **************************   local_copy = get_PARMLOG_cache(shot) 
+059  0.00 examples/get_LP_data.py       : OK! skip
+081  0.00 examples/mini_summary_MAGPIE.py: OK! skip
+108  1.37 examples/plot_shots.py        : OK! 
+018  1.63 examples/calibrate_probes.py  : Err LookupError: shot=[1509529825000000000, 1509529826000000000], diag=W7X_UTDU_LP18_I:  fetc
+047  0.00 examples/find_2D_conf_scans.py: OK! skip
+068  1.49 examples/igetfile.py          : OK! 
+145  4.32 examples/wid_specgram.py      : OK! ************************   set_axis_if_OK(pl.gca(),axt[0:2], np.array(axt[2:])/ffact) 
+000  0.77 examples/DA_info.py           : OK! 
+083  0.00 examples/mirnov_RMS_db.py     : OK! skip
+028  5.10 examples/clean_up_pyfusion_text.py: OK! 
+072  1.54 examples/marfe_plot.py        : OK! : 183/4, 1924 **************************   config_name=config_name, **kwargs).fetch() 
+048  0.00 examples/find_VSL_locking.py  : OK! script
+122  1.28 examples/prepfs_time_mp.py    : OK! 
+051  1.05 examples/find_last_data.py    : OK! 
+121  1.84 examples/prepfs_range_sep.py  : OK! 
+137  2.43 examples/slider_f_t.py        : OK! 
+066  0.00 examples/h1_mode_identify.py  : OK! script
+093  5.53 examples/play_with_fft_signals.py: OK! 
+120 21.83 examples/prepfs_range_mp.py   : OK! 
+143  4.12 examples/test_lasso_fs.py     : OK! 
+042  1.26 examples/divertor_power_profile.py: OK! 
+127  1.16 examples/process_swept_Langmuir.py: Err AttributeError: 'list' object has no attribute 'lower' 
+103  3.00 examples/plot_multi_movie.py  : Err IOError: [Errno 2] No such file or directory: u'/tmp/movie/H1ToroidalAxial_97419.png' 
+128  0.40 examples/query_h1ds.py        : Err sqlalchemy.exc.NoSuchTableError: summary 
+007  0.00 examples/W7X_get_shot_times.py: OK! skip
+006  0.00 examples/W7X_analysis_Fri_11Mar.py: OK! script
+062  1.28 examples/get_diamag.py        : OK!  result in an error in the future   sm_timebase = timebase[offset:offset+len(sm_sig)] 
+043  0.00 examples/example_fragments.py : OK! script
+104  2.16 examples/plot_ne_profile.py   : OK! 
+084  0.00 examples/mode_identify_example_2012.py: OK! skip
+099  1.61 examples/plot_correlation.py  : OK! 
+033  1.33 examples/coherence_vs_time.py : OK! f fftopt > 0: new_time_range = get_optimum_time_range(input_data, new_time_range, fftopt)
+034  1.18 examples/compare_LPdas.py     : OK! 
+039  1.95 examples/cross_phase.py       : OK! 
+098  0.00 examples/plot_both_LP2D.py    : OK! skip
+038  0.00 examples/correct_LP_data.py   : OK! skip
+013  0.32 examples/__init__.py          : OK! 
+032  0.77 examples/cluster_phases_three_colour.py: Err ImportError: cannot import name cm 
+135  0.93 examples/show_corruption.py   : OK! 
+070  0.50 examples/manage_data.py       : OK! 
+046  0.00 examples/file_sorter.py       : OK! skip
+082  0.00 examples/mini_summary_MDS.py  : OK! skip
+012  0.35 examples/W7X_read_json.py     : OK! 
+011  0.51 examples/W7X_probe_list.py    : OK! 
+074  1.41 examples/marfe_time_plot.py   : OK! 
+015  2.80 examples/basic_ne_scan.py     : OK! 
+021  0.89 examples/check_DA.py          : OK! 
+036  0.00 examples/compare_bands.py     : OK! skip
+005  1.11 examples/W7X_analysis.py      : Err ZeroDivisionError: integer division or modulo by zero 
+017  0.47 examples/bug_report.py        : OK! 
+088  1.06 examples/multi_plot.py        : OK! 
+020  2.94 examples/channel_spectra.py   : OK! 
+071  0.00 examples/many_specs.py        : OK! skip
+061  1.02 examples/get_basic_params.py  : Err ValueError: no good shots 
+041  1.22 examples/density_cluster.py   : OK! 
+101  0.38 examples/plot_json_timeseries.py: OK! 
+026  1.45 examples/check_other_data.py  : OK! 
+058 13.54 examples/gen_fs_local.py      : OK! 
+089  9.90 examples/ne_profile_preprocess.py: OK! 
+029 17.20 examples/clean_up_pyfusion_text_mp.py: OK! 
+076  0.95 examples/merge_basic_HJ_diagnostics.py: Err NameError: name 'dd' is not defined 
+078  0.77 examples/merge_h1_diagnostics.py: Err NameError: name 'dd' is not defined 
+019  1.74 examples/channel_angle_games.py: OK! 
+014  0.89 examples/barber_pole.py       : OK! 
+092  2.70 examples/phase_histogram.py   : OK! 
+049  0.64 examples/find_close_shot.py   : OK! 
+139  0.78 examples/small_65.py          : OK! 
+141  1.13 examples/svd_simple_rotator.py: OK! 
+142  1.77 examples/tables_extract.py    : OK! 
+090  0.76 examples/new_mode_identify_script.py: Err ValueError: Need to choose doN=True and/or doM=True 
+086  0.93 examples/mode_identify_script.py: Err IndexError: list index out of range 
+116  0.73 examples/plot_text_fft.py     : Err IOError: [Errno 2] No such file or directory: 'g:fft26_50.dat' 
+125  0.69 examples/process_chirps.py    : Err NameError: name 'dd' is not defined 
+022  2.08 examples/check_HD_histogram.py: OK! 
+138  0.76 examples/small_300.py         : OK! 
+064  0.00 examples/get_wp_etc.py        : OK! skip
+053  0.80 examples/flip_phase.py        : OK! 
+054  0.45 examples/fonts.py             : OK! 
+129  3.50 examples/read_DF.py           : OK! aining open files:/data/datamining/DA/PF2_130813_50_5X_1.5_5b_rms_1_diags_comp5.h5...done 
+027  5.32 examples/check_polarity_flips.py: OK! 
+001  4.76 examples/DP14_mode_plot.py    : OK! 
+097 12.54 examples/plot_basic.py        : OK! 42: RuntimeWarning: divide by zero encountered in true_divide   1/(dy1+dy2),)) 
+107  3.10 examples/plot_shot.py         : OK! 
+077  4.12 examples/merge_basic_diagnostics.py: Err IOError: [Errno 2] No such file or directory: 'DA_file.npz' 
+119 16.20 examples/prepfs_range.py      : OK! 
+057  3.56 examples/gen_fs_general.py    : OK! 
+037  0.82 examples/copy_DA.py           : Err IOError: [Errno 2] No such file or directory: '../../datamining/DA/PF2_130813_50_5X_1.5_5b
+117  0.72 examples/plot_text_pyfusion.py: Err IOError: [Errno 2] No such file or directory: '/docs/home/bdb112/pyfusion/working/pyfusion
+102  0.71 examples/plot_many.py         : Err ValueError: SCAN NOT AVAILABLE!!!!! 
+065  0.02 examples/good_ones_density_cluster.py: Err SyntaxError: invalid syntax 
+067  6.46 examples/h1_mode_lists.py     : OK! r facecolor properties.    warnings.warn("Setting the 'color' property will override" 
+031  1.74 examples/cluster_info.py      : OK! 
+114  2.99 examples/plot_svd_simple.py   : OK! 
+113  7.80 examples/plot_svd_old.py      : OK! 
+024  1.33 examples/check_dw_pdt.py      : OK! 
+075  8.81 examples/medium_300.py        : OK! 
+085  0.07 examples/mode_identify_example_from_ICPP_2010.py: Err SyntaxError: invalid syntax 
+91 good, 29 errors out of 120 not skipped
+to see problem files, type print(err_files)
+
+Then fixed 8 and labelled some scripts, got above ^
+After completing merge of IPP and Canberra W7X MHD/datamining 06d52
+got 83 good, 42 errors out of 125 not skipped - will check the rest after ipp test.
+
 
 Python 2.7.12 (default, Nov, Pyfusion 0.9.92O (666e5f6) Sat May  4 11:50:04 2019
 000  0.71 examples/DA_info.py           : OK! 

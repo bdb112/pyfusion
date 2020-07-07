@@ -226,8 +226,9 @@ def get_fftw3_speed(arr, iters=10, direction=None, dtype=np.float32, **kwargs):
     else:  # do one example
         build_kwargs = dict(flags=['FFTW_ESTIMATE'])
         build_kwargs.update(kwargs)
+        print(build_kwargs)
         simd_align = pyfftw.simd_alignment  # 16 at the moment.
-        arr = pyfftw.n_byte_align(arr,  simd_align)
+        arr = pyfftw.n_byte_align(arr, simd_align)
         out = pyfftw.n_byte_align(np.ones(len(arr)/2+1, dtype=np.complex64),
                                   simd_align)
         fwd = pyfftw.FFTW(arr, out, **build_kwargs)

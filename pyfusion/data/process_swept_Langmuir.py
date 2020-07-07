@@ -783,7 +783,7 @@ Args:
 clip_iprobe = e.g. [-0.015, .02]  # used to check if a resistive term is affecting Te
 clip_vprobe = [,]  # used to reduce emphasis on isat
   debug = [None - use the existing value]
-  plot_DA - plot the DA in figer(plot_DA)
+  plot_DA - plot the DA in figure(plot_DA) (and upwards?)
 
 Returns:
     (if return_results) A list of results - can save a DA object as described above if a filename is given

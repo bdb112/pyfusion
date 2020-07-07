@@ -42,6 +42,8 @@ params = info['params']
 channels = info['channels']
 if channels[0][0] == '_':
     channels = ['W7X'+chan+'_I' for chan in channels]
+    if 'full_channel_names' not in dat['info']:   # this is a fudge - it seems I never implemented full_channel_names
+        dat['info']['full_channel_names'] = channels
 
 short_channels = []
 for chan in channels:
@@ -84,7 +86,7 @@ ofile.write(nl)
 extra_dict = {}
 dev_name = 'W7X'
 for ch in channels:
-    if 'full_channel_name' not in dat:
+    if 'full_channel_names' not in dat['info']:
         ch = dev_name + '_' + ch + '_I'
     try:
         config_opts = pyfusion.conf.utils.get_config_as_dict('Diagnostic', ch)

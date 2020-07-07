@@ -4,7 +4,8 @@ run pyfusion/examples/plot_xy.py dev_name='W7X' shot_number=[180907,6] time_rang
 
 run pyfusion/examples/plot_xy.py dev_name='W7X' shot_number=[20180911,24] diag_names=W7M_BRIDGE_V1,W7M_BRIDGE_APPROX_I
 # at the moment time_range does not help for retrieved data
-_PYFUSION_TEST_@@time_range=[4.6,4.6001]  
+# was _PYFUSION_TEST_@@time_range=[4.6,4.6001]  
+_PYFUSION_TEST_@@time_range=[2.6,2.6001]  
 """
 import pyfusion
 from pyfusion.utils import boxcar, rotate

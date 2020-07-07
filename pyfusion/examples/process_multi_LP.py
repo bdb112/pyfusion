@@ -17,7 +17,7 @@ kwargs = dict(t_comp=[0, 0], threshchan=-1, initial_TeVfI0=dict(Te=20, Vf=1, I0=
 kwargs.update(dict(filename='/tmp/pmulti_{s0}_{s1}_{t_start}_{dtseg}'))
 
 _var_defaults = """
-extra_kwargs = {}
+extra_kwargs = {'fit_params':{}}
 program = [20181010, 31]
 program = [20180927, 30]  # short for tests
 program = [20180920, 29]  # clean, low te
@@ -25,7 +25,7 @@ seg_len = 200
 tstart = 1.0
 tend = 1.001
 toffs = None
-plot_DA = 21
+plot_DA = 21  # this sets the starting window of plots so we can have many open, yet override if we want to repeat with diff. params
 nfull = 5 # the number of rotations of one full sample set
 nhalf = 2 # the number of rotations of a half sample set - only 2 makes sense for one period
 """
@@ -39,7 +39,6 @@ kwargs.update(extra_kwargs) # then can update the rest
 
 
 LP = Langmuir_data(program, 'W7M_BRIDGE_ALLI', 'W7M_BRIDGE_V1', dev_name='W7M')
-
 dt = np.average(np.diff(LP.imeasfull.timebase))
 
 plt.figure()

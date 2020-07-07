@@ -20,7 +20,8 @@ http://webservices.ipp-hgw.mpg.de/docs/componentsDbRest.html#searchMeshModels
 485: Inboard limiter for OP1.1 in m 5. Created 12.06.2014, used for EPS 2014. Limiter designed at phi=0, for configuration (1, 1, 1, 1, 1, 0.13, 0.13) at +9 cm from copper cooling structure. The shaping is ideal limiter for P = 10 MW/m2, assuming decay length of 15 mm and parallel flux of 40 MW/m2. Grid size theta/phi: 81/91. Stepping is along local surface normals. The 0-surface is based on Fourier coefficients max poloidal number M=30, max toroidal number N=21, calculated with Biot-Savart step = 1cm. Additional modifications: parabolic and plateau inserts in the center, linear extension at the edges. The limiter poloidal extent theta=(-.485, .485).
 474: Inboard limiter in module 5. Limiter designed for OP1.1 at phi = 0, for configuration (1, 1, 1, 1, 1, 0.2, 0.2) at +5.3 cm from copper cooling structure. The shaping is ideal limiter for P = 10 MW/m2m assuming decay length of 3.55 mm and parallel flux of 200 MW/m2. Stepping is along local surface normals. The 0-surface is based on Fourier coefficients max poloidal number M=40, max toroidal number N=40, calculated with Biot-Savart step=2mm. The limiter poloidal extent theta=(-.411, .411) toprevent a small third zone in connection length. Local naming: +5.3cm_v8.
 """
-component_path = sys.argv[1] if len(sys.argv) > 1 else '/data/databases/W7X/LP/limiter_component_483'
+# 485 is the best limiter for OP1.1, only 474 is available here. - see email from Daniel Bockenhoff 4/11/2020
+component_path = sys.argv[1] if len(sys.argv) > 1 else '/data/databases/W7X/LP/limiter_component_474'# OP1.1 uses 485
 if 'http' in component_path:
     if sys.version < '3.0.0':
         from future.standard_library import install_aliases

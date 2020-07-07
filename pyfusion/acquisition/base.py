@@ -85,10 +85,16 @@ def try_fetch_local(input_data, bare_chan, time_range=None):
         # MDSplus style path to access sorted files into folders by shot
         path, patt = os.path.split(each_path)
         #  print(patt)
-        if len(patt) == 2*len(patt.replace('~','')):  # a subdir code based on date/shot
+        # Detect a a subdir code based on date/shot - half the chars are ~
+        if len(patt) == 2*len(patt.replace('~','')): 
             subdir = ''
-            # reverse the order of both the pattern and the shot so a posn is 0th char
+            # Use the YYYYMMDD part if two components
             strshot = str(shot[0]) if len(np.shape(shot))>0 else str(shot)
+            # print(strshot, patt, str(shot))
+            if len(np.shape(shot)) == 0 and int(strshot[2:4]) <16:
+                print("*******Warning {strshot} seems like an MDSplus shot or MDS test shot in YYMMDD form - see line 255"
+                      .format(strshot=strshot))
+            # reverse the order of both the pattern and the shot so 'a' posn is 0th char
             revshot = strshot[::-1]
             for i,ch in enumerate(patt):
                 if (i%2) == 0: 
@@ -99,7 +105,8 @@ def try_fetch_local(input_data, bare_chan, time_range=None):
                 if (ord(ch) - ord('a')) < len(revshot):
                     subdir += revshot[ord(ch) - ord('a')]
                 else:
-                    print('Are we working with MDSplus W7M test shot???', shot)
+                    if pyfusion.VERBOSE>0:
+                        print('********** Are we working with MDSplus W7M test shot??? - \n need a W7M test shot to check if this is really and error', shot)
 
         else:
             subdir = patt
@@ -141,6 +148,8 @@ def try_fetch_local(input_data, bare_chan, time_range=None):
         read by newload 0.9.92O clean,on both) even though the rawdim is OK up to 350,000
     L57  doesn't have this problem in 0.8.2b - written the same date! (but diff dimraw very fragmented)
     """
+    if 'params' not in signal_dict:
+        signal_dict.update(dict(params=()))
     if 'params' in signal_dict and 'name' in signal_dict['params'] and 'W7X_L5' in signal_dict['params']['name']:
         if  LooseVersion(signal_dict['params']['pyfusion_version']) < LooseVersion('0.6.8b'):
             raise ValueError('probe assignments in error LP11-22 in {fn}'
@@ -200,9 +209,11 @@ def try_fetch_local(input_data, bare_chan, time_range=None):
     if time_range is not None:
         origbnds = (output_data.timebase[[0,-1]]/1e-9).astype(np.float) #  can't use min max as we want the ends
         output_data = output_data.reduce_time(time_range)  # because reduce time can only copy now.
+        # ***** this output_data.utc calc only works for non-nan timebase start and ends,
+        #       and only if the original output_data.utc is correct
         newbnds = (output_data.timebase[[0,-1]]/1e-9).astype(np.float)
         output_data.utc = [output_data.utc[i] + (newbnds[i] - origbnds[i]).round(0) for i in range(2)]
-        print(output_data.utc)
+        print('output_data.utc', output_data.utc, newbnds, origbnds)
 
     oldsrc =  ', originally from ' + output_data.params['source'] if hasattr(output_data, 'params') and 'source' in output_data.params else ''
     output_data.params.update(dict(source='from npz cache' + oldsrc))
@@ -241,7 +252,10 @@ def update_with_valid_config(fetcher):
         #   - need to formalise this, extract the code to a function?
         is_valid = True
 
-        # check for an MDSplus W7M test shot 18... - normal W7M is 2018....
+        # check for an MDSplus W7M test shot 18... - normal W7M is 2018.... - need to find command lines from ipp
+        # Starting with 18 instead of 2018 allows pyfusion to distinguish test shots - on the W7X net,
+        # perhaps these are distinguished by using a different tree, because the shot number may be duplicated
+        # Examplee:  run pyfusion/examples/plot_signals.py dev_name=W7M diag_name=W7M_BRIDGE_V1 shot_number=[180907,9]
         if np.shape(fetcher.shot) != () and fetcher.shot[0] < 990000:  
             valid_shots = None # don't check as the check will find no shot at the moment
             pyfusion.utils.warn('ignoring valid_since data assumed for MDS test {sh}'

@@ -37,7 +37,7 @@ K=4
 numpts = 512
 baselev=1e-4
 normalise='0'
-interpolation=rcParams['image.interpolation']  #  (default) 'nearest','bilinear, bicubic
+interpolation=plt.rcParams['image.interpolation']  #  (default) 'nearest','bilinear, bicubic
 myfilter3=dict(passband=[2e3,4e3], stopband=[1e3,6e3], max_passband_loss=2, min_stopband_attenuation=15,btype='bandpass')
 filter = None  
 help=0

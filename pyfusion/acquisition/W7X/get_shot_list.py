@@ -78,11 +78,15 @@ def make_utcs_relative_seconds(dic, t0):
             dic.update({k: vnew})
     return dic
 
-def pprint_params(dic, utc_or_shot):
+def pprint_params(dic, utc_or_shot=None):
     """ pretty print a dictionary, showing ns times relative to t0, which can be given as 
            a utc, shot in utc or date, number (W7X)
            e.g. pprint_params(signal_dict['params'],[20160310,11])
                 pprint_params(data.params,[20160310,11])   
+    Note:  this version had only been run on ipp VM
+    To overcome absence of program data (making all relative to utc[0])
+        pprint_params(data.params,data.params['utc'][0])
+
     >>> offset = 1000000000*123456; parms = dict(utc0=offset, utc1=offset+10**9, deci=1.23, xstr='unchanged')
     >>> pprint_params(parms, 0); pprint_params(parms, offset)
     {'deci': 1.23, 'utc0': 123456.0, 'utc1': 123457.0, 'xstr': 'unchanged'}
@@ -94,7 +98,17 @@ def pprint_params(dic, utc_or_shot):
             t0 = progs.values()[0]['from']
         else:
             t0 = utc_or_shot[0]
-    else: t0 = utc_or_shot
+    elif utc_or_shot is None:
+        if 'utc_0' in dic:
+            print('>>> relative to utc_0')
+            utc_or_shot = dic['utc_0']
+        elif 'shot_f' in dic:
+            print('>>> relative to shot start')
+            utc_or_shot = dic['shot_f']
+        else:
+            print('No suitable time reference in ', dic.keys(), '\n try setting utc_or_shot')
+            raise ValueError('No suitable time reference in given dictionary')
+    t0 = utc_or_shot
     
     copydic = deepcopy(dic)
     reldic = make_utcs_relative_seconds(copydic, t0)

@@ -1,8 +1,9 @@
 from matplotlib import pyplot as plt
 from pyfusion.data.DA_datamining import DA, report_mem, append_to_DA_file
 from pyfusion.data.convenience import between, bw, btw, decimate, his, broaden
-
 # paste NOt %PASTE
+#_PYFUSION_TEST_@@SCRIPT
+
 run -i pyfusion/examples/gen_fs_bands.py  dev_name='W7X' diag_name=W7X_MIRNOV_41_BEST_LOOP shot_range="[[20180912,s] for s in range(43,44)]" max_bands=1 info=0 min_svs=2 max_H=0.999 min_p=0 exception=() outfile='W7X_MIR/preproc/201809/PMIRNOV_41_BEST_LOOP_10_3m_20180912043' fmax=10e3  seg_dt=3e-3 min_svs=2
 #  clean up not usually needed
 run -i pyfusion/examples/clean_up_pyfusion_text_mp.py MP=0 fileglob="'W7X_MIR/preproc/201809/P*'"

@@ -9,7 +9,8 @@ clone_pyfusion  # ( an alias)
 source /tmp/testpf/pyfusion/pyfusion/run_pyfusion 57 Lim57%1
 cd ~/pyfusion/working/pyfusion
 run /home/bdb112/pyfusion/working/pyfusion/pyfusion/test/test_examples.py newest_first=0 filewild="/tmp/testpf/pyfusion/pyfusion/examples/*py"
-
+multiple tests? - not implemented? - seems to do the last.
+false errors on running subprocesses e.g. gen_fs_bands, get_shot list
 """ 
 
 
@@ -25,12 +26,13 @@ _var_defaults="""
 filewild = 'pyfusion/examples/*.py'  # an explict filewild (but gets non repo)
 python_exe = 'python' # -3'
 start = 0  # allow a restart part-way through - always starts earlier, as it ignores @@Skip
-#       start=last_one is got short_cut
+#       start=last_one is got short_cut, Note: run -i
 pfdebug=0 # normally set pyfusion.DEBUG to 0 regardless
 newest_first=1 # if True, order the files so the last edited is first.
 max_sec=2
 stop_on_error=False
 maxwidth=90 # was 77  # maximum width of error message in summary display
+W7XNET=False  # set true to enable tests needing access to W7XNET
 """
 
 exec(_var_defaults)
@@ -105,7 +107,8 @@ try:  # this try is to catch ^C
         print('flags are', flags)
         if flags != []:
             if ('skip' in [flag.lower() for flag in flags] or
-                'script' in [flag.lower() for flag in flags]):
+                'script' in [flag.lower() for flag in flags] or
+                ('w7xnet' in [flag.lower() for flag in flags] and not W7XNET)):
                 # this is fudgey to get the number of elements right
                 flag = ','.join([flag for flag in flags
                                   if 'skip' in flag.lower() or 'script' in flag.lower()])

@@ -1,4 +1,5 @@
 """ Script file to help with W7X_neTe_profile for fine tuning etc, especially now we include MPM
+_PYFUSION_TEST_@@SCRIPT
 """ 
 da_file = "LP/to_daihong/LP20160309_7_L5SEG_2k2am1p2_21_0_1s.npz" ; dk = 18.0; max_ne=4.6
 #da_file = "LP/all_LD/LP20160309_17_L5SEG_2k2.npz" ; dk = 18.0; max_ne=4.6

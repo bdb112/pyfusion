@@ -4,19 +4,27 @@ pyfusion - python code for data mining plasma fluctuations
  * python3 - basically OK - some problems 20170817:
    - python3 stops after one set of data in process_swept_Langmuir
    - unicode problem in reading cached data (even self generated) - try np.load(encoding='ASCII'
-   
+
  *  Bug! 20160824  save of a file already in local cache (e.g. to decimate) seems to square gains.  Partial fix - don't allow local_saves from local cache (only works on machines with acccess to the archivedB. F further problem to the above workaround - RAW  to be enforced independently of pyfusion.RAW, otherwise pyfusion.RAW is set (to 1) after any save_local - for now, just save in a separate process.
  * possible problem with tests - new convention to return None for data not found may suppress real errors, making tests look too good
  * wid_specgram memory error for foverlap>0
 
- To see VERSION along with commit index  
+ Use ReText to check wysiwyg - To see VERSION along with commit index  
 
 .. code-block::
 
    git log -p pyfusion/version.py |egrep  "\+VERSION =|commit"
 
-Most recent update: 
- * 0.995 Op1.2b
+
+
+Most recent update:
+
+* no version change, as test_all results are only hald fixed - will try on ipp to check how we are going
+* merge ipp and canberra (W7X MHD datamining), including fixes to PUFSION_TEST versions of check_W7X_timebase_repair.py,marfe_plots_June_2017.py,low_level_W7X_MDSplus_example.py,gen_fs_bands.py,daihong_script.py,W7X_neTe_MPM_LP_comparison_script.py,plot_phase_vs_freq.py,full_processing_example_script.py,plot_specgram.py,plot_dmusic.py
+
+
+Version 0.995 Op1.2b
+
  * more options in plot_fs_DA.py
  * dat/base.py - add the config_name attrib (blank), explanation in config.rst
  * find_cluster_members.py - add a function get_probe_angles - a bit kludgey?

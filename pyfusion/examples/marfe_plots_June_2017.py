@@ -14,6 +14,7 @@ plt.show()
 %hgrepmagic python/
 """
 """
+_PYFUSION_TEST_@@SCRIPT
 Try to reproduce work in these two sessions
 ==== session 4081, 2016-12-06 10:32:55    =====
 ==== session 5336, 2020-03-27 18:17:59    =====

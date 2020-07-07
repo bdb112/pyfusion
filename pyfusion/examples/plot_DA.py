@@ -24,6 +24,7 @@ else:
     if os.path.split(filename)[1] == filename:
         print(os.getcwd(), end='')
     print(filename)
+    block_me = not hasattr(sys, 'ps1')
 
     # from_emacs was called block_me
     from_emacs = not hasattr(sys, 'ps1')
@@ -52,4 +53,4 @@ else:
         raise LookupError('Keys available are: ' + str(list(da)))
 
     da.plot(key)
-    plt.show(1)
+    plt.show(block=block_me)

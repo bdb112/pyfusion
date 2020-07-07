@@ -1,4 +1,5 @@
 import sys
+#_PYFUSION_TEST_@@W7XNET
 sys.path.insert(0, 'c:\\PortablePrograms\\winpythonlibs')
 import MDSplus as MDS
 from matplotlib import pyplot as plt

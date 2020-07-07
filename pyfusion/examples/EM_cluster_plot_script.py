@@ -33,4 +33,4 @@ axs4[2].plot(array([modtwopi(ph,offset=0) for ph in dd['phases'][w6e]]).T,'b',lw
 axs4[2].set_title('4-12kHz, before 3.2s')
 axs4[3].plot(array([modtwopi(ph,offset=.5) for ph in dd['phases']])[::5].T,'b',lw=.015)
 axs4[3].set_title('all')
-plt.show()
+plt.show(block=0)

@@ -2,7 +2,8 @@
 This runs some checks on W7X signals with corrupt timebases
 The first (so far only) method is to check the voltage data for time slips by using analytic_phase
 
-_PYFUSION_TEST_@@diag_name=W7X_L57_LP01_U shot_number=[20160309,51] fsamp=500.41 fft=0 block=0
+# This data file has lots of jumps... 
+_PYFUSION_TEST_@@diag_name=W7X_L57_LP01_U shot_number=[20160309,51] fsamp=500.41 fft=1 block=0
 """
 import pyfusion
 from pyfusion.data.plots import myiden, myiden2, mydiff
@@ -55,6 +56,10 @@ if add_corruption:
 fd = data
 # this is a workaround for clipped sweep signals, but it slows time response
 if fft:
+    # in this context (data with errors), many weird FFT sizes are likely, so limit planning time
+    if pyfusion.fft_type == 'fftw3':
+        pyfusion.fftw3_args.update(dict(planning_timelimit=1.0))
+
     FFT_size = nice_FFT_size(len(data.timebase)-1, -1) # 1 less to allow rounding err in reduce time
     data = data.reduce_time([data.timebase[0], data.timebase[FFT_size]])
  
@@ -92,12 +97,24 @@ if 'W7X' in data.keys()[0]:
         if dt is None:
             raise Exception(' no diff_dimraw found in params')
         biggest_float = np.float128 if hasattr(np, 'float128') else np.float64
-        t_zero = (data.params['req_f_u']-data.params['utc_0'])/1e9
-        offs = dt[0]
-        dt[0] = 0
+        dt[0] = 0 # this forces tbcheck to start at zero
+        if 'req_f_u' in data.params:
+            t_zero = (data.params['req_f_u'] - data.params['utc_0'])/1e9
+        else:  # this guess for utc_0 is probably not great.
+            pyfusion.utils.warn('{shot} is an old npz file? t0 may be off'.format(shot=shot_number))
+            t_zero = (data.params['shot_f']  - data.params['data_utc'][0])/1e9 + 61
         tbcheck = np.clip(np.cumsum(dt.astype(biggest_float)), 0, None)/1e9
-        axdt.set_title('diff of dimraw in secs')
-        axdt.plot(data.timebase, tbcheck[0:len(data.timebase)] + t_zero - data.timebase)
+        ### this test is incorrect - can only test if data.utc[0] is really the first data point - not true if request is > data.
+        ### this may be OK for url-fetched data, but not for npz as of 0.995 
+        ### if np.abs((np.diff(data.params['data_utc'])/1e9)[0] /
+        ###          (data.timebase[-1] - data.timebase[0]) - 1) > 1e-6:
+        ###    pyfusion.utils.warn('the dimraw origin is probably wrong for {shot}'.format(shot=shot_number))
+        # dimraw tzero needs more care - 
+        caveat = '(dimraw tzero may be wrong)' if time_range is not None and 'npz' in data.params['source'] else ''
+        delta_t_ns = 1e9 * np.nanmean(np.diff(data.timebase))
+        offs = int(1e9 * (data.timebase[0] - t_zero)/delta_t_ns)
+        axdt.set_title('diff of dimraw in secs ' + caveat)
+        axdt.plot(data.timebase, tbcheck[offs:offs+len(data.timebase)] + t_zero - data.timebase)
         axdt.set_yscale('symlog', linthreshy=1e-6)
 plt.show(block)
 if abs(np.diff(axph.get_ylim()))>10:

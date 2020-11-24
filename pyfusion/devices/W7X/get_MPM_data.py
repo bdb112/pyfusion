@@ -2,7 +2,13 @@ import pyfusion
 import numpy as np
 
 """
-From Philipp Drew, April 2020
+Typical local save with reduced reolution
+run pyfusion/examples/save_to_local.py shot_list=shot_range([20160309,32],[20160309,33]) diag_name="['W7M_MPM_R']" dev_name='W7M' local_dir='W7X/thurs/' time_range=[-.1,1.145] downsample=100
+
+
+
+
+Based on email from Philipp Drew, April 2020
 
 x0=-5930.11862;
 y0=-2254.21244;

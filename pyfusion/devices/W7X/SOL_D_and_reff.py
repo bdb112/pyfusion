@@ -1,3 +1,17 @@
+""" Generate text files SOL_LP and reff_LP containing
+ the SOL distance and reff of probe tips, and 
+ SOL_w7x and reff_w7x the SOL distance and reff of the MPM plunge
+ of the LP tips, for the equilibria/shot referred to in line 24.
+ optionally XYZ_ is simply the probe tips as read from allLP
+
+This assumes examples/W7X_OP1.1_LCFS.py' has been run, and 
+run -i SOL_D_and_reff.py # -i to preserve allLP
+
+Takes a good few minutes.
+
+This was run initially as a script mon.py and was renamed and tuned up
+as SOL_D_end_reff.py after ipp session 848 on 2020/4/20
+"""
 import pyfusion
 import sys
 import numpy as np
@@ -19,6 +33,7 @@ vars = dict(vmec_eq=vmec_eq, sval=sval, mshot=dat['shot'][0]%1e6*1000 + dat['sho
 
 xyz = np.array([dat['x'],dat['y'],dat['z'][0:540]])
 
+# distance of the MPM to the LCFS 
 SOL = np.array([[pt, distance_to_surface(sval=sval, vmec_eq=vmec_eq, point=pt, ax3D=None, max_its=4)[0]] for pt in xyz.T[:upto]])
 
 fname = str('SOL_{vmec_eq}_{sval:.6f}_{mshot:.0f}.txt'.format(**vars))
@@ -55,6 +70,7 @@ with open(SOL_LP_fname,'w') as fh:
     fh.writelines([str('{0:.4f}\n'.format(xx[-1])) for xx in SOL_LP])
 
 """
+# probe xyz's 
 with open(SOL_LP_fname.replace('SOL','XYZ'),'w') as fh:
-    fh.writelines([str('{0:.4f} {0:.4f} {0:.4f}\n'.format(*xx)) for xx in LPxyz.T])
+    fh.writelines([str('{0:.4f} {1:.4f} {2:.4f}\n'.format(*xx)) for xx in LPxyz.T])
 """

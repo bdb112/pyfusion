@@ -1,9 +1,9 @@
-"""
+"""   20200715 occasional truncated json file - fixed by closing json file (with..)
 From the component library of W7X, extract the coordinates of the
 node list of the limiter, count the unique points, and extract those
 lying in the plane of the limiter given by Phi=4/5 * pi
 
-run pyfusion/examples/extract_limiter_coords.py "http://esb.ipp-hgw.mpg.de:8280/services/ComponentsDbRest/component/483/"
+run pyfusion/examples/extract_limiter_coords.py "http://esb.ipp-hgw.mpg.de:8280/services/ComponentsDbRest/component/485/"
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,7 +11,7 @@ import os, sys, json
 import pyfusion
 from pyfusion.utils.time_utils import utc_GMT,utc_ns
  
-# http://esb.ipp-hgw.mpg.de:8280/services/ComponentsDbRest/component/482/data
+# see http://esb.ipp-hgw.mpg.de:8280/services/ComponentsDbRest/component/485/data and info
 
 
 # I used to use 474, but 485 seems more recent (both for m5)
@@ -21,7 +21,7 @@ http://webservices.ipp-hgw.mpg.de/docs/componentsDbRest.html#searchMeshModels
 474: Inboard limiter in module 5. Limiter designed for OP1.1 at phi = 0, for configuration (1, 1, 1, 1, 1, 0.2, 0.2) at +5.3 cm from copper cooling structure. The shaping is ideal limiter for P = 10 MW/m2m assuming decay length of 3.55 mm and parallel flux of 200 MW/m2. Stepping is along local surface normals. The 0-surface is based on Fourier coefficients max poloidal number M=40, max toroidal number N=40, calculated with Biot-Savart step=2mm. The limiter poloidal extent theta=(-.411, .411) toprevent a small third zone in connection length. Local naming: +5.3cm_v8.
 """
 # 485 is the best limiter for OP1.1, only 474 is available here. - see email from Daniel Bockenhoff 4/11/2020
-component_path = sys.argv[1] if len(sys.argv) > 1 else '/data/databases/W7X/LP/limiter_component_474'# OP1.1 uses 485
+component_path = sys.argv[1] if len(sys.argv) > 1 else '/data/databases/W7X/LP/limiter_component_474'# OP1.1 uses 485, but only 474 is available offline
 if 'http' in component_path:
     if sys.version < '3.0.0':
         from future.standard_library import install_aliases
@@ -111,12 +111,11 @@ set_axes_equal(ax)
 import json
 try:
     thispath = os.path.dirname(__file__)
-    W7X_path = os.path.realpath(thispath+'/../acquisition/W7X/')
+    W7X_dev_path = os.path.realpath(thispath+'/../devices/W7X/')
 except NameError as reason:
     print("Using current dir as __file__ not understood", reason.__repr__())
-    W7X_path = '.'
+    W7X_dev_path = '.'
     
-fh = file(os.path.join(W7X_path,'limiter_geometry.json'), 'wt')
 small_data = dict(rlim=xu.tolist(), zlim=zu.tolist(), shape_poly=pfit.tolist(), fname=nfname, info=info)
 # a sample of the points along the centreline - presumably the wetted line
 dnsample = 2
@@ -127,7 +126,9 @@ small_data.update(dict(xvcl=x[wY0][inds][::dnsample].tolist(),
                        yhcl=y[wZ0][inds][::dnsample].tolist(),
                        zhcl=z[wZ0][inds][::dnsample].tolist(),
 ))
-json.dump(small_data, fh)
+with file(os.path.join(W7X_dev_path,'limiter_geometry.json'), 'wt') as fh: 
+  json.dump(small_data, fh)
+
 print('saved in ' + fh.name)
 
 """

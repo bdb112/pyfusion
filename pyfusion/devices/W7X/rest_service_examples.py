@@ -21,7 +21,8 @@ reffs = requests.get(url + 'reff.json').json() # dict of s and reff
 reff_LP11 = requests.get(url + 'reff.json?x=1.75650&y=-5.40590&z=-0.22140').json() 
 print('reff_LP11 = ', reff_LP11)
 print('MPM', requests.get(url + 'reff.json?x=-5.6048&y=-2.12504&z=-0.168').json()) 
-# loop takes about 12 seconds
-reffarray = [[x, requests.get(url + 'reff.json?z=-0.168&y=-2.125&x='+str(-x)).json()] for x in np.linspace(4.8,5.8,endpoint=0)]
+# loop takes about 12 seconds for 100, 2 sec for 10
+reffarray = [[x, requests.get(url + 'reff.json?z=-0.168&y=-2.125&x='+str(-x)).json()]
+             for x in np.linspace(4.8, 5.8, 10, endpoint=0)]
 
-from osa import Client
+from osa import Client  # why here? - maybe was for and example which didbnt get written
